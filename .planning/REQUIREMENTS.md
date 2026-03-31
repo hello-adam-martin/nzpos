@@ -19,11 +19,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Authentication
 
-- [ ] **AUTH-01**: Owner can sign up with email and password via Supabase Auth
-- [ ] **AUTH-02**: Staff can log in with 4-digit PIN (bcrypt hashed, fast shift changes)
-- [ ] **AUTH-03**: Staff PIN lockout after 10 failed attempts in 5 minutes
-- [ ] **AUTH-04**: Owner has full access (admin, POS, reports). Staff has POS-only access.
-- [ ] **AUTH-05**: Route-level middleware enforces role-based access (/pos = staff+owner, /admin = owner only)
+- [x] **AUTH-01**: Owner can sign up with email and password via Supabase Auth
+- [x] **AUTH-02**: Staff can log in with 4-digit PIN (bcrypt hashed, fast shift changes)
+- [x] **AUTH-03**: Staff PIN lockout after 10 failed attempts in 5 minutes
+- [x] **AUTH-04**: Owner has full access (admin, POS, reports). Staff has POS-only access.
+- [x] **AUTH-05**: Route-level middleware enforces role-based access (/pos = staff+owner, /admin = owner only)
 
 ### Product Catalog
 
@@ -143,11 +143,11 @@ Explicitly excluded. Documented to prevent scope creep.
 | FOUND-05 | Phase 1 | Complete |
 | FOUND-06 | Phase 1 | Complete |
 | FOUND-07 | Phase 1 | Complete |
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
-| AUTH-03 | Phase 1 | Pending |
-| AUTH-04 | Phase 1 | Pending |
-| AUTH-05 | Phase 1 | Pending |
+| AUTH-01 | Phase 1 | Complete |
+| AUTH-02 | Phase 1 | Complete |
+| AUTH-03 | Phase 1 | Complete |
+| AUTH-04 | Phase 1 | Complete |
+| AUTH-05 | Phase 1 | Complete |
 | DEPLOY-01 | Phase 1 | Pending |
 | DEPLOY-02 | Phase 1 | Pending |
 | PROD-01 | Phase 2 | Pending |
