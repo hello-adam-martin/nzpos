@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-product-catalog 02-03-PLAN.md
-last_updated: "2026-03-31T22:10:32.978Z"
+stopped_at: Completed 02-product-catalog 02-04-PLAN.md
+last_updated: "2026-03-31T22:08:44.301Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 7
   percent: 0
 ---
 
@@ -58,7 +58,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-foundation P04 | 18 | 2 tasks | 16 files |
 | Phase 01-foundation P05 | 8 | 2 tasks | 7 files |
 | Phase 02-product-catalog P02 | 12 | 2 tasks | 6 files |
-| Phase 02-product-catalog P03 | 5 | 2 tasks | 10 files |
+| Phase 02-product-catalog P04 | 10 | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -87,8 +87,8 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: CI pipeline 3-job ordering: test (all branches) -> migrate (main) -> deploy (main), strictly sequential with needs:
 - [Phase 02-product-catalog]: price_dollars form field (string) converted via parsePriceToCents; price_cents (int) accepted directly — supports both form submission patterns
 - [Phase 02-product-catalog]: Image upload outputs WebP regardless of input format — consistent CDN storage, optimal file size at quality 85
-- [Phase 02-product-catalog]: Server Component page + Client Component state split: page.tsx fetches data, ProductsPageClient manages all interactive state (canonical App Router pattern)
-- [Phase 02-product-catalog]: Client-side filter+sort in ProductDataTable: all products fetched server-side, search/filter/sort are pure client operations — appropriate for small product catalog (< 500 products)
+- [Phase 02-product-catalog]: papaparse used for both parse and unparse in CSV import — consistent library, no manual CSV string construction
+- [Phase 02-product-catalog]: validateImportRows uses empty Sets/Maps in preview step — DB-level duplicate detection happens at insert time in importProducts Server Action
 
 ### Pending Todos
 
@@ -101,6 +101,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T22:10:32.976Z
-Stopped at: Completed 02-product-catalog 02-03-PLAN.md
+Last session: 2026-03-31T22:08:44.299Z
+Stopped at: Completed 02-product-catalog 02-04-PLAN.md
 Resume file: None
