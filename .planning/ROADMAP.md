@@ -35,7 +35,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 - [x] 01-01-PLAN.md — Scaffold Next.js 16 with dependencies, Tailwind v4 design system, Vitest
 - [x] 01-02-PLAN.md — Supabase schema, RLS policies, custom JWT auth hook, client utilities
-- [ ] 01-03-PLAN.md — GST calculation module (TDD), money formatting, Zod validation schemas
+- [x] 01-03-PLAN.md — GST calculation module (TDD), money formatting, Zod validation schemas
 - [ ] 01-04-PLAN.md — Owner signup/signin, staff PIN auth with lockout, middleware, seed data
 - [ ] 01-05-PLAN.md — PWA manifest with icons, GitHub Actions CI/CD pipeline
 **UI hint**: yes
