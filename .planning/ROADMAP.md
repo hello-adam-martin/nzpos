@@ -36,8 +36,8 @@ Plans:
 - [x] 01-01-PLAN.md — Scaffold Next.js 16 with dependencies, Tailwind v4 design system, Vitest
 - [x] 01-02-PLAN.md — Supabase schema, RLS policies, custom JWT auth hook, client utilities
 - [x] 01-03-PLAN.md — GST calculation module (TDD), money formatting, Zod validation schemas
-- [ ] 01-04-PLAN.md — Owner signup/signin, staff PIN auth with lockout, middleware, seed data
-- [ ] 01-05-PLAN.md — PWA manifest with icons, GitHub Actions CI/CD pipeline
+- [x] 01-04-PLAN.md — Owner signup/signin, staff PIN auth with lockout, middleware, seed data
+- [x] 01-05-PLAN.md — PWA manifest with icons, GitHub Actions CI/CD pipeline
 **UI hint**: yes
 
 ### Phase 2: Product Catalog

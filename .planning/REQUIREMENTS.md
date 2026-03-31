@@ -91,8 +91,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Deployment
 
-- [ ] **DEPLOY-01**: CI/CD via GitHub Actions: test → deploy to Vercel → Supabase migrations
-- [ ] **DEPLOY-02**: iPad PWA: manifest, icons, fullscreen mode, installable
+- [x] **DEPLOY-01**: CI/CD via GitHub Actions: test → deploy to Vercel → Supabase migrations
+- [x] **DEPLOY-02**: iPad PWA: manifest, icons, fullscreen mode, installable
 
 ## v2 Requirements
 
@@ -148,8 +148,8 @@ Explicitly excluded. Documented to prevent scope creep.
 | AUTH-03 | Phase 1 | Complete |
 | AUTH-04 | Phase 1 | Complete |
 | AUTH-05 | Phase 1 | Complete |
-| DEPLOY-01 | Phase 1 | Pending |
-| DEPLOY-02 | Phase 1 | Pending |
+| DEPLOY-01 | Phase 1 | Complete |
+| DEPLOY-02 | Phase 1 | Complete |
 | PROD-01 | Phase 2 | Pending |
 | PROD-02 | Phase 2 | Pending |
 | PROD-03 | Phase 2 | Pending |
