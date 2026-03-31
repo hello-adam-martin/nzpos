@@ -5,6 +5,7 @@ import ProductFilterBar, { type StockStatus, type ActiveStatus } from './Product
 import ProductDataTable, { type ProductWithCategory } from './ProductDataTable'
 import CategorySidebarPanel from '@/components/admin/categories/CategorySidebarPanel'
 import ProductFormDrawer from './ProductFormDrawer'
+import { CSVImportFlow } from '@/components/admin/csv/CSVImportFlow'
 
 interface Category {
   id: string
@@ -23,6 +24,7 @@ export default function ProductsPageClient({ products, categories }: ProductsPag
   const [stockStatus, setStockStatus] = useState<StockStatus>('all')
   const [activeStatus, setActiveStatus] = useState<ActiveStatus>('all')
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [csvImportOpen, setCsvImportOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<ProductWithCategory | null>(null)
 
   // Build product counts per category for sidebar
@@ -67,7 +69,7 @@ export default function ProductsPageClient({ products, categories }: ProductsPag
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => {}}
+              onClick={() => setCsvImportOpen(true)}
               className="px-4 py-2 text-sm font-semibold font-sans border border-amber text-amber rounded-[var(--radius-md)] hover:bg-amber/10 transition-colors disabled:opacity-40"
             >
               Import CSV
@@ -119,6 +121,11 @@ export default function ProductsPageClient({ products, categories }: ProductsPag
           categories={categories}
           onClose={handleDrawerClose}
         />
+      )}
+
+      {/* CSV import flow */}
+      {csvImportOpen && (
+        <CSVImportFlow onClose={() => setCsvImportOpen(false)} />
       )}
     </div>
   )
