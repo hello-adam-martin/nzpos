@@ -21,7 +21,7 @@ created: 2026-04-01
 | Preset | not applicable |
 | Component library | none (custom components using Tailwind v4 utility classes) |
 | Icon library | none declared in Phase 1 — use inline SVG or Heroicons (MIT, zero-dependency) |
-| Font | Satoshi (display, 700) + DM Sans (body/UI, 400–600) + Geist Mono (SKU/data) via Bunny Fonts CDN |
+| Font | Satoshi (display, 600) + DM Sans (body/UI, 400–600) + Geist Mono (SKU/data) via Bunny Fonts CDN |
 
 Source: DESIGN.md, globals.css @theme block, Phase 1 execution decisions.
 
@@ -33,8 +33,7 @@ Declared values (all multiples of 4):
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| 2xs | 2px | Inline micro gaps (badge padding vertical) |
-| xs | 4px | Icon gaps, tight inline padding |
+| xs | 4px | Icon gaps, tight inline padding, badge padding vertical |
 | sm | 8px | Input padding vertical, chip gaps |
 | md | 16px | Card padding, field spacing, default element gap |
 | lg | 24px | Section padding, panel gaps |
@@ -48,7 +47,7 @@ Exceptions:
 - Category sidebar: fixed 240px wide (matches DESIGN.md admin layout spec)
 - CSV column mapper drag handle: 44x44px touch target (admin can be used on iPad)
 
-Source: DESIGN.md spacing scale + POS touch target spec. Admin density is "comfortable" per DESIGN.md.
+Source: DESIGN.md spacing scale + POS touch target spec. Admin density is "comfortable" per DESIGN.md. 2xs/2px token removed — 2 is not a multiple of 4; badge vertical padding uses xs (4px).
 
 ---
 
@@ -56,17 +55,17 @@ Source: DESIGN.md spacing scale + POS touch target spec. Admin density is "comfo
 
 | Role | Font | Size | Weight | Line Height | Usage |
 |------|------|------|--------|-------------|-------|
-| Page title | Satoshi | 30px / 1.875rem (3xl) | 700 | 1.2 | "Products" page heading |
+| Page title | Satoshi | 30px / 1.875rem (3xl) | 600 | 1.2 | "Products" page heading |
 | Section heading | DM Sans | 20px / 1.25rem (xl) | 600 | 1.3 | Panel headers ("Categories", "Import Preview") |
 | Body | DM Sans | 16px / 1rem (base) | 400 | 1.5 | Form labels, descriptions, paragraph copy |
-| Label / UI | DM Sans | 14px / 0.875rem (sm) | 500 | 1.4 | Table column headers, input labels, filter chips |
-| Caption | DM Sans | 12px / 0.75rem (xs) | 400 | 1.4 | Helper text, error messages below inputs, timestamps |
+| Label / UI + Caption | DM Sans | 14px / 0.875rem (sm) | 600 (label) / 400 (caption) | 1.4 | Table column headers, input labels, filter chips (600); helper text, error messages below inputs, timestamps (400) |
 | Data / SKU | Geist Mono | 14px / 0.875rem (sm) | 400 | 1.4 | SKU column, barcode values, price values in table |
 
 Notes:
 - Price values in table use `font-feature-settings: 'tnum' 1` for aligned columns (from DESIGN.md).
-- Maximum 4 sizes in active use per screen: caption (12), label (14), body (16), page title (30).
-- Two weights declared: regular (400) and medium/semibold (500–600). 700 reserved for page title only.
+- Exactly 4 sizes in active use: 14px (sm), 16px (base), 20px (xl), 30px (3xl).
+- Exactly 2 declared weights: 400 (regular) and 600 (semibold). No other weights used.
+- Caption/helper text shares the 14px (sm) size at weight 400 to distinguish from label/UI (weight 600).
 
 Source: DESIGN.md typography scale.
 
@@ -104,7 +103,7 @@ Components to build in this phase (no shadcn; all custom Tailwind):
 | `ProductDataTable` | Sortable table. Columns: thumbnail (40x40), name, SKU (mono), price (NZD, tnum), stock, category, status badge. Row min-height 48px. |
 | `ProductSearchBar` | Text input searching name + SKU. Debounced 300ms. Clears with × button. |
 | `ProductFilterBar` | Three inline filters: category dropdown, stock status select (All / In Stock / Low / Out), status toggle (Active / Inactive / All). |
-| `ProductStatusBadge` | Pill badge. Active = success green fill. Inactive = border + muted text. Low stock = warning amber fill. Out of stock = error red fill. Radius: full. |
+| `ProductStatusBadge` | Pill badge. Active = success green fill. Inactive = border + muted text. Low stock = warning amber fill. Out of stock = error red fill. Radius: full. Badge padding vertical: 4px (xs token). |
 | `AddProductButton` | Amber background, white text, "Add Product". Opens `ProductFormDrawer`. |
 | `ImportCSVButton` | Amber outline (border amber, amber text), "Import CSV". Opens CSV import flow. |
 
@@ -141,7 +140,7 @@ Components to build in this phase (no shadcn; all custom Tailwind):
 | `CategoryRow` | Drag handle (left, 44x44 touch target) + category name + product count badge + edit icon (right). |
 | `CategoryInlineEditor` | Replaces category name with text input on edit click. Confirm via Enter or checkmark button. Cancel via Escape or × button. |
 | `AddCategoryButton` | Text button "+ Add Category" at bottom of sidebar panel. Opens inline name input at end of list. |
-| `DeleteCategoryButton` | Appears on hover/focus of CategoryRow. Red icon. Opens confirmation dialog. |
+| `DeleteCategoryButton` | Appears on hover/focus of CategoryRow. Red icon. `aria-label="Delete {Category Name}"`. Opens confirmation dialog. |
 
 ---
 
@@ -163,7 +162,7 @@ Components to build in this phase (no shadcn; all custom Tailwind):
 - Slides in from right, 480px width on desktop. Full-screen on viewport < 640px.
 - Backdrop (rgba black 40%) covers main content. Click backdrop to cancel (if no unsaved changes).
 - Unsaved changes: clicking backdrop or pressing Escape shows inline confirmation: "You have unsaved changes. Discard?" with "Keep editing" and "Discard" buttons.
-- Form validation runs on submit (not on blur). Error messages appear below each field in 12px / caption style / error red.
+- Form validation runs on submit (not on blur). Error messages appear below each field in 14px / caption style / error red.
 - Successful save: drawer closes, table row updates immediately (optimistic) then re-validates from server.
 
 ### Image Upload
@@ -188,12 +187,12 @@ Components to build in this phase (no shadcn; all custom Tailwind):
 
 ### Deactivate Product
 - "Deactivate Product" button in edit drawer (ghost, error color).
-- Confirmation dialog (modal): heading "Deactivate [Product Name]?", body "This product will no longer appear in the POS or online store.", two buttons: "Cancel" (ghost) and "Deactivate" (error/red background).
+- Confirmation dialog (modal): heading "Deactivate [Product Name]?", body "This product will no longer appear in the POS or online store.", two buttons: "Keep Product Active" (ghost) and "Deactivate" (error/red background).
 - Deactivated product row: reduced opacity (60%) in table. Status badge changes to "Inactive".
 
 ### Delete Category
 - Only available if category has 0 products. If category has products, delete button is disabled with tooltip: "Move or remove products first."
-- If 0 products: confirmation dialog: "Delete [Category Name]?" / "This cannot be undone." / "Cancel" + "Delete" (red).
+- If 0 products: confirmation dialog: "Delete [Category Name]?" / "This cannot be undone." / "Keep Category" (ghost) + "Delete" (red).
 
 ---
 
@@ -246,9 +245,11 @@ Each interactive element must implement these states:
 | CSV empty error report label | Download Error Report ({N} rows) |
 | Deactivate confirmation heading | Deactivate {Product Name}? |
 | Deactivate confirmation body | This product will no longer appear in the POS or online store. |
+| Deactivate dismiss button | Keep Product Active |
 | Deactivate button | Deactivate |
 | Delete category confirmation heading | Delete {Category Name}? |
 | Delete category confirmation body | This cannot be undone. |
+| Delete category dismiss button | Keep Category |
 | Delete button | Delete |
 | Delete category disabled tooltip | Move or remove all products from this category first. |
 
