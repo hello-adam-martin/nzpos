@@ -31,7 +31,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **PROD-02**: Owner can upload product images via Supabase Storage
 - [x] **PROD-03**: Owner can edit and deactivate products
 - [ ] **PROD-04**: Owner can import products from CSV (batch processing for 500+ rows, skip duplicates)
-- [ ] **PROD-05**: Product images display in POS grid and online store
+- [x] **PROD-05**: Product images display in POS grid and online store
 - [ ] **PROD-06**: Categories can be created, edited, and reordered
 
 ### POS Checkout
@@ -154,7 +154,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | PROD-02 | Phase 2 | Complete |
 | PROD-03 | Phase 2 | Complete |
 | PROD-04 | Phase 2 | Pending |
-| PROD-05 | Phase 2 | Pending |
+| PROD-05 | Phase 2 | Complete |
 | PROD-06 | Phase 2 | Pending |
 | POS-01 | Phase 3 | Pending |
 | POS-02 | Phase 3 | Pending |

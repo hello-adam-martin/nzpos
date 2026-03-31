@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-product-catalog 02-02-PLAN.md
-last_updated: "2026-03-31T21:57:12.023Z"
+stopped_at: Completed 02-product-catalog 02-03-PLAN.md
+last_updated: "2026-03-31T22:10:32.978Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 9
-  completed_plans: 6
+  completed_plans: 8
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 02 (product-catalog) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-03-31
 
@@ -58,6 +58,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-foundation P04 | 18 | 2 tasks | 16 files |
 | Phase 01-foundation P05 | 8 | 2 tasks | 7 files |
 | Phase 02-product-catalog P02 | 12 | 2 tasks | 6 files |
+| Phase 02-product-catalog P03 | 5 | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -86,6 +87,8 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: CI pipeline 3-job ordering: test (all branches) -> migrate (main) -> deploy (main), strictly sequential with needs:
 - [Phase 02-product-catalog]: price_dollars form field (string) converted via parsePriceToCents; price_cents (int) accepted directly — supports both form submission patterns
 - [Phase 02-product-catalog]: Image upload outputs WebP regardless of input format — consistent CDN storage, optimal file size at quality 85
+- [Phase 02-product-catalog]: Server Component page + Client Component state split: page.tsx fetches data, ProductsPageClient manages all interactive state (canonical App Router pattern)
+- [Phase 02-product-catalog]: Client-side filter+sort in ProductDataTable: all products fetched server-side, search/filter/sort are pure client operations — appropriate for small product catalog (< 500 products)
 
 ### Pending Todos
 
@@ -98,6 +101,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T21:57:12.020Z
-Stopped at: Completed 02-product-catalog 02-02-PLAN.md
+Last session: 2026-03-31T22:10:32.976Z
+Stopped at: Completed 02-product-catalog 02-03-PLAN.md
 Resume file: None
