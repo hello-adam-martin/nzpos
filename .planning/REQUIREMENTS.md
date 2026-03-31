@@ -10,9 +10,9 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Foundation
 
 - [x] **FOUND-01**: Next.js 16 project scaffolded with App Router, Tailwind v4, Supabase client
-- [ ] **FOUND-02**: Supabase schema deployed with all tables, store_id on every table, indexes
-- [ ] **FOUND-03**: Custom JWT claims configured (store_id + role in app_metadata)
-- [ ] **FOUND-04**: RLS policies enforce tenant isolation on all tables
+- [x] **FOUND-02**: Supabase schema deployed with all tables, store_id on every table, indexes
+- [x] **FOUND-03**: Custom JWT claims configured (store_id + role in app_metadata)
+- [x] **FOUND-04**: RLS policies enforce tenant isolation on all tables
 - [ ] **FOUND-05**: GST calculation module (per-line on discounted amounts, IRD-compliant) with unit tests
 - [ ] **FOUND-06**: Zod validation schemas for all entity types
 - [x] **FOUND-07**: Money stored as integer cents throughout, display formatting in UI only
@@ -137,9 +137,9 @@ Explicitly excluded. Documented to prevent scope creep.
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
 | FOUND-01 | Phase 1 | Complete |
-| FOUND-02 | Phase 1 | Pending |
-| FOUND-03 | Phase 1 | Pending |
-| FOUND-04 | Phase 1 | Pending |
+| FOUND-02 | Phase 1 | Complete |
+| FOUND-03 | Phase 1 | Complete |
+| FOUND-04 | Phase 1 | Complete |
 | FOUND-05 | Phase 1 | Pending |
 | FOUND-06 | Phase 1 | Pending |
 | FOUND-07 | Phase 1 | Complete |
