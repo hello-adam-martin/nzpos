@@ -1,26 +1,43 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  /* Primary */
+  --color-navy: #1E293B;
+  --color-navy-light: #334155;
+  --color-navy-dark: #0F172A;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Accent */
+  --color-amber: #E67E22;
+  --color-amber-hover: #D35400;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+  /* Backgrounds */
+  --color-bg: #FAFAF9;
+  --color-surface: #F5F5F4;
+  --color-card: #FFFFFF;
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Text */
+  --color-text: #1C1917;
+  --color-text-muted: #78716C;
+  --color-text-light: #A8A29E;
+
+  /* Borders */
+  --color-border: #E7E5E4;
+  --color-border-light: #F0EFED;
+
+  /* Semantic */
+  --color-success: #059669;
+  --color-warning: #D97706;
+  --color-error: #DC2626;
+  --color-info: #3B82F6;
+
+  /* Typography */
+  --font-sans: 'DM Sans', sans-serif;
+  --font-display: 'Satoshi', sans-serif;
+  --font-mono: 'Geist Mono', monospace;
+
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
 }
