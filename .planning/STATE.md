@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 1 planned
-last_updated: "2026-04-01"
-last_activity: 2026-04-01 — Phase 1 planned (5 plans, 4 waves), verified by plan checker
+status: executing
+stopped_at: Completed 01-foundation-01-01-PLAN.md
+last_updated: "2026-03-31T19:12:38.669Z"
+last_activity: 2026-03-31
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 5
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 1 — Foundation
+**Current focus:** Phase 01 — foundation
 
 ## Current Position
 
-Phase: 1 of 6 (Foundation)
-Plan: 0 of 5 in current phase
+Phase: 01 (foundation) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-04-01 — Phase 1 planned (5 plans, 4 waves), ready to execute
+Last activity: 2026-03-31
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01-foundation P01 | 11 | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -64,6 +65,9 @@ Recent decisions affecting current work:
 - Phase 1: Integer cents throughout (no floats) — schema constraint, cannot change after data exists
 - Phase 1: GST must be a pure function with IRD specimen test cases before checkout code is written
 - Phase 3/4: Refresh-on-transaction (revalidatePath) over Supabase Realtime for inventory sync
+- [Phase 01-foundation]: Tailwind v4 CSS-native config: @theme block in globals.css, no tailwind.config.js
+- [Phase 01-foundation]: Bunny Fonts CDN for Satoshi+DM Sans (Satoshi not on Google Fonts)
+- [Phase 01-foundation]: iPad viewport: userScalable=false to prevent accidental pinch-zoom on POS
 
 ### Pending Todos
 
@@ -76,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01
-Stopped at: Phase 1 planned
-Resume file: .planning/phases/01-foundation/01-01-PLAN.md
+Last session: 2026-03-31T19:12:38.667Z
+Stopped at: Completed 01-foundation-01-01-PLAN.md
+Resume file: None
