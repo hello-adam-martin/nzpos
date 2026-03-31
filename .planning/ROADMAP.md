@@ -31,7 +31,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. RLS policies prevent any row from being returned unless the JWT's store_id matches — verified by a failing test that queries with a mismatched store_id
   4. GST calculation module returns IRD-correct values for a suite of test cases including discounted line items and fractional-cent rounding
   5. iPad can install the app as a PWA (standalone fullscreen, home screen icon visible)
-**Plans**: TBD
+**Plans:** 5 plans
+Plans:
+- [ ] 01-01-PLAN.md — Scaffold Next.js 16 with dependencies, Tailwind v4 design system, Vitest
+- [ ] 01-02-PLAN.md — Supabase schema, RLS policies, custom JWT auth hook, client utilities
+- [ ] 01-03-PLAN.md — GST calculation module (TDD), money formatting, Zod validation schemas
+- [ ] 01-04-PLAN.md — Owner signup/signin, staff PIN auth with lockout, middleware, seed data
+- [ ] 01-05-PLAN.md — PWA manifest with icons, GitHub Actions CI/CD pipeline
 **UI hint**: yes
 
 ### Phase 2: Product Catalog
@@ -105,7 +111,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/TBD | Not started | - |
+| 1. Foundation | 0/5 | Planning complete | - |
 | 2. Product Catalog | 0/TBD | Not started | - |
 | 3. POS Checkout | 0/TBD | Not started | - |
 | 4. Online Store | 0/TBD | Not started | - |
