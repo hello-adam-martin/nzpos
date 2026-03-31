@@ -12,7 +12,9 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] GST handling (15%, tax-inclusive display, per-line rounding on discounted items) — Validated in Phase 01: Foundation
+- [x] User auth (owner email/password, staff PIN login with lockout) — Validated in Phase 01: Foundation
+- [x] Multi-tenant data model (store_id on all tables for future expansion) — Validated in Phase 01: Foundation
 
 ### Active
 
@@ -20,8 +22,6 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - [ ] POS checkout on iPad (product grid, cart, discounts, EFTPOS/cash recording)
 - [ ] Online storefront with Stripe checkout and promo codes
 - [ ] Shared inventory with atomic stock decrement (no overselling)
-- [ ] GST handling (15%, tax-inclusive display, per-line rounding on discounted items)
-- [ ] User auth (owner email/password, staff PIN login with lockout)
 - [ ] End-of-day cash-up / reconciliation report
 - [ ] Xero integration (OAuth, daily sales sync with GST breakdown)
 - [ ] CSV product import
@@ -30,7 +30,6 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - [ ] Click-and-collect order workflow (pending_pickup → ready → collected)
 - [ ] Basic reporting (daily sales, top products, stock levels)
 - [ ] EFTPOS confirmation step (terminal approved? yes/no before completing sale)
-- [ ] Multi-tenant data model (store_id on all tables for future expansion)
 
 ### Out of Scope
 
