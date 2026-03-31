@@ -1,23 +1,12 @@
 'use client'
 import { useState } from 'react'
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core'
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  arrayMove,
-} from '@dnd-kit/sortable'
+import dynamic from 'next/dynamic'
 import { createCategory } from '@/actions/categories/createCategory'
-import { reorderCategories } from '@/actions/categories/reorderCategories'
-import CategoryRow from './CategoryRow'
+
+const SortableCategoryList = dynamic(
+  () => import('./SortableCategoryList'),
+  { ssr: false }
+)
 
 interface Category {
   id: string
@@ -45,30 +34,6 @@ export default function CategorySidebarPanel({
   const [newName, setNewName] = useState('')
   const [addError, setAddError] = useState<string | null>(null)
   const [isAddPending, setIsAddPending] = useState(false)
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  )
-
-  async function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-
-    const oldIndex = categories.findIndex((c) => c.id === active.id)
-    const newIndex = categories.findIndex((c) => c.id === over.id)
-    const reordered = arrayMove(categories, oldIndex, newIndex)
-
-    // Optimistic update
-    setCategories(reordered)
-
-    // Persist new sort_order values
-    await reorderCategories({
-      categories: reordered.map((cat, index) => ({ id: cat.id, sort_order: index })),
-    })
-  }
 
   async function handleAddCategory() {
     if (!newName.trim()) {
@@ -135,28 +100,15 @@ export default function CategorySidebarPanel({
 
       {/* Sortable category list */}
       <div className="flex-1 overflow-y-auto px-2">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={categories.map((c) => c.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            {categories.map((category) => (
-              <CategoryRow
-                key={category.id}
-                category={category}
-                productCount={productCounts[category.id] ?? 0}
-                isSelected={selectedCategoryId === category.id}
-                onSelect={(id) => onCategorySelect?.(id)}
-                onDeleted={handleDeleted}
-                onRenamed={handleRenamed}
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
+        <SortableCategoryList
+          categories={categories}
+          productCounts={productCounts}
+          selectedCategoryId={selectedCategoryId}
+          onCategorySelect={(id) => onCategorySelect?.(id)}
+          onCategoriesChange={setCategories}
+          onDeleted={handleDeleted}
+          onRenamed={handleRenamed}
+        />
 
         {/* Empty state */}
         {categories.length === 0 && !isAddingNew && (
