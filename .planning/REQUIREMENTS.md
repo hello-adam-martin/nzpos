@@ -27,9 +27,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Product Catalog
 
-- [ ] **PROD-01**: Owner can create products with name, SKU, barcode, price (cents), category, stock, reorder threshold
-- [ ] **PROD-02**: Owner can upload product images via Supabase Storage
-- [ ] **PROD-03**: Owner can edit and deactivate products
+- [x] **PROD-01**: Owner can create products with name, SKU, barcode, price (cents), category, stock, reorder threshold
+- [x] **PROD-02**: Owner can upload product images via Supabase Storage
+- [x] **PROD-03**: Owner can edit and deactivate products
 - [ ] **PROD-04**: Owner can import products from CSV (batch processing for 500+ rows, skip duplicates)
 - [ ] **PROD-05**: Product images display in POS grid and online store
 - [ ] **PROD-06**: Categories can be created, edited, and reordered
@@ -150,9 +150,9 @@ Explicitly excluded. Documented to prevent scope creep.
 | AUTH-05 | Phase 1 | Complete |
 | DEPLOY-01 | Phase 1 | Complete |
 | DEPLOY-02 | Phase 1 | Complete |
-| PROD-01 | Phase 2 | Pending |
-| PROD-02 | Phase 2 | Pending |
-| PROD-03 | Phase 2 | Pending |
+| PROD-01 | Phase 2 | Complete |
+| PROD-02 | Phase 2 | Complete |
+| PROD-03 | Phase 2 | Complete |
 | PROD-04 | Phase 2 | Pending |
 | PROD-05 | Phase 2 | Pending |
 | PROD-06 | Phase 2 | Pending |

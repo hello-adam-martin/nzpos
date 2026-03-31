@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Phase 2 UI-SPEC approved
-last_updated: "2026-03-31T21:03:10.682Z"
+status: executing
+stopped_at: Completed 02-product-catalog 02-02-PLAN.md
+last_updated: "2026-03-31T21:57:12.023Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 9
+  completed_plans: 6
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 01 — foundation
+**Current focus:** Phase 02 — product-catalog
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 02 (product-catalog) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
 Last activity: 2026-03-31
 
 Progress: [░░░░░░░░░░] 0%
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-foundation P03 | 3 | 2 tasks | 9 files |
 | Phase 01-foundation P04 | 18 | 2 tasks | 16 files |
 | Phase 01-foundation P05 | 8 | 2 tasks | 7 files |
+| Phase 02-product-catalog P02 | 12 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,8 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: Owner signup refreshes session after staff record creation to trigger JWT hook for store_id+role claims
 - [Phase 01-foundation]: No service worker in Phase 1 — PWA installability on iOS via manifest + HTTPS only per D-11
 - [Phase 01-foundation]: CI pipeline 3-job ordering: test (all branches) -> migrate (main) -> deploy (main), strictly sequential with needs:
+- [Phase 02-product-catalog]: price_dollars form field (string) converted via parsePriceToCents; price_cents (int) accepted directly — supports both form submission patterns
+- [Phase 02-product-catalog]: Image upload outputs WebP regardless of input format — consistent CDN storage, optimal file size at quality 85
 
 ### Pending Todos
 
@@ -95,6 +98,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T21:03:10.679Z
-Stopped at: Phase 2 UI-SPEC approved
-Resume file: .planning/phases/02-product-catalog/02-UI-SPEC.md
+Last session: 2026-03-31T21:57:12.020Z
+Stopped at: Completed 02-product-catalog 02-02-PLAN.md
+Resume file: None

@@ -50,10 +50,10 @@ Plans:
   3. Owner can edit any product field and deactivate a product; deactivated products no longer appear in active listings
   4. Owner can import a CSV of 500+ products; duplicates (by SKU) are skipped with a preview diff shown before committing
   5. Owner can create, rename, and reorder product categories
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 Plans:
 - [ ] 02-01-PLAN.md — Infrastructure setup, admin shell, and category CRUD with drag-and-drop
-- [ ] 02-02-PLAN.md — Product CRUD Server Actions and image upload with sharp resize
+- [x] 02-02-PLAN.md — Product CRUD Server Actions and image upload with sharp resize
 - [ ] 02-03-PLAN.md — Product list page with data table, search, filters, and form drawer
 - [ ] 02-04-PLAN.md — CSV import: parsing, validation, batch import, and 3-step UI flow
 **UI hint**: yes
@@ -117,7 +117,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/5 | In Progress|  |
-| 2. Product Catalog | 0/4 | Not started | - |
+| 2. Product Catalog | 1/4 | In Progress|  |
 | 3. POS Checkout | 0/TBD | Not started | - |
 | 4. Online Store | 0/TBD | Not started | - |
 | 5. Admin & Reporting | 0/TBD | Not started | - |
