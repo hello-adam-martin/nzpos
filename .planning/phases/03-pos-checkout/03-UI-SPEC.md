@@ -22,7 +22,7 @@ created: 2026-04-01
 | Preset | not applicable |
 | Component library | none (custom components, no Radix or shadcn) |
 | Icon library | lucide-react (established in Phase 1/2 codebase pattern) |
-| Font | Satoshi (display, 700) + DM Sans (body/UI, 400–600) via Bunny Fonts CDN |
+| Font | Satoshi (display, 700) + DM Sans (body/UI, 400/700) via Bunny Fonts CDN |
 
 Source: DESIGN.md, globals.css `@theme` block. No `components.json` present — confirmed not applicable.
 
@@ -34,7 +34,7 @@ Declared values (must be multiples of 4):
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| 2xs | 2px | Tight inline gaps (badge text padding) |
+| 2xs | 4px | Tight inline gaps (badge text padding) |
 | xs | 4px | Icon gaps, inline label padding |
 | sm | 8px | Compact element spacing, cart row internal padding |
 | md | 16px | Default element spacing, card padding |
@@ -56,18 +56,24 @@ Exceptions:
 
 All sizes use DM Sans for UI/labels/body; Satoshi for headings only where noted.
 
+Two weights only: 400 (regular — body, labels, muted text) and 700 (bold — headings, totals, CTAs, prices).
+
 | Role | Size | Weight | Line Height | Font | Usage |
 |------|------|--------|-------------|------|-------|
-| Body | 16px (base) | 400 (regular) | 1.5 | DM Sans | Product descriptions, cart item names |
-| Label | 14px (sm) | 500 (medium) | 1.4 | DM Sans | Form labels, category pill text, badge text, price labels |
-| Price/Number | 16px (base) | 600 (semibold) | 1.0 | DM Sans + `font-feature-settings: 'tnum' 1` | All monetary values in cart — tabular alignment required |
-| Heading | 20px (xl) | 700 (bold) | 1.2 | DM Sans | Cart section headers ("Your Cart"), panel titles |
-| Display | 30px (3xl) | 700 (bold) | 1.2 | Satoshi | Cart total amount, EFTPOS confirmation amount |
-| Micro | 12px (xs) | 400 (regular) | 1.4 | DM Sans | Stock count badge, timestamp, hint text |
+| Micro/Label | 14px (sm) | 400 (regular) | 1.4 | DM Sans | Form labels, category pill text, badge text, price labels, stock count badge, timestamp, hint text, subtotal/GST rows |
+| Body | 16px (base) | 400 (regular) | 1.5 | DM Sans | Product descriptions, cart item names, product names in cart rows |
+| Heading | 20px (xl) | 700 (bold) | 1.2 | DM Sans | Cart section headers ("Order"), panel titles, EFTPOS instruction text |
+| Display | 30px (3xl) | 700 (bold) | 1.2 | Satoshi | Cart total amount, EFTPOS confirmation amount, large numeric inputs |
 
-Weights in use: 400 (regular) and 600 (semibold) for body/label hierarchy; 700 (bold) for headings and totals. Three-weight system is acceptable for this surface given the financial data density.
+Tabular numbers: apply `font-feature-settings: 'tnum' 1` to all monetary values for column alignment.
 
 Source: DESIGN.md typography scale. Tabular-nums requirement from DESIGN.md "Data/Tables" note.
+
+Notes on collapsed sizes:
+- Former 12px Micro and 14px Label merged to 14px — 12px is imperceptibly small at POS viewing distance on an iPad.
+- Former 18px pay button text (layout) replaced with 16px body — sufficient at 56px button height.
+- Former 48px EFTPOS amount (layout) replaced with 30px Display — Satoshi 700 at 30px is highly legible at arm's length; 48px creates overflow risk on smaller viewports.
+- Former 500 and 600 weights collapsed to 400 (all regular roles) and 700 (all bold roles). Mid-weights (500/600) provided insufficient visual contrast to justify extra weight variants.
 
 ---
 
@@ -78,7 +84,7 @@ Source: DESIGN.md typography scale. Tabular-nums requirement from DESIGN.md "Dat
 | Dominant (60%) | #FAFAF9 | `--color-bg` | Main POS background, product grid area |
 | Secondary (30%) | #F5F5F4 | `--color-surface` | Cart panel background, category filter bar |
 | Card surface | #FFFFFF | `--color-card` | Individual product cards, cart item rows, modal dialogs |
-| Accent (10%) | #E67E22 | `--color-amber` | Pay button, "Charge $X" CTA only |
+| Accent (10%) | #E67E22 | `--color-amber` | Pay button; promotional price text on product cards |
 | Primary navy | #1E293B | `--color-navy` | Category pills (active state), header bar, POS top bar |
 | Destructive | #DC2626 | `--color-error` | "VOID SALE" button on EFTPOS confirmation, out-of-stock badge, remove-item action |
 | Success | #059669 | `--color-success` | "APPROVED" indicator, sale completed state, stock OK badge |
@@ -86,12 +92,14 @@ Source: DESIGN.md typography scale. Tabular-nums requirement from DESIGN.md "Dat
 
 Accent (#E67E22) reserved for:
 1. The single "Charge $X.XX" / "Process Payment" pay button at the bottom of the cart panel
-2. Nothing else on this surface
+2. Promotional price text on product cards (price displayed in amber to signal active promotion)
+
+Justification for second accent use: promotional price text is a direct commercial signal requiring immediate visual distinction from the regular price. Using amber (the brand's commercial-action color) for promotional prices is semantically consistent with the pay button — both indicate a commercial moment. No other elements use accent on this surface.
 
 Navy (#1E293B) reserved for:
 1. Top/header bar with store name and staff name
 2. Active category pill (selected state)
-3. Primary text buttons (secondary actions, not the pay CTA)
+3. Discount sheet apply button and other secondary navy action buttons
 
 Destructive (#DC2626) reserved for:
 1. "VOID SALE" button (EFTPOS confirmation screen) — full-width, large
@@ -110,16 +118,16 @@ This surface is iPad-first (fullscreen PWA, no browser chrome). All layout decis
 - Full-viewport height: `h-dvh` (dynamic viewport height, accounts for iOS safe areas)
 - Two-column split: `grid grid-cols-[1fr_400px]` — products grid left, cart panel right
 - No scrolling on the outer container — each panel scrolls internally
-- Top bar: 56px tall, navy background, store name (Satoshi 700) left, staff name (DM Sans 500) + logout right
+- Top bar: 56px tall, navy background, store name (Satoshi 700) left, staff name (DM Sans 400) + logout right
 
 ### Product Grid (left panel)
 - Category filter row: horizontal scroll, pill buttons, 44px min height, 8px gap, 16px horizontal padding
 - Product grid: CSS grid `grid-cols-[repeat(auto-fill,minmax(140px,1fr))]`, 16px gap, 16px padding
 - Product card: white background, 8px radius, subtle border (`--color-border`), warm shadow
   - Image: 1:1 aspect ratio, top half of card, `object-cover`
-  - Product name: 14px DM Sans 500, 2-line clamp with ellipsis
-  - Price: 14px DM Sans 600, tabular-nums, amber color only when on promotion
-  - Stock badge: 12px, top-right corner, absolute position — green (in stock), amber (low stock: ≤ reorder threshold), red (out of stock)
+  - Product name: 14px DM Sans 400, 2-line clamp with ellipsis
+  - Price: 14px DM Sans 700, tabular-nums, amber color (#E67E22) when on promotion
+  - Stock badge: 14px, top-right corner, absolute position — green (in stock), amber (low stock: ≤ reorder threshold), red (out of stock)
   - Tap target: entire card (no inner button), min 120px × 140px
 
 ### Cart Panel (right panel)
@@ -128,16 +136,16 @@ This surface is iPad-first (fullscreen PWA, no browser chrome). All layout decis
 - Line items list: scrollable, 8px internal padding, each row 48px min height
   - Product name: 16px DM Sans 400, truncate at 1 line
   - Quantity controls: minus (–) and plus (+) buttons, 36px × 36px min, 4px border-radius
-  - Line total: 16px DM Sans 600, tabular-nums, right-aligned
+  - Line total: 16px DM Sans 700, tabular-nums, right-aligned
   - Discount indicator: 14px muted text below product name when discount applied
   - Remove (×) button: 24px icon, muted color, tap target padded to 36px × 36px
 - Cart summary section (bottom of list, above pay):
-  - Subtotal row: 14px label, 16px value tabular-nums
+  - Subtotal row: 14px label, 14px value tabular-nums
   - GST row (per-line aggregate): 14px label muted, 14px value tabular-nums muted
-  - Total row: 20px Satoshi 700 label, 30px Satoshi 700 value, prominent
+  - Total row: 20px DM Sans 700 label, 30px Satoshi 700 value, prominent
   - Divider above summary: 1px `--color-border`
 - Payment method toggle: two options — "EFTPOS" and "Cash", pill toggle, 44px height, navy active state
-- Pay button: full-width, 56px height, amber background, white text 18px DM Sans 700, 8px radius
+- Pay button: full-width, 56px height, amber background, white text 16px DM Sans 700, 8px radius
   - Disabled state when cart is empty: 50% opacity, no pointer events
   - Label: "Charge $X.XX" (exact total injected)
 
@@ -145,25 +153,25 @@ This surface is iPad-first (fullscreen PWA, no browser chrome). All layout decis
 - Triggered per line item from cart row action
 - Slide in from right over cart panel, 320px wide
 - Discount type toggle: "%" or "$", pill toggle
-- Amount input: large (24px), center-aligned, numeric keyboard on iPad
+- Amount input: large (30px Display), center-aligned, numeric keyboard on iPad
 - Reason dropdown: Staff / Damaged / Loyalty / Other
-- Apply button: navy, full-width, 48px
+- Apply button: navy background, white text 16px DM Sans 700, full-width, 48px height, label "Apply Discount"
 
 ### EFTPOS Confirmation Screen (full-screen overlay)
 - Full viewport overlay, navy background (#1E293B), white text
 - Center-aligned content with large amount display
-- Amount: 48px Satoshi 700, "NZD $X.XX" format
+- Amount: 30px Satoshi 700, "NZD $X.XX" format
 - Instruction: "Did the EFTPOS terminal show APPROVED?" 20px DM Sans 400
 - Two buttons side-by-side, 56px height, full-width each with 16px gap:
-  - "YES — Sale Complete": success green (#059669), white text 18px DM Sans 700
-  - "NO — Void Sale": destructive red (#DC2626), white text 18px DM Sans 700
+  - "YES — Sale Complete": success green (#059669), white text 16px DM Sans 700
+  - "NO — Void Sale": destructive red (#DC2626), white text 16px DM Sans 700
 - No close/dismiss gesture — user must tap one button
 
 ### Out-of-Stock Override Dialog
 - Small modal (not full-screen), centered, white card, 12px radius, md shadow
-- Warning icon (amber), "This product is out of stock" heading
-- "Override and add anyway" button (amber, 44px) for owner role only
-- "Cancel" ghost button
+- Warning icon (amber), "This product is out of stock" heading (20px DM Sans 700)
+- "Add anyway (override)" button (amber background, white text, 44px height) for owner role only
+- "Keep out of stock" ghost button (navy border, navy text, 44px height)
 
 ---
 
@@ -188,7 +196,8 @@ This surface is iPad-first (fullscreen PWA, no browser chrome). All layout decis
 | Remove item (accessible label) | "Remove [product name] from order" |
 | Discount applied indicator | "[N]% off" or "$[N] off" beneath product name |
 | Override stock action | "Add anyway (override)" |
-| Override cancel | "Cancel" |
+| Override cancel | "Keep out of stock" |
+| Discount apply button | "Apply Discount" |
 | Payment method labels | "EFTPOS" / "Cash" |
 | Discount type labels | "Percentage (%)" / "Fixed ($)" |
 | Discount reason options | "Staff discount" / "Damaged item" / "Loyalty reward" / "Other" |
