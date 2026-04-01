@@ -30,7 +30,7 @@ export default function AdminSidebar() {
               key={href}
               href={href}
               className={[
-                'flex items-center px-3 py-2.5 rounded-[var(--radius-md)] text-sm font-semibold font-sans transition-colors duration-150',
+                'flex items-center px-3 py-3 rounded-[var(--radius-md)] text-sm font-semibold font-sans transition-colors duration-150',
                 isActive
                   ? 'bg-white/10 text-white border-l-4 border-amber pl-2'
                   : 'text-white/60 hover:text-white hover:bg-white/5',
