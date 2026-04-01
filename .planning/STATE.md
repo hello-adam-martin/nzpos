@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-admin-reporting 05-03-PLAN.md
-last_updated: "2026-04-01T09:29:39.786Z"
+stopped_at: Completed 05-06-PLAN.md (Reports Page)
+last_updated: "2026-04-01T09:30:16.796Z"
 last_activity: 2026-04-01
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 29
-  completed_plans: 27
+  completed_plans: 28
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 05 (admin-reporting) — EXECUTING
-Plan: 3 of 6
+Plan: 4 of 6
 Status: Ready to execute
 Last activity: 2026-04-01
 
@@ -66,6 +66,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-online-store P06 | 93s | 2 tasks | 4 files |
 | Phase 05-admin-reporting P02 | 2 | 2 tasks | 3 files |
 | Phase 05-admin-reporting P03 | 217 | 3 tasks | 6 files |
+| Phase 05-admin-reporting P06 | 15m | 4 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,9 @@ Recent decisions affecting current work:
 - [Phase 05-admin-reporting]: Dashboard orders query includes pending_pickup, ready, collected alongside completed to capture all non-expired revenue
 - [Phase 05-admin-reporting]: VALID_STATUSES/VALID_CHANNELS/VALID_PAYMENT_METHODS Sets guard filter URL params before Supabase .eq() to prevent TypeScript enum mismatch and invalid values
 - [Phase 05-admin-reporting]: Refund button in OrderDetailDrawer wired to onRefundClick prop only — actual refund logic deferred to Plan 04 (05-04)
+- [Phase 05-admin-reporting]: Two-query approach for order_items joins avoids broken cross-table filter in Supabase JS v2
+- [Phase 05-admin-reporting]: GST summary from orders.gst_cents not order_items to prevent double-counting
+- [Phase 05-admin-reporting]: ExportCSVButton auto-converts _cents keys to _dollars for human-readable CSV
 
 ### Pending Todos
 
@@ -121,6 +125,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T09:29:39.784Z
-Stopped at: Completed 05-admin-reporting 05-03-PLAN.md
+Last session: 2026-04-01T09:30:16.794Z
+Stopped at: Completed 05-06-PLAN.md (Reports Page)
 Resume file: None

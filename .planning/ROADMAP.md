@@ -102,7 +102,7 @@ Plans:
 - [x] 05-03-PLAN.md — Cash-up flow (open/close session, reconciliation)
 - [ ] 05-04-PLAN.md — Reports page (sales, top products, stock levels)
 - [x] 05-05-PLAN.md — GST period summary report
-- [ ] 05-06-PLAN.md — Owner dashboard and low stock alerts
+- [x] 05-06-PLAN.md — Owner dashboard and low stock alerts
 **UI hint**: yes
 
 ### Phase 6: Xero Integration
@@ -128,5 +128,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Product Catalog | 2/5 | In Progress|  |
 | 3. POS Checkout | 0/TBD | Not started | - |
 | 4. Online Store | 0/TBD | Not started | - |
-| 5. Admin & Reporting | 4/6 | In Progress|  |
+| 5. Admin & Reporting | 5/6 | In Progress|  |
 | 6. Xero Integration | 0/TBD | Not started | - |
