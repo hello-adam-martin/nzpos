@@ -36,14 +36,14 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### POS Checkout
 
-- [ ] **POS-01**: Staff sees product grid with images, categories, and search on iPad
-- [ ] **POS-02**: Staff can tap products to add to cart, adjust quantities
+- [x] **POS-01**: Staff sees product grid with images, categories, and search on iPad
+- [x] **POS-02**: Staff can tap products to add to cart, adjust quantities
 - [x] **POS-03**: Staff can apply percentage or fixed-amount discounts per line item
 - [x] **POS-04**: Cart shows subtotal, GST breakdown (per-line on discounted amounts), and total
 - [x] **POS-05**: Staff selects payment method (EFTPOS or cash)
 - [ ] **POS-06**: EFTPOS confirmation step: "Did the terminal show APPROVED?" Yes completes sale, No voids
 - [x] **POS-07**: Completed sale atomically decrements stock and creates order record
-- [ ] **POS-08**: POS re-fetches stock after each sale and on page focus (no stale data)
+- [x] **POS-08**: POS re-fetches stock after each sale and on page focus (no stale data)
 - [ ] **POS-09**: Out-of-stock warning displayed, owner can override
 
 ### Online Store
@@ -156,14 +156,14 @@ Explicitly excluded. Documented to prevent scope creep.
 | PROD-04 | Phase 2 | Complete |
 | PROD-05 | Phase 2 | Pending |
 | PROD-06 | Phase 2 | Complete |
-| POS-01 | Phase 3 | Pending |
-| POS-02 | Phase 3 | Pending |
+| POS-01 | Phase 3 | Complete |
+| POS-02 | Phase 3 | Complete |
 | POS-03 | Phase 3 | Complete |
 | POS-04 | Phase 3 | Complete |
 | POS-05 | Phase 3 | Complete |
 | POS-06 | Phase 3 | Pending |
 | POS-07 | Phase 3 | Complete |
-| POS-08 | Phase 3 | Pending |
+| POS-08 | Phase 3 | Complete |
 | POS-09 | Phase 3 | Pending |
 | DISC-03 | Phase 3 | Complete |
 | DISC-04 | Phase 3 | Complete |

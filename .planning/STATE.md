@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-04-01T03:26:12.294Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-04-01T03:26:30.128Z"
 last_activity: 2026-04-01
 progress:
   total_phases: 6
@@ -61,6 +61,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-product-catalog P04 | 10 | 2 tasks | 11 files |
 | Phase 03-pos-checkout P01 | 3 | 2 tasks | 7 files |
 | Phase 03-pos-checkout P03 | 15 | 2 tasks | 6 files |
+| Phase 03-pos-checkout P02 | 192 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,8 @@ Recent decisions affecting current work:
 - [Phase 03-pos-checkout]: completeSale uses admin client (bypasses RLS) via SECURITY DEFINER RPC — staff JWT verified in Server Action layer, not DB layer
 - [Phase 03-pos-checkout]: CartPanel shows summary/toggle/button only when cart has items — avoids showing $0.00 total in empty state
 - [Phase 03-pos-checkout]: PayButton uses CSS opacity-50 + pointer-events-none for disabled state — avoids native button styling interference
+- [Phase 03-pos-checkout]: POSClientShell holds search/category state; filtered products passed to ProductGrid — centralized filtering with encapsulated inputs
+- [Phase 03-pos-checkout]: Staff logout uses router.push only (cookie persists until 8h expiry) — full server-side cookie deletion is v1.1 scope
 
 ### Pending Todos
 
@@ -108,6 +111,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T03:26:07.169Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-04-01T03:26:30.125Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None
