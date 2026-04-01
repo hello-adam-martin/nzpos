@@ -51,19 +51,19 @@ Exceptions:
 
 ## Typography
 
-Sourced from DESIGN.md. Storefront uses 4 roles: body, label, heading, display.
+Sourced from DESIGN.md. Storefront uses exactly 4 roles: Body, Label, Heading, Display.
 
 | Role | Font | Size | Weight | Line Height | Usage |
 |------|------|------|--------|-------------|-------|
-| Body | DM Sans | 16px (base) | 400 | 1.5 | Product descriptions, cart summary text, footer copy |
-| Label | DM Sans | 14px (sm) | 500 | 1.4 | Category pills, form labels, badge text, nav links |
+| Body | DM Sans | 16px (base) | 400 | 1.5 | Product descriptions, cart summary text, footer copy, product name on card (weight 600 for differentiation), price on product list card (weight 600), cart total, checkout summary total |
+| Label | DM Sans | 14px (sm) | 500 | 1.4 | Category pills, form labels, badge text, nav links, stock badge labels, timestamp/meta text, legal footnotes |
 | Heading | DM Sans | 24px (2xl) | 600 | 1.3 | Product names on detail page, section headings |
 | Display | Satoshi | 36px (4xl) | 700 | 1.2 | Store name/hero headline, page-level titles |
 
-Additional scale in use (do not introduce others):
-- 12px (xs) — stock badge labels, timestamp/meta text, legal footnotes
-- 18px (lg) — product name on card (two-line clamp), price on product list card
-- 20px (xl) — cart total, checkout summary total
+Notes on role assignment:
+- Badge/meta text (previously 12px) uses Label (14px) — minimum legible size for touch devices
+- Product card name and price (previously 18px) use Body (16px) at weight 600 for visual differentiation from description text
+- Cart total and checkout summary total (previously 20px) use Body (16px) at weight 600; the larger Heading role (24px) is reserved for section headings on the detail page
 
 Price figures: DM Sans, `tabular-nums` feature enabled (`font-feature-settings: 'tnum' 1`), weight 600.
 
@@ -135,7 +135,7 @@ Sourced from DESIGN.md layout section:
 - Mobile: single column — image top, details below
 - Desktop: 2-column split — image left (50%), details right (50%)
 - Image: square aspect ratio, rounded-lg (8px), object-cover
-- Details: product name (heading role), price (xl, amber), description (body), Add to Cart CTA
+- Details: product name (heading role), price (body role at weight 600, amber), description (body), Add to Cart CTA
 
 ### Cart
 - Desktop: side drawer panel sliding from right, 380px wide
@@ -191,7 +191,7 @@ All copy is NZ English (not US English). Prices always display with NZD prefix o
 | Sold out badge | "Sold Out" |
 | Low stock notice | "Only {n} left" |
 | Promo code placeholder | "Promo code" |
-| Promo code CTA | "Apply" |
+| Promo code CTA | "Apply Code" |
 | Promo applied success | "Code applied — {value} off" |
 | Promo invalid error | "That code is invalid or has expired." |
 | Promo rate limit error | "Too many attempts. Try again in a moment." |
@@ -226,7 +226,7 @@ New components required for this phase. Follow naming and file location patterns
 | CartDrawer | src/components/store/CartDrawer.tsx | Desktop side panel + mobile bottom sheet with cart state |
 | CartLineItem | src/components/store/CartLineItem.tsx | Row with image thumbnail, name, quantity stepper, price, remove |
 | CartSummary | src/components/store/CartSummary.tsx | Subtotal, discount line, GST, total — tabular-nums throughout |
-| PromoCodeInput | src/components/store/PromoCodeInput.tsx | Text input + Apply button, inline error/success message |
+| PromoCodeInput | src/components/store/PromoCodeInput.tsx | Text input + Apply Code button, inline error/success message |
 | OrderConfirmation | src/components/store/OrderConfirmation.tsx | Post-Stripe success page: order number, summary, status |
 | SoldOutBadge | src/components/store/SoldOutBadge.tsx | Red badge overlay on card image, blocks add-to-cart interaction |
 | StockNotice | src/components/store/StockNotice.tsx | Amber warning text below Add to Cart when stock <= reorder_threshold |
@@ -248,6 +248,7 @@ Note: CartLineItem and CategoryPillBar are distinct from POS equivalents. Do not
 | Category pills | role="radiogroup" + role="radio" pattern, keyboard navigable |
 | All buttons | Minimum 44x44px touch target on mobile |
 | Color contrast | Navy on white: 12.6:1 (AAA). Amber on white: 3.1:1 — amber used only on large text/buttons (AA large). |
+| CartLineItem remove button | aria-label="Remove {product name} from cart" |
 
 ---
 
