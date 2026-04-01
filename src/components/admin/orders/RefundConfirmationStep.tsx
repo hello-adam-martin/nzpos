@@ -43,7 +43,7 @@ export function RefundConfirmationStep({
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="px-6 py-4 border-b border-border flex-shrink-0">
-        <h2 className="font-sans font-bold text-xl text-text">Confirm Refund</h2>
+        <h2 className="font-display font-bold text-xl text-text">Confirm Refund</h2>
       </div>
 
       {/* Body */}

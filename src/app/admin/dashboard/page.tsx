@@ -43,7 +43,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-[var(--space-xl)]">
-      <h1 className="font-sans font-bold text-xl text-[var(--color-text)]">Dashboard</h1>
+      <h1 className="font-display font-bold text-2xl text-[var(--color-text)]">Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-lg)]">
         <DashboardHeroCard

@@ -71,7 +71,7 @@ export default async function CashUpPage() {
 
   return (
     <div className="space-y-lg">
-      <h1 className="font-sans font-bold text-xl text-[var(--color-text)]">Cash-Up</h1>
+      <h1 className="font-display font-bold text-2xl text-[var(--color-text)]">Cash-Up</h1>
 
       <CashUpAdminPageClient
         sessions={formattedSessions}

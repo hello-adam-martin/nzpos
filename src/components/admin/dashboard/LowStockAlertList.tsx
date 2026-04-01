@@ -16,7 +16,7 @@ export function LowStockAlertList({ products }: LowStockAlertListProps) {
 
   return (
     <section>
-      <h2 className="font-sans font-bold text-xl text-[var(--color-text)] mb-[var(--space-md)]">
+      <h2 className="font-display font-bold text-xl text-[var(--color-text)] mb-[var(--space-md)]">
         Low Stock Alerts
       </h2>
 
