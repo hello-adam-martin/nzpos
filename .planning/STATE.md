@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-admin-reporting 05-02-PLAN.md
-last_updated: "2026-04-01T09:29:26.716Z"
+stopped_at: Completed 05-admin-reporting 05-03-PLAN.md
+last_updated: "2026-04-01T09:29:39.786Z"
 last_activity: 2026-04-01
 progress:
   total_phases: 6
@@ -65,6 +65,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-online-store P05 | 225s | 2 tasks | 5 files |
 | Phase 04-online-store P06 | 93s | 2 tasks | 4 files |
 | Phase 05-admin-reporting P02 | 2 | 2 tasks | 3 files |
+| Phase 05-admin-reporting P03 | 217 | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -106,6 +107,8 @@ Recent decisions affecting current work:
 - [Phase 04-online-store]: D-14 email notification deferred from Phase 4 — documented with TODO in updateOrderStatus.ts
 - [Phase 05-admin-reporting]: Low-stock filtering done client-side after fetching all active products (small catalog assumption)
 - [Phase 05-admin-reporting]: Dashboard orders query includes pending_pickup, ready, collected alongside completed to capture all non-expired revenue
+- [Phase 05-admin-reporting]: VALID_STATUSES/VALID_CHANNELS/VALID_PAYMENT_METHODS Sets guard filter URL params before Supabase .eq() to prevent TypeScript enum mismatch and invalid values
+- [Phase 05-admin-reporting]: Refund button in OrderDetailDrawer wired to onRefundClick prop only — actual refund logic deferred to Plan 04 (05-04)
 
 ### Pending Todos
 
@@ -118,6 +121,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T09:27:01.864Z
-Stopped at: Completed 05-admin-reporting 05-02-PLAN.md
+Last session: 2026-04-01T09:29:39.784Z
+Stopped at: Completed 05-admin-reporting 05-03-PLAN.md
 Resume file: None

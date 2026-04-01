@@ -67,13 +67,13 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Reporting & Admin
 
-- [ ] **ADMIN-01**: Dashboard shows today's sales total, order count, by channel (POS vs online)
+- [x] **ADMIN-01**: Dashboard shows today's sales total, order count, by channel (POS vs online)
 - [ ] **ADMIN-02**: End-of-day cash-up report: totals by payment method, expected vs actual cash, variance
 - [x] **ADMIN-03**: Cash sessions tracked (opening float, close time, closed by)
 - [ ] **ADMIN-04**: Basic sales reports: daily totals, top products, stock levels
 - [ ] **ADMIN-05**: GST period summary with breakdown for filing
-- [ ] **ADMIN-06**: Low stock alerts on dashboard when products hit reorder threshold
-- [ ] **ADMIN-07**: Order list with status, channel, payment method, staff, date
+- [x] **ADMIN-06**: Low stock alerts on dashboard when products hit reorder threshold
+- [x] **ADMIN-07**: Order list with status, channel, payment method, staff, date
 
 ### Xero Integration
 
@@ -178,13 +178,13 @@ Explicitly excluded. Documented to prevent scope creep.
 | STORE-09 | Phase 4 | Complete |
 | DISC-01 | Phase 4 | Complete |
 | DISC-02 | Phase 4 | Complete |
-| ADMIN-01 | Phase 5 | Pending |
+| ADMIN-01 | Phase 5 | Complete |
 | ADMIN-02 | Phase 5 | Pending |
 | ADMIN-03 | Phase 5 | Complete |
 | ADMIN-04 | Phase 5 | Pending |
 | ADMIN-05 | Phase 5 | Pending |
-| ADMIN-06 | Phase 5 | Pending |
-| ADMIN-07 | Phase 5 | Pending |
+| ADMIN-06 | Phase 5 | Complete |
+| ADMIN-07 | Phase 5 | Complete |
 | REF-01 | Phase 5 | Pending |
 | REF-02 | Phase 5 | Pending |
 | XERO-01 | Phase 6 | Pending |
