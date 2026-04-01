@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-product-catalog 02-04-PLAN.md
-last_updated: "2026-03-31T22:24:01.232Z"
+stopped_at: Completed 05-admin-reporting 05-01-PLAN.md
+last_updated: "2026-04-01T09:20:38.122Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 6
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-foundation P05 | 8 | 2 tasks | 7 files |
 | Phase 02-product-catalog P02 | 12 | 2 tasks | 6 files |
 | Phase 02-product-catalog P04 | 10 | 2 tasks | 11 files |
+| Phase 05-admin-reporting P01 | 3 | 3 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,8 @@ Recent decisions affecting current work:
 - [Phase 02-product-catalog]: Image upload outputs WebP regardless of input format — consistent CDN storage, optimal file size at quality 85
 - [Phase 02-product-catalog]: papaparse used for both parse and unparse in CSV import — consistent library, no manual CSV string construction
 - [Phase 02-product-catalog]: validateImportRows uses empty Sets/Maps in preview step — DB-level duplicate detection happens at insert time in importProducts Server Action
+- [Phase 05-admin-reporting]: server-only import (not 'use server') used in resolveAuth.ts — utility functions use server-only guard, not Server Action directive
+- [Phase 05-admin-reporting]: Named exports for badge components (OrderStatusBadge, ChannelBadge) not default exports — consistent with shared component pattern
 
 ### Pending Todos
 
@@ -101,6 +104,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T22:08:44.299Z
-Stopped at: Completed 02-product-catalog 02-04-PLAN.md
+Last session: 2026-04-01T09:20:38.119Z
+Stopped at: Completed 05-admin-reporting 05-01-PLAN.md
 Resume file: None
