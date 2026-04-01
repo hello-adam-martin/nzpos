@@ -88,8 +88,15 @@ Plans:
   2. Customer can add products to cart, apply a valid promo code, and be redirected to Stripe Checkout; invalid or expired codes show an error
   3. After Stripe payment succeeds, stock decrements atomically and an order record is created; replaying the same Stripe event a second time does not create a duplicate order or decrement stock again
   4. Sold-out products display "Sold Out" and cannot be added to cart by any customer
-  5. Staff can update a click-and-collect order through PENDING_PICKUP → READY → COLLECTED; the status is visible to the owner in the admin order list
-**Plans**: TBD
+  5. Staff can update a click-and-collect order through PENDING_PICKUP -> READY -> COLLECTED; the status is visible to the owner in the admin order list
+**Plans:** 6 plans
+Plans:
+- [ ] 04-01-PLAN.md — Schema fixes, online store migration (slug, RPC, RLS), server utilities
+- [ ] 04-02-PLAN.md — Cart context with localStorage persistence, storefront layout and header
+- [ ] 04-03-PLAN.md — Product listing page, product detail page, category pills, search, sold-out handling
+- [ ] 04-04-PLAN.md — Promo code CRUD admin page, validate Server Action with rate limiting
+- [ ] 04-05-PLAN.md — Cart drawer, Stripe Checkout Session, webhook handler, order confirmation
+- [ ] 04-06-PLAN.md — Click-and-collect status transitions, POS Pickups tab
 **UI hint**: yes
 
 ### Phase 5: Admin & Reporting
@@ -120,13 +127,13 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/5 | In Progress|  |
 | 2. Product Catalog | 2/5 | In Progress|  |
 | 3. POS Checkout | 6/6 | Complete   | 2026-04-01 |
-| 4. Online Store | 0/TBD | Not started | - |
+| 4. Online Store | 0/6 | Not started | - |
 | 5. Admin & Reporting | 0/TBD | Not started | - |
 | 6. Xero Integration | 0/TBD | Not started | - |
