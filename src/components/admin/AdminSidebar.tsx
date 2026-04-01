@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { signOut } from '@/actions/auth/signOut'
 
 const navLinks = [
   { href: '/admin/dashboard', label: 'Dashboard' },
@@ -11,7 +12,11 @@ const navLinks = [
   { href: '/admin/cash-up', label: 'Cash-Up' },
 ]
 
-export default function AdminSidebar() {
+interface AdminSidebarProps {
+  userEmail?: string | null
+}
+
+export default function AdminSidebar({ userEmail }: AdminSidebarProps) {
   const pathname = usePathname()
 
   return (
@@ -43,8 +48,21 @@ export default function AdminSidebar() {
       </nav>
 
       {/* Footer area */}
-      <div className="px-6 py-4 border-t border-white/10">
-        <p className="text-xs text-white/40 font-sans">NZPOS v1.0</p>
+      <div className="px-4 py-4 border-t border-white/10 space-y-3">
+        {userEmail && (
+          <p className="text-xs text-white/50 font-sans truncate" title={userEmail}>
+            {userEmail}
+          </p>
+        )}
+        <form action={signOut}>
+          <button
+            type="submit"
+            className="w-full text-left text-xs text-white/40 hover:text-white/70 font-sans transition-colors duration-150"
+          >
+            Sign out
+          </button>
+        </form>
+        <p className="text-xs text-white/30 font-sans">NZPOS v1.0</p>
       </div>
     </aside>
   )
