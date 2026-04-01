@@ -38,6 +38,10 @@ export async function middleware(request: NextRequest) {
   }
 
   // POS routes — staff or owner (staff_session cookie with jose JWT)
+  // Allow POS login page through without auth
+  if (pathname === '/pos/login') {
+    return NextResponse.next()
+  }
   if (pathname.startsWith('/pos')) {
     const staffToken = request.cookies.get('staff_session')?.value
 
