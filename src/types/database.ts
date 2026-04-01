@@ -130,6 +130,7 @@ export type Database = {
           reorder_threshold: number
           image_url: string | null
           is_active: boolean
+          slug: string | null
           created_at: string
           updated_at: string
         }
@@ -145,6 +146,7 @@ export type Database = {
           reorder_threshold?: number
           image_url?: string | null
           is_active?: boolean
+          slug?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -160,6 +162,7 @@ export type Database = {
           reorder_threshold?: number
           image_url?: string | null
           is_active?: boolean
+          slug?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -300,10 +303,10 @@ export type Database = {
           id: string
           store_id: string
           code: string
-          discount_type: 'percent' | 'fixed'
+          discount_type: 'percentage' | 'fixed'
           discount_value: number
           max_uses: number | null
-          use_count: number
+          current_uses: number
           expires_at: string | null
           is_active: boolean
           created_at: string
@@ -313,10 +316,10 @@ export type Database = {
           id?: string
           store_id: string
           code: string
-          discount_type: 'percent' | 'fixed'
+          discount_type: 'percentage' | 'fixed'
           discount_value: number
           max_uses?: number | null
-          use_count?: number
+          current_uses?: number
           expires_at?: string | null
           is_active?: boolean
           created_at?: string
@@ -326,10 +329,10 @@ export type Database = {
           id?: string
           store_id?: string
           code?: string
-          discount_type?: 'percent' | 'fixed'
+          discount_type?: 'percentage' | 'fixed'
           discount_value?: number
           max_uses?: number | null
-          use_count?: number
+          current_uses?: number
           expires_at?: string | null
           is_active?: boolean
           created_at?: string
@@ -347,27 +350,32 @@ export type Database = {
       }
       stripe_events: {
         Row: {
-          id: string
-          stripe_event_id: string
+          id: string              // Stripe event ID (TEXT PK, not UUID)
+          store_id: string
           type: string
-          processed: boolean
-          created_at: string
+          processed_at: string
         }
         Insert: {
-          id?: string
-          stripe_event_id: string
+          id: string              // Stripe event ID — required, is PK
+          store_id: string
           type: string
-          processed?: boolean
-          created_at?: string
+          processed_at?: string
         }
         Update: {
           id?: string
-          stripe_event_id?: string
+          store_id?: string
           type?: string
-          processed?: boolean
-          created_at?: string
+          processed_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'stripe_events_store_id_fkey'
+            columns: ['store_id']
+            isOneToOne: false
+            referencedRelation: 'stores'
+            referencedColumns: ['id']
+          }
+        ]
       }
       cash_sessions: {
         Row: {
@@ -427,6 +435,18 @@ export type Database = {
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      complete_online_sale: {
+        Args: {
+          p_store_id: string
+          p_order_id: string
+          p_stripe_session_id: string
+          p_stripe_payment_intent_id: string
+          p_customer_email: string | null
+          p_items: unknown  // JSONB
+        }
+        Returns: void
+      }
+    }
   }
 }
