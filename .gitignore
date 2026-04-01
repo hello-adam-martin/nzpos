@@ -43,3 +43,7 @@ Thumbs.db
 supabase/.branches
 supabase/.temp
 .gstack/
+
+# Claude Code
+.claude/settings.local.json
+.claude/worktrees/
