@@ -1,18 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock server-only at module level
 vi.mock('server-only', () => ({}))
 
-// Mock the sleep function to run instantly in tests
-vi.mock('../sync', async (importOriginal) => {
-  const mod = await importOriginal<typeof import('../sync')>()
-  return mod
-})
-
 // Mock Supabase admin client
-const mockSupabaseFrom = vi.fn()
 const mockSupabaseClient = {
-  from: mockSupabaseFrom,
+  from: vi.fn(),
 }
 vi.mock('@/lib/supabase/admin', () => ({
   createSupabaseAdminClient: () => mockSupabaseClient,
@@ -56,36 +49,105 @@ vi.mock('../buildInvoice', () => ({
 import { getAuthenticatedXeroClient } from '../client'
 import { getNZDayBoundaries, getNZTodayBoundaries } from '../dates'
 import { buildDailyInvoice, buildCreditNote } from '../buildInvoice'
+import { executeDailySync, executeManualSync, executeDailySyncWithRetry } from '../sync'
 
-// Helper to build a chainable Supabase mock
-function buildSupabaseQueryChain(result: unknown) {
-  const chain = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    gte: vi.fn().mockReturnThis(),
-    lte: vi.fn().mockReturnThis(),
-    in: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    update: vi.fn().mockReturnThis(),
-    single: vi.fn().mockReturnThis(),
-    then: vi.fn(),
-  }
-  // Make the chain resolve as a promise
-  const withResult = {
-    ...chain,
-    then: (resolve: (val: unknown) => unknown) => Promise.resolve(result).then(resolve),
-  }
-  Object.keys(chain).forEach((key) => {
-    if (key !== 'then') {
-      ;(chain as Record<string, ReturnType<typeof vi.fn>>)[key].mockReturnValue(withResult)
-    }
+/**
+ * Build a simple chainable Supabase query mock that resolves to `result`.
+ */
+function makeChain(result: unknown) {
+  const self: Record<string, unknown> = {}
+  const methods = ['select', 'eq', 'gte', 'lte', 'in', 'single']
+  methods.forEach((m) => {
+    self[m] = vi.fn(() => self)
   })
-  return withResult
+  // insert/update return a new chain
+  self.insert = vi.fn(() => makeChain(result))
+  self.update = vi.fn(() => makeChain(result))
+  // Make it a thenable
+  self.then = (resolve: (val: unknown) => unknown) =>
+    Promise.resolve(result).then(resolve)
+  return self
 }
 
-describe('aggregateDailySales (internal helper via executeDailySync)', () => {
+type OrderRow = { total_cents: number; payment_method: string; channel: string; status: string }
+
+/**
+ * Setup standard from() mock for common tables.
+ *
+ * @param forRetry - If true, handles multiple sync attempts (each attempt gets fresh counters)
+ *   by tracking calls per invocation window rather than globally. Sync log check always
+ *   returns null (no prior success), and orders always return the same data.
+ */
+function setupStandardMocks({
+  connectionData = {
+    account_code_cash: '200',
+    account_code_eftpos: '201',
+    account_code_online: '202',
+    xero_contact_id: 'contact-abc',
+  } as Record<string, string> | null,
+  completedOrders = [] as OrderRow[],
+  refundedOrders = [] as OrderRow[],
+  existingLog = null as { xero_invoice_id: string; status: string } | null,
+  logInsertData = { id: 'log-1' } as { id: string },
+  forRetry = false,
+} = {}) {
+  if (forRetry) {
+    // For retry tests: always return completedOrders on first orders call, refundedOrders on second
+    // Track per-pair using a modulo approach: odd calls = completed, even calls = refunded
+    let ordersCallCount = 0
+
+    mockSupabaseClient.from.mockImplementation((table: string) => {
+      if (table === 'xero_connections') {
+        return makeChain({ data: connectionData, error: null })
+      }
+      if (table === 'xero_sync_log') {
+        // Always return no existing log and accept inserts/updates
+        return makeChain({ data: logInsertData, error: null })
+      }
+      if (table === 'orders') {
+        ordersCallCount++
+        // Odd call = completed orders, even call = refunded orders (per attempt: 2 calls each)
+        if (ordersCallCount % 2 === 1) {
+          return makeChain({ data: completedOrders, error: null })
+        }
+        return makeChain({ data: refundedOrders, error: null })
+      }
+      return makeChain({ data: null, error: null })
+    })
+    return
+  }
+
+  let ordersCallCount = 0
+  let syncLogCallCount = 0
+
+  mockSupabaseClient.from.mockImplementation((table: string) => {
+    if (table === 'xero_connections') {
+      return makeChain({ data: connectionData, error: null })
+    }
+    if (table === 'xero_sync_log') {
+      syncLogCallCount++
+      if (syncLogCallCount === 1) {
+        return makeChain({ data: existingLog, error: null })
+      }
+      return makeChain({ data: logInsertData, error: null })
+    }
+    if (table === 'orders') {
+      ordersCallCount++
+      if (ordersCallCount === 1) {
+        return makeChain({ data: completedOrders, error: null })
+      }
+      return makeChain({ data: refundedOrders, error: null })
+    }
+    return makeChain({ data: null, error: null })
+  })
+}
+
+describe('aggregateDailySales (via executeDailySync)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockCreateInvoices.mockReset()
+    mockUpdateInvoice.mockReset()
+    mockCreateCreditNotes.mockReset()
   })
 
   it('aggregates sales by payment method from order data', async () => {
@@ -94,46 +156,18 @@ describe('aggregateDailySales (internal helper via executeDailySync)', () => {
       tenantId: 'tenant-123',
     })
 
-    // Orders query returns cash + eftpos orders
-    let callCount = 0
-    mockSupabaseFrom.mockImplementation((table: string) => {
-      if (table === 'xero_connections') {
-        return buildSupabaseQueryChain({
-          data: {
-            account_code_cash: '200',
-            account_code_eftpos: '201',
-            account_code_online: '202',
-            xero_contact_id: 'contact-abc',
-          },
-          error: null,
-        })
-      }
-      if (table === 'xero_sync_log' && callCount === 0) {
-        callCount++
-        return buildSupabaseQueryChain({ data: null, error: null })
-      }
-      if (table === 'xero_sync_log' && callCount === 1) {
-        callCount++
-        return buildSupabaseQueryChain({ data: { id: 'log-1' }, error: null })
-      }
-      if (table === 'orders') {
-        return buildSupabaseQueryChain({
-          data: [
-            { total_cents: 1000, payment_method: 'cash', channel: 'pos', status: 'completed' },
-            { total_cents: 2000, payment_method: 'eftpos', channel: 'pos', status: 'completed' },
-            { total_cents: 500, payment_method: 'eftpos', channel: 'pos', status: 'completed' },
-          ],
-          error: null,
-        })
-      }
-      return buildSupabaseQueryChain({ data: null, error: null })
+    setupStandardMocks({
+      completedOrders: [
+        { total_cents: 1000, payment_method: 'cash', channel: 'pos', status: 'completed' },
+        { total_cents: 2000, payment_method: 'eftpos', channel: 'pos', status: 'completed' },
+        { total_cents: 500, payment_method: 'eftpos', channel: 'pos', status: 'completed' },
+      ],
     })
 
     mockCreateInvoices.mockResolvedValueOnce({
       body: { invoices: [{ invoiceID: 'inv-xyz', invoiceNumber: 'NZPOS-2026-03-31' }] },
     })
 
-    const { executeDailySync } = await import('../sync')
     const result = await executeDailySync('store-1')
 
     expect(buildDailyInvoice).toHaveBeenCalledWith(
@@ -148,16 +182,18 @@ describe('aggregateDailySales (internal helper via executeDailySync)', () => {
     expect(result.success).toBe(true)
   })
 
-  it('filters to only completed/collected/ready orders (excludes refunded, pending, expired)', async () => {
+  it('filters to only completed/collected/ready orders using .in() status filter', async () => {
     vi.mocked(getAuthenticatedXeroClient).mockResolvedValueOnce({
       xero: mockXeroClient as never,
       tenantId: 'tenant-123',
     })
 
-    let logCallCount = 0
-    mockSupabaseFrom.mockImplementation((table: string) => {
+    const inFilterValues: string[][] = []
+    let syncLogCallCount = 0
+
+    mockSupabaseClient.from.mockImplementation((table: string) => {
       if (table === 'xero_connections') {
-        return buildSupabaseQueryChain({
+        return makeChain({
           data: {
             account_code_cash: '200',
             account_code_eftpos: '201',
@@ -167,52 +203,41 @@ describe('aggregateDailySales (internal helper via executeDailySync)', () => {
           error: null,
         })
       }
-      if (table === 'xero_sync_log' && logCallCount === 0) {
-        logCallCount++
-        return buildSupabaseQueryChain({ data: null, error: null })
-      }
       if (table === 'xero_sync_log') {
-        logCallCount++
-        return buildSupabaseQueryChain({ data: { id: 'log-1' }, error: null })
+        syncLogCallCount++
+        return makeChain({ data: syncLogCallCount === 1 ? null : { id: 'log-1' }, error: null })
       }
       if (table === 'orders') {
-        // Capture the chain to inspect calls
-        const mockChain = {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          gte: vi.fn().mockReturnThis(),
-          lte: vi.fn().mockReturnThis(),
-          in: vi.fn((field: string, values: string[]) => {
-            // Verify the 'in' filter uses correct statuses
-            if (field === 'status') {
-              expect(values).toContain('completed')
-              expect(values).toContain('collected')
-              expect(values).toContain('ready')
-              expect(values).not.toContain('refunded')
-              expect(values).not.toContain('pending')
-              expect(values).not.toContain('expired')
-              expect(values).not.toContain('pending_pickup')
-            }
-            return mockChain
-          }),
-          then: (resolve: (val: unknown) => unknown) =>
-            Promise.resolve({ data: [], error: null }).then(resolve),
-        }
-        mockChain.select.mockReturnValue(mockChain)
-        mockChain.eq.mockReturnValue(mockChain)
-        mockChain.gte.mockReturnValue(mockChain)
-        mockChain.lte.mockReturnValue(mockChain)
-        return mockChain
+        const chain: Record<string, unknown> = {}
+        const methods = ['select', 'eq', 'gte', 'lte', 'single']
+        methods.forEach((m) => {
+          chain[m] = vi.fn(() => chain)
+        })
+        chain.in = vi.fn((field: string, values: string[]) => {
+          if (field === 'status') inFilterValues.push([...values])
+          return chain
+        })
+        chain.then = (resolve: (val: unknown) => unknown) =>
+          Promise.resolve({ data: [], error: null }).then(resolve)
+        return chain
       }
-      return buildSupabaseQueryChain({ data: null, error: null })
+      return makeChain({ data: null, error: null })
     })
 
     mockCreateInvoices.mockResolvedValueOnce({
       body: { invoices: [{ invoiceID: 'inv-xyz', invoiceNumber: 'NZPOS-2026-03-31' }] },
     })
 
-    const { executeDailySync } = await import('../sync')
     await executeDailySync('store-1')
+
+    expect(inFilterValues[0]).toContain('completed')
+    expect(inFilterValues[0]).toContain('collected')
+    expect(inFilterValues[0]).toContain('ready')
+    expect(inFilterValues[0]).not.toContain('refunded')
+    expect(inFilterValues[0]).not.toContain('pending')
+    expect(inFilterValues[0]).not.toContain('expired')
+    expect(inFilterValues[0]).not.toContain('pending_pickup')
+    expect(inFilterValues[1]).toContain('refunded')
   })
 
   it('returns zero for payment methods with no orders', async () => {
@@ -221,43 +246,16 @@ describe('aggregateDailySales (internal helper via executeDailySync)', () => {
       tenantId: 'tenant-123',
     })
 
-    let logCallCount = 0
-    mockSupabaseFrom.mockImplementation((table: string) => {
-      if (table === 'xero_connections') {
-        return buildSupabaseQueryChain({
-          data: {
-            account_code_cash: '200',
-            account_code_eftpos: '201',
-            account_code_online: '202',
-            xero_contact_id: 'contact-abc',
-          },
-          error: null,
-        })
-      }
-      if (table === 'xero_sync_log' && logCallCount === 0) {
-        logCallCount++
-        return buildSupabaseQueryChain({ data: null, error: null })
-      }
-      if (table === 'xero_sync_log') {
-        logCallCount++
-        return buildSupabaseQueryChain({ data: { id: 'log-1' }, error: null })
-      }
-      if (table === 'orders') {
-        return buildSupabaseQueryChain({
-          data: [
-            { total_cents: 1500, payment_method: 'eftpos', channel: 'pos', status: 'completed' },
-          ],
-          error: null,
-        })
-      }
-      return buildSupabaseQueryChain({ data: null, error: null })
+    setupStandardMocks({
+      completedOrders: [
+        { total_cents: 1500, payment_method: 'eftpos', channel: 'pos', status: 'completed' },
+      ],
     })
 
     mockCreateInvoices.mockResolvedValueOnce({
       body: { invoices: [{ invoiceID: 'inv-xyz', invoiceNumber: 'NZPOS-2026-03-31' }] },
     })
 
-    const { executeDailySync } = await import('../sync')
     await executeDailySync('store-1')
 
     expect(buildDailyInvoice).toHaveBeenCalledWith(
@@ -275,6 +273,9 @@ describe('aggregateDailySales (internal helper via executeDailySync)', () => {
 describe('executeDailySync', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockCreateInvoices.mockReset()
+    mockUpdateInvoice.mockReset()
+    mockCreateCreditNotes.mockReset()
   })
 
   it('creates pending sync log entry, calls Xero API, updates to success with invoice ID', async () => {
@@ -283,55 +284,16 @@ describe('executeDailySync', () => {
       tenantId: 'tenant-123',
     })
 
-    const insertMock = vi.fn().mockReturnValue(
-      buildSupabaseQueryChain({ data: { id: 'log-1' }, error: null })
-    )
-    const updateMock = vi.fn().mockReturnValue(
-      buildSupabaseQueryChain({ data: null, error: null })
-    )
-
-    let logCallCount = 0
-    mockSupabaseFrom.mockImplementation((table: string) => {
-      if (table === 'xero_connections') {
-        return buildSupabaseQueryChain({
-          data: {
-            account_code_cash: '200',
-            account_code_eftpos: '201',
-            account_code_online: '202',
-            xero_contact_id: 'contact-abc',
-          },
-          error: null,
-        })
-      }
-      if (table === 'xero_sync_log' && logCallCount === 0) {
-        logCallCount++
-        // First call: check for existing log
-        return buildSupabaseQueryChain({ data: null, error: null })
-      }
-      if (table === 'xero_sync_log' && logCallCount === 1) {
-        logCallCount++
-        // Second call: insert pending log
-        return { insert: insertMock }
-      }
-      if (table === 'xero_sync_log') {
-        logCallCount++
-        // Third+ calls: update log
-        return { update: updateMock }
-      }
-      if (table === 'orders') {
-        return buildSupabaseQueryChain({
-          data: [{ total_cents: 5000, payment_method: 'cash', channel: 'pos', status: 'completed' }],
-          error: null,
-        })
-      }
-      return buildSupabaseQueryChain({ data: null, error: null })
+    setupStandardMocks({
+      completedOrders: [
+        { total_cents: 5000, payment_method: 'cash', channel: 'pos', status: 'completed' },
+      ],
     })
 
     mockCreateInvoices.mockResolvedValueOnce({
       body: { invoices: [{ invoiceID: 'inv-123', invoiceNumber: 'NZPOS-2026-03-31' }] },
     })
 
-    const { executeDailySync } = await import('../sync')
     const result = await executeDailySync('store-1')
 
     expect(result.success).toBe(true)
@@ -345,45 +307,17 @@ describe('executeDailySync', () => {
       tenantId: 'tenant-123',
     })
 
-    let logCallCount = 0
-    mockSupabaseFrom.mockImplementation((table: string) => {
-      if (table === 'xero_connections') {
-        return buildSupabaseQueryChain({
-          data: {
-            account_code_cash: '200',
-            account_code_eftpos: '201',
-            account_code_online: '202',
-            xero_contact_id: 'contact-abc',
-          },
-          error: null,
-        })
-      }
-      if (table === 'xero_sync_log' && logCallCount === 0) {
-        logCallCount++
-        // Existing successful log entry
-        return buildSupabaseQueryChain({
-          data: { xero_invoice_id: 'existing-inv-456', status: 'success' },
-          error: null,
-        })
-      }
-      if (table === 'xero_sync_log') {
-        logCallCount++
-        return buildSupabaseQueryChain({ data: { id: 'log-2' }, error: null })
-      }
-      if (table === 'orders') {
-        return buildSupabaseQueryChain({
-          data: [{ total_cents: 3000, payment_method: 'eftpos', channel: 'pos', status: 'completed' }],
-          error: null,
-        })
-      }
-      return buildSupabaseQueryChain({ data: null, error: null })
+    setupStandardMocks({
+      existingLog: { xero_invoice_id: 'existing-inv-456', status: 'success' },
+      completedOrders: [
+        { total_cents: 3000, payment_method: 'eftpos', channel: 'pos', status: 'completed' },
+      ],
     })
 
     mockUpdateInvoice.mockResolvedValueOnce({
       body: { invoices: [{ invoiceID: 'existing-inv-456', invoiceNumber: 'NZPOS-2026-03-31' }] },
     })
 
-    const { executeDailySync } = await import('../sync')
     const result = await executeDailySync('store-1')
 
     expect(buildDailyInvoice).toHaveBeenCalledWith(
@@ -391,7 +325,11 @@ describe('executeDailySync', () => {
       expect.any(Object),
       'existing-inv-456'
     )
-    expect(mockUpdateInvoice).toHaveBeenCalledWith('tenant-123', 'existing-inv-456', expect.any(Object))
+    expect(mockUpdateInvoice).toHaveBeenCalledWith(
+      'tenant-123',
+      'existing-inv-456',
+      expect.any(Object)
+    )
     expect(result.success).toBe(true)
   })
 
@@ -401,14 +339,13 @@ describe('executeDailySync', () => {
       tenantId: 'tenant-123',
     })
 
-    const updateMock = vi.fn().mockReturnValue(
-      buildSupabaseQueryChain({ data: null, error: null })
-    )
+    const updatePayloads: Array<Record<string, unknown>> = []
+    let syncLogCallCount = 0
+    let ordersCallCount = 0
 
-    let logCallCount = 0
-    mockSupabaseFrom.mockImplementation((table: string) => {
+    mockSupabaseClient.from.mockImplementation((table: string) => {
       if (table === 'xero_connections') {
-        return buildSupabaseQueryChain({
+        return makeChain({
           data: {
             account_code_cash: '200',
             account_code_eftpos: '201',
@@ -418,37 +355,40 @@ describe('executeDailySync', () => {
           error: null,
         })
       }
-      if (table === 'xero_sync_log' && logCallCount === 0) {
-        logCallCount++
-        return buildSupabaseQueryChain({ data: null, error: null })
-      }
-      if (table === 'xero_sync_log' && logCallCount === 1) {
-        logCallCount++
-        return buildSupabaseQueryChain({ data: { id: 'log-err' }, error: null })
-      }
       if (table === 'xero_sync_log') {
-        logCallCount++
-        return { update: updateMock }
+        syncLogCallCount++
+        if (syncLogCallCount === 1) {
+          return makeChain({ data: null, error: null })
+        }
+        // Create a chain with a captured update method
+        const chain = makeChain({ data: { id: 'log-err' }, error: null })
+        chain.update = vi.fn((payload: Record<string, unknown>) => {
+          updatePayloads.push(payload)
+          return makeChain({ data: null, error: null })
+        })
+        return chain
       }
       if (table === 'orders') {
-        return buildSupabaseQueryChain({
-          data: [{ total_cents: 2000, payment_method: 'cash', channel: 'pos', status: 'completed' }],
+        ordersCallCount++
+        return makeChain({
+          data: ordersCallCount === 1
+            ? [{ total_cents: 2000, payment_method: 'cash', channel: 'pos', status: 'completed' }]
+            : [],
           error: null,
         })
       }
-      return buildSupabaseQueryChain({ data: null, error: null })
+      return makeChain({ data: null, error: null })
     })
 
     mockCreateInvoices.mockRejectedValueOnce(new Error('Xero API timeout'))
 
-    const { executeDailySync } = await import('../sync')
     const result = await executeDailySync('store-1')
 
     expect(result.success).toBe(false)
     expect(result.message).toContain('Xero API timeout')
-    expect(updateMock).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 'failed', error_message: 'Xero API timeout' })
-    )
+    const failureUpdate = updatePayloads.find((u) => u.status === 'failed')
+    expect(failureUpdate).toBeDefined()
+    expect(failureUpdate?.error_message).toBe('Xero API timeout')
   })
 
   it('returns early with "no sales" message when all totals are zero', async () => {
@@ -457,25 +397,8 @@ describe('executeDailySync', () => {
       tenantId: 'tenant-123',
     })
 
-    mockSupabaseFrom.mockImplementation((table: string) => {
-      if (table === 'xero_connections') {
-        return buildSupabaseQueryChain({
-          data: {
-            account_code_cash: '200',
-            account_code_eftpos: '201',
-            account_code_online: '202',
-            xero_contact_id: 'contact-abc',
-          },
-          error: null,
-        })
-      }
-      if (table === 'orders') {
-        return buildSupabaseQueryChain({ data: [], error: null })
-      }
-      return buildSupabaseQueryChain({ data: null, error: null })
-    })
+    setupStandardMocks({ completedOrders: [], refundedOrders: [] })
 
-    const { executeDailySync } = await import('../sync')
     const result = await executeDailySync('store-1')
 
     expect(result.success).toBe(true)
@@ -486,7 +409,6 @@ describe('executeDailySync', () => {
   it('skips sync when Xero is not connected (no authenticated client)', async () => {
     vi.mocked(getAuthenticatedXeroClient).mockResolvedValueOnce(null)
 
-    const { executeDailySync } = await import('../sync')
     const result = await executeDailySync('store-1')
 
     expect(result.success).toBe(false)
@@ -498,6 +420,9 @@ describe('executeDailySync', () => {
 describe('executeManualSync', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockCreateInvoices.mockReset()
+    mockUpdateInvoice.mockReset()
+    mockCreateCreditNotes.mockReset()
   })
 
   it('uses getNZTodayBoundaries for today sales window', async () => {
@@ -506,34 +431,8 @@ describe('executeManualSync', () => {
       tenantId: 'tenant-123',
     })
 
-    let logCallCount = 0
-    mockSupabaseFrom.mockImplementation((table: string) => {
-      if (table === 'xero_connections') {
-        return buildSupabaseQueryChain({
-          data: {
-            account_code_cash: '200',
-            account_code_eftpos: '201',
-            account_code_online: '202',
-            xero_contact_id: 'contact-abc',
-          },
-          error: null,
-        })
-      }
-      if (table === 'xero_sync_log' && logCallCount === 0) {
-        logCallCount++
-        return buildSupabaseQueryChain({ data: null, error: null })
-      }
-      if (table === 'xero_sync_log') {
-        logCallCount++
-        return buildSupabaseQueryChain({ data: { id: 'log-manual' }, error: null })
-      }
-      if (table === 'orders') {
-        return buildSupabaseQueryChain({ data: [], error: null })
-      }
-      return buildSupabaseQueryChain({ data: null, error: null })
-    })
+    setupStandardMocks({ completedOrders: [], refundedOrders: [] })
 
-    const { executeManualSync } = await import('../sync')
     await executeManualSync('store-1')
 
     expect(getNZTodayBoundaries).toHaveBeenCalled()
@@ -544,103 +443,41 @@ describe('executeManualSync', () => {
 describe('syncRefundsAsCreditNotes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockCreateInvoices.mockReset()
+    mockUpdateInvoice.mockReset()
+    mockCreateCreditNotes.mockReset()
   })
 
-  it('creates credit notes for refunded orders', async () => {
+  it('creates credit notes for refunded orders in the sync period', async () => {
     vi.mocked(getAuthenticatedXeroClient).mockResolvedValueOnce({
       xero: mockXeroClient as never,
       tenantId: 'tenant-123',
     })
 
-    let logCallCount = 0
-    let ordersCallCount = 0
-    mockSupabaseFrom.mockImplementation((table: string) => {
-      if (table === 'xero_connections') {
-        return buildSupabaseQueryChain({
-          data: {
-            account_code_cash: '200',
-            account_code_eftpos: '201',
-            account_code_online: '202',
-            xero_contact_id: 'contact-abc',
-          },
-          error: null,
-        })
-      }
-      if (table === 'xero_sync_log' && logCallCount === 0) {
-        logCallCount++
-        return buildSupabaseQueryChain({ data: null, error: null })
-      }
-      if (table === 'xero_sync_log') {
-        logCallCount++
-        return buildSupabaseQueryChain({ data: { id: 'log-refund' }, error: null })
-      }
-      if (table === 'orders') {
-        ordersCallCount++
-        if (ordersCallCount === 1) {
-          // Completed orders (zero totals so we still proceed to refund check)
-          return buildSupabaseQueryChain({ data: [], error: null })
-        }
-        if (ordersCallCount === 2) {
-          // Refunded orders
-          return buildSupabaseQueryChain({
-            data: [{ total_cents: 1500, payment_method: 'eftpos', channel: 'pos', status: 'refunded' }],
-            error: null,
-          })
-        }
-      }
-      return buildSupabaseQueryChain({ data: null, error: null })
+    setupStandardMocks({
+      completedOrders: [
+        { total_cents: 5000, payment_method: 'cash', channel: 'pos', status: 'completed' },
+      ],
+      refundedOrders: [
+        { total_cents: 1500, payment_method: 'eftpos', channel: 'pos', status: 'refunded' },
+      ],
     })
 
     mockCreateInvoices.mockResolvedValueOnce({
       body: { invoices: [{ invoiceID: 'inv-refund', invoiceNumber: 'NZPOS-2026-03-31' }] },
     })
     mockCreateCreditNotes.mockResolvedValueOnce({
-      body: { creditNotes: [{ creditNoteID: 'cn-1', creditNoteNumber: 'NZPOS-CN-2026-03-31' }] },
-    })
-
-    const { executeDailySync } = await import('../sync')
-    // Provide some sales so we don't early-return on "no sales"
-    mockSupabaseFrom.mockImplementation((table: string) => {
-      if (table === 'xero_connections') {
-        return buildSupabaseQueryChain({
-          data: {
-            account_code_cash: '200',
-            account_code_eftpos: '201',
-            account_code_online: '202',
-            xero_contact_id: 'contact-abc',
-          },
-          error: null,
-        })
-      }
-      if (table === 'xero_sync_log' && logCallCount === 2) {
-        logCallCount++
-        return buildSupabaseQueryChain({ data: null, error: null })
-      }
-      if (table === 'xero_sync_log') {
-        logCallCount++
-        return buildSupabaseQueryChain({ data: { id: 'log-refund-2' }, error: null })
-      }
-      if (table === 'orders') {
-        ordersCallCount++
-        if (ordersCallCount === 3) {
-          // Completed orders
-          return buildSupabaseQueryChain({
-            data: [{ total_cents: 5000, payment_method: 'cash', channel: 'pos', status: 'completed' }],
-            error: null,
-          })
-        }
-        // Refunded orders
-        return buildSupabaseQueryChain({
-          data: [{ total_cents: 1500, payment_method: 'eftpos', channel: 'pos', status: 'refunded' }],
-          error: null,
-        })
-      }
-      return buildSupabaseQueryChain({ data: null, error: null })
+      body: { creditNotes: [{ creditNoteID: 'cn-1' }] },
     })
 
     await executeDailySync('store-1')
 
-    expect(buildCreditNote).toHaveBeenCalledWith(1500, '2026-03-31', expect.any(Object), expect.any(String))
+    expect(buildCreditNote).toHaveBeenCalledWith(
+      1500,
+      '2026-03-31',
+      expect.any(Object),
+      expect.any(String)
+    )
     expect(mockCreateCreditNotes).toHaveBeenCalledOnce()
   })
 })
@@ -648,176 +485,106 @@ describe('syncRefundsAsCreditNotes', () => {
 describe('executeDailySyncWithRetry', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // Mock sleep to be instant
-    vi.useFakeTimers()
+    mockCreateInvoices.mockReset()
+    mockUpdateInvoice.mockReset()
+    mockCreateCreditNotes.mockReset()
   })
 
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  it('retries up to 3 times on failure and returns success if eventually succeeds', async () => {
-    // First two calls fail, third succeeds
-    vi.mocked(getAuthenticatedXeroClient)
-      .mockResolvedValueOnce({
-        xero: mockXeroClient as never,
-        tenantId: 'tenant-123',
-      })
-      .mockResolvedValueOnce({
-        xero: mockXeroClient as never,
-        tenantId: 'tenant-123',
-      })
-      .mockResolvedValueOnce({
-        xero: mockXeroClient as never,
-        tenantId: 'tenant-123',
-      })
-
-    let callNum = 0
-    const makeFromMock = () => {
-      callNum++
-      return (table: string) => {
-        if (table === 'xero_connections') {
-          return buildSupabaseQueryChain({
-            data: {
-              account_code_cash: '200',
-              account_code_eftpos: '201',
-              account_code_online: '202',
-              xero_contact_id: 'contact-abc',
-            },
-            error: null,
-          })
-        }
-        if (table === 'xero_sync_log') {
-          return buildSupabaseQueryChain({ data: { id: `log-${callNum}` }, error: null })
-        }
-        if (table === 'orders') {
-          return buildSupabaseQueryChain({
-            data: [{ total_cents: 1000, payment_method: 'cash', channel: 'pos', status: 'completed' }],
-            error: null,
-          })
-        }
-        return buildSupabaseQueryChain({ data: null, error: null })
-      }
-    }
-
-    mockSupabaseFrom.mockImplementation(makeFromMock())
-
-    mockCreateInvoices
-      .mockRejectedValueOnce(new Error('Network error'))
-      .mockRejectedValueOnce(new Error('Network error'))
-      .mockResolvedValueOnce({
-        body: { invoices: [{ invoiceID: 'inv-ok', invoiceNumber: 'NZPOS-2026-03-31' }] },
-      })
-
-    const { executeDailySyncWithRetry } = await import('../sync')
-
-    // We need to handle the sleep calls - use Promise.resolve to bypass
-    const resultPromise = executeDailySyncWithRetry('store-1')
-    // Advance all timers to skip backoff delays
-    await vi.runAllTimersAsync()
-    const result = await resultPromise
-
-    expect(result.success).toBe(true)
-    expect(result.attempts).toBeGreaterThanOrEqual(1)
-  })
-
-  it('marks status as failed with error_message after 3 failures', async () => {
-    vi.mocked(getAuthenticatedXeroClient)
-      .mockResolvedValue({
-        xero: mockXeroClient as never,
-        tenantId: 'tenant-123',
-      })
-
-    mockSupabaseFrom.mockImplementation((table: string) => {
-      if (table === 'xero_connections') {
-        return buildSupabaseQueryChain({
-          data: {
-            account_code_cash: '200',
-            account_code_eftpos: '201',
-            account_code_online: '202',
-            xero_contact_id: 'contact-abc',
-          },
-          error: null,
-        })
-      }
-      if (table === 'xero_sync_log') {
-        return buildSupabaseQueryChain({ data: { id: 'log-fail' }, error: null })
-      }
-      if (table === 'orders') {
-        return buildSupabaseQueryChain({
-          data: [{ total_cents: 1000, payment_method: 'cash', channel: 'pos', status: 'completed' }],
-          error: null,
-        })
-      }
-      return buildSupabaseQueryChain({ data: null, error: null })
-    })
-
-    mockCreateInvoices.mockRejectedValue(new Error('Persistent failure'))
-
-    const { executeDailySyncWithRetry } = await import('../sync')
-
-    const resultPromise = executeDailySyncWithRetry('store-1')
-    await vi.runAllTimersAsync()
-    const result = await resultPromise
-
-    expect(result.success).toBe(false)
-    expect(result.message).toContain('Persistent failure')
-    expect(result.attempts).toBe(3)
-  })
-
-  it('stops retrying on success', async () => {
+  it('retries up to 3 times and returns success when eventually succeeds', async () => {
     vi.mocked(getAuthenticatedXeroClient).mockResolvedValue({
       xero: mockXeroClient as never,
       tenantId: 'tenant-123',
     })
 
-    mockSupabaseFrom.mockImplementation((table: string) => {
-      if (table === 'xero_connections') {
-        return buildSupabaseQueryChain({
-          data: {
-            account_code_cash: '200',
-            account_code_eftpos: '201',
-            account_code_online: '202',
-            xero_contact_id: 'contact-abc',
-          },
-          error: null,
-        })
-      }
-      if (table === 'xero_sync_log') {
-        return buildSupabaseQueryChain({ data: { id: 'log-ok' }, error: null })
-      }
-      if (table === 'orders') {
-        return buildSupabaseQueryChain({
-          data: [{ total_cents: 1000, payment_method: 'cash', channel: 'pos', status: 'completed' }],
-          error: null,
-        })
-      }
-      return buildSupabaseQueryChain({ data: null, error: null })
+    setupStandardMocks({
+      forRetry: true,
+      completedOrders: [
+        { total_cents: 1000, payment_method: 'cash', channel: 'pos', status: 'completed' },
+      ],
+    })
+
+    // First two calls fail, third succeeds
+    mockCreateInvoices
+      .mockRejectedValueOnce(new Error('Network error attempt 1'))
+      .mockRejectedValueOnce(new Error('Network error attempt 2'))
+      .mockResolvedValueOnce({
+        body: { invoices: [{ invoiceID: 'inv-ok', invoiceNumber: 'NZPOS-2026-03-31' }] },
+      })
+
+    // Pass no-op sleepFn to skip actual delays
+    const noopSleep = vi.fn().mockResolvedValue(undefined)
+    const result = await executeDailySyncWithRetry('store-1', undefined, noopSleep)
+
+    expect(result.success).toBe(true)
+    expect(result.attempts).toBeGreaterThanOrEqual(2)
+    expect(mockCreateInvoices).toHaveBeenCalledTimes(3)
+    // Verify sleep was called with backoff values
+    expect(noopSleep).toHaveBeenCalledWith(60_000)
+    expect(noopSleep).toHaveBeenCalledWith(300_000)
+  })
+
+  it('increments attempt count and marks failed after 3 failures', async () => {
+    vi.mocked(getAuthenticatedXeroClient).mockResolvedValue({
+      xero: mockXeroClient as never,
+      tenantId: 'tenant-123',
+    })
+
+    setupStandardMocks({
+      forRetry: true,
+      completedOrders: [
+        { total_cents: 1000, payment_method: 'cash', channel: 'pos', status: 'completed' },
+      ],
+    })
+
+    mockCreateInvoices.mockRejectedValue(new Error('Persistent failure'))
+
+    const noopSleep = vi.fn().mockResolvedValue(undefined)
+    const result = await executeDailySyncWithRetry('store-1', undefined, noopSleep)
+
+    expect(result.success).toBe(false)
+    expect(result.message).toContain('Persistent failure')
+    expect(result.attempts).toBe(3)
+    expect(mockCreateInvoices).toHaveBeenCalledTimes(3)
+  })
+
+  it('stops retrying on success (attempt 1)', async () => {
+    vi.mocked(getAuthenticatedXeroClient).mockResolvedValue({
+      xero: mockXeroClient as never,
+      tenantId: 'tenant-123',
+    })
+
+    setupStandardMocks({
+      forRetry: true,
+      completedOrders: [
+        { total_cents: 1000, payment_method: 'cash', channel: 'pos', status: 'completed' },
+      ],
     })
 
     mockCreateInvoices.mockResolvedValueOnce({
       body: { invoices: [{ invoiceID: 'inv-quick', invoiceNumber: 'NZPOS-2026-03-31' }] },
     })
 
-    const { executeDailySyncWithRetry } = await import('../sync')
-    const result = await executeDailySyncWithRetry('store-1')
+    const noopSleep = vi.fn().mockResolvedValue(undefined)
+    const result = await executeDailySyncWithRetry('store-1', undefined, noopSleep)
 
     expect(result.success).toBe(true)
     expect(result.attempts).toBe(1)
-    // Should not call createInvoices more than once
     expect(mockCreateInvoices).toHaveBeenCalledOnce()
+    // Sleep should not be called when first attempt succeeds
+    expect(noopSleep).not.toHaveBeenCalled()
   })
 
   it('does not retry non-retryable failures (Xero not connected)', async () => {
-    vi.mocked(getAuthenticatedXeroClient).mockResolvedValue(null)
+    vi.mocked(getAuthenticatedXeroClient).mockResolvedValueOnce(null)
 
-    const { executeDailySyncWithRetry } = await import('../sync')
-    const result = await executeDailySyncWithRetry('store-1')
+    const noopSleep = vi.fn().mockResolvedValue(undefined)
+    const result = await executeDailySyncWithRetry('store-1', undefined, noopSleep)
 
     expect(result.success).toBe(false)
     expect(result.message).toContain('not connected')
     expect(result.attempts).toBe(1)
-    // Should only call getAuthenticatedXeroClient once, no retries
     expect(getAuthenticatedXeroClient).toHaveBeenCalledOnce()
+    // No sleep on non-retryable
+    expect(noopSleep).not.toHaveBeenCalled()
   })
 })
