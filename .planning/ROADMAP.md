@@ -69,9 +69,9 @@ Plans:
   3. For EFTPOS: a full-screen confirmation step asks "Did the terminal show APPROVED?" — answering No voids the sale; answering Yes records it and decrements stock atomically
   4. After each completed sale the product grid reflects updated stock counts without a manual refresh
   5. Out-of-stock products show a warning on the grid; owner override is available to respond anyway
-**Plans:** 5 plans
+**Plans:** 1/5 plans executed
 Plans:
-- [ ] 03-01-PLAN.md — Cart logic module (TDD), Supabase RPC migration, completeSale Server Action
+- [x] 03-01-PLAN.md — Cart logic module (TDD), Supabase RPC migration, completeSale Server Action
 - [ ] 03-02-PLAN.md — POS page Server Component, product grid with categories, search, stock badges
 - [ ] 03-03-PLAN.md — Cart panel with line items, quantity controls, summary, payment toggle, pay button
 - [ ] 03-04-PLAN.md — Discount sheet, EFTPOS confirmation, cash entry, out-of-stock override, sale summary + full wiring
@@ -125,7 +125,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/5 | In Progress|  |
 | 2. Product Catalog | 2/5 | In Progress|  |
-| 3. POS Checkout | 0/5 | Not started | - |
+| 3. POS Checkout | 1/5 | In Progress|  |
 | 4. Online Store | 0/TBD | Not started | - |
 | 5. Admin & Reporting | 0/TBD | Not started | - |
 | 6. Xero Integration | 0/TBD | Not started | - |

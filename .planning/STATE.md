@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 3 context gathered
-last_updated: "2026-03-31T23:38:12.106Z"
-last_activity: 2026-03-31
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-04-01T02:45:34.608Z"
+last_activity: 2026-04-01
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 15
+  completed_plans: 11
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 02 — product-catalog
+**Current focus:** Phase 03 — pos-checkout
 
 ## Current Position
 
-Phase: 3
-Plan: Not started
+Phase: 03 (pos-checkout) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-03-31
+Last activity: 2026-04-01
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-foundation P05 | 8 | 2 tasks | 7 files |
 | Phase 02-product-catalog P02 | 12 | 2 tasks | 6 files |
 | Phase 02-product-catalog P04 | 10 | 2 tasks | 11 files |
+| Phase 03-pos-checkout P01 | 3 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,9 @@ Recent decisions affecting current work:
 - [Phase 02-product-catalog]: Image upload outputs WebP regardless of input format — consistent CDN storage, optimal file size at quality 85
 - [Phase 02-product-catalog]: papaparse used for both parse and unparse in CSV import — consistent library, no manual CSV string construction
 - [Phase 02-product-catalog]: validateImportRows uses empty Sets/Maps in preview step — DB-level duplicate detection happens at insert time in importProducts Server Action
+- [Phase 03-pos-checkout]: Cart discount distribution: Math.floor for all items, last item absorbs rounding remainder — ensures exact total
+- [Phase 03-pos-checkout]: complete_pos_sale RPC uses SELECT FOR UPDATE to lock stock rows before decrement — prevents overselling under concurrent transactions
+- [Phase 03-pos-checkout]: completeSale uses admin client (bypasses RLS) via SECURITY DEFINER RPC — staff JWT verified in Server Action layer, not DB layer
 
 ### Pending Todos
 
@@ -101,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T23:38:12.103Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-pos-checkout/03-CONTEXT.md
+Last session: 2026-04-01T02:45:34.605Z
+Stopped at: Completed 03-01-PLAN.md
+Resume file: None
