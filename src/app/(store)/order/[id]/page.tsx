@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic'
 
 type Props = {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ token?: string }>
 }
 
 function getStatusLabel(status: string): string {
@@ -44,14 +45,21 @@ function getStatusMessage(status: string): string {
   }
 }
 
-export default async function OrderStatusPage({ params }: Props) {
+export default async function OrderStatusPage({ params, searchParams: searchParamsPromise }: Props) {
   const { id: orderId } = await params
+  const { token } = await searchParamsPromise
+
+  // IDOR protection: require lookup token to view order details
+  if (!token) {
+    notFound()
+  }
 
   const supabase = createSupabaseAdminClient()
-  const { data: order, error } = await supabase
+  const { data: order, error } = await (supabase as any)
     .from('orders')
     .select('*, order_items(*)')
     .eq('id', orderId)
+    .eq('lookup_token', token)
     .single()
 
   if (error || !order) {

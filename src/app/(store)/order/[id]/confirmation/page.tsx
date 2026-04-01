@@ -5,7 +5,7 @@ import CartClearer from './CartClearer'
 
 type Props = {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ session_id?: string }>
+  searchParams: Promise<{ session_id?: string; token?: string }>
 }
 
 function getStatusMessage(
@@ -24,14 +24,21 @@ function getStatusMessage(
   }
 }
 
-export default async function OrderConfirmationPage({ params, searchParams: _searchParams }: Props) {
+export default async function OrderConfirmationPage({ params, searchParams: searchParamsPromise }: Props) {
   const { id: orderId } = await params
+  const { token } = await searchParamsPromise
+
+  // IDOR protection: require lookup token to view order details
+  if (!token) {
+    notFound()
+  }
 
   const supabase = createSupabaseAdminClient()
-  const { data: order, error } = await supabase
+  const { data: order, error } = await (supabase as any)
     .from('orders')
     .select('*, order_items(*)')
     .eq('id', orderId)
+    .eq('lookup_token', token)
     .single()
 
   if (error || !order) {
@@ -235,7 +242,7 @@ export default async function OrderConfirmationPage({ params, searchParams: _sea
         {/* Link to order status page */}
         <div className="text-center">
           <a
-            href={`/order/${orderId}`}
+            href={`/order/${orderId}?token=${token}`}
             className="text-sm underline"
             style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-sans)' }}
           >

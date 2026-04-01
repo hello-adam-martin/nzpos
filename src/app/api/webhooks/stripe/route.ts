@@ -34,6 +34,8 @@ export async function POST(req: Request) {
       console.error('[stripe-webhook] handleCheckoutComplete error:', err)
       return new Response('Internal server error', { status: 500 })
     }
+  } else {
+    console.log(`[stripe-webhook] Unhandled event type: ${event.type}`)
   }
 
   return new Response('ok', { status: 200 })
@@ -85,4 +87,15 @@ async function handleCheckoutComplete(
   })
 
   if (rpcError) throw rpcError
+
+  // Increment promo usage atomically (only after successful payment)
+  const { data: orderRow } = await (supabase as any)
+    .from('orders')
+    .select('promo_id')
+    .eq('id', orderId)
+    .single()
+
+  if (orderRow?.promo_id) {
+    await supabase.rpc('increment_promo_uses', { p_promo_id: orderRow.promo_id })
+  }
 }

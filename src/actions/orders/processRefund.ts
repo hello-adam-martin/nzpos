@@ -45,42 +45,51 @@ export async function processRefund(input: unknown): Promise<
     return { error: 'Order cannot be refunded in current status' }
   }
 
-  // 5. Stripe refund for online orders (per D-15, Pitfall #6)
+  // 5. Optimistic lock: claim refund status BEFORE calling Stripe (prevents double-refund race)
+  const { data: locked } = await adminClient
+    .from('orders')
+    .update({ status: 'refunded', notes: reason })
+    .eq('id', orderId)
+    .in('status', Array.from(REFUNDABLE_STATUSES))
+    .select('id')
+    .single()
+
+  if (!locked) {
+    return { error: 'Order already refunded or status changed. Refresh and try again.' }
+  }
+
+  // 6. Stripe refund for online orders (per D-15, Pitfall #6)
   if (order.channel === 'online' && order.stripe_payment_intent_id) {
     try {
       const refund = await stripe.refunds.create({
         payment_intent: order.stripe_payment_intent_id,
+        amount: order.total_cents,
       })
       if (refund.status !== 'succeeded' && refund.status !== 'pending') {
+        // Revert status on Stripe failure
+        await adminClient.from('orders').update({ status: order.status, notes: null }).eq('id', orderId)
         return { error: 'Stripe refund failed. Check your Stripe dashboard and try again.' }
       }
+      // Store refund ID for audit trail
+      await (adminClient as any).from('orders').update({ stripe_refund_id: refund.id }).eq('id', orderId)
     } catch {
+      // Revert status on Stripe failure
+      await adminClient.from('orders').update({ status: order.status, notes: null }).eq('id', orderId)
       return { error: 'Stripe refund failed. Check your Stripe dashboard and try again.' }
     }
   } else if (order.channel === 'online' && !order.stripe_payment_intent_id) {
+    // Revert status
+    await adminClient.from('orders').update({ status: order.status, notes: null }).eq('id', orderId)
     return { error: 'Cannot refund — Stripe payment ID not found. Check order in Stripe dashboard.' }
   }
 
-  // 6. Update order status to refunded, store reason in notes
-  await adminClient
-    .from('orders')
-    .update({ status: 'refunded', notes: reason })
-    .eq('id', orderId)
-
-  // 7. Restore stock if requested (read-then-write pattern, safe for v1 single-operator)
+  // 7. Restore stock if requested (atomic increment via RPC)
   if (restoreStock && order.order_items) {
     for (const item of order.order_items) {
-      const { data: product } = await adminClient
-        .from('products')
-        .select('stock_quantity')
-        .eq('id', item.product_id)
-        .single()
-      if (product) {
-        await adminClient
-          .from('products')
-          .update({ stock_quantity: product.stock_quantity + item.quantity })
-          .eq('id', item.product_id)
-      }
+      await adminClient.rpc('restore_stock', {
+        p_product_id: item.product_id,
+        p_quantity: item.quantity,
+      })
     }
   }
 

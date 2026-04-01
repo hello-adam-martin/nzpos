@@ -1,12 +1,9 @@
 'use server'
 import 'server-only'
 import { revalidatePath } from 'next/cache'
-import { cookies } from 'next/headers'
-import { jwtVerify } from 'jose'
 import { z } from 'zod'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
-
-const secret = new TextEncoder().encode(process.env.STAFF_JWT_SECRET!)
+import { resolveStaffAuth } from '@/lib/resolveAuth'
 
 // Allowed status transitions per D-22
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
@@ -20,24 +17,12 @@ const UpdateStatusSchema = z.object({
   newStatus: z.enum(['pending_pickup', 'ready', 'collected']),
 })
 
-async function getStaffSession() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('staff_session')?.value
-  if (!token) return null
-  try {
-    const { payload } = await jwtVerify(token, secret)
-    return payload as { role: string; store_id: string; staff_id: string }
-  } catch {
-    return null
-  }
-}
-
 export async function updateOrderStatus(input: unknown): Promise<
   | { success: true; newStatus: string }
   | { error: string }
 > {
   // 1. Auth check: verify staff JWT from staff_session cookie
-  const staff = await getStaffSession()
+  const staff = await resolveStaffAuth()
   if (!staff) return { error: 'Not authenticated' }
 
   const storeId = staff.store_id

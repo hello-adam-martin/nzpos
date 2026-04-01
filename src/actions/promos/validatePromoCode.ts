@@ -2,13 +2,11 @@
 import 'server-only'
 import { headers } from 'next/headers'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
-import { checkRateLimit } from '@/lib/rateLimit'
 import { formatNZD } from '@/lib/money'
 
 interface ValidatePromoCodeInput {
   code: string
   cartTotalCents: number
-  storeId: string
 }
 
 type ValidatePromoCodeResult =
@@ -22,17 +20,23 @@ type ValidatePromoCodeResult =
 export async function validatePromoCode(
   input: ValidatePromoCodeInput
 ): Promise<ValidatePromoCodeResult> {
-  // Rate limit: 10 validations per minute per IP
-  const headersList = await headers()
-  const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
-  if (!checkRateLimit(ip, 10)) {
-    return { error: 'rate_limited', message: 'Too many attempts. Try again in a moment.' }
-  }
-
-  const { code, cartTotalCents, storeId } = input
+  const { code, cartTotalCents } = input
+  const storeId = process.env.STORE_ID!
 
   // Use admin client — storefront has no authenticated session
   const supabase = createSupabaseAdminClient()
+
+  // Rate limit: 10 validations per minute per IP (via Supabase RPC, persists across instances)
+  const headersList = await headers()
+  const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const { data: allowed } = await supabase.rpc('check_rate_limit', {
+    p_ip: ip,
+    p_max: 10,
+    p_window_seconds: 60,
+  })
+  if (allowed === false) {
+    return { error: 'rate_limited', message: 'Too many attempts. Try again in a moment.' }
+  }
 
   const { data: promo } = await supabase
     .from('promo_codes')

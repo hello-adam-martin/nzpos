@@ -15,13 +15,18 @@ export async function resolveAuth(): Promise<{ store_id: string; staff_id: strin
     return { store_id: user.app_metadata.store_id, staff_id: user.id }
   }
   // Fall back to staff PIN JWT
+  return resolveStaffAuth()
+}
+
+/** Staff-only auth: checks staff PIN JWT cookie only (no owner fallback) */
+export async function resolveStaffAuth(): Promise<{ store_id: string; staff_id: string; role: string } | null> {
   const cookieStore = await cookies()
   const token = cookieStore.get('staff_session')?.value
   if (!token) return null
   try {
     const { payload } = await jwtVerify(token, secret)
-    const p = payload as { store_id: string; staff_id: string }
-    return { store_id: p.store_id, staff_id: p.staff_id }
+    const p = payload as { store_id: string; staff_id: string; role: string }
+    return { store_id: p.store_id, staff_id: p.staff_id, role: p.role }
   } catch {
     return null
   }

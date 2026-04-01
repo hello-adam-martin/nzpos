@@ -12,8 +12,6 @@ export function PromoCodeInput() {
   const [isShaking, setIsShaking] = useState(false)
   const [isPending, startTransition] = useTransition()
 
-  const storeId = process.env.NEXT_PUBLIC_STORE_ID!
-
   // Promo already applied — show applied state
   if (state.promoCode) {
     const { promoCode, promoDiscountCents, promoDiscountType } = state
@@ -59,7 +57,6 @@ export function PromoCodeInput() {
       const result = await validatePromoCode({
         code: trimmed,
         cartTotalCents: subtotalCents,
-        storeId,
       })
 
       if ('success' in result && result.success) {

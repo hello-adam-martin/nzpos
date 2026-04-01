@@ -95,10 +95,10 @@ export async function createCheckoutSession(
   let appliedDiscountCents = 0
   let verifiedPromoId: string | undefined
 
-  if (promoId && promoDiscountCents > 0) {
+  if (promoId) {
     const { data: promo } = await supabase
       .from('promo_codes')
-      .select('id, is_active, expires_at, max_uses, current_uses')
+      .select('id, is_active, expires_at, max_uses, current_uses, discount_type, discount_value')
       .eq('id', promoId)
       .eq('store_id', storeId)
       .single()
@@ -110,8 +110,14 @@ export async function createCheckoutSession(
       (promo.max_uses === null || promo.current_uses < promo.max_uses)
 
     if (promoValid) {
-      // Re-clamp to current subtotal (items may have changed)
-      appliedDiscountCents = Math.min(promoDiscountCents, subtotalBeforeDiscount)
+      // Recalculate discount server-side — NEVER trust client promoDiscountCents
+      let computedDiscount: number
+      if (promo.discount_type === 'percentage') {
+        computedDiscount = Math.floor(subtotalBeforeDiscount * promo.discount_value / 100)
+      } else {
+        computedDiscount = promo.discount_value
+      }
+      appliedDiscountCents = Math.min(computedDiscount, subtotalBeforeDiscount)
       verifiedPromoId = promo.id
     }
   }
@@ -154,7 +160,8 @@ export async function createCheckoutSession(
   const gstCents = calcOrderGST(lineGSTs)
   const totalDiscountCents = appliedDiscountCents
 
-  // 7. Create PENDING order record
+  // 7. Create PENDING order record with lookup token for IDOR protection
+  const lookupToken = crypto.randomUUID()
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .insert({
@@ -166,7 +173,9 @@ export async function createCheckoutSession(
       total_cents: totalCents,
       discount_cents: totalDiscountCents,
       payment_method: 'stripe',
-    })
+      lookup_token: lookupToken,
+      promo_id: verifiedPromoId ?? null,
+    } as any)
     .select('id')
     .single()
 
@@ -196,22 +205,7 @@ export async function createCheckoutSession(
     return { error: 'server_error' }
   }
 
-  // 9. If promo applied: increment current_uses (non-fatal — next validation will catch max_uses)
-  if (verifiedPromoId) {
-    // Fetch current value and increment (avoids RPC dependency)
-    const { data: promoRow } = await supabase
-      .from('promo_codes')
-      .select('current_uses')
-      .eq('id', verifiedPromoId)
-      .single()
-
-    if (promoRow) {
-      await supabase
-        .from('promo_codes')
-        .update({ current_uses: promoRow.current_uses + 1 })
-        .eq('id', verifiedPromoId)
-    }
-  }
+  // 9. Promo uses are incremented in the Stripe webhook after payment completes (not here)
 
   // 10. Create Stripe Checkout Session (server-validated prices, no Stripe Tax)
   const session = await stripe.checkout.sessions.create({
@@ -231,7 +225,7 @@ export async function createCheckoutSession(
       order_id: order.id,
       store_id: storeId,
     },
-    success_url: `${baseUrl}/order/${order.id}/confirmation?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${baseUrl}/order/${order.id}/confirmation?token=${lookupToken}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/`,
   })
 

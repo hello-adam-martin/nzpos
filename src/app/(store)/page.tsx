@@ -34,7 +34,11 @@ export default async function StorePage({ searchParams }: PageProps) {
   }
 
   if (q) {
-    query = query.or(`name.ilike.%${q}%,sku.ilike.%${q}%`)
+    // Sanitize search input to prevent PostgREST filter injection
+    const sanitized = q.replace(/[,().*%\\]/g, '')
+    if (sanitized.length > 0) {
+      query = query.or(`name.ilike.%${sanitized}%,sku.ilike.%${sanitized}%`)
+    }
   }
 
   const { data: rawProducts } = await query

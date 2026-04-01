@@ -1,28 +1,13 @@
 'use server'
 import 'server-only'
 import { revalidatePath } from 'next/cache'
-import { cookies } from 'next/headers'
-import { jwtVerify } from 'jose'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
+import { resolveStaffAuth } from '@/lib/resolveAuth'
 import { CreateOrderSchema } from '@/schemas/order'
-
-const secret = new TextEncoder().encode(process.env.STAFF_JWT_SECRET!)
-
-async function getStaffSession() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('staff_session')?.value
-  if (!token) return null
-  try {
-    const { payload } = await jwtVerify(token, secret)
-    return payload as { role: string; store_id: string; staff_id: string }
-  } catch {
-    return null
-  }
-}
 
 export async function completeSale(input: unknown) {
   // 1. Verify staff JWT from staff_session cookie
-  const staff = await getStaffSession()
+  const staff = await resolveStaffAuth()
   if (!staff) return { error: 'Not authenticated — please log in again' }
 
   // 2. Validate input with Zod
