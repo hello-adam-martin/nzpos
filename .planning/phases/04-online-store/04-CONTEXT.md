@@ -32,7 +32,8 @@ Customers can browse products on a public storefront, add items to cart, apply p
 - **D-12:** All online orders are click-and-collect by default. No delivery option in v1. Checkout flow states "Collect in-store" — no selection step needed.
 - **D-13:** Order status page at `/order/[id]` shows current status (PENDING → COMPLETED → PENDING_PICKUP → READY → COLLECTED). Accessible via confirmation page link and email links.
 - **D-14:** Email notification sent when staff marks order as READY for pickup. Email contains link to order status page. Uses a simple transactional email (implementation approach is Claude's discretion — Supabase Edge Function, Resend, or similar).
-- **D-15:** Status transitions managed by owner in admin order list (Phase 5 builds the UI). Phase 4 creates the data model, status enum, and transition Server Actions.
+- **D-15:** Status transitions managed by owner in admin order list (Phase 5 builds the full admin UI). Phase 4 creates the data model, status enum, and transition Server Actions.
+- **D-15b:** Lightweight "Pickups" tab on POS screen showing pending pickup orders (filtered to PENDING_PICKUP and READY statuses). Staff taps an order to see summary, then taps "Collected" to mark it complete. Keeps staff in POS — no admin access needed for day-to-day pickup handling.
 
 ### Promo Code Management
 - **D-16:** Dedicated `/admin/promos` page. Owner creates codes with: code string, type (percentage/fixed), discount value, minimum order amount (cents), maximum total uses, expiry date. List view shows active/expired/maxed-out codes.
