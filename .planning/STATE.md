@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 5 UI-SPEC approved
-last_updated: "2026-04-01T09:14:43.497Z"
-last_activity: 2026-04-01 -- Phase 05 execution started
+stopped_at: Completed 05-admin-reporting 05-02-PLAN.md
+last_updated: "2026-04-01T09:27:01.866Z"
+last_activity: 2026-04-01
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 29
-  completed_plans: 23
+  completed_plans: 25
   percent: 0
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 05 (admin-reporting) — EXECUTING
-Plan: 1 of 6
-Status: Executing Phase 05
-Last activity: 2026-04-01 -- Phase 05 execution started
+Plan: 2 of 6
+Status: Ready to execute
+Last activity: 2026-04-01
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -64,6 +64,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-online-store P07 | 134s | 2 tasks | 4 files |
 | Phase 04-online-store P05 | 225s | 2 tasks | 5 files |
 | Phase 04-online-store P06 | 93s | 2 tasks | 4 files |
+| Phase 05-admin-reporting P02 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -103,6 +104,8 @@ Recent decisions affecting current work:
 - [Phase 04-online-store]: CartDrawer uses window.location.href for Stripe redirect — Server Action returns URL and client-side redirect is required for external Stripe URL
 - [Phase 04-online-store]: POSTopBar converted to 'use client' to support usePathname for active nav highlighting (D-15b)
 - [Phase 04-online-store]: D-14 email notification deferred from Phase 4 — documented with TODO in updateOrderStatus.ts
+- [Phase 05-admin-reporting]: Low-stock filtering done client-side after fetching all active products (small catalog assumption)
+- [Phase 05-admin-reporting]: Dashboard orders query includes pending_pickup, ready, collected alongside completed to capture all non-expired revenue
 
 ### Pending Todos
 
@@ -115,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T08:28:39.235Z
-Stopped at: Phase 5 UI-SPEC approved
-Resume file: .planning/phases/05-admin-reporting/05-UI-SPEC.md
+Last session: 2026-04-01T09:27:01.864Z
+Stopped at: Completed 05-admin-reporting 05-02-PLAN.md
+Resume file: None
