@@ -42,7 +42,7 @@ Declared values (multiples of 4, enforced via CSS custom properties in globals.c
 
 Exceptions:
 - Sync log row min-height: 48px (readable data row with multiple columns)
-- Account code form input height: 40px (standard admin form field, consistent with existing forms)
+- Account code form input height: 48px (matches sync log row height and banner height, standard set value)
 - Banner alert: full-width strip at top of admin content area, 48px min-height to ensure prominence
 
 ---
