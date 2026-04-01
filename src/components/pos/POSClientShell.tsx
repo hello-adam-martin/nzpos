@@ -61,6 +61,16 @@ export function POSClientShell({
   // Track cash tendered for sale summary
   const [lastCashTenderedCents, setLastCashTenderedCents] = useState<number | null>(null)
 
+  // Auto-close discount sheet if target item was removed from cart
+  useEffect(() => {
+    if (discountTarget !== null) {
+      const stillInCart = cart.items.some((i) => i.productId === discountTarget)
+      if (!stillInCart) {
+        setDiscountTarget(null)
+      }
+    }
+  }, [cart.items, discountTarget])
+
   // Stock refresh on page focus (D-14, POS-08)
   useEffect(() => {
     function handleVisibilityChange() {
@@ -310,6 +320,7 @@ export function POSClientShell({
           totalCents={splitCashCents != null ? totals.totalCents - splitCashCents : totals.totalCents}
           onConfirm={handleEftposConfirm}
           onVoid={handleEftposVoid}
+          isProcessing={isProcessing}
         />
       )}
 

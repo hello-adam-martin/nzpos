@@ -7,9 +7,10 @@ type EftposConfirmScreenProps = {
   totalCents: number
   onConfirm: () => void
   onVoid: () => void
+  isProcessing?: boolean
 }
 
-export function EftposConfirmScreen({ totalCents, onConfirm, onVoid }: EftposConfirmScreenProps) {
+export function EftposConfirmScreen({ totalCents, onConfirm, onVoid, isProcessing = false }: EftposConfirmScreenProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Focus trap on mount
@@ -72,14 +73,24 @@ export function EftposConfirmScreen({ totalCents, onConfirm, onVoid }: EftposCon
       {/* Action buttons */}
       <div className="flex gap-4 w-full max-w-lg mt-12">
         <button
-          onClick={onConfirm}
-          className="flex-1 min-h-[56px] bg-success text-white text-base font-bold rounded-lg hover:opacity-90 transition-opacity"
+          onClick={isProcessing ? undefined : onConfirm}
+          disabled={isProcessing}
+          aria-disabled={isProcessing}
+          className={[
+            'flex-1 min-h-[56px] bg-success text-white text-base font-bold rounded-lg transition-opacity',
+            isProcessing ? 'opacity-50 pointer-events-none' : 'hover:opacity-90',
+          ].join(' ')}
         >
           YES — Sale Complete
         </button>
         <button
-          onClick={onVoid}
-          className="flex-1 min-h-[56px] bg-error text-white text-base font-bold rounded-lg hover:opacity-90 transition-opacity"
+          onClick={isProcessing ? undefined : onVoid}
+          disabled={isProcessing}
+          aria-disabled={isProcessing}
+          className={[
+            'flex-1 min-h-[56px] bg-error text-white text-base font-bold rounded-lg transition-opacity',
+            isProcessing ? 'opacity-50 pointer-events-none' : 'hover:opacity-90',
+          ].join(' ')}
         >
           NO — Void Sale
         </button>

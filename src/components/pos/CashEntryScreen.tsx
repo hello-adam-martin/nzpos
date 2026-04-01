@@ -20,7 +20,10 @@ export function CashEntryScreen({ totalCents, onComplete, onSplit, onCancel }: C
     inputRef.current?.focus()
   }, [])
 
-  const tenderedCents = parsePriceToCents(amountStr) ?? 0
+  // Cap at $99,999 (9,999,900 cents) to prevent unreasonable inputs
+  const MAX_CASH_CENTS = 9_999_900
+  const rawCents = parsePriceToCents(amountStr) ?? 0
+  const tenderedCents = Math.min(rawCents, MAX_CASH_CENTS)
   const hasAmount = tenderedCents > 0
   const isExact = tenderedCents === totalCents
   const isSufficient = tenderedCents >= totalCents
