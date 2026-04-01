@@ -191,7 +191,8 @@ export type Database = {
           gst_cents: number
           total_cents: number
           discount_cents: number
-          payment_method: 'eftpos' | 'cash' | 'stripe' | null
+          payment_method: 'eftpos' | 'cash' | 'stripe' | 'split' | null
+          cash_tendered_cents: number | null
           stripe_session_id: string | null
           stripe_payment_intent_id: string | null
           customer_email: string | null
@@ -209,7 +210,8 @@ export type Database = {
           gst_cents: number
           total_cents: number
           discount_cents?: number
-          payment_method?: 'eftpos' | 'cash' | 'stripe' | null
+          payment_method?: 'eftpos' | 'cash' | 'stripe' | 'split' | null
+          cash_tendered_cents?: number | null
           stripe_session_id?: string | null
           stripe_payment_intent_id?: string | null
           customer_email?: string | null
@@ -227,7 +229,8 @@ export type Database = {
           gst_cents?: number
           total_cents?: number
           discount_cents?: number
-          payment_method?: 'eftpos' | 'cash' | 'stripe' | null
+          payment_method?: 'eftpos' | 'cash' | 'stripe' | 'split' | null
+          cash_tendered_cents?: number | null
           stripe_session_id?: string | null
           stripe_payment_intent_id?: string | null
           customer_email?: string | null
@@ -427,6 +430,22 @@ export type Database = {
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      complete_pos_sale: {
+        Args: {
+          p_store_id: string
+          p_staff_id: string
+          p_payment_method: string
+          p_subtotal_cents: number
+          p_gst_cents: number
+          p_total_cents: number
+          p_discount_cents: number
+          p_cash_tendered_cents: number | null
+          p_notes: string | null
+          p_items: unknown // JSONB array of order items
+        }
+        Returns: { order_id: string }
+      }
+    }
   }
 }
