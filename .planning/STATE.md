@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-07-PLAN.md
-last_updated: "2026-04-01T07:36:03.698Z"
+stopped_at: Completed 04-05-PLAN.md
+last_updated: "2026-04-01T07:37:59.598Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 23
-  completed_plans: 21
+  completed_plans: 22
   percent: 0
 ---
 
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-online-store P02 | 98s | 2 tasks | 3 files |
 | Phase 04-online-store P03 | 6m | 2 tasks | 8 files |
 | Phase 04-online-store P07 | 134s | 2 tasks | 4 files |
+| Phase 04-online-store P05 | 225s | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,8 @@ Recent decisions affecting current work:
 - [Phase 04-online-store]: formatNZD is the actual money.ts export (not formatCents as in plan) — used throughout storefront components
 - [Phase 04-online-store]: AddToCartButton extracted as isolated client component to maintain server/client boundary on detail page
 - [Phase 04-online-store]: CartClearer extracted as isolated client component to keep confirmation page as Server Component while allowing useCart hook access
+- [Phase 04-online-store]: Promo current_uses incremented via read-then-write (not RPC) — increment_promo_uses RPC not in generated types; direct update is safe for v1 traffic
+- [Phase 04-online-store]: CartDrawer uses window.location.href for Stripe redirect — Server Action returns URL and client-side redirect is required for external Stripe URL
 
 ### Pending Todos
 
@@ -109,6 +112,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T07:36:03.695Z
-Stopped at: Completed 04-07-PLAN.md
+Last session: 2026-04-01T07:37:59.594Z
+Stopped at: Completed 04-05-PLAN.md
 Resume file: None
