@@ -14,8 +14,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation** - Scaffold, schema, auth plumbing, GST module, Zod schemas, CI/CD, PWA manifest
 - [ ] **Phase 2: Product Catalog** - Owner CRUD for products and categories, image uploads, CSV import
-- [x] **Phase 3: POS Checkout** - Staff PIN auth, iPad product grid, cart with discounts, EFTPOS confirmation, atomic sale (completed 2026-04-01)
-- [x] **Phase 4: Online Store** - Public storefront, Stripe checkout, promo codes, webhooks, click-and-collect (completed 2026-04-01)
+- [ ] **Phase 3: POS Checkout** - Staff PIN auth, iPad product grid, cart with discounts, EFTPOS confirmation, atomic sale
+- [ ] **Phase 4: Online Store** - Public storefront, Stripe checkout, promo codes, webhooks, click-and-collect
 - [ ] **Phase 5: Admin & Reporting** - Owner dashboard, order management, refunds, cash-up, reporting, low stock alerts
 - [ ] **Phase 6: Xero Integration** - OAuth connect, daily sales sync, GST breakdown, token management
 
@@ -69,14 +69,7 @@ Plans:
   3. For EFTPOS: a full-screen confirmation step asks "Did the terminal show APPROVED?" — answering No voids the sale; answering Yes records it and decrements stock atomically
   4. After each completed sale the product grid reflects updated stock counts without a manual refresh
   5. Out-of-stock products show a warning on the grid; owner override is available to respond anyway
-**Plans:** 6/6 plans complete
-Plans:
-- [x] 03-01-PLAN.md — Cart logic module (TDD), Supabase RPC migration, completeSale Server Action
-- [x] 03-02-PLAN.md — POS page Server Component, product grid with categories, search, stock badges
-- [x] 03-03-PLAN.md — Cart panel with line items, quantity controls, summary, payment toggle, pay button
-- [x] 03-04-PLAN.md — Discount sheet, EFTPOS confirmation, cash entry, out-of-stock override, sale summary + full wiring
-- [x] 03-05-PLAN.md — Integration testing, edge case fixes, visual verification checkpoint
-- [x] 03-06-PLAN.md — Gap closure: build PIN login UI (staff selector, PIN pad, form submission)
+**Plans**: TBD
 **UI hint**: yes
 
 ### Phase 4: Online Store
@@ -88,16 +81,8 @@ Plans:
   2. Customer can add products to cart, apply a valid promo code, and be redirected to Stripe Checkout; invalid or expired codes show an error
   3. After Stripe payment succeeds, stock decrements atomically and an order record is created; replaying the same Stripe event a second time does not create a duplicate order or decrement stock again
   4. Sold-out products display "Sold Out" and cannot be added to cart by any customer
-  5. Staff can update a click-and-collect order through PENDING_PICKUP -> READY -> COLLECTED; the status is visible to the owner in the admin order list
-**Plans:** 7/7 plans complete
-Plans:
-- [x] 04-01-PLAN.md — Schema fixes, online store migration, server utilities, Wave 0 test stubs
-- [x] 04-02-PLAN.md — Cart context with localStorage persistence, storefront layout and header
-- [x] 04-03-PLAN.md — Product listing page, product detail page, category pills, search, sold-out handling
-- [x] 04-04-PLAN.md — Promo code CRUD admin page, validate Server Action with rate limiting
-- [x] 04-05-PLAN.md — Cart drawer UI components, createCheckoutSession Server Action
-- [x] 04-06-PLAN.md — Click-and-collect status transitions, POS Pickups tab with navigation
-- [x] 04-07-PLAN.md — Stripe webhook handler with idempotency, order confirmation and status pages
+  5. Staff can update a click-and-collect order through PENDING_PICKUP → READY → COLLECTED; the status is visible to the owner in the admin order list
+**Plans**: TBD
 **UI hint**: yes
 
 ### Phase 5: Admin & Reporting
@@ -110,14 +95,14 @@ Plans:
   3. Owner can view a sales report for any date range showing daily totals, top products by revenue, and current stock levels
   4. Owner can view GST period summary with per-line breakdown suitable for IRD filing
   5. Owner can process a full refund on any order; refunded orders appear with refund status in the order list and in reporting
-**Plans:** 6 plans
+**Plans**: 1/6 plans executed
 Plans:
-- [ ] 05-01-PLAN.md — Foundation: schema fix, Recharts install, sidebar extension, shared utilities and badges
-- [ ] 05-02-PLAN.md — Dashboard: hero cards (today's sales, orders, channel split) and low stock alerts
-- [ ] 05-03-PLAN.md — Order list: data table, filter bar, pagination, order detail drawer with click-and-collect
-- [ ] 05-04-PLAN.md — Refund flow: processRefund Server Action (Stripe integration), confirmation UI in drawer
-- [ ] 05-05-PLAN.md — Cash-up: session open/close Server Actions, POS top bar integration, denomination breakdown, admin page
-- [ ] 05-06-PLAN.md — Reports: sales charts (Recharts), date range presets, GST summary/detail, top products, CSV export
+- [x] 05-01-PLAN.md — Foundation: test stubs, schema fix, Recharts, shared utilities, sidebar, badge components
+- [ ] 05-02-PLAN.md — Order management list with filters
+- [ ] 05-03-PLAN.md — Cash-up flow (open/close session, reconciliation)
+- [ ] 05-04-PLAN.md — Reports page (sales, top products, stock levels)
+- [ ] 05-05-PLAN.md — GST period summary report
+- [ ] 05-06-PLAN.md — Owner dashboard and low stock alerts
 **UI hint**: yes
 
 ### Phase 6: Xero Integration
@@ -135,13 +120,13 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/5 | In Progress|  |
 | 2. Product Catalog | 2/5 | In Progress|  |
-| 3. POS Checkout | 6/6 | Complete   | 2026-04-01 |
-| 4. Online Store | 7/7 | Complete   | 2026-04-01 |
-| 5. Admin & Reporting | 0/6 | Not started | - |
+| 3. POS Checkout | 0/TBD | Not started | - |
+| 4. Online Store | 0/TBD | Not started | - |
+| 5. Admin & Reporting | 1/6 | In Progress | - |
 | 6. Xero Integration | 0/TBD | Not started | - |
