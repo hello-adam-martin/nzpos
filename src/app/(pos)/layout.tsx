@@ -3,5 +3,5 @@ export const metadata = {
 }
 
 export default function PosLayout({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-screen bg-bg touch-manipulation">{children}</div>
+  return <div className="h-dvh overflow-hidden bg-bg touch-manipulation">{children}</div>
 }
