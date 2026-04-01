@@ -130,6 +130,7 @@ export type Database = {
           reorder_threshold: number
           image_url: string | null
           is_active: boolean
+          slug: string | null
           created_at: string
           updated_at: string
         }
@@ -145,6 +146,7 @@ export type Database = {
           reorder_threshold?: number
           image_url?: string | null
           is_active?: boolean
+          slug?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -160,6 +162,7 @@ export type Database = {
           reorder_threshold?: number
           image_url?: string | null
           is_active?: boolean
+          slug?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -191,8 +194,7 @@ export type Database = {
           gst_cents: number
           total_cents: number
           discount_cents: number
-          payment_method: 'eftpos' | 'cash' | 'stripe' | 'split' | null
-          cash_tendered_cents: number | null
+          payment_method: 'eftpos' | 'cash' | 'stripe' | null
           stripe_session_id: string | null
           stripe_payment_intent_id: string | null
           customer_email: string | null
@@ -210,8 +212,7 @@ export type Database = {
           gst_cents: number
           total_cents: number
           discount_cents?: number
-          payment_method?: 'eftpos' | 'cash' | 'stripe' | 'split' | null
-          cash_tendered_cents?: number | null
+          payment_method?: 'eftpos' | 'cash' | 'stripe' | null
           stripe_session_id?: string | null
           stripe_payment_intent_id?: string | null
           customer_email?: string | null
@@ -229,8 +230,7 @@ export type Database = {
           gst_cents?: number
           total_cents?: number
           discount_cents?: number
-          payment_method?: 'eftpos' | 'cash' | 'stripe' | 'split' | null
-          cash_tendered_cents?: number | null
+          payment_method?: 'eftpos' | 'cash' | 'stripe' | null
           stripe_session_id?: string | null
           stripe_payment_intent_id?: string | null
           customer_email?: string | null
@@ -303,10 +303,10 @@ export type Database = {
           id: string
           store_id: string
           code: string
-          discount_type: 'percent' | 'fixed'
+          discount_type: 'percentage' | 'fixed'
           discount_value: number
           max_uses: number | null
-          use_count: number
+          current_uses: number
           expires_at: string | null
           is_active: boolean
           created_at: string
@@ -316,10 +316,10 @@ export type Database = {
           id?: string
           store_id: string
           code: string
-          discount_type: 'percent' | 'fixed'
+          discount_type: 'percentage' | 'fixed'
           discount_value: number
           max_uses?: number | null
-          use_count?: number
+          current_uses?: number
           expires_at?: string | null
           is_active?: boolean
           created_at?: string
@@ -329,10 +329,10 @@ export type Database = {
           id?: string
           store_id?: string
           code?: string
-          discount_type?: 'percent' | 'fixed'
+          discount_type?: 'percentage' | 'fixed'
           discount_value?: number
           max_uses?: number | null
-          use_count?: number
+          current_uses?: number
           expires_at?: string | null
           is_active?: boolean
           created_at?: string
@@ -350,27 +350,32 @@ export type Database = {
       }
       stripe_events: {
         Row: {
-          id: string
-          stripe_event_id: string
+          id: string              // Stripe event ID (TEXT PK, not UUID)
+          store_id: string
           type: string
-          processed: boolean
-          created_at: string
+          processed_at: string
         }
         Insert: {
-          id?: string
-          stripe_event_id: string
+          id: string              // Stripe event ID — required, is PK
+          store_id: string
           type: string
-          processed?: boolean
-          created_at?: string
+          processed_at?: string
         }
         Update: {
           id?: string
-          stripe_event_id?: string
+          store_id?: string
           type?: string
-          processed?: boolean
-          created_at?: string
+          processed_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'stripe_events_store_id_fkey'
+            columns: ['store_id']
+            isOneToOne: false
+            referencedRelation: 'stores'
+            referencedColumns: ['id']
+          }
+        ]
       }
       cash_sessions: {
         Row: {
@@ -431,20 +436,16 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
-      complete_pos_sale: {
+      complete_online_sale: {
         Args: {
           p_store_id: string
-          p_staff_id: string
-          p_payment_method: string
-          p_subtotal_cents: number
-          p_gst_cents: number
-          p_total_cents: number
-          p_discount_cents: number
-          p_cash_tendered_cents: number | null
-          p_notes: string | null
-          p_items: unknown // JSONB array of order items
+          p_order_id: string
+          p_stripe_session_id: string
+          p_stripe_payment_intent_id: string
+          p_customer_email: string | null
+          p_items: unknown  // JSONB
         }
-        Returns: { order_id: string }
+        Returns: void
       }
     }
   }

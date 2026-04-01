@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Phase 4 context gathered
-last_updated: "2026-04-01T06:33:11.257Z"
-last_activity: 2026-04-01
+status: executing
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-04-01T07:20:48.689Z"
+last_activity: 2026-03-31
 progress:
   total_phases: 6
-  completed_phases: 3
-  total_plans: 16
-  completed_plans: 16
+  completed_phases: 2
+  total_plans: 10
+  completed_plans: 10
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 03 — pos-checkout
+**Current focus:** Phase 02 — product-catalog
 
 ## Current Position
 
-Phase: 4
+Phase: 3
 Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-01
+Status: Ready to execute
+Last activity: 2026-03-31
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -59,12 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-foundation P05 | 8 | 2 tasks | 7 files |
 | Phase 02-product-catalog P02 | 12 | 2 tasks | 6 files |
 | Phase 02-product-catalog P04 | 10 | 2 tasks | 11 files |
-| Phase 03-pos-checkout P01 | 3 | 2 tasks | 7 files |
-| Phase 03-pos-checkout P03 | 15 | 2 tasks | 6 files |
-| Phase 03-pos-checkout P02 | 192 | 2 tasks | 8 files |
-| Phase 03-pos-checkout P04 | 4 | 2 tasks | 7 files |
-| Phase 03-pos-checkout P05 | 31495551 | 1 tasks | 3 files |
-| Phase 03-pos-checkout P06 | 2 | 1 tasks | 2 files |
+| Phase 04-online-store P01 | 10 | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -95,20 +90,9 @@ Recent decisions affecting current work:
 - [Phase 02-product-catalog]: Image upload outputs WebP regardless of input format — consistent CDN storage, optimal file size at quality 85
 - [Phase 02-product-catalog]: papaparse used for both parse and unparse in CSV import — consistent library, no manual CSV string construction
 - [Phase 02-product-catalog]: validateImportRows uses empty Sets/Maps in preview step — DB-level duplicate detection happens at insert time in importProducts Server Action
-- [Phase 03-pos-checkout]: Cart discount distribution: Math.floor for all items, last item absorbs rounding remainder — ensures exact total
-- [Phase 03-pos-checkout]: complete_pos_sale RPC uses SELECT FOR UPDATE to lock stock rows before decrement — prevents overselling under concurrent transactions
-- [Phase 03-pos-checkout]: completeSale uses admin client (bypasses RLS) via SECURITY DEFINER RPC — staff JWT verified in Server Action layer, not DB layer
-- [Phase 03-pos-checkout]: CartPanel shows summary/toggle/button only when cart has items — avoids showing $0.00 total in empty state
-- [Phase 03-pos-checkout]: PayButton uses CSS opacity-50 + pointer-events-none for disabled state — avoids native button styling interference
-- [Phase 03-pos-checkout]: POSClientShell holds search/category state; filtered products passed to ProductGrid — centralized filtering with encapsulated inputs
-- [Phase 03-pos-checkout]: Staff logout uses router.push only (cookie persists until 8h expiry) — full server-side cookie deletion is v1.1 scope
-- [Phase 03-pos-checkout]: Split payment implemented sequentially: cash entered first, then EFTPOS confirm for remainder
-- [Phase 03-pos-checkout]: Owner out-of-stock override is direct (no PIN) since already authenticated; staff calls verifyStaffPin
-- [Phase 03-pos-checkout]: isProcessing passed to EftposConfirmScreen disables YES/NO buttons during API call — prevents double-recording
-- [Phase 03-pos-checkout]: discountTarget auto-cleared via useEffect when cart item removed — no stale sheet
-- [Phase 03-pos-checkout]: Cash tendered capped at 9999900 cents in CashEntryScreen — prevents unreasonable inputs
-- [Phase 03-pos-checkout]: export const dynamic = 'force-dynamic' on /pos/login prevents static prerender error when Supabase env vars absent at build time
-- [Phase 03-pos-checkout]: PinLoginForm auto-submits at pin.length === 4 passing string directly to handleSubmit to avoid stale state race condition
+- [Phase 04-online-store]: complete_online_sale updates existing PENDING order rather than inserting — matches Stripe Checkout hosted flow where order is created before redirect
+- [Phase 04-online-store]: Public RLS policies added for storefront: products (is_active=true) and orders (channel='online') for unauthenticated guest checkout reads
+- [Phase 04-online-store]: stripe_events id is TEXT PRIMARY KEY (Stripe event ID is the PK) for O(1) idempotency dedup on webhook processing
 
 ### Pending Todos
 
@@ -121,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T06:33:11.255Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-online-store/04-CONTEXT.md
+Last session: 2026-04-01T07:20:48.686Z
+Stopped at: Completed 04-01-PLAN.md
+Resume file: None
