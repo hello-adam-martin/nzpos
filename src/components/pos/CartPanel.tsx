@@ -3,11 +3,9 @@
 import type { CartState, CartAction } from '@/lib/cart'
 import { calcCartTotals } from '@/lib/cart'
 import { CartLineItem } from './CartLineItem'
-
-// Task 2 components — imported once created (will be added in Task 2)
-// import { CartSummary } from './CartSummary'
-// import { PaymentMethodToggle } from './PaymentMethodToggle'
-// import { PayButton } from './PayButton'
+import { CartSummary } from './CartSummary'
+import { PaymentMethodToggle } from './PaymentMethodToggle'
+import { PayButton } from './PayButton'
 
 type CartPanelProps = {
   cart: CartState
@@ -18,6 +16,7 @@ type CartPanelProps = {
 
 export function CartPanel({ cart, dispatch, onOpenDiscount }: CartPanelProps) {
   const itemCount = cart.items.reduce((sum, i) => sum + i.quantity, 0)
+  const totals = calcCartTotals(cart.items)
 
   return (
     <div className="flex flex-col h-full bg-surface border-l border-border">
@@ -53,9 +52,18 @@ export function CartPanel({ cart, dispatch, onOpenDiscount }: CartPanelProps) {
             ))}
           </div>
 
-          {/* Bottom section: summary + payment toggle + pay button (populated in Task 2) */}
-          <div className="border-t border-border p-4 space-y-3" id="cart-bottom-section">
-            {/* CartSummary, PaymentMethodToggle, PayButton added in Task 2 */}
+          {/* Bottom section: summary + payment toggle + pay button */}
+          <div className="border-t border-border p-4 space-y-3">
+            <CartSummary items={cart.items} />
+            <PaymentMethodToggle
+              selected={cart.paymentMethod}
+              onSelect={(method) => dispatch({ type: 'SET_PAYMENT_METHOD', method })}
+            />
+            <PayButton
+              totalCents={totals.totalCents}
+              disabled={cart.items.length === 0 || cart.paymentMethod === null}
+              onClick={() => dispatch({ type: 'INITIATE_PAYMENT' })}
+            />
           </div>
         </>
       )}
