@@ -300,10 +300,11 @@ export type Database = {
           id: string
           store_id: string
           code: string
-          discount_type: 'percent' | 'fixed'
+          discount_type: 'percentage' | 'fixed'
           discount_value: number
+          min_order_cents: number
           max_uses: number | null
-          use_count: number
+          current_uses: number
           expires_at: string | null
           is_active: boolean
           created_at: string
@@ -313,10 +314,11 @@ export type Database = {
           id?: string
           store_id: string
           code: string
-          discount_type: 'percent' | 'fixed'
+          discount_type: 'percentage' | 'fixed'
           discount_value: number
+          min_order_cents?: number
           max_uses?: number | null
-          use_count?: number
+          current_uses?: number
           expires_at?: string | null
           is_active?: boolean
           created_at?: string
@@ -326,10 +328,11 @@ export type Database = {
           id?: string
           store_id?: string
           code?: string
-          discount_type?: 'percent' | 'fixed'
+          discount_type?: 'percentage' | 'fixed'
           discount_value?: number
+          min_order_cents?: number
           max_uses?: number | null
-          use_count?: number
+          current_uses?: number
           expires_at?: string | null
           is_active?: boolean
           created_at?: string
