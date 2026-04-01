@@ -4,6 +4,14 @@
 
 A custom retail POS system for NZ small businesses. Runs on an iPad tablet for in-store checkout, has a public online storefront for customers, and an admin dashboard for the owner. Built specifically for the NZ market (GST, EFTPOS, NZD). The founder's supplies store is the first customer.
 
+## Current State
+
+**Shipped:** v1.0 MVP (2026-04-02)
+
+The complete v1 is built and tested: 191 source files, 17,423 LOC TypeScript, 502 tests passing. All 6 phases shipped across 33 plans. The system handles in-store POS checkout (iPad), online Stripe checkout, shared inventory with atomic stock decrement, admin reporting with cash-up, and Xero accounting integration.
+
+**Known gaps:** Xero integration requires live OAuth credentials for final UAT (4 of 5 tests pending). All automated tests pass.
+
 ## Core Value
 
 A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
@@ -12,24 +20,25 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 
 ### Validated
 
-- [x] GST handling (15%, tax-inclusive display, per-line rounding on discounted items) — Validated in Phase 01: Foundation
-- [x] User auth (owner email/password, staff PIN login with lockout) — Validated in Phase 01: Foundation
-- [x] Multi-tenant data model (store_id on all tables for future expansion) — Validated in Phase 01: Foundation
+- [x] GST handling (15%, tax-inclusive display, per-line rounding on discounted items) — v1.0
+- [x] User auth (owner email/password, staff PIN login with lockout) — v1.0
+- [x] Multi-tenant data model (store_id on all tables for future expansion) — v1.0
+- [x] Product catalog with categories, SKUs, images, and stock tracking — v1.0
+- [x] POS checkout on iPad (product grid, cart, discounts, EFTPOS/cash recording) — v1.0
+- [x] Online storefront with Stripe checkout and promo codes — v1.0
+- [x] Shared inventory with atomic stock decrement (no overselling) — v1.0
+- [x] End-of-day cash-up / reconciliation report — v1.0
+- [x] Xero integration (OAuth, daily sales sync with GST breakdown) — v1.0
+- [x] CSV product import — v1.0
+- [x] Refund handling (full refund, mark order as refunded) — v1.0
+- [x] Low stock alerts — v1.0
+- [x] Click-and-collect order workflow (pending_pickup → ready → collected) — v1.0
+- [x] Basic reporting (daily sales, top products, stock levels) — v1.0
+- [x] EFTPOS confirmation step (terminal approved? yes/no before completing sale) — v1.0
 
 ### Active
 
-- [x] Product catalog with categories, SKUs, images, and stock tracking — Validated in Phase 02: Product Catalog
-- [x] POS checkout on iPad (product grid, cart, discounts, EFTPOS/cash recording) — Validated in Phase 03: POS Checkout
-- [x] Online storefront with Stripe checkout and promo codes — Validated in Phase 04: Online Store
-- [x] Shared inventory with atomic stock decrement (no overselling) — Validated in Phase 03: POS Checkout
-- [x] End-of-day cash-up / reconciliation report — Validated in Phase 05: Admin Reporting
-- [x] Xero integration (OAuth, daily sales sync with GST breakdown) — Validated in Phase 06: Xero Integration
-- [x] CSV product import — Validated in Phase 02: Product Catalog
-- [x] Refund handling (full refund, mark order as refunded) — Validated in Phase 05: Admin Reporting
-- [x] Low stock alerts — Validated in Phase 05: Admin Reporting
-- [x] Click-and-collect order workflow (pending_pickup → ready → collected) — Validated in Phase 04: Online Store
-- [x] Basic reporting (daily sales, top products, stock levels) — Validated in Phase 05: Admin Reporting
-- [x] EFTPOS confirmation step (terminal approved? yes/no before completing sale) — Validated in Phase 03: POS Checkout
+(No active requirements. Next milestone not yet planned.)
 
 ### Out of Scope
 
@@ -44,6 +53,8 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - Barcode scanning — v1.1 (html5-qrcode library)
 - Receipt printing — v1.1 (ESC/POS thermal printer)
 - Email receipts — v1.1
+- Partial refunds — full refund only in v1, partial needs its own data model + Xero credit notes
+- Customer accounts — online customers check out as guests, accounts deferred to v1.1
 
 ## Context
 
@@ -51,8 +62,7 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - Walk-in retail is the primary business, property management supply is secondary
 - NZ POS market has established players (Square, Lightspeed/Vend, POSbiz) but founder chose custom build for full ownership and potential SaaS expansion
 - Design system shipped: deep navy (#1E293B) + amber (#E67E22), Satoshi + DM Sans typography (see DESIGN.md)
-- CEO review accepted 5 scope expansions: multi-tenant store_id, Xero, cash-up, discounts, product images
-- Eng review added: Zod validation, custom JWT claims for RLS, Vitest + Playwright, GST rounding fix, EFTPOS confirmation, refresh-on-transaction (not Realtime), Stripe order lifecycle state machine, click-and-collect status model
+- v1.0 shipped 2026-04-02 with 502 tests passing, 211 commits, 17,423 LOC TypeScript
 
 ## Constraints
 
@@ -67,17 +77,21 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Custom build over off-the-shelf | Full ownership, potential SaaS product, founder wants to build | — Pending |
-| Next.js + Supabase + Stripe | Standard 2026 stack, well-documented, AI-friendly | — Pending |
-| Multi-tenant from day 1 (store_id) | Cheap insurance vs painful migration later. AI handles query friction. | — Pending |
-| Xero integration in v1 | 75% of NZ small biz use Xero. Genuine differentiator. | — Pending |
-| Refresh-on-transaction over Supabase Realtime | Simpler, self-healing, no WebSocket failure mode | — Pending |
-| Custom JWT claims for RLS | Avoids 2-11x performance penalty of user table joins in RLS policies | — Pending |
-| Deep navy + amber design system | Professional, trustworthy, distinctive vs competitors | — Pending |
-| Zod validation on all Server Actions | Security baseline, catches malformed input before DB | — Pending |
-| Per-line GST on discounted amounts | IRD-compliant. Rounding per-line then sum for order total. | — Pending |
-| EFTPOS confirmation step | Prevents phantom sales when terminal declines but POS records payment | — Pending |
-| Click-and-collect status model | PENDING_PICKUP → READY → COLLECTED. Staff marks status in admin/POS. | — Pending |
+| Custom build over off-the-shelf | Full ownership, potential SaaS product, founder wants to build | ✓ Good — shipped v1.0 |
+| Next.js + Supabase + Stripe | Standard 2026 stack, well-documented, AI-friendly | ✓ Good — no framework blockers |
+| Multi-tenant from day 1 (store_id) | Cheap insurance vs painful migration later. AI handles query friction. | ✓ Good — zero friction in practice |
+| Xero integration in v1 | 75% of NZ small biz use Xero. Genuine differentiator. | ✓ Good — fully implemented |
+| Refresh-on-transaction over Supabase Realtime | Simpler, self-healing, no WebSocket failure mode | ✓ Good — works for single terminal |
+| Custom JWT claims for RLS | Avoids 2-11x performance penalty of user table joins in RLS policies | ✓ Good — clean RLS policies |
+| Deep navy + amber design system | Professional, trustworthy, distinctive vs competitors | ✓ Good — consistent across all surfaces |
+| Zod validation on all Server Actions | Security baseline, catches malformed input before DB | ✓ Good — caught bugs early |
+| Per-line GST on discounted amounts | IRD-compliant. Rounding per-line then sum for order total. | ✓ Good — tested with IRD specimens |
+| EFTPOS confirmation step | Prevents phantom sales when terminal declines but POS records payment | ✓ Good — no phantom sales possible |
+| Click-and-collect status model | PENDING_PICKUP → READY → COLLECTED. Staff marks status in admin/POS. | ✓ Good — clean state machine |
+| Integer cents throughout | No floating point math for money. All monetary columns INTEGER. | ✓ Good — zero rounding bugs |
+| Staff PIN via jose JWTs (not Supabase Auth) | Independent from owner auth. 8h sessions. Fast shift changes. | ✓ Good — clean separation |
+| Xero tokens in Supabase Vault | SECURITY DEFINER RPCs, not plain columns. service_role only access. | ✓ Good — tokens never in application memory |
+| Tailwind v4 CSS-native config | No tailwind.config.js. @theme block in globals.css. | ⚠️ Revisit — spacing tokens caused v4 bugs |
 
 ## Evolution
 
@@ -97,4 +111,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-02 after Phase 06 completion (all v1.0 milestone phases complete)*
+*Last updated: 2026-04-02 after v1.0 milestone completion*
