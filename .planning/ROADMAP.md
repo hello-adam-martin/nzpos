@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation** - Scaffold, schema, auth plumbing, GST module, Zod schemas, CI/CD, PWA manifest
 - [ ] **Phase 2: Product Catalog** - Owner CRUD for products and categories, image uploads, CSV import
-- [ ] **Phase 3: POS Checkout** - Staff PIN auth, iPad product grid, cart with discounts, EFTPOS confirmation, atomic sale
+- [x] **Phase 3: POS Checkout** - Staff PIN auth, iPad product grid, cart with discounts, EFTPOS confirmation, atomic sale (completed 2026-04-01)
 - [ ] **Phase 4: Online Store** - Public storefront, Stripe checkout, promo codes, webhooks, click-and-collect
 - [ ] **Phase 5: Admin & Reporting** - Owner dashboard, order management, refunds, cash-up, reporting, low stock alerts
 - [ ] **Phase 6: Xero Integration** - OAuth connect, daily sales sync, GST breakdown, token management
@@ -69,14 +69,14 @@ Plans:
   3. For EFTPOS: a full-screen confirmation step asks "Did the terminal show APPROVED?" — answering No voids the sale; answering Yes records it and decrements stock atomically
   4. After each completed sale the product grid reflects updated stock counts without a manual refresh
   5. Out-of-stock products show a warning on the grid; owner override is available to respond anyway
-**Plans:** 6 plans (5 complete, 1 gap closure pending)
+**Plans:** 6/6 plans complete
 Plans:
 - [x] 03-01-PLAN.md — Cart logic module (TDD), Supabase RPC migration, completeSale Server Action
 - [x] 03-02-PLAN.md — POS page Server Component, product grid with categories, search, stock badges
 - [x] 03-03-PLAN.md — Cart panel with line items, quantity controls, summary, payment toggle, pay button
 - [x] 03-04-PLAN.md — Discount sheet, EFTPOS confirmation, cash entry, out-of-stock override, sale summary + full wiring
 - [x] 03-05-PLAN.md — Integration testing, edge case fixes, visual verification checkpoint
-- [ ] 03-06-PLAN.md — Gap closure: build PIN login UI (staff selector, PIN pad, form submission)
+- [x] 03-06-PLAN.md — Gap closure: build PIN login UI (staff selector, PIN pad, form submission)
 **UI hint**: yes
 
 ### Phase 4: Online Store
@@ -126,7 +126,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/5 | In Progress|  |
 | 2. Product Catalog | 2/5 | In Progress|  |
-| 3. POS Checkout | 5/6 | Gap closure | - |
+| 3. POS Checkout | 6/6 | Complete   | 2026-04-01 |
 | 4. Online Store | 0/TBD | Not started | - |
 | 5. Admin & Reporting | 0/TBD | Not started | - |
 | 6. Xero Integration | 0/TBD | Not started | - |

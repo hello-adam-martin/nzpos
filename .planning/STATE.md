@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: "Completed 03-05-PLAN.md — Phase 03 complete, visual verification passed"
-last_updated: "2026-04-01T17:00:00Z"
+status: verifying
+stopped_at: Completed 03-06-PLAN.md — PIN login UI gap closure complete
+last_updated: "2026-04-01T04:46:14.958Z"
 last_activity: 2026-04-01
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 15
-  completed_plans: 15
+  total_plans: 16
+  completed_plans: 16
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 Phase: 03 (pos-checkout) — COMPLETE
 Plan: 5 of 5
-Status: Phase complete — visual verification passed, ready for Phase 04
+Status: Phase complete — ready for verification
 Last activity: 2026-04-01
 
 Progress: [░░░░░░░░░░] 0%
@@ -64,6 +64,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-pos-checkout P02 | 192 | 2 tasks | 8 files |
 | Phase 03-pos-checkout P04 | 4 | 2 tasks | 7 files |
 | Phase 03-pos-checkout P05 | 31495551 | 1 tasks | 3 files |
+| Phase 03-pos-checkout P06 | 2 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -106,6 +107,8 @@ Recent decisions affecting current work:
 - [Phase 03-pos-checkout]: isProcessing passed to EftposConfirmScreen disables YES/NO buttons during API call — prevents double-recording
 - [Phase 03-pos-checkout]: discountTarget auto-cleared via useEffect when cart item removed — no stale sheet
 - [Phase 03-pos-checkout]: Cash tendered capped at 9999900 cents in CashEntryScreen — prevents unreasonable inputs
+- [Phase 03-pos-checkout]: export const dynamic = 'force-dynamic' on /pos/login prevents static prerender error when Supabase env vars absent at build time
+- [Phase 03-pos-checkout]: PinLoginForm auto-submits at pin.length === 4 passing string directly to handleSubmit to avoid stale state race condition
 
 ### Pending Todos
 
@@ -118,6 +121,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T17:00:00Z
-Stopped at: Completed 03-05-PLAN.md — Phase 03 complete, visual verification passed
+Last session: 2026-04-01T04:46:14.956Z
+Stopped at: Completed 03-06-PLAN.md — PIN login UI gap closure complete
 Resume file: None
