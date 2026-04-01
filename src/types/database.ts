@@ -305,6 +305,7 @@ export type Database = {
           code: string
           discount_type: 'percentage' | 'fixed'
           discount_value: number
+          min_order_cents: number
           max_uses: number | null
           current_uses: number
           expires_at: string | null
@@ -318,6 +319,7 @@ export type Database = {
           code: string
           discount_type: 'percentage' | 'fixed'
           discount_value: number
+          min_order_cents?: number
           max_uses?: number | null
           current_uses?: number
           expires_at?: string | null
@@ -331,6 +333,7 @@ export type Database = {
           code?: string
           discount_type?: 'percentage' | 'fixed'
           discount_value?: number
+          min_order_cents?: number
           max_uses?: number | null
           current_uses?: number
           expires_at?: string | null

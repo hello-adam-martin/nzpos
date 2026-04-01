@@ -60,8 +60,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Discounts & Promos
 
-- [ ] **DISC-01**: Owner can create promo codes with type (percentage/fixed), value, min order, max uses, expiry
-- [ ] **DISC-02**: Online store validates promo codes with rate limiting (10/min per IP)
+- [x] **DISC-01**: Owner can create promo codes with type (percentage/fixed), value, min order, max uses, expiry
+- [x] **DISC-02**: Online store validates promo codes with rate limiting (10/min per IP)
 - [ ] **DISC-03**: POS staff can apply manual discounts with reason (staff, damaged, loyalty)
 - [ ] **DISC-04**: GST recalculates correctly on discounted line items
 
@@ -176,8 +176,8 @@ Explicitly excluded. Documented to prevent scope creep.
 | STORE-07 | Phase 4 | Pending |
 | STORE-08 | Phase 4 | Complete |
 | STORE-09 | Phase 4 | Pending |
-| DISC-01 | Phase 4 | Pending |
-| DISC-02 | Phase 4 | Pending |
+| DISC-01 | Phase 4 | Complete |
+| DISC-02 | Phase 4 | Complete |
 | ADMIN-01 | Phase 5 | Pending |
 | ADMIN-02 | Phase 5 | Pending |
 | ADMIN-03 | Phase 5 | Pending |

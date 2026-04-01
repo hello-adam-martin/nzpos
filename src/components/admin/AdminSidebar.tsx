@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 const navLinks = [
   { href: '/admin/dashboard', label: 'Dashboard' },
   { href: '/admin/products', label: 'Products' },
+  { href: '/admin/promos', label: 'Promos' },
 ]
 
 export default function AdminSidebar() {
