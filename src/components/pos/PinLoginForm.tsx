@@ -81,7 +81,7 @@ export function PinLoginForm({ storeId, storeName, staffList }: PinLoginFormProp
       <h1 className="font-display text-2xl font-bold text-white mb-2">{storeName}</h1>
       <p className="text-text-light text-sm mb-8">Staff Login</p>
 
-      <div className="bg-card rounded-lg p-8 w-full max-w-sm shadow-lg">
+      <div className="bg-card rounded-lg p-8 w-full max-w-96 shadow-lg">
         {/* Staff selector */}
         {!selectedStaffId && (
           <div>

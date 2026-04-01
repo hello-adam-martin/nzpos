@@ -45,11 +45,13 @@ export function ProductCard({
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       className={[
-        'relative bg-card rounded-lg border p-3.5 text-center cursor-pointer',
-        'transition-[border-color,transform] duration-150 active:scale-[0.97]',
+        'relative rounded-lg border p-3.5 text-center cursor-pointer shadow-sm',
+        'transition-[border-color,transform,background-color] duration-150 active:scale-[0.97]',
         isDisabled
-          ? 'opacity-50 cursor-not-allowed border-border'
-          : 'border-border hover:border-navy',
+          ? 'opacity-50 cursor-not-allowed bg-card border-border'
+          : isInCart
+            ? 'bg-[#F1F5F9] border-[#CBD5E1] hover:border-navy'
+            : 'bg-card border-[#D6D3D1] hover:border-navy',
         isInCart ? 'ring-2 ring-info ring-offset-1' : '',
       ]
         .filter(Boolean)

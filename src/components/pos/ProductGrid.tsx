@@ -66,7 +66,7 @@ export function ProductGrid({
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3 p-4">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3 p-4 bg-border rounded-lg">
           {products.map((product) => {
             const cartItem = cart.items.find(
               (i) => i.productId === product.id
