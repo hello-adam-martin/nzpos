@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-admin-reporting 05-01-PLAN.md
-last_updated: "2026-04-01T09:20:38.122Z"
-last_activity: 2026-03-31
+stopped_at: Phase 5 UI-SPEC approved
+last_updated: "2026-04-01T09:14:43.497Z"
+last_activity: 2026-04-01 -- Phase 05 execution started
 progress:
   total_phases: 6
-  completed_phases: 2
-  total_plans: 10
-  completed_plans: 10
+  completed_phases: 4
+  total_plans: 29
+  completed_plans: 23
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 02 — product-catalog
+**Current focus:** Phase 05 — admin-reporting
 
 ## Current Position
 
-Phase: 3
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-03-31
+Phase: 05 (admin-reporting) — EXECUTING
+Plan: 1 of 6
+Status: Executing Phase 05
+Last activity: 2026-04-01 -- Phase 05 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -59,7 +59,11 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-foundation P05 | 8 | 2 tasks | 7 files |
 | Phase 02-product-catalog P02 | 12 | 2 tasks | 6 files |
 | Phase 02-product-catalog P04 | 10 | 2 tasks | 11 files |
-| Phase 05-admin-reporting P01 | 3 | 3 tasks | 17 files |
+| Phase 04-online-store P02 | 98s | 2 tasks | 3 files |
+| Phase 04-online-store P03 | 6m | 2 tasks | 8 files |
+| Phase 04-online-store P07 | 134s | 2 tasks | 4 files |
+| Phase 04-online-store P05 | 225s | 2 tasks | 5 files |
+| Phase 04-online-store P06 | 93s | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -90,8 +94,15 @@ Recent decisions affecting current work:
 - [Phase 02-product-catalog]: Image upload outputs WebP regardless of input format — consistent CDN storage, optimal file size at quality 85
 - [Phase 02-product-catalog]: papaparse used for both parse and unparse in CSV import — consistent library, no manual CSV string construction
 - [Phase 02-product-catalog]: validateImportRows uses empty Sets/Maps in preview step — DB-level duplicate detection happens at insert time in importProducts Server Action
-- [Phase 05-admin-reporting]: server-only import (not 'use server') used in resolveAuth.ts — utility functions use server-only guard, not Server Action directive
-- [Phase 05-admin-reporting]: Named exports for badge components (OrderStatusBadge, ChannelBadge) not default exports — consistent with shared component pattern
+- [Phase 04-online-store]: StoreCartItem omits lineTotalCents/gstCents — computed dynamically in useCart to avoid stale values if formula changes
+- [Phase 04-online-store]: isDrawerOpen excluded from localStorage persistence — always starts closed on hydration
+- [Phase 04-online-store]: formatNZD is the actual money.ts export (not formatCents as in plan) — used throughout storefront components
+- [Phase 04-online-store]: AddToCartButton extracted as isolated client component to maintain server/client boundary on detail page
+- [Phase 04-online-store]: CartClearer extracted as isolated client component to keep confirmation page as Server Component while allowing useCart hook access
+- [Phase 04-online-store]: Promo current_uses incremented via read-then-write (not RPC) — increment_promo_uses RPC not in generated types; direct update is safe for v1 traffic
+- [Phase 04-online-store]: CartDrawer uses window.location.href for Stripe redirect — Server Action returns URL and client-side redirect is required for external Stripe URL
+- [Phase 04-online-store]: POSTopBar converted to 'use client' to support usePathname for active nav highlighting (D-15b)
+- [Phase 04-online-store]: D-14 email notification deferred from Phase 4 — documented with TODO in updateOrderStatus.ts
 
 ### Pending Todos
 
@@ -104,6 +115,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T09:20:38.119Z
-Stopped at: Completed 05-admin-reporting 05-01-PLAN.md
-Resume file: None
+Last session: 2026-04-01T08:28:39.235Z
+Stopped at: Phase 5 UI-SPEC approved
+Resume file: .planning/phases/05-admin-reporting/05-UI-SPEC.md
