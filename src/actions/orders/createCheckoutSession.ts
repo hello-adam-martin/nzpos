@@ -1,0 +1,244 @@
+'use server'
+import 'server-only'
+import { stripe } from '@/lib/stripe'
+import { createSupabaseAdminClient } from '@/lib/supabase/admin'
+import { calcLineItem, calcOrderGST } from '@/lib/gst'
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface CheckoutItem {
+  productId: string
+  quantity: number
+}
+
+interface CreateCheckoutSessionInput {
+  items: CheckoutItem[]
+  promoId?: string
+  promoDiscountCents?: number
+  promoDiscountType?: 'percentage' | 'fixed'
+}
+
+type CreateCheckoutSessionResult =
+  | { url: string }
+  | { error: 'out_of_stock'; productName: string }
+  | { error: 'invalid_input' }
+  | { error: 'server_error' }
+
+// ---------------------------------------------------------------------------
+// Server Action
+// ---------------------------------------------------------------------------
+
+export async function createCheckoutSession(
+  input: CreateCheckoutSessionInput
+): Promise<CreateCheckoutSessionResult> {
+  const storeId = process.env.STORE_ID!
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL!
+
+  const { items, promoId, promoDiscountCents = 0, promoDiscountType } = input
+
+  if (!items || items.length === 0) {
+    return { error: 'invalid_input' }
+  }
+
+  const supabase = createSupabaseAdminClient()
+
+  // 1. Re-fetch product prices from DB — NEVER trust client prices
+  const productIds = items.map((i) => i.productId)
+  const { data: products, error: productsError } = await supabase
+    .from('products')
+    .select('id, name, price_cents, stock_quantity, is_active')
+    .eq('store_id', storeId)
+    .in('id', productIds)
+    .eq('is_active', true)
+
+  if (productsError || !products) {
+    console.error('[createCheckoutSession] Failed to fetch products:', productsError?.message)
+    return { error: 'server_error' }
+  }
+
+  // Build a lookup map
+  const productMap = new Map(products.map((p) => [p.id, p]))
+
+  // 2. Validate all items exist and have sufficient stock
+  for (const item of items) {
+    const product = productMap.get(item.productId)
+    if (!product) {
+      return { error: 'out_of_stock', productName: 'Unknown product' }
+    }
+    if (product.stock_quantity < item.quantity) {
+      return { error: 'out_of_stock', productName: product.name }
+    }
+  }
+
+  // 3. Build cart with server-verified prices and GST
+  // Compute subtotal before discount
+  const cartItems = items.map((item) => {
+    const product = productMap.get(item.productId)!
+    const lineTotal = product.price_cents * item.quantity
+    return {
+      productId: item.productId,
+      productName: product.name,
+      unitPriceCents: product.price_cents,
+      quantity: item.quantity,
+      lineTotalBeforeDiscount: lineTotal,
+    }
+  })
+
+  const subtotalBeforeDiscount = cartItems.reduce(
+    (sum, item) => sum + item.lineTotalBeforeDiscount,
+    0
+  )
+
+  // 4. If promo provided: re-validate from DB (double-check expiry/uses/active)
+  let appliedDiscountCents = 0
+  let verifiedPromoId: string | undefined
+
+  if (promoId && promoDiscountCents > 0) {
+    const { data: promo } = await supabase
+      .from('promo_codes')
+      .select('id, is_active, expires_at, max_uses, current_uses')
+      .eq('id', promoId)
+      .eq('store_id', storeId)
+      .single()
+
+    const promoValid =
+      promo &&
+      promo.is_active &&
+      (!promo.expires_at || new Date(promo.expires_at) >= new Date()) &&
+      (promo.max_uses === null || promo.current_uses < promo.max_uses)
+
+    if (promoValid) {
+      // Re-clamp to current subtotal (items may have changed)
+      appliedDiscountCents = Math.min(promoDiscountCents, subtotalBeforeDiscount)
+      verifiedPromoId = promo.id
+    }
+  }
+
+  // 5. Distribute discount pro-rata across lines (Math.floor for all, last absorbs remainder)
+  const lineDiscounts: number[] = new Array(cartItems.length).fill(0)
+  if (appliedDiscountCents > 0 && subtotalBeforeDiscount > 0) {
+    let allocated = 0
+    for (let i = 0; i < cartItems.length; i++) {
+      if (i === cartItems.length - 1) {
+        lineDiscounts[i] = appliedDiscountCents - allocated
+      } else {
+        const share = Math.floor(
+          (cartItems[i].lineTotalBeforeDiscount / subtotalBeforeDiscount) * appliedDiscountCents
+        )
+        lineDiscounts[i] = share
+        allocated += share
+      }
+    }
+  }
+
+  // 6. Calculate per-line totals and GST after discount
+  const lineGSTs: number[] = []
+  const finalCartItems = cartItems.map((item, i) => {
+    const { lineTotal, gst } = calcLineItem(
+      item.unitPriceCents,
+      item.quantity,
+      lineDiscounts[i]
+    )
+    lineGSTs.push(gst)
+    return {
+      ...item,
+      discountShareCents: lineDiscounts[i],
+      lineTotalCents: lineTotal,
+      gstCents: gst,
+    }
+  })
+
+  const totalCents = finalCartItems.reduce((sum, item) => sum + item.lineTotalCents, 0)
+  const gstCents = calcOrderGST(lineGSTs)
+  const totalDiscountCents = appliedDiscountCents
+
+  // 7. Create PENDING order record
+  const { data: order, error: orderError } = await supabase
+    .from('orders')
+    .insert({
+      store_id: storeId,
+      channel: 'online',
+      status: 'pending',
+      subtotal_cents: subtotalBeforeDiscount,
+      gst_cents: gstCents,
+      total_cents: totalCents,
+      discount_cents: totalDiscountCents,
+      payment_method: 'stripe',
+    })
+    .select('id')
+    .single()
+
+  if (orderError || !order) {
+    console.error('[createCheckoutSession] Failed to create order:', orderError?.message)
+    return { error: 'server_error' }
+  }
+
+  // 8. CRITICAL: Insert order_items for each cart item (required for complete_online_sale stock decrement)
+  const orderItemsData = finalCartItems.map((item) => ({
+    order_id: order.id,
+    store_id: storeId,
+    product_id: item.productId,
+    product_name: item.productName,
+    unit_price_cents: item.unitPriceCents,
+    quantity: item.quantity,
+    discount_cents: item.discountShareCents,
+    line_total_cents: item.lineTotalCents,
+    gst_cents: item.gstCents,
+  }))
+
+  const { error: itemsError } = await supabase.from('order_items').insert(orderItemsData)
+  if (itemsError) {
+    console.error('[createCheckoutSession] Failed to insert order_items:', itemsError.message)
+    // Clean up orphan order
+    await supabase.from('orders').delete().eq('id', order.id)
+    return { error: 'server_error' }
+  }
+
+  // 9. If promo applied: increment current_uses (non-fatal — next validation will catch max_uses)
+  if (verifiedPromoId) {
+    // Fetch current value and increment (avoids RPC dependency)
+    const { data: promoRow } = await supabase
+      .from('promo_codes')
+      .select('current_uses')
+      .eq('id', verifiedPromoId)
+      .single()
+
+    if (promoRow) {
+      await supabase
+        .from('promo_codes')
+        .update({ current_uses: promoRow.current_uses + 1 })
+        .eq('id', verifiedPromoId)
+    }
+  }
+
+  // 10. Create Stripe Checkout Session (server-validated prices, no Stripe Tax)
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    currency: 'nzd',
+    line_items: finalCartItems.map((item) => ({
+      price_data: {
+        currency: 'nzd',
+        product_data: { name: item.productName },
+        // GST-inclusive line total, already includes discount share
+        // quantity factored into lineTotalCents — use qty: 1
+        unit_amount: item.lineTotalCents,
+      },
+      quantity: 1,
+    })),
+    metadata: {
+      order_id: order.id,
+      store_id: storeId,
+    },
+    success_url: `${baseUrl}/order/${order.id}/confirmation?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${baseUrl}/`,
+  })
+
+  if (!session.url) {
+    console.error('[createCheckoutSession] Stripe session created but no URL returned')
+    return { error: 'server_error' }
+  }
+
+  return { url: session.url }
+}
