@@ -2,8 +2,9 @@
 phase: 5
 slug: admin-reporting
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
+wave_0_plan: "05-01"
 created: 2026-04-01
 ---
 
@@ -38,19 +39,22 @@ created: 2026-04-01
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 05-01-01 | 01 | 0 | ADMIN-01, ADMIN-06 | unit | `npm test -- src/lib/__tests__/dashboard.test.ts` | ❌ W0 | ⬜ pending |
-| 05-01-02 | 01 | 0 | ADMIN-02 | unit | `npm test -- src/lib/__tests__/cashSession.test.ts` | ❌ W0 | ⬜ pending |
-| 05-01-03 | 01 | 0 | ADMIN-03 | unit | `npm test -- src/actions/cash-sessions/__tests__/` | ❌ W0 | ⬜ pending |
-| 05-01-04 | 01 | 0 | ADMIN-04, REF-02 | unit | `npm test -- src/lib/__tests__/reports.test.ts` | ❌ W0 | ⬜ pending |
-| 05-01-05 | 01 | 0 | ADMIN-05 | unit | `npm test -- src/lib/__tests__/gstReport.test.ts` | ❌ W0 | ⬜ pending |
-| 05-01-06 | 01 | 0 | ADMIN-07 | unit | `npm test -- src/lib/__tests__/orderFilters.test.ts` | ❌ W0 | ⬜ pending |
-| 05-01-07 | 01 | 0 | REF-01 | unit | `npm test -- src/actions/orders/__tests__/processRefund.test.ts` | ❌ W0 | ⬜ pending |
+| 05-01-00 | 01 | 0 | ALL | scaffold | `npm test` | Created by Task 0 | ⬜ pending |
+| 05-01-01 | 01 | 0 | ADMIN-01, ADMIN-06 | unit | `npm test -- src/lib/__tests__/dashboard.test.ts` | Created by 05-01 Task 0 | ⬜ pending |
+| 05-01-02 | 01 | 0 | ADMIN-02 | unit | `npm test -- src/lib/__tests__/cashSession.test.ts` | Created by 05-01 Task 0 | ⬜ pending |
+| 05-01-03 | 01 | 0 | ADMIN-03 | unit | `npm test -- src/actions/cash-sessions/__tests__/` | Created by 05-01 Task 0 | ⬜ pending |
+| 05-01-04 | 01 | 0 | ADMIN-04, REF-02 | unit | `npm test -- src/lib/__tests__/reports.test.ts` | Created by 05-01 Task 0 | ⬜ pending |
+| 05-01-05 | 01 | 0 | ADMIN-05 | unit | `npm test -- src/lib/__tests__/gstReport.test.ts` | Created by 05-01 Task 0 | ⬜ pending |
+| 05-01-06 | 01 | 0 | ADMIN-07 | unit | `npm test -- src/lib/__tests__/orderFilters.test.ts` | Created by 05-01 Task 0 | ⬜ pending |
+| 05-01-07 | 01 | 0 | REF-01 | unit | `npm test -- src/actions/orders/__tests__/processRefund.test.ts` | Created by 05-01 Task 0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
 ---
 
 ## Wave 0 Requirements
+
+All 8 test stubs are created by Plan 05-01 Task 0 (first task in the phase):
 
 - [ ] `src/lib/__tests__/dashboard.test.ts` — stubs for ADMIN-01, ADMIN-06
 - [ ] `src/lib/__tests__/cashSession.test.ts` — stubs for ADMIN-02
@@ -74,11 +78,11 @@ created: 2026-04-01
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 30s
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references (Plan 05-01 Task 0 creates all 8 stubs)
+- [x] No watch-mode flags
+- [x] Feedback latency < 30s
 - [ ] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** pending execution
