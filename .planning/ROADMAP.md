@@ -114,7 +114,12 @@ Plans:
   2. Previous day's sales sync to Xero automatically overnight as a single invoice with correct GST breakdown; sync appears in the admin sync log with success/fail status and invoice ID
   3. Owner can trigger a manual sync from the dashboard and see the result immediately
   4. If the Xero token expires or the connection breaks, the admin dashboard shows a visible warning and the owner can reconnect without contacting support
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+- [ ] 06-01-PLAN.md — Database migration, xero-node install, Xero lib modules (types, vault, client, dates, invoice builder)
+- [ ] 06-02-PLAN.md — OAuth connect/disconnect flow, Integrations page, account codes, disconnect banner
+- [ ] 06-03-PLAN.md — Sync engine (sales aggregation, Xero invoice creation, credit notes, sync log)
+- [ ] 06-04-PLAN.md — Cron route, manual sync action, sync UI components, visual verification
 **UI hint**: yes
 
 ## Progress
@@ -129,4 +134,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. POS Checkout | 0/TBD | Not started | - |
 | 4. Online Store | 0/TBD | Not started | - |
 | 5. Admin & Reporting | 6/6 | Complete   | 2026-04-01 |
-| 6. Xero Integration | 0/TBD | Not started | - |
+| 6. Xero Integration | 0/4 | Not started | - |
