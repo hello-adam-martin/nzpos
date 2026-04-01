@@ -19,7 +19,7 @@ export function CartPanel({ cart, dispatch, onOpenDiscount }: CartPanelProps) {
   const totals = calcCartTotals(cart.items)
 
   return (
-    <div className="flex flex-col h-full bg-surface border-l border-border">
+    <div className="flex flex-col h-full overflow-hidden bg-surface border-l border-border">
       {/* Header */}
       <div className="flex items-center px-4 py-3 border-b border-border">
         <h2 className="text-xl font-bold text-text">Order</h2>
@@ -36,7 +36,7 @@ export function CartPanel({ cart, dispatch, onOpenDiscount }: CartPanelProps) {
         </div>
       ) : (
         <>
-          <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1">
+          <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2 space-y-1">
             {cart.items.map((item) => (
               <CartLineItem
                 key={item.productId}
