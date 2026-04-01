@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-product-catalog 02-04-PLAN.md
-last_updated: "2026-03-31T22:24:01.232Z"
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-04-01T07:20:48.689Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 6
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-foundation P05 | 8 | 2 tasks | 7 files |
 | Phase 02-product-catalog P02 | 12 | 2 tasks | 6 files |
 | Phase 02-product-catalog P04 | 10 | 2 tasks | 11 files |
+| Phase 04-online-store P01 | 10 | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,9 @@ Recent decisions affecting current work:
 - [Phase 02-product-catalog]: Image upload outputs WebP regardless of input format — consistent CDN storage, optimal file size at quality 85
 - [Phase 02-product-catalog]: papaparse used for both parse and unparse in CSV import — consistent library, no manual CSV string construction
 - [Phase 02-product-catalog]: validateImportRows uses empty Sets/Maps in preview step — DB-level duplicate detection happens at insert time in importProducts Server Action
+- [Phase 04-online-store]: complete_online_sale updates existing PENDING order rather than inserting — matches Stripe Checkout hosted flow where order is created before redirect
+- [Phase 04-online-store]: Public RLS policies added for storefront: products (is_active=true) and orders (channel='online') for unauthenticated guest checkout reads
+- [Phase 04-online-store]: stripe_events id is TEXT PRIMARY KEY (Stripe event ID is the PK) for O(1) idempotency dedup on webhook processing
 
 ### Pending Todos
 
@@ -101,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T22:08:44.299Z
-Stopped at: Completed 02-product-catalog 02-04-PLAN.md
+Last session: 2026-04-01T07:20:48.686Z
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None
