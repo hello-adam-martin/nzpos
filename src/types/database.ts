@@ -373,47 +373,41 @@ export type Database = {
         Row: {
           id: string
           store_id: string
-          staff_id: string
-          opened_at: string
-          closed_at: string | null
+          opened_by: string
+          closed_by: string | null
           opening_float_cents: number
-          closing_float_cents: number | null
+          closing_cash_cents: number | null
           expected_cash_cents: number | null
-          actual_cash_cents: number | null
           variance_cents: number | null
           notes: string | null
-          created_at: string
-          updated_at: string
+          opened_at: string
+          closed_at: string | null
         }
         Insert: {
           id?: string
           store_id: string
-          staff_id: string
-          opened_at?: string
-          closed_at?: string | null
+          opened_by: string
+          closed_by?: string | null
           opening_float_cents: number
-          closing_float_cents?: number | null
+          closing_cash_cents?: number | null
           expected_cash_cents?: number | null
-          actual_cash_cents?: number | null
           variance_cents?: number | null
           notes?: string | null
-          created_at?: string
-          updated_at?: string
+          opened_at?: string
+          closed_at?: string | null
         }
         Update: {
           id?: string
           store_id?: string
-          staff_id?: string
-          opened_at?: string
-          closed_at?: string | null
+          opened_by?: string
+          closed_by?: string | null
           opening_float_cents?: number
-          closing_float_cents?: number | null
+          closing_cash_cents?: number | null
           expected_cash_cents?: number | null
-          actual_cash_cents?: number | null
           variance_cents?: number | null
           notes?: string | null
-          created_at?: string
-          updated_at?: string
+          opened_at?: string
+          closed_at?: string | null
         }
         Relationships: [
           {
