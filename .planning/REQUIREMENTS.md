@@ -56,7 +56,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **STORE-06**: Webhook is idempotent (stripe_events dedup table with unique constraint)
 - [x] **STORE-07**: Order lifecycle: PENDING → COMPLETED (on webhook) or EXPIRED (session timeout)
 - [x] **STORE-08**: Out-of-stock products show "Sold Out" and cannot be added to cart
-- [ ] **STORE-09**: Click-and-collect: PENDING_PICKUP → READY → COLLECTED status flow
+- [x] **STORE-09**: Click-and-collect: PENDING_PICKUP → READY → COLLECTED status flow
 
 ### Discounts & Promos
 
@@ -175,7 +175,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | STORE-06 | Phase 4 | Complete |
 | STORE-07 | Phase 4 | Complete |
 | STORE-08 | Phase 4 | Complete |
-| STORE-09 | Phase 4 | Pending |
+| STORE-09 | Phase 4 | Complete |
 | DISC-01 | Phase 4 | Complete |
 | DISC-02 | Phase 4 | Complete |
 | ADMIN-01 | Phase 5 | Pending |
