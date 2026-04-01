@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 6 context gathered
-last_updated: "2026-04-01T10:42:01.296Z"
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-04-01T19:03:53.935Z"
 last_activity: 2026-04-01
 progress:
   total_phases: 6
   completed_phases: 5
-  total_plans: 29
-  completed_plans: 29
+  total_plans: 33
+  completed_plans: 30
   percent: 0
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 05 — admin-reporting
+**Current focus:** Phase 06 — xero-integration
 
 ## Current Position
 
-Phase: 05 (admin-reporting) — EXECUTING
-Plan: 5 of 6
+Phase: 06 (xero-integration) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
 Last activity: 2026-04-01
 
@@ -68,6 +68,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05-admin-reporting P03 | 217 | 3 tasks | 6 files |
 | Phase 05-admin-reporting P06 | 15m | 4 tasks | 11 files |
 | Phase 05-admin-reporting P04 | 4m | 2 tasks | 4 files |
+| Phase 06-xero-integration P01 | 5m | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -115,6 +116,9 @@ Recent decisions affecting current work:
 - [Phase 05-admin-reporting]: GST summary from orders.gst_cents not order_items to prevent double-counting
 - [Phase 05-admin-reporting]: ExportCSVButton auto-converts _cents keys to _dollars for human-readable CSV
 - [Phase 05-admin-reporting]: Refund step replaces drawer content in-place (no new modal) per UI-SPEC; overlay and Escape blocked during refund step
+- [Phase 06-xero-integration]: LineAmountTypes.Inclusive enum value is 'Inclusive' (not 'INCLUSIVE') in xero-node — confirmed via SDK inspection
+- [Phase 06-xero-integration]: Xero vault pattern: tokens stored exclusively via Supabase Vault RPC (SECURITY DEFINER, service_role only); no plain token columns in schema
+- [Phase 06-xero-integration]: NZ DST: fromZonedTime uses offset at local midnight, not reference time — April midnight uses NZDT (UTC+13) even after DST ends
 
 ### Pending Todos
 
@@ -127,6 +131,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T10:42:01.293Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-xero-integration/06-CONTEXT.md
+Last session: 2026-04-01T19:03:53.932Z
+Stopped at: Completed 06-01-PLAN.md
+Resume file: None
