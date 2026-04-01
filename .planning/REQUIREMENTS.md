@@ -41,10 +41,10 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **POS-03**: Staff can apply percentage or fixed-amount discounts per line item
 - [x] **POS-04**: Cart shows subtotal, GST breakdown (per-line on discounted amounts), and total
 - [x] **POS-05**: Staff selects payment method (EFTPOS or cash)
-- [ ] **POS-06**: EFTPOS confirmation step: "Did the terminal show APPROVED?" Yes completes sale, No voids
+- [x] **POS-06**: EFTPOS confirmation step: "Did the terminal show APPROVED?" Yes completes sale, No voids
 - [x] **POS-07**: Completed sale atomically decrements stock and creates order record
 - [x] **POS-08**: POS re-fetches stock after each sale and on page focus (no stale data)
-- [ ] **POS-09**: Out-of-stock warning displayed, owner can override
+- [x] **POS-09**: Out-of-stock warning displayed, owner can override
 
 ### Online Store
 
@@ -161,10 +161,10 @@ Explicitly excluded. Documented to prevent scope creep.
 | POS-03 | Phase 3 | Complete |
 | POS-04 | Phase 3 | Complete |
 | POS-05 | Phase 3 | Complete |
-| POS-06 | Phase 3 | Pending |
+| POS-06 | Phase 3 | Complete |
 | POS-07 | Phase 3 | Complete |
 | POS-08 | Phase 3 | Complete |
-| POS-09 | Phase 3 | Pending |
+| POS-09 | Phase 3 | Complete |
 | DISC-03 | Phase 3 | Complete |
 | DISC-04 | Phase 3 | Complete |
 | STORE-01 | Phase 4 | Pending |

@@ -74,7 +74,7 @@ Plans:
 - [x] 03-01-PLAN.md — Cart logic module (TDD), Supabase RPC migration, completeSale Server Action
 - [x] 03-02-PLAN.md — POS page Server Component, product grid with categories, search, stock badges
 - [x] 03-03-PLAN.md — Cart panel with line items, quantity controls, summary, payment toggle, pay button
-- [ ] 03-04-PLAN.md — Discount sheet, EFTPOS confirmation, cash entry, out-of-stock override, sale summary + full wiring
+- [x] 03-04-PLAN.md — Discount sheet, EFTPOS confirmation, cash entry, out-of-stock override, sale summary + full wiring
 - [ ] 03-05-PLAN.md — Integration testing, edge case fixes, visual verification checkpoint
 **UI hint**: yes
 

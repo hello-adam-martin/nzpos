@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-04-01T03:26:30.128Z"
+stopped_at: Completed 03-04-PLAN.md
+last_updated: "2026-04-01T03:34:38.800Z"
 last_activity: 2026-04-01
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 15
-  completed_plans: 13
+  completed_plans: 14
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 03 (pos-checkout) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-04-01
 
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-pos-checkout P01 | 3 | 2 tasks | 7 files |
 | Phase 03-pos-checkout P03 | 15 | 2 tasks | 6 files |
 | Phase 03-pos-checkout P02 | 192 | 2 tasks | 8 files |
+| Phase 03-pos-checkout P04 | 4 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,8 @@ Recent decisions affecting current work:
 - [Phase 03-pos-checkout]: PayButton uses CSS opacity-50 + pointer-events-none for disabled state — avoids native button styling interference
 - [Phase 03-pos-checkout]: POSClientShell holds search/category state; filtered products passed to ProductGrid — centralized filtering with encapsulated inputs
 - [Phase 03-pos-checkout]: Staff logout uses router.push only (cookie persists until 8h expiry) — full server-side cookie deletion is v1.1 scope
+- [Phase 03-pos-checkout]: Split payment implemented sequentially: cash entered first, then EFTPOS confirm for remainder
+- [Phase 03-pos-checkout]: Owner out-of-stock override is direct (no PIN) since already authenticated; staff calls verifyStaffPin
 
 ### Pending Todos
 
@@ -111,6 +114,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T03:26:30.125Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-04-01T03:34:38.798Z
+Stopped at: Completed 03-04-PLAN.md
 Resume file: None
