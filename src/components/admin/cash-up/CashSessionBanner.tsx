@@ -28,7 +28,7 @@ export function CashSessionBanner({ openedAt, onCloseClick }: CashSessionBannerP
   }, [openedAt])
 
   return (
-    <div className="flex items-center gap-sm text-sm text-white/80">
+    <div className="flex items-center gap-2 text-sm text-white/80">
       <span>Session open &middot; {elapsed}</span>
       <button
         type="button"

@@ -60,7 +60,7 @@ export function DenominationBreakdown({ onTotalChange }: DenominationBreakdownPr
       <button
         type="button"
         onClick={() => dispatch({ type: 'TOGGLE' })}
-        className="w-full flex items-center justify-between px-md py-sm text-sm font-bold text-[var(--color-text)] cursor-pointer"
+        className="w-full flex items-center justify-between px-4 py-2 text-sm font-bold text-[var(--color-text)] cursor-pointer"
       >
         <span>Enter by denomination</span>
         <svg
@@ -77,12 +77,12 @@ export function DenominationBreakdown({ onTotalChange }: DenominationBreakdownPr
       </button>
 
       {state.expanded && (
-        <div className="px-md pb-md border-t border-[var(--color-border)]">
-          <div className="grid grid-cols-2 gap-sm pt-sm">
+        <div className="px-4 pb-4 border-t border-[var(--color-border)]">
+          <div className="grid grid-cols-2 gap-2 pt-2">
             {DENOMINATIONS.map((d) => (
               <div
                 key={d.valueCents}
-                className="flex items-center gap-sm"
+                className="flex items-center gap-2"
                 style={{ minHeight: '44px' }}
               >
                 <label className="text-sm font-bold text-[var(--color-text)] w-12 shrink-0">
@@ -94,7 +94,7 @@ export function DenominationBreakdown({ onTotalChange }: DenominationBreakdownPr
                   value={state.counts[d.valueCents] ?? ''}
                   onChange={(e) => handleChange(d.valueCents, e.target.value)}
                   placeholder="0"
-                  className="w-full border border-[var(--color-border)] rounded-sm px-sm py-xs text-sm font-normal text-[var(--color-text)] focus:outline-none focus:border-[var(--color-navy)]"
+                  className="w-full border border-[var(--color-border)] rounded-sm px-2 py-1 text-sm font-normal text-[var(--color-text)] focus:outline-none focus:border-[var(--color-navy)]"
                 />
               </div>
             ))}

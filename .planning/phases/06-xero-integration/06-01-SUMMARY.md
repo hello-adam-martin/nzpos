@@ -127,6 +127,12 @@ None — all functions have complete implementations. vault.ts and client.ts dep
 - Vault RPC functions need to run against actual Supabase with vault extension enabled (migration 008 must be applied)
 - Env vars required before any Xero calls work: XERO_CLIENT_ID, XERO_CLIENT_SECRET, XERO_REDIRECT_URI, CRON_SECRET
 
+## Self-Check: PASSED
+
+- All 8 created files confirmed present on disk
+- All 3 task commits confirmed in git log (f17fde6, 966d1dc, 64e3b4c)
+- Final metadata commit: 3202ae8
+
 ---
 *Phase: 06-xero-integration*
 *Completed: 2026-04-02*

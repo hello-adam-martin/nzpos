@@ -70,7 +70,7 @@ export default async function CashUpPage() {
     formattedSessions.find((s) => s.closed_at === null) ?? null
 
   return (
-    <div className="space-y-lg">
+    <div className="space-y-6">
       <h1 className="font-display font-bold text-2xl text-[var(--color-text)]">Cash-Up</h1>
 
       <CashUpAdminPageClient

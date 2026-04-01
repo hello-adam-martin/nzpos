@@ -28,7 +28,7 @@ export function CashVarianceSummary({
   }
 
   return (
-    <div className="bg-[var(--color-surface)] rounded-md p-md space-y-sm">
+    <div className="bg-[var(--color-surface)] rounded-md p-4 space-y-2">
       <div className="flex justify-between items-center">
         <span className="text-sm font-bold text-[var(--color-text)]">Expected Cash</span>
         <span className="font-mono text-sm font-normal text-[var(--color-text)]">
@@ -41,7 +41,7 @@ export function CashVarianceSummary({
           {formatNZD(actualCashCents)}
         </span>
       </div>
-      <div className="border-t border-[var(--color-border)] pt-sm flex justify-between items-center">
+      <div className="border-t border-[var(--color-border)] pt-2 flex justify-between items-center">
         <span className="text-sm font-bold text-[var(--color-text)]">Variance</span>
         <span className={`font-mono text-sm font-bold ${varianceColor()}`}>
           {varianceLabel()}

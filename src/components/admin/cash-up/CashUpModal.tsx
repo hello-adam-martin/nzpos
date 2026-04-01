@@ -103,9 +103,9 @@ export function CashUpModal({ isOpen, onClose, currentSession }: CashUpModalProp
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-start justify-center">
-      <div className="bg-white rounded-xl p-xl max-w-md w-full mx-4 mt-[20vh] shadow-lg">
+      <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 mt-[20vh] shadow-lg">
         {/* Header */}
-        <div className="flex items-center justify-between mb-lg">
+        <div className="flex items-center justify-between mb-6">
           <h2 className="font-sans text-xl font-bold text-[var(--color-text)]">
             {currentSession ? 'Close Cash Session' : 'Open Cash Session'}
           </h2>
@@ -124,7 +124,7 @@ export function CashUpModal({ isOpen, onClose, currentSession }: CashUpModalProp
         {/* Content */}
         {closeResult ? (
           // Show variance summary after closing
-          <div className="space-y-lg">
+          <div className="space-y-6">
             <CashVarianceSummary
               expectedCashCents={closeResult.expectedCashCents}
               actualCashCents={closeResult.closingCashCents}
@@ -133,16 +133,16 @@ export function CashUpModal({ isOpen, onClose, currentSession }: CashUpModalProp
             <button
               type="button"
               onClick={onClose}
-              className="w-full bg-[var(--color-navy)] text-white text-sm font-bold py-sm rounded-md cursor-pointer"
+              className="w-full bg-[var(--color-navy)] text-white text-sm font-bold py-2 rounded-md cursor-pointer"
             >
               Done
             </button>
           </div>
         ) : currentSession ? (
           // Close session form
-          <div className="space-y-md">
+          <div className="space-y-4">
             <div>
-              <label className="block text-sm font-bold text-[var(--color-text)] mb-xs">
+              <label className="block text-sm font-bold text-[var(--color-text)] mb-1">
                 Cash counted
               </label>
               <input
@@ -155,14 +155,14 @@ export function CashUpModal({ isOpen, onClose, currentSession }: CashUpModalProp
                   setCashCountedCents(0) // Reset denomination total when typing directly
                 }}
                 placeholder="0.00"
-                className="w-full border border-[var(--color-border)] rounded-md px-md py-sm text-sm font-normal text-[var(--color-text)] focus:outline-none focus:border-[var(--color-navy)]"
+                className="w-full border border-[var(--color-border)] rounded-md px-4 py-2 text-sm font-normal text-[var(--color-text)] focus:outline-none focus:border-[var(--color-navy)]"
               />
             </div>
 
             <DenominationBreakdown onTotalChange={handleDenominationChange} />
 
             <div>
-              <label className="block text-sm font-bold text-[var(--color-text)] mb-xs">
+              <label className="block text-sm font-bold text-[var(--color-text)] mb-1">
                 Notes (optional)
               </label>
               <textarea
@@ -171,7 +171,7 @@ export function CashUpModal({ isOpen, onClose, currentSession }: CashUpModalProp
                 maxLength={500}
                 rows={2}
                 placeholder="Any notes about this cash-up..."
-                className="w-full border border-[var(--color-border)] rounded-md px-md py-sm text-sm font-normal text-[var(--color-text)] focus:outline-none focus:border-[var(--color-navy)] resize-none"
+                className="w-full border border-[var(--color-border)] rounded-md px-4 py-2 text-sm font-normal text-[var(--color-text)] focus:outline-none focus:border-[var(--color-navy)] resize-none"
               />
             </div>
 
@@ -183,16 +183,16 @@ export function CashUpModal({ isOpen, onClose, currentSession }: CashUpModalProp
               type="button"
               onClick={handleCloseSession}
               disabled={loading}
-              className="w-full bg-[var(--color-amber)] text-white text-sm font-bold py-sm rounded-md cursor-pointer disabled:opacity-50"
+              className="w-full bg-[var(--color-amber)] text-white text-sm font-bold py-2 rounded-md cursor-pointer disabled:opacity-50"
             >
               {loading ? 'Closing...' : 'Confirm Close'}
             </button>
           </div>
         ) : (
           // Open session form
-          <div className="space-y-md">
+          <div className="space-y-4">
             <div>
-              <label className="block text-sm font-bold text-[var(--color-text)] mb-xs">
+              <label className="block text-sm font-bold text-[var(--color-text)] mb-1">
                 Opening float
               </label>
               <input
@@ -202,7 +202,7 @@ export function CashUpModal({ isOpen, onClose, currentSession }: CashUpModalProp
                 value={floatDollars}
                 onChange={(e) => setFloatDollars(e.target.value)}
                 placeholder="0.00"
-                className="w-full border border-[var(--color-border)] rounded-md px-md py-sm text-sm font-normal text-[var(--color-text)] focus:outline-none focus:border-[var(--color-navy)]"
+                className="w-full border border-[var(--color-border)] rounded-md px-4 py-2 text-sm font-normal text-[var(--color-text)] focus:outline-none focus:border-[var(--color-navy)]"
               />
             </div>
 
@@ -214,7 +214,7 @@ export function CashUpModal({ isOpen, onClose, currentSession }: CashUpModalProp
               type="button"
               onClick={handleOpenSession}
               disabled={loading}
-              className="w-full bg-[var(--color-navy)] text-white text-sm font-bold py-sm rounded-md cursor-pointer disabled:opacity-50"
+              className="w-full bg-[var(--color-navy)] text-white text-sm font-bold py-2 rounded-md cursor-pointer disabled:opacity-50"
             >
               {loading ? 'Opening...' : 'Open Session'}
             </button>
