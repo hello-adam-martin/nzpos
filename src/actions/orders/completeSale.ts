@@ -62,6 +62,7 @@ export async function completeSale(input: unknown) {
         productId: error.message.split(':')[1]?.trim(),
       }
     }
+    console.error('[completeSale] RPC error:', error.message, error.code, error.details)
     return { error: 'Sale could not be recorded. Please try again or note the order manually.' }
   }
 
