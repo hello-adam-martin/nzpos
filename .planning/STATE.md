@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 03-04-PLAN.md
-last_updated: "2026-04-01T03:34:38.800Z"
+status: verifying
+stopped_at: "Completed 03-05-PLAN.md — checkpoint:human-verify at Task 2"
+last_updated: "2026-04-01T03:41:01.722Z"
 last_activity: 2026-04-01
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 15
-  completed_plans: 14
+  completed_plans: 15
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 Phase: 03 (pos-checkout) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-01
 
 Progress: [░░░░░░░░░░] 0%
@@ -63,6 +63,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-pos-checkout P03 | 15 | 2 tasks | 6 files |
 | Phase 03-pos-checkout P02 | 192 | 2 tasks | 8 files |
 | Phase 03-pos-checkout P04 | 4 | 2 tasks | 7 files |
+| Phase 03-pos-checkout P05 | 31495551 | 1 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,9 @@ Recent decisions affecting current work:
 - [Phase 03-pos-checkout]: Staff logout uses router.push only (cookie persists until 8h expiry) — full server-side cookie deletion is v1.1 scope
 - [Phase 03-pos-checkout]: Split payment implemented sequentially: cash entered first, then EFTPOS confirm for remainder
 - [Phase 03-pos-checkout]: Owner out-of-stock override is direct (no PIN) since already authenticated; staff calls verifyStaffPin
+- [Phase 03-pos-checkout]: isProcessing passed to EftposConfirmScreen disables YES/NO buttons during API call — prevents double-recording
+- [Phase 03-pos-checkout]: discountTarget auto-cleared via useEffect when cart item removed — no stale sheet
+- [Phase 03-pos-checkout]: Cash tendered capped at 9999900 cents in CashEntryScreen — prevents unreasonable inputs
 
 ### Pending Todos
 
@@ -114,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T03:34:38.798Z
-Stopped at: Completed 03-04-PLAN.md
+Last session: 2026-04-01T03:41:01.720Z
+Stopped at: Completed 03-05-PLAN.md — checkpoint:human-verify at Task 2
 Resume file: None
