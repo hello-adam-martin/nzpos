@@ -52,9 +52,9 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **STORE-02**: Product detail pages are server-rendered for SEO
 - [x] **STORE-03**: Customer can add products to cart and proceed to Stripe Checkout
 - [ ] **STORE-04**: Customer can apply promo codes (percentage or fixed, with validation)
-- [ ] **STORE-05**: Stripe webhook confirms payment, atomically decrements stock, creates order
-- [ ] **STORE-06**: Webhook is idempotent (stripe_events dedup table with unique constraint)
-- [ ] **STORE-07**: Order lifecycle: PENDING → COMPLETED (on webhook) or EXPIRED (session timeout)
+- [x] **STORE-05**: Stripe webhook confirms payment, atomically decrements stock, creates order
+- [x] **STORE-06**: Webhook is idempotent (stripe_events dedup table with unique constraint)
+- [x] **STORE-07**: Order lifecycle: PENDING → COMPLETED (on webhook) or EXPIRED (session timeout)
 - [x] **STORE-08**: Out-of-stock products show "Sold Out" and cannot be added to cart
 - [ ] **STORE-09**: Click-and-collect: PENDING_PICKUP → READY → COLLECTED status flow
 
@@ -171,9 +171,9 @@ Explicitly excluded. Documented to prevent scope creep.
 | STORE-02 | Phase 4 | Complete |
 | STORE-03 | Phase 4 | Complete |
 | STORE-04 | Phase 4 | Pending |
-| STORE-05 | Phase 4 | Pending |
-| STORE-06 | Phase 4 | Pending |
-| STORE-07 | Phase 4 | Pending |
+| STORE-05 | Phase 4 | Complete |
+| STORE-06 | Phase 4 | Complete |
+| STORE-07 | Phase 4 | Complete |
 | STORE-08 | Phase 4 | Complete |
 | STORE-09 | Phase 4 | Pending |
 | DISC-01 | Phase 4 | Complete |
