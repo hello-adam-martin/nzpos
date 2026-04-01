@@ -96,8 +96,8 @@ All values from established globals.css @theme block.
 - Text: #92400E (amber-800 equivalent)
 - Icon: warning triangle inline SVG, 16px
 
-**Disconnect confirmation Cancel button:**
-- Cancel — ghost button, --color-navy text, no fill, no border
+**Disconnect confirmation Keep Connected button:**
+- Keep Connected — ghost button, --color-navy text, no fill, no border
 
 ---
 
@@ -191,10 +191,10 @@ Clicking "Disconnect" shows an inline confirmation within the connection card:
 [Confirmation box, bordered red, rounded-md, p-4]
 "Disconnect Xero? Daily sync will stop and account codes will be cleared.
  You can reconnect at any time."
-[Cancel — ghost button, --color-navy text, no fill]  [Disconnect — red filled button "Disconnect Xero"]
+[Keep Connected — ghost button, --color-navy text, no fill]  [Disconnect — red filled button "Disconnect Xero"]
 ```
 
-No separate modal. Inline within the card. Pressing Escape or clicking Cancel dismisses.
+No separate modal. Inline within the card. Pressing Escape or clicking "Keep Connected" dismisses.
 
 ---
 
@@ -226,7 +226,7 @@ No separate modal. Inline within the card. Pressing Escape or clicking Cancel di
 | Disconnect confirmation heading | Disconnect Xero? |
 | Disconnect confirmation body | Daily sync will stop. Account codes will be cleared. You can reconnect at any time. |
 | Disconnect confirm CTA | Disconnect Xero |
-| Disconnect cancel CTA | Cancel |
+| Disconnect cancel CTA | Keep Connected |
 | Banner alert — disconnected | Xero is disconnected. Daily sales sync has stopped. Reconnect to restore automatic sync. |
 | Banner alert — never connected | Xero not connected. Connect your Xero account to enable automatic sales sync. |
 | Error: no sales to sync | No sales recorded for today. Nothing to sync. |
