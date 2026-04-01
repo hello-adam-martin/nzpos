@@ -20,14 +20,14 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 
 - [x] Product catalog with categories, SKUs, images, and stock tracking — Validated in Phase 02: Product Catalog
 - [x] POS checkout on iPad (product grid, cart, discounts, EFTPOS/cash recording) — Validated in Phase 03: POS Checkout
-- [ ] Online storefront with Stripe checkout and promo codes
+- [x] Online storefront with Stripe checkout and promo codes — Validated in Phase 04: Online Store
 - [x] Shared inventory with atomic stock decrement (no overselling) — Validated in Phase 03: POS Checkout
 - [ ] End-of-day cash-up / reconciliation report
 - [ ] Xero integration (OAuth, daily sales sync with GST breakdown)
 - [x] CSV product import — Validated in Phase 02: Product Catalog
 - [ ] Refund handling (full refund, mark order as refunded)
 - [ ] Low stock alerts
-- [ ] Click-and-collect order workflow (pending_pickup → ready → collected)
+- [x] Click-and-collect order workflow (pending_pickup → ready → collected) — Validated in Phase 04: Online Store
 - [ ] Basic reporting (daily sales, top products, stock levels)
 - [x] EFTPOS confirmation step (terminal approved? yes/no before completing sale) — Validated in Phase 03: POS Checkout
 
@@ -97,4 +97,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-01 after Phase 03 completion*
+*Last updated: 2026-04-01 after Phase 04 completion*
