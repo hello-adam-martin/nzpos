@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-06-PLAN.md (Reports Page)
-last_updated: "2026-04-01T09:30:16.796Z"
+stopped_at: Completed 05-04-PLAN.md (Refund Flow)
+last_updated: "2026-04-01T09:36:04.215Z"
 last_activity: 2026-04-01
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 29
-  completed_plans: 28
+  completed_plans: 29
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Position
 
 Phase: 05 (admin-reporting) — EXECUTING
-Plan: 4 of 6
+Plan: 5 of 6
 Status: Ready to execute
 Last activity: 2026-04-01
 
@@ -67,6 +67,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05-admin-reporting P02 | 2 | 2 tasks | 3 files |
 | Phase 05-admin-reporting P03 | 217 | 3 tasks | 6 files |
 | Phase 05-admin-reporting P06 | 15m | 4 tasks | 11 files |
+| Phase 05-admin-reporting P04 | 4m | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -113,6 +114,7 @@ Recent decisions affecting current work:
 - [Phase 05-admin-reporting]: Two-query approach for order_items joins avoids broken cross-table filter in Supabase JS v2
 - [Phase 05-admin-reporting]: GST summary from orders.gst_cents not order_items to prevent double-counting
 - [Phase 05-admin-reporting]: ExportCSVButton auto-converts _cents keys to _dollars for human-readable CSV
+- [Phase 05-admin-reporting]: Refund step replaces drawer content in-place (no new modal) per UI-SPEC; overlay and Escape blocked during refund step
 
 ### Pending Todos
 
@@ -125,6 +127,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T09:30:16.794Z
-Stopped at: Completed 05-06-PLAN.md (Reports Page)
+Last session: 2026-04-01T09:36:04.212Z
+Stopped at: Completed 05-04-PLAN.md (Refund Flow)
 Resume file: None

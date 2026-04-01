@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 2: Product Catalog** - Owner CRUD for products and categories, image uploads, CSV import
 - [ ] **Phase 3: POS Checkout** - Staff PIN auth, iPad product grid, cart with discounts, EFTPOS confirmation, atomic sale
 - [ ] **Phase 4: Online Store** - Public storefront, Stripe checkout, promo codes, webhooks, click-and-collect
-- [ ] **Phase 5: Admin & Reporting** - Owner dashboard, order management, refunds, cash-up, reporting, low stock alerts
+- [x] **Phase 5: Admin & Reporting** - Owner dashboard, order management, refunds, cash-up, reporting, low stock alerts (completed 2026-04-01)
 - [ ] **Phase 6: Xero Integration** - OAuth connect, daily sales sync, GST breakdown, token management
 
 ## Phase Details
@@ -100,7 +100,7 @@ Plans:
 - [x] 05-01-PLAN.md — Foundation: test stubs, schema fix, Recharts, shared utilities, sidebar, badge components
 - [x] 05-02-PLAN.md — Order management list with filters
 - [x] 05-03-PLAN.md — Cash-up flow (open/close session, reconciliation)
-- [ ] 05-04-PLAN.md — Reports page (sales, top products, stock levels)
+- [x] 05-04-PLAN.md — Reports page (sales, top products, stock levels)
 - [x] 05-05-PLAN.md — GST period summary report
 - [x] 05-06-PLAN.md — Owner dashboard and low stock alerts
 **UI hint**: yes
@@ -128,5 +128,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Product Catalog | 2/5 | In Progress|  |
 | 3. POS Checkout | 0/TBD | Not started | - |
 | 4. Online Store | 0/TBD | Not started | - |
-| 5. Admin & Reporting | 5/6 | In Progress|  |
+| 5. Admin & Reporting | 6/6 | Complete   | 2026-04-01 |
 | 6. Xero Integration | 0/TBD | Not started | - |
