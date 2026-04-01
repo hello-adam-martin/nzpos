@@ -36,34 +36,34 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### POS Checkout
 
-- [x] **POS-01**: Staff sees product grid with images, categories, and search on iPad
-- [x] **POS-02**: Staff can tap products to add to cart, adjust quantities
-- [x] **POS-03**: Staff can apply percentage or fixed-amount discounts per line item
-- [x] **POS-04**: Cart shows subtotal, GST breakdown (per-line on discounted amounts), and total
-- [x] **POS-05**: Staff selects payment method (EFTPOS or cash)
-- [x] **POS-06**: EFTPOS confirmation step: "Did the terminal show APPROVED?" Yes completes sale, No voids
-- [x] **POS-07**: Completed sale atomically decrements stock and creates order record
-- [x] **POS-08**: POS re-fetches stock after each sale and on page focus (no stale data)
-- [x] **POS-09**: Out-of-stock warning displayed, owner can override
+- [ ] **POS-01**: Staff sees product grid with images, categories, and search on iPad
+- [ ] **POS-02**: Staff can tap products to add to cart, adjust quantities
+- [ ] **POS-03**: Staff can apply percentage or fixed-amount discounts per line item
+- [ ] **POS-04**: Cart shows subtotal, GST breakdown (per-line on discounted amounts), and total
+- [ ] **POS-05**: Staff selects payment method (EFTPOS or cash)
+- [ ] **POS-06**: EFTPOS confirmation step: "Did the terminal show APPROVED?" Yes completes sale, No voids
+- [ ] **POS-07**: Completed sale atomically decrements stock and creates order record
+- [ ] **POS-08**: POS re-fetches stock after each sale and on page focus (no stale data)
+- [ ] **POS-09**: Out-of-stock warning displayed, owner can override
 
 ### Online Store
 
 - [ ] **STORE-01**: Public storefront displays products with images, categories, search
 - [ ] **STORE-02**: Product detail pages are server-rendered for SEO
-- [ ] **STORE-03**: Customer can add products to cart and proceed to Stripe Checkout
+- [x] **STORE-03**: Customer can add products to cart and proceed to Stripe Checkout
 - [ ] **STORE-04**: Customer can apply promo codes (percentage or fixed, with validation)
-- [x] **STORE-05**: Stripe webhook confirms payment, atomically decrements stock, creates order
-- [x] **STORE-06**: Webhook is idempotent (stripe_events dedup table with unique constraint)
-- [x] **STORE-07**: Order lifecycle: PENDING → COMPLETED (on webhook) or EXPIRED (session timeout)
-- [ ] **STORE-08**: Out-of-stock products show "Sold Out" and cannot be added to cart
+- [ ] **STORE-05**: Stripe webhook confirms payment, atomically decrements stock, creates order
+- [ ] **STORE-06**: Webhook is idempotent (stripe_events dedup table with unique constraint)
+- [ ] **STORE-07**: Order lifecycle: PENDING → COMPLETED (on webhook) or EXPIRED (session timeout)
+- [x] **STORE-08**: Out-of-stock products show "Sold Out" and cannot be added to cart
 - [ ] **STORE-09**: Click-and-collect: PENDING_PICKUP → READY → COLLECTED status flow
 
 ### Discounts & Promos
 
 - [ ] **DISC-01**: Owner can create promo codes with type (percentage/fixed), value, min order, max uses, expiry
 - [ ] **DISC-02**: Online store validates promo codes with rate limiting (10/min per IP)
-- [x] **DISC-03**: POS staff can apply manual discounts with reason (staff, damaged, loyalty)
-- [x] **DISC-04**: GST recalculates correctly on discounted line items
+- [ ] **DISC-03**: POS staff can apply manual discounts with reason (staff, damaged, loyalty)
+- [ ] **DISC-04**: GST recalculates correctly on discounted line items
 
 ### Reporting & Admin
 
@@ -156,25 +156,25 @@ Explicitly excluded. Documented to prevent scope creep.
 | PROD-04 | Phase 2 | Complete |
 | PROD-05 | Phase 2 | Pending |
 | PROD-06 | Phase 2 | Complete |
-| POS-01 | Phase 3 | Complete |
-| POS-02 | Phase 3 | Complete |
-| POS-03 | Phase 3 | Complete |
-| POS-04 | Phase 3 | Complete |
-| POS-05 | Phase 3 | Complete |
-| POS-06 | Phase 3 | Complete |
-| POS-07 | Phase 3 | Complete |
-| POS-08 | Phase 3 | Complete |
-| POS-09 | Phase 3 | Complete |
-| DISC-03 | Phase 3 | Complete |
-| DISC-04 | Phase 3 | Complete |
+| POS-01 | Phase 3 | Pending |
+| POS-02 | Phase 3 | Pending |
+| POS-03 | Phase 3 | Pending |
+| POS-04 | Phase 3 | Pending |
+| POS-05 | Phase 3 | Pending |
+| POS-06 | Phase 3 | Pending |
+| POS-07 | Phase 3 | Pending |
+| POS-08 | Phase 3 | Pending |
+| POS-09 | Phase 3 | Pending |
+| DISC-03 | Phase 3 | Pending |
+| DISC-04 | Phase 3 | Pending |
 | STORE-01 | Phase 4 | Pending |
 | STORE-02 | Phase 4 | Pending |
-| STORE-03 | Phase 4 | Pending |
+| STORE-03 | Phase 4 | Complete |
 | STORE-04 | Phase 4 | Pending |
-| STORE-05 | Phase 4 | Complete |
-| STORE-06 | Phase 4 | Complete |
-| STORE-07 | Phase 4 | Complete |
-| STORE-08 | Phase 4 | Pending |
+| STORE-05 | Phase 4 | Pending |
+| STORE-06 | Phase 4 | Pending |
+| STORE-07 | Phase 4 | Pending |
+| STORE-08 | Phase 4 | Complete |
 | STORE-09 | Phase 4 | Pending |
 | DISC-01 | Phase 4 | Pending |
 | DISC-02 | Phase 4 | Pending |
