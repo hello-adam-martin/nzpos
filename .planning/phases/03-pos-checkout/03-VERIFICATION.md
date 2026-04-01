@@ -1,28 +1,22 @@
 ---
 phase: 03-pos-checkout
-verified: 2026-04-01T16:55:00Z
-status: gaps_found
-score: 4/5 must-haves verified
-gaps:
-  - truth: "Staff can log in with PIN, see the product grid filtered by category, tap products to add to cart, and adjust quantities"
-    status: partial
-    reason: "The PIN login page (/pos/login/page.tsx) is a stub — it renders only a heading with no PIN pad, no staff selector, and no form. The verifyStaffPin server action is fully implemented and wired, but staff cannot actually complete the login flow in a browser. The POS page itself (product grid, category filter, cart add, quantity controls) is fully implemented."
-    artifacts:
-      - path: "src/app/(pos)/pos/login/page.tsx"
-        issue: "Stub — renders only '<h1>Staff PIN Login</h1>' with no PIN input form, no staff selector, no submit handler"
-    missing:
-      - "Staff selector (name list or staff ID field) on the login page"
-      - "4-digit PIN pad or numeric input"
-      - "Form submission that calls verifyStaffPin server action"
-      - "Error display for invalid PIN or lockout state"
-      - "Redirect to /pos on successful login"
+verified: 2026-04-01T17:57:30Z
+status: human_needed
+score: 5/5 must-haves verified
+re_verification:
+  previous_status: gaps_found
+  previous_score: 4/5
+  gaps_closed:
+    - "Staff can log in with PIN, see the product grid filtered by category, tap products to add to cart, and adjust quantities — PIN login page is now a fully implemented Client Component (PinLoginForm) with staff selector, 4-digit PIN pad, auto-submit, error display, and redirect"
+  gaps_remaining: []
+  regressions: []
 human_verification:
   - test: "Navigate to /pos/login on an iPad, select a staff member, enter a valid 4-digit PIN"
     expected: "Staff session cookie is set, redirect to /pos, product grid loads with staff name in top bar"
-    why_human: "Login page is a stub — cannot verify the full flow automatically; functional login depends on a real Supabase instance with seeded staff records and PIN hashes"
+    why_human: "Requires a live Supabase instance with seeded staff records and bcrypt-hashed PINs; full flow cannot be exercised programmatically"
   - test: "At /pos/login, enter an incorrect PIN 10 times in 5 minutes"
     expected: "Account lockout message displayed; further attempts blocked until window expires"
-    why_human: "Lockout behavior requires a live DB and timing"
+    why_human: "Lockout behavior requires a live DB and timing; verifyStaffPin logic is unit-tested but the UI error display path for lockout needs visual confirmation"
   - test: "Complete a full sale: add products, apply discount, select EFTPOS, confirm APPROVED on the EFTPOS screen"
     expected: "SaleSummaryScreen shows correct total, GST breakdown, sale ID; product grid stock counts decrement"
     why_human: "End-to-end flow requires a seeded Supabase instance and real completeSale RPC execution"
@@ -34,9 +28,9 @@ human_verification:
 # Phase 3: POS Checkout Verification Report
 
 **Phase Goal:** Staff can complete an in-store sale from product selection to payment recording, with inventory updating atomically
-**Verified:** 2026-04-01T16:55:00Z
-**Status:** gaps_found
-**Re-verification:** No — initial verification
+**Verified:** 2026-04-01T17:57:30Z
+**Status:** human_needed
+**Re-verification:** Yes — after gap closure (plan 03-06)
 
 ## Goal Achievement
 
@@ -44,13 +38,13 @@ human_verification:
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|---------|
-| 1 | Staff can log in with PIN, see the product grid filtered by category, tap products to add to cart, and adjust quantities | PARTIAL | PIN login page is a stub (no form); product grid, category filter, cart add, and quantity controls are fully wired |
+| 1 | Staff can log in with PIN, see the product grid filtered by category, tap products to add to cart, and adjust quantities | VERIFIED | PinLoginForm (189 lines) contains staff selector buttons, 4-dot PIN indicator, 3x4 keypad, auto-submit at `pin.length === 4`, error display, and `router.push('/pos')` on success; login page is a full Server Component fetching store + staff; old stub heading is absent |
 | 2 | Staff can apply a percentage or fixed-amount discount to any line item; cart recalculates GST per-line on discounted amount and shows correct subtotal, GST, and total | VERIFIED | DiscountSheet, cartReducer APPLY_LINE_DISCOUNT, calcCartTotals all implemented; 20 unit tests pass |
 | 3 | For EFTPOS: full-screen confirmation asks "Did the terminal show APPROVED?" — No voids the sale; Yes records it and decrements stock atomically | VERIFIED | EftposConfirmScreen wired; YES calls handleEftposConfirm → completeSale → complete_pos_sale RPC with FOR UPDATE stock lock |
 | 4 | After each completed sale the product grid reflects updated stock counts without a manual refresh | VERIFIED | revalidatePath('/pos') in completeSale + router.refresh() in POSClientShell + visibilitychange listener all wired |
 | 5 | Out-of-stock products show a warning on the grid; owner override is available | VERIFIED | StockBadge renders red "Out of Stock"; ProductCard disables for staff; OutOfStockDialog shows owner bypass and staff PIN flow |
 
-**Score:** 4/5 truths verified (Truth 1 is partial — POS grid half passes, login UI is a stub)
+**Score:** 5/5 truths verified
 
 ---
 
@@ -58,23 +52,19 @@ human_verification:
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `supabase/migrations/005_pos_rpc.sql` | complete_pos_sale RPC + cash_tendered_cents + split payment | VERIFIED | Contains CREATE OR REPLACE FUNCTION, FOR UPDATE, OUT_OF_STOCK exception, split payment constraint |
-| `src/lib/cart.ts` | CartItem, CartState, CartAction, cartReducer, calcCartTotals, applyCartDiscount, initialCartState | VERIFIED | All exports present; imports calcLineItem from gst.ts (not re-implemented) |
-| `src/actions/orders/completeSale.ts` | Server Action with JWT verify, Zod validate, RPC call, revalidatePath | VERIFIED | server-only guard, jwtVerify, CreateOrderSchema.safeParse, rpc('complete_pos_sale'), revalidatePath('/pos') |
-| `src/app/(pos)/pos/page.tsx` | Server Component with admin client, JWT verify, data fetch, POSClientShell render | VERIFIED | Fetches products, categories, staff, store, staffList via Promise.all; passes all as props |
-| `src/components/pos/POSClientShell.tsx` | useReducer cart root, all overlays, handlers wired | VERIFIED | useReducer(cartReducer), all 5 overlay components rendered conditionally, handleCompleteSale calls completeSale |
-| `src/components/pos/ProductGrid.tsx` | Auto-fill grid with search and category filter | VERIFIED | Receives filtered products from shell; search + SKU quick-entry wired |
-| `src/components/pos/ProductCard.tsx` | Tap handler, stock badge, disabled for out-of-stock staff | VERIFIED | isDisabled = isOutOfStock && staffRole !== 'owner'; StockBadge included |
-| `src/components/pos/CartPanel.tsx` | Line items, summary, payment toggle, pay button | VERIFIED | CartLineItem, CartSummary, PaymentMethodToggle, PayButton all rendered with dispatch |
-| `src/components/pos/CartSummary.tsx` | calcCartTotals driven subtotal/GST/total | VERIFIED | Calls calcCartTotals(items) — not manual calculation |
-| `src/components/pos/DiscountSheet.tsx` | Percentage/fixed toggle, reason dropdown, live preview, apply | VERIFIED | Substantive — computes discountCents, calls onApply(discountCents, discountType, reason) |
-| `src/components/pos/EftposConfirmScreen.tsx` | Full-screen navy, APPROVED question, YES/NO buttons, isProcessing disable | VERIFIED | role="alertdialog", focus trap, isProcessing prop disables both buttons |
-| `src/components/pos/CashEntryScreen.tsx` | Auto-focus, change calculation, insufficient warning, split button, MAX_CASH_CENTS cap | VERIFIED | calcChangeDue wired, $99,999 cap present, split payment triggers onSplit |
-| `src/components/pos/OutOfStockDialog.tsx` | Owner direct bypass, staff PIN verification against owner record | VERIFIED | Owner button + staff PIN input; verifyStaffPin called; error reset on failure |
-| `src/components/pos/SaleSummaryScreen.tsx` | Items list, GST breakdown, payment method badge, cash tendered/change, New Sale button | VERIFIED | Substantive — all fields rendered from real props |
-| `src/components/pos/PayButton.tsx` | Amber CTA with "Charge $X.XX", disabled state | VERIFIED | formatNZD(totalCents) label, pointer-events-none when disabled |
-| `src/components/pos/PaymentMethodToggle.tsx` | EFTPOS/Cash pills, navy active state | VERIFIED | aria-pressed, dispatches SET_PAYMENT_METHOD |
-| **`src/app/(pos)/pos/login/page.tsx`** | PIN login form with staff selector, PIN input, submit | **STUB** | Renders only `<h1>Staff PIN Login</h1>` — no PIN input, no staff selector, no form |
+| `src/app/(pos)/pos/login/page.tsx` | Server Component fetching store + active staff, renders PinLoginForm | VERIFIED | Contains `import 'server-only'`, `createSupabaseAdminClient`, `.from('stores')`, `.from('staff')`, `<PinLoginForm ...>`, `export const dynamic = 'force-dynamic'` |
+| `src/components/pos/PinLoginForm.tsx` | Client Component with staff selector, PIN pad, auto-submit, error display | VERIFIED | 189 lines; `'use client'`, `verifyStaffPin` imported and called, `useRouter`, `router.push('/pos')`, `grid grid-cols-3`, `rounded-full` dot indicators, `selectedStaffId` state, `setPin('')` on error |
+| `supabase/migrations/005_pos_rpc.sql` | complete_pos_sale RPC + cash_tendered_cents + split payment | VERIFIED (unchanged from initial) | Contains CREATE OR REPLACE FUNCTION, FOR UPDATE, OUT_OF_STOCK exception, split payment constraint |
+| `src/lib/cart.ts` | CartItem, CartState, CartAction, cartReducer, calcCartTotals, applyCartDiscount, initialCartState | VERIFIED (unchanged) | All exports present; imports calcLineItem from gst.ts |
+| `src/actions/orders/completeSale.ts` | Server Action with JWT verify, Zod validate, RPC call, revalidatePath | VERIFIED (unchanged) | server-only guard, jwtVerify, safeParse, rpc('complete_pos_sale'), revalidatePath('/pos') |
+| `src/app/(pos)/pos/page.tsx` | Server Component with admin client, JWT verify, data fetch, POSClientShell render | VERIFIED (unchanged) | Fetches products, categories, staff, store via Promise.all |
+| `src/components/pos/POSClientShell.tsx` | useReducer cart root, all overlays, handlers wired | VERIFIED (unchanged) | All 5 overlay components rendered conditionally |
+| `src/components/pos/ProductGrid.tsx` | Search and category filter | VERIFIED (unchanged) | Search + SKU quick-entry wired |
+| `src/components/pos/CartSummary.tsx` | calcCartTotals driven | VERIFIED (unchanged) | Calls calcCartTotals(items) |
+| `src/components/pos/DiscountSheet.tsx` | Percentage/fixed toggle, reason dropdown, apply | VERIFIED (unchanged) | Computes discountCents, calls onApply |
+| `src/components/pos/EftposConfirmScreen.tsx` | Full-screen, APPROVED question, YES/NO | VERIFIED (unchanged) | role="alertdialog", focus trap, isProcessing prop |
+| `src/components/pos/OutOfStockDialog.tsx` | Owner bypass + staff PIN verification | VERIFIED (unchanged) | Owner button + staff PIN input; verifyStaffPin called |
+| `src/actions/auth/staffPin.ts` | verifyStaffPin with bcrypt, lockout, JWT, cookie | VERIFIED (unchanged) | Full implementation: bcryptjs.compare, SignJWT, cookies().set |
 
 ---
 
@@ -82,16 +72,15 @@ human_verification:
 
 | From | To | Via | Status | Details |
 |------|----|-----|--------|---------|
-| `pos/page.tsx` | `POSClientShell` | Server Component passes products + categories as props | WIRED | `<POSClientShell products={products} categories={categories} ...>` |
-| `POSClientShell` | `src/lib/cart.ts` | useReducer(cartReducer, initialCartState) | WIRED | `const [cart, dispatch] = useReducer(cartReducer, initialCartState)` |
-| `ProductCard` | `POSClientShell` | onAddToCart callback dispatches ADD_PRODUCT | WIRED | `onAddToCart` prop triggers `handleAddToCart` which dispatches |
-| `POSClientShell` | `completeSale` | handleCompleteSale calls completeSale Server Action | WIRED | `const result = await completeSale({ ... })` |
-| `completeSale` | `complete_pos_sale` RPC | supabase.rpc('complete_pos_sale', ...) | WIRED | `supabase.rpc('complete_pos_sale', { p_store_id, ... })` |
-| `CartSummary` | `calcCartTotals` | Import and call with items | WIRED | `const { subtotalCents, gstCents, totalCents } = calcCartTotals(items)` |
-| `cart.ts` | `src/lib/gst.ts` | import calcLineItem, calcOrderGST | WIRED | `import { calcLineItem, calcOrderGST } from '@/lib/gst'` |
-| `EftposConfirmScreen` YES | `handleCompleteSale` | onConfirm prop | WIRED | `handleEftposConfirm` → `handleCompleteSale(undefined, splitCashCents)` |
-| `EftposConfirmScreen` NO | `VOID_SALE` dispatch | onVoid prop | WIRED | `handleEftposVoid` dispatches `{ type: 'VOID_SALE' }` |
-| `pos/login/page.tsx` | `verifyStaffPin` | Form submission | NOT_WIRED | Login page is a stub; verifyStaffPin action exists but is not imported or called from the login page |
+| `src/components/pos/PinLoginForm.tsx` | `src/actions/auth/staffPin.ts` | `import { verifyStaffPin }` at line 5; called in `handleSubmit` at line 30 | WIRED | Pattern `verifyStaffPin` confirmed present |
+| `src/app/(pos)/pos/login/page.tsx` | `src/components/pos/PinLoginForm.tsx` | `import { PinLoginForm }` at line 3; rendered at line 33 with `storeId`, `storeName`, `staffList` props | WIRED | Pattern `PinLoginForm` confirmed present |
+| `src/components/pos/PinLoginForm.tsx` | `next/navigation` | `useRouter` at line 4; `router.push('/pos')` at line 42 | WIRED | Pattern `router\.push.*pos` confirmed present |
+| `pos/page.tsx` | `POSClientShell` | Server Component passes products + categories as props | WIRED (unchanged) | `<POSClientShell products={products} categories={categories} ...>` |
+| `POSClientShell` | `src/lib/cart.ts` | useReducer(cartReducer, initialCartState) | WIRED (unchanged) | Confirmed in initial verification |
+| `POSClientShell` | `completeSale` | handleCompleteSale calls completeSale Server Action | WIRED (unchanged) | `const result = await completeSale({ ... })` |
+| `completeSale` | `complete_pos_sale` RPC | supabase.rpc('complete_pos_sale', ...) | WIRED (unchanged) | Confirmed in initial verification |
+| `CartSummary` | `calcCartTotals` | Import and call | WIRED (unchanged) | Confirmed in initial verification |
+| `EftposConfirmScreen` YES | `handleCompleteSale` | onConfirm prop | WIRED (unchanged) | Confirmed in initial verification |
 
 ---
 
@@ -99,11 +88,11 @@ human_verification:
 
 | Artifact | Data Variable | Source | Produces Real Data | Status |
 |----------|---------------|--------|-------------------|--------|
-| `ProductGrid` | `products` | Passed as prop from POSClientShell; fetched in `pos/page.tsx` via admin client `.from('products').select('*')` | Yes — DB query with store_id filter | FLOWING |
-| `CartSummary` | `subtotalCents, gstCents, totalCents` | `calcCartTotals(items)` — reduces over cart.items populated by ADD_PRODUCT dispatch | Yes — real reducer state | FLOWING |
-| `SaleSummaryScreen` | `items, orderId, totalCents` | Passed from POSClientShell; orderId comes from completeSale response (RPC return) | Yes — real DB order_id | FLOWING |
-| `OutOfStockDialog` | `product` | Passed from POSClientShell's `outOfStockProduct` state, set when ProductCard tapped with stock_quantity === 0 | Yes — real product row from DB | FLOWING |
-| `pos/login/page.tsx` | (no data rendered) | Stub — no data fetch, no state | N/A — stub | DISCONNECTED |
+| `PinLoginForm` | `staffList` | Passed as prop from `pos/login/page.tsx`; fetched via admin client `.from('staff').select('id, name, role').eq('store_id', ...).eq('is_active', true)` | Yes — live DB query with store_id + is_active filter | FLOWING |
+| `PinLoginForm` | `storeName` | Passed as prop from `pos/login/page.tsx`; fetched via `.from('stores').select('id, name').limit(1).single()` | Yes — live DB query | FLOWING |
+| `ProductGrid` | `products` | Passed as prop from POSClientShell; fetched in `pos/page.tsx` via admin client | Yes — DB query with store_id filter | FLOWING (unchanged) |
+| `CartSummary` | `subtotalCents, gstCents, totalCents` | `calcCartTotals(items)` — reduces over cart.items | Yes — real reducer state | FLOWING (unchanged) |
+| `SaleSummaryScreen` | `items, orderId, totalCents` | completeSale response (RPC return) | Yes — real DB order_id | FLOWING (unchanged) |
 
 ---
 
@@ -113,29 +102,33 @@ human_verification:
 |----------|---------|--------|--------|
 | Cart GST calculations pass all unit tests | `npx vitest run src/lib/__tests__/pos-cart.test.ts` | 20 tests pass | PASS |
 | completeSale Server Action auth/validation/error paths | `npx vitest run src/actions/orders/__tests__/completeSale.test.ts` | 7 tests pass | PASS |
-| Full test suite green | `npx vitest run` | 343 passed, 6 skipped (RLS integration tests — require live DB) | PASS |
-| Login page is interactive | Visit `/pos/login`, expect PIN form | Page shows only heading, no form elements | FAIL |
-| Login page calls verifyStaffPin | Grep for import in login page | Not imported; not referenced | FAIL |
+| Full test suite green (including new phase) | `npx vitest run` | 343 passed, 6 skipped (36 files) | PASS |
+| Old stub heading absent from login page | `grep "Staff PIN Login" src/app/(pos)/pos/login/page.tsx` | No output (removed) | PASS |
+| verifyStaffPin imported and called in PinLoginForm | `grep "verifyStaffPin" src/components/pos/PinLoginForm.tsx` | Lines 5 and 30 | PASS |
+| router.push('/pos') present in PinLoginForm | `grep "router.push" src/components/pos/PinLoginForm.tsx` | Line 42 | PASS |
+| PIN auto-submit trigger present | `grep "pin.length === 4" src/components/pos/PinLoginForm.tsx` | Line 27 and 49 | PASS |
 
 ---
 
 ## Requirements Coverage
 
-| Requirement | Description | Status | Evidence |
-|-------------|-------------|--------|---------|
-| POS-01 | Staff sees product grid with images, categories, search on iPad | SATISFIED | ProductGrid + CategoryFilterBar + ProductCard with image/placeholder; search wired |
-| POS-02 | Staff can tap products to add to cart, adjust quantities | SATISFIED | ADD_PRODUCT dispatch on tap; SET_QUANTITY in CartLineItem; QuantityControl with +/- |
-| POS-03 | Staff can apply percentage or fixed-amount discounts per line | SATISFIED | DiscountSheet with % and $ toggle; APPLY_LINE_DISCOUNT dispatched |
-| POS-04 | Cart shows subtotal, GST breakdown (per-line on discounted amounts), and total | SATISFIED | CartSummary calls calcCartTotals; calcCartTotals uses calcOrderGST; GST computed per-line via calcLineItem |
-| POS-05 | Staff selects payment method (EFTPOS or cash) | SATISFIED | PaymentMethodToggle dispatches SET_PAYMENT_METHOD; PayButton initiates payment |
-| POS-06 | EFTPOS confirmation: "Did the terminal show APPROVED?" — Yes completes, No voids | SATISFIED | EftposConfirmScreen with exact question text; YES → handleEftposConfirm → completeSale; NO → VOID_SALE |
-| POS-07 | Completed sale atomically decrements stock and creates order record | SATISFIED | complete_pos_sale RPC with SELECT FOR UPDATE + INSERT order + UPDATE products in single transaction |
-| POS-08 | POS re-fetches stock after each sale and on page focus | SATISFIED | revalidatePath('/pos') in completeSale; router.refresh() in handleCompleteSale; visibilitychange listener in POSClientShell |
-| POS-09 | Out-of-stock warning displayed, owner can override | SATISFIED | StockBadge "Out of Stock" red badge; ProductCard disabled for staff; OutOfStockDialog with owner bypass + staff PIN |
-| DISC-03 | POS staff can apply manual discounts with reason (staff, damaged, loyalty) | SATISFIED | DiscountSheet reason dropdown: Staff discount / Damaged item / Loyalty reward / Other; reason stored in CartItem.discountReason |
-| DISC-04 | GST recalculates correctly on discounted line items | SATISFIED | calcLineItem(unitPriceCents, quantity, discountCents) called in recalcItem; 20 unit tests validate correctness |
+| Requirement | Source Plan | Description | Status | Evidence |
+|-------------|------------|-------------|--------|---------|
+| POS-01 | 03-06-PLAN.md | Staff sees product grid with images, categories, and search on iPad | SATISFIED | ProductGrid + CategoryFilterBar + ProductCard; login gap now closed — staff can reach the grid |
+| POS-02 | Phase 3 plans | Staff can tap products to add to cart, adjust quantities | SATISFIED | ADD_PRODUCT dispatch on tap; SET_QUANTITY in CartLineItem |
+| POS-03 | Phase 3 plans | Staff can apply percentage or fixed-amount discounts per line item | SATISFIED | DiscountSheet with % and $ toggle; APPLY_LINE_DISCOUNT dispatched |
+| POS-04 | Phase 3 plans | Cart shows subtotal, GST breakdown, and total | SATISFIED | CartSummary calls calcCartTotals; per-line GST via calcOrderGST |
+| POS-05 | Phase 3 plans | Staff selects payment method (EFTPOS or cash) | SATISFIED | PaymentMethodToggle dispatches SET_PAYMENT_METHOD |
+| POS-06 | Phase 3 plans | EFTPOS confirmation step: Yes completes, No voids | SATISFIED | EftposConfirmScreen; YES → completeSale; NO → VOID_SALE |
+| POS-07 | Phase 3 plans | Completed sale atomically decrements stock and creates order record | SATISFIED | complete_pos_sale RPC with SELECT FOR UPDATE + INSERT + UPDATE in single transaction |
+| POS-08 | Phase 3 plans | POS re-fetches stock after each sale and on page focus | SATISFIED | revalidatePath('/pos') + router.refresh() + visibilitychange listener |
+| POS-09 | Phase 3 plans | Out-of-stock warning displayed, owner can override | SATISFIED | StockBadge "Out of Stock"; ProductCard disabled for staff; OutOfStockDialog with owner bypass |
+| DISC-03 | Phase 3 plans | POS staff can apply manual discounts with reason | SATISFIED | DiscountSheet reason dropdown: Staff / Damaged / Loyalty / Other; stored in CartItem.discountReason |
+| DISC-04 | Phase 3 plans | GST recalculates correctly on discounted line items | SATISFIED | calcLineItem(unitPriceCents, quantity, discountCents); 20 unit tests validate correctness |
 
-**Note:** AUTH-02 (Staff can log in with 4-digit PIN) is satisfied at the server action level (`verifyStaffPin` is fully implemented), but the login UI is a stub. The requirement is functionally incomplete for end-to-end use — staff cannot complete login in a browser without a PIN entry form.
+**Note on AUTH-02:** AUTH-02 (Staff can log in with 4-digit PIN) is assigned to Phase 1 in REQUIREMENTS.md, not Phase 3. It is fully satisfied end-to-end: `verifyStaffPin` server action (bcrypt, lockout, JWT) was implemented in Phase 1; the POS login UI (PinLoginForm) was completed in Phase 3 plan 06. AUTH-02 is marked `[x]` in REQUIREMENTS.md. No orphaned requirements found for Phase 3.
+
+All 11 Phase 3 requirement IDs (POS-01 through POS-09, DISC-03, DISC-04) are SATISFIED.
 
 ---
 
@@ -143,50 +136,54 @@ human_verification:
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|---------|--------|
-| `src/app/(pos)/pos/login/page.tsx` | 1-7 | Stub component — returns only a heading, no interactive elements | BLOCKER | Staff cannot log in via UI; the POS is inaccessible in a real-world deployment without a working login page or the dev-login bypass route |
-| `src/app/api/dev-login/pos/route.ts` | All | Dev-only bypass with hardcoded UUIDs; only usable in dev mode | INFO | Correctly gated to NODE_ENV !== 'production'; does not replace the missing login UI |
+| `src/app/api/dev-login/pos/route.ts` | All | Dev-only bypass with hardcoded UUIDs | INFO | Correctly gated to `NODE_ENV !== 'production'`; does not affect production |
+
+No blockers or warnings found in the gap-closure files. The two previously flagged FAIL spot-checks (login page is interactive; login page calls verifyStaffPin) are now PASS.
 
 ---
 
 ## Human Verification Required
 
-### 1. Staff PIN Login Flow
+### 1. Staff PIN Login Flow (End-to-End)
 
-**Test:** Navigate to `/pos/login`, observe the page
-**Expected:** Should see a staff selector (or name/ID field), a 4-digit PIN pad or numeric input, and a submit mechanism
-**Why human:** The login page is a confirmed stub — this test will fail visually; documenting it so the fix priority is clear
+**Test:** With a seeded Supabase instance, navigate to `/pos/login`, select a staff member from the list, tap digits on the PIN pad to enter a valid 4-digit PIN
+**Expected:** Staff session cookie (`staff_session`) is set as HttpOnly; browser redirects to `/pos`; product grid loads with store data
+**Why human:** Requires live Supabase with staff rows seeded and bcrypt-hashed PINs; the redirect and cookie behavior cannot be verified without a running server
 
-### 2. Complete End-to-End Sale
+### 2. PIN Lockout UI Feedback
 
-**Test:** With a seeded Supabase instance: log in as staff, add 2-3 products to cart, apply a 10% discount to one line, select EFTPOS, tap "Charge $X.XX", confirm YES on EFTPOS screen
+**Test:** At `/pos/login`, enter an incorrect PIN 10 times within 5 minutes for the same staff member
+**Expected:** After the 10th failure, the error message reads "Account locked. Contact store owner." and the PIN pad becomes non-functional for that staff until the 5-minute window expires
+**Why human:** Requires live DB and real timing; verifyStaffPin lockout logic is unit-tested but the UI error display path for the lockout message needs visual confirmation
+
+### 3. Complete End-to-End Sale
+
+**Test:** Log in as staff, add 2-3 products to cart, apply a 10% discount to one line, select EFTPOS, tap "Charge $X.XX", confirm YES on EFTPOS screen
 **Expected:** SaleSummaryScreen shows correct sale ID, items list, GST breakdown, "EFTPOS" payment badge; product stock counts decrement on the grid after tapping New Sale
-**Why human:** Requires live Supabase with products and stock; completeSale RPC must execute against a real DB
-
-### 3. Cash Change Calculation Display
-
-**Test:** Add products totalling $25.00, select Cash, enter $30.00 tendered
-**Expected:** "Change due: $5.00" displays in green; Complete Sale button is enabled
-**Why human:** Requires browser interaction; calcChangeDue is unit-tested but UI rendering needs visual confirmation
+**Why human:** Requires live Supabase with seeded products and stock; completeSale RPC must execute against a real DB
 
 ### 4. Out-of-Stock Staff PIN Override
 
 **Test:** As staff, tap an out-of-stock product; when OutOfStockDialog appears, enter the owner's 4-digit PIN
 **Expected:** PIN is verified against the owner's DB record; product is added to cart; dialog closes
-**Why human:** Requires live DB with staff records and PIN hashes; verifyStaffPin is unit-tested but the full dialog flow needs real data
+**Why human:** Requires live DB with staff records and PIN hashes
 
 ---
 
 ## Gaps Summary
 
-**One gap blocks the phase goal:** The PIN login page (`src/app/(pos)/pos/login/page.tsx`) is a stub from Phase 1 that was never completed in Phase 3. The `verifyStaffPin` server action is fully implemented, but staff have no UI to enter their PIN. In a real deployment, staff cannot access the POS.
+No gaps remain. The one gap from the initial verification (stub PIN login page) has been closed by plan 03-06:
 
-This gap is specifically about Success Criterion 1: "Staff can log in with PIN." The subsequent criteria (product grid, discounts, EFTPOS, stock refresh, out-of-stock) are all fully implemented and wired correctly.
+- `src/app/(pos)/pos/login/page.tsx` is now a substantive Server Component (34 lines) that fetches store and staff data via the admin client and passes real props to PinLoginForm
+- `src/components/pos/PinLoginForm.tsx` is a substantive Client Component (189 lines) with staff selector, 4-dot PIN indicator, 3x4 keypad, auto-submit, error display with retry, and redirect on success
+- All 3 key links from the plan's must_haves are wired and confirmed
+- All 343 unit tests still pass (no regressions)
+- The old stub heading (`<h1>Staff PIN Login</h1>`) is confirmed absent
 
-**All other 4 success criteria are fully verified.** The backend foundation (RPC, cart reducer, completeSale action) is solid with 27 unit tests passing. The POS surface components (grid, cart, overlays) are substantive and wired. The EFTPOS confirmation, stock refresh, and out-of-stock override are all correctly implemented.
-
-**Scope note:** The 03-CONTEXT.md describes the login page as "existing" (from Phase 1) and Phase 3's plans do not include tasks to build the login UI — this gap was inherited and not addressed.
+Phase 3 goal is achieved in code. Human verification is required only to confirm behavior against a live Supabase instance.
 
 ---
 
-_Verified: 2026-04-01T16:55:00Z_
+_Verified: 2026-04-01T17:57:30Z_
 _Verifier: Claude (gsd-verifier)_
+_Re-verification: Yes — after plan 03-06 gap closure_
