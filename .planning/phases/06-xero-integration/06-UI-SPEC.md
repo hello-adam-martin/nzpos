@@ -21,8 +21,8 @@ created: 2026-04-01
 | Preset | not applicable — @theme block in src/app/globals.css | globals.css confirmed |
 | Component library | none (custom components, no Radix/shadcn) | codebase scan |
 | Icon library | Inline SVG (consistent with all existing admin components) | AdminSidebar.tsx, OrderDataTable.tsx patterns |
-| Font (display) | Satoshi, weight 700 — via Bunny Fonts CDN | DESIGN.md / globals.css |
-| Font (body/UI) | DM Sans, weight 400/500/600 — via Bunny Fonts CDN | DESIGN.md / globals.css |
+| Font (display) | Satoshi, weight 600 — via Bunny Fonts CDN | DESIGN.md / globals.css |
+| Font (body/UI) | DM Sans, weight 400/600 — via Bunny Fonts CDN | DESIGN.md / globals.css |
 
 ---
 
@@ -51,13 +51,18 @@ Exceptions:
 
 All roles use DM Sans (font-sans) except page heading which uses Satoshi (font-display).
 
+Scale: 4 sizes maximum, 2 weights maximum.
+
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
-| Page heading | 24px (2xl) | 700 (Satoshi) | 1.2 | "Integrations" page title |
+| Page heading | 24px (2xl) | 600 (Satoshi) | 1.2 | "Integrations" page title |
 | Section heading | 18px (lg) | 600 (DM Sans) | 1.3 | "Xero Connection", "Account Codes", "Sync Log" section headers |
 | Body | 16px (base) | 400 (DM Sans) | 1.5 | Descriptive copy, empty state body, form labels |
-| Label / Data | 14px (sm) | 500 (DM Sans) | 1.4 | Table column headers, form field labels, sync log values, status badges |
-| Caption | 12px (xs) | 400 (DM Sans) | 1.4 | Error messages below form fields, timestamp values in sync log |
+| Label / Caption / Data | 14px (sm) | 400 or 600 (DM Sans) | 1.4 | See note below |
+
+**14px usage note:** Two visual variants share the 14px size — weight distinguishes them:
+- 14px weight 600: table column headers, form field labels, status badge text, CTAs at small size
+- 14px weight 400 + muted color (--color-muted): captions, timestamps, error messages below form fields, sync log secondary values
 
 Tabular data (sync log amounts, invoice numbers): use `font-feature-settings: 'tnum' 1` on 14px DM Sans — consistent with existing admin tables (DESIGN.md data/tables rule).
 
@@ -91,6 +96,18 @@ All values from established globals.css @theme block.
 - Text: #92400E (amber-800 equivalent)
 - Icon: warning triangle inline SVG, 16px
 
+**Disconnect confirmation Cancel button:**
+- Cancel — ghost button, --color-navy text, no fill, no border
+
+---
+
+## Focal Point
+
+**Screen: /admin/integrations**
+
+- **Disconnected state:** XeroConnectButton is the focal point. It is the primary amber CTA, centered-left in the Xero Connection card, with the most visual weight on the page. All other content (account codes, sync log) is secondary or hidden.
+- **Connected state:** XeroSyncButton ("Sync Today's Sales") is the focal point. It is the primary amber CTA in the Sync section. The sync status indicator (last synced timestamp, most recent sync log row) is the secondary focal element directly below it.
+
 ---
 
 ## Component Inventory
@@ -101,7 +118,7 @@ All values from established globals.css @theme block.
 |-----------|------|---------|
 | XeroDisconnectBanner | src/components/admin/integrations/XeroDisconnectBanner.tsx | Full-width alert strip in admin layout, shown when xero_connections.status = 'disconnected' or no connection. Not dismissible — only clears on reconnect. Rendered in AdminLayout above `<main>`. |
 | XeroConnectButton | src/components/admin/integrations/XeroConnectButton.tsx | Primary amber button ("Connect to Xero") that initiates OAuth flow. Shows connection status pill ("Connected" green badge or "Disconnected" red badge) alongside it. |
-| XeroAccountCodeForm | src/components/admin/integrations/XeroAccountCodeForm.tsx | 3-field form: Cash Account Code, EFTPOS Account Code, Online (Stripe) Account Code. Each is a text input with label + 12px helper text. Saves via Server Action. Shows inline success/error feedback. |
+| XeroAccountCodeForm | src/components/admin/integrations/XeroAccountCodeForm.tsx | 3-field form: Cash Account Code, EFTPOS Account Code, Online (Stripe) Account Code. Each is a text input with label + 14px muted helper text. Saves via Server Action. Shows inline success/error feedback. |
 | XeroSyncLog | src/components/admin/integrations/XeroSyncLog.tsx | Data table showing sync history. Columns: Date, Period, Status badge, Total (NZD), Invoice #, Error. Max 30 rows, no pagination in v1 (Claude's discretion). |
 | XeroSyncButton | src/components/admin/integrations/XeroSyncButton.tsx | Amber button "Sync Today's Sales". Shows loading spinner during sync (disabled state). Displays inline result feedback ("Synced — Invoice #INV-0042" or error message) without page reload. |
 
@@ -119,7 +136,7 @@ All values from established globals.css @theme block.
 Single-page layout within existing admin shell (sidebar 240px + main content area). Content is a vertical stack of three card sections:
 
 ```
-[Page heading: "Integrations" — 24px Satoshi 700]
+[Page heading: "Integrations" — 24px Satoshi 600]
 [Subheading: "Connect your accounting software to sync sales automatically." — 16px DM Sans muted]
 
 [Card: "Xero Connection"]
@@ -174,7 +191,7 @@ Clicking "Disconnect" shows an inline confirmation within the connection card:
 [Confirmation box, bordered red, rounded-md, p-4]
 "Disconnect Xero? Daily sync will stop and account codes will be cleared.
  You can reconnect at any time."
-[Cancel — ghost button]  [Disconnect — red filled button "Disconnect Xero"]
+[Cancel — ghost button, --color-navy text, no fill]  [Disconnect — red filled button "Disconnect Xero"]
 ```
 
 No separate modal. Inline within the card. Pressing Escape or clicking Cancel dismisses.
