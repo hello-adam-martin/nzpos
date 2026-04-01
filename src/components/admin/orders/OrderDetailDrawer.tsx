@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { formatNZD } from '@/lib/money'
 import { OrderStatusBadge } from './OrderStatusBadge'
 import { updateOrderStatus } from '@/actions/orders/updateOrderStatus'
+import { RefundConfirmationStep } from './RefundConfirmationStep'
 import type { OrderWithStaff } from './OrderDataTable'
 
 const NZ_DATE_FORMAT = new Intl.DateTimeFormat('en-NZ', {
@@ -27,16 +28,18 @@ interface OrderDetailDrawerProps {
   order: OrderWithStaff | null
   onClose: () => void
   onRefundClick: () => void
+  onRefundComplete?: (totalCents: number) => void
 }
 
-export function OrderDetailDrawer({ order, onClose, onRefundClick }: OrderDetailDrawerProps) {
+export function OrderDetailDrawer({ order, onClose, onRefundClick, onRefundComplete }: OrderDetailDrawerProps) {
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [transitionError, setTransitionError] = useState<string | null>(null)
+  const [showRefundStep, setShowRefundStep] = useState(false)
 
-  // Escape key handler
+  // Escape key handler (only if not in refund step — refund step requires explicit cancel)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && !showRefundStep) {
         onClose()
       }
     }
@@ -44,11 +47,12 @@ export function OrderDetailDrawer({ order, onClose, onRefundClick }: OrderDetail
       document.addEventListener('keydown', handleKeyDown)
     }
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [order, onClose])
+  }, [order, onClose, showRefundStep])
 
-  // Reset error when order changes
+  // Reset refund step and error when order changes
   useEffect(() => {
     setTransitionError(null)
+    setShowRefundStep(false)
   }, [order?.id])
 
   async function handleStatusTransition(newStatus: string) {
@@ -71,13 +75,13 @@ export function OrderDetailDrawer({ order, onClose, onRefundClick }: OrderDetail
 
   return (
     <>
-      {/* Overlay */}
+      {/* Overlay — does not close drawer during refund step (requires explicit cancel) */}
       <div
         className={[
           'fixed inset-0 bg-black/40 z-40 transition-opacity duration-200',
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
         ].join(' ')}
-        onClick={onClose}
+        onClick={showRefundStep ? undefined : onClose}
         aria-hidden="true"
       />
 
@@ -93,7 +97,19 @@ export function OrderDetailDrawer({ order, onClose, onRefundClick }: OrderDetail
         aria-modal="true"
         aria-label="Order detail"
       >
-        {order && (
+        {order && showRefundStep && (
+          <RefundConfirmationStep
+            orderId={order.id}
+            totalCents={order.total_cents}
+            onBack={() => setShowRefundStep(false)}
+            onRefundComplete={() => {
+              setShowRefundStep(false)
+              onRefundComplete?.(order.total_cents)
+              onClose()
+            }}
+          />
+        )}
+        {order && !showRefundStep && (
           <div className="flex flex-col h-full">
             {/* Header */}
             <div className="flex items-start justify-between px-6 py-4 border-b border-border flex-shrink-0 gap-3">
@@ -270,7 +286,7 @@ export function OrderDetailDrawer({ order, onClose, onRefundClick }: OrderDetail
               <div className="px-6 py-4 border-t border-border flex-shrink-0">
                 <button
                   type="button"
-                  onClick={onRefundClick}
+                  onClick={() => setShowRefundStep(true)}
                   className="bg-navy text-white w-full py-3 rounded-[var(--radius-lg)] font-bold font-sans text-sm hover:bg-navy-dark transition-colors"
                 >
                   Refund Order

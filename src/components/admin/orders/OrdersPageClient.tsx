@@ -1,6 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { formatNZD } from '@/lib/money'
 import { OrderFilterBar } from './OrderFilterBar'
 import { OrderDataTable, type OrderWithStaff } from './OrderDataTable'
 import { OrderDetailDrawer } from './OrderDetailDrawer'
@@ -19,9 +20,16 @@ export function OrdersPageClient({
   pageSize,
 }: OrdersPageClientProps) {
   const [selectedOrder, setSelectedOrder] = useState<OrderWithStaff | null>(null)
-  const [refundTargetOrder, setRefundTargetOrder] = useState<OrderWithStaff | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  // Auto-dismiss toast after 3 seconds
+  useEffect(() => {
+    if (!toast) return
+    const timer = setTimeout(() => setToast(null), 3000)
+    return () => clearTimeout(timer)
+  }, [toast])
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
 
@@ -44,14 +52,28 @@ export function OrdersPageClient({
   }
 
   function handleRefundClick() {
-    // Refund flow handled in Plan 04 — store the target for future integration
-    setRefundTargetOrder(selectedOrder)
-    // For now: just close the drawer (actual refund in Plan 04)
+    // Refund step is now handled inside OrderDetailDrawer via showRefundStep state
+    // This prop is kept for backward compatibility but the drawer manages the flow internally
+  }
+
+  function handleRefundComplete(totalCents: number) {
     setSelectedOrder(null)
+    router.refresh()
+    setToast(`Refund processed. ${formatNZD(totalCents)} returned to customer.`)
   }
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Success toast */}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed top-4 right-4 z-[100] bg-[var(--color-success)] text-white text-sm font-sans font-bold px-4 py-3 rounded-[var(--radius-md)] shadow-lg max-w-xs"
+        >
+          {toast}
+        </div>
+      )}
       {/* Filter bar */}
       <OrderFilterBar />
 
@@ -97,6 +119,7 @@ export function OrdersPageClient({
         order={selectedOrder}
         onClose={handleDrawerClose}
         onRefundClick={handleRefundClick}
+        onRefundComplete={handleRefundComplete}
       />
     </div>
   )
