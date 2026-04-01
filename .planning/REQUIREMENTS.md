@@ -78,9 +78,9 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Xero Integration
 
 - [x] **XERO-01**: Owner can connect Xero via OAuth 2.0 flow
-- [ ] **XERO-02**: Daily automated sync pushes previous day's sales as a single Xero invoice with GST breakdown
-- [ ] **XERO-03**: Xero sync log tracks every attempt (success/fail/invoice ID/error)
-- [ ] **XERO-04**: Owner can trigger manual sync from admin dashboard
+- [x] **XERO-02**: Daily automated sync pushes previous day's sales as a single Xero invoice with GST breakdown
+- [x] **XERO-03**: Xero sync log tracks every attempt (success/fail/invoice ID/error)
+- [x] **XERO-04**: Owner can trigger manual sync from admin dashboard
 - [x] **XERO-05**: Token refresh handled automatically; admin notified if Xero disconnects
 - [x] **XERO-06**: Tokens stored in Supabase Vault (not plain DB columns)
 
@@ -188,8 +188,8 @@ Explicitly excluded. Documented to prevent scope creep.
 | REF-01 | Phase 5 | Complete |
 | REF-02 | Phase 5 | Complete |
 | XERO-01 | Phase 6 | Complete |
-| XERO-02 | Phase 6 | Pending |
-| XERO-03 | Phase 6 | Pending |
-| XERO-04 | Phase 6 | Pending |
+| XERO-02 | Phase 6 | Complete |
+| XERO-03 | Phase 6 | Complete |
+| XERO-04 | Phase 6 | Complete |
 | XERO-05 | Phase 6 | Complete |
 | XERO-06 | Phase 6 | Complete |
