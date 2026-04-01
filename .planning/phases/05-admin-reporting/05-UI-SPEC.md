@@ -33,7 +33,6 @@ Declared values (must be multiples of 4):
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| 2xs | 2px | Border offsets, hairline gaps |
 | xs | 4px | Icon gaps, badge padding, inline padding |
 | sm | 8px | Compact element spacing, button icon gap |
 | md | 16px | Default form field spacing, card inner padding |
@@ -41,6 +40,8 @@ Declared values (must be multiples of 4):
 | xl | 32px | Layout column gap, page-level padding |
 | 2xl | 48px | Major section breaks, hero card grouping |
 | 3xl | 64px | Page-level top padding |
+
+Note: Hairline borders and dividers use CSS `border-width: 1px` directly — these are not layout spacing values and do not belong in the spacing scale.
 
 Exceptions:
 - Dashboard hero stat cards: minimum height 96px for scannable at-a-glance reading
@@ -57,10 +58,12 @@ Source: DESIGN.md spacing scale, confirmed in existing `ProductDataTable.tsx` ro
 | Role | Font | Size | Weight | Line Height | Usage |
 |------|------|------|--------|-------------|-------|
 | Body | DM Sans (`--font-sans`) | 14px (sm) | 400 | 1.5 | Table cells, secondary text, form labels |
-| Label | DM Sans (`--font-sans`) | 14px (sm) | 600 (semibold) | 1.4 | Column headers, filter labels, drawer field labels |
-| Heading | DM Sans (`--font-sans`) | 20px (xl) | 600 (semibold) | 1.3 | Page titles (Orders, Reports, Cash-Up), section headings |
-| Display | Satoshi (`--font-display`) | 30px (3xl) | 700 | 1.2 | Dashboard hero stat numbers (today's total, order count) |
+| Label | DM Sans (`--font-sans`) | 14px (sm) | 700 (bold) | 1.4 | Column headers, filter labels, drawer field labels |
+| Heading | DM Sans (`--font-sans`) | 20px (xl) | 700 (bold) | 1.3 | Page titles (Orders, Reports, Cash-Up), section headings |
+| Display | Satoshi (`--font-display`) | 30px (3xl) | 700 (bold) | 1.2 | Dashboard hero stat numbers (today's total, order count) |
 | Mono/Data | Geist Mono (`--font-mono`) | 14px (sm) | 400 | 1.5 | Order IDs, monetary values in tables, GST breakdowns |
+
+Declared weights: 400 (regular) and 700 (bold). No intermediate weights used in this phase.
 
 Notes:
 - All monetary values use `font-feature-settings: 'tnum' 1` (tabular numerals) — consistent with existing `ProductDataTable` pattern
@@ -108,7 +111,7 @@ New components required for this phase (follow existing patterns):
 
 ### Dashboard Page
 - `DashboardHeroCard` — stat card with large Satoshi display number + DM Sans label. White card bg, border, sm shadow. Props: label, value, subLabel (e.g. "POS: 12 / Online: 8").
-- `LowStockAlertList` — unordered list below hero cards. Each row: product name (semibold), current stock (mono, warning color if ≤ threshold), threshold (text-muted). Max 10 items; "View all" link when more.
+- `LowStockAlertList` — unordered list below hero cards. Each row: product name (bold), current stock (mono, warning color if ≤ threshold), threshold (text-muted). Max 10 items; "View all" link when more.
 - `ChannelBadge` — pill badge: "POS" (navy fill) or "Online" (info fill). Reuse pattern from `ProductStatusBadge`.
 
 ### Order List Page (`/admin/orders`)
@@ -119,7 +122,7 @@ New components required for this phase (follow existing patterns):
 
 ### Refund Flow (within OrderDetailDrawer)
 - "Refund Order" button: navy bg, white text, full width, positioned at bottom of drawer. NOT amber — this is a serious action, not a primary happy-path action.
-- `RefundConfirmationStep` — replaces drawer content. Shows order total being refunded, `RefundReasonSelect` dropdown, "Restock items?" toggle, amber "Confirm Refund" button + ghost "Cancel" button.
+- `RefundConfirmationStep` — replaces drawer content. Shows order total being refunded, `RefundReasonSelect` dropdown, "Restock items?" toggle, amber "Confirm Refund" button + ghost "Back to Order" button.
 - `RefundReasonSelect` — controlled select input. Options: "Customer request", "Damaged", "Wrong item", "Other". Required before Confirm is enabled.
 
 ### Cash-Up
@@ -155,7 +158,7 @@ Use **Recharts** (recharts@2.x). Rationale: lightweight, React-native, composabl
 2. Drawer content replaced by `RefundConfirmationStep` (no new modal — in-place replacement within drawer).
 3. Owner selects refund reason (required), toggles restock, clicks amber "Confirm Refund".
 4. Loading state on button during Server Action. On success: drawer shows read-only refunded state with green badge. On error: inline error message above buttons.
-5. Cancel returns to order detail view.
+5. "Back to Order" returns to order detail view without processing a refund.
 
 ### Cash-Up Flow
 1. POS top bar shows "Open Session" button (ghost, small) when no session is active.
@@ -205,7 +208,7 @@ Use **Recharts** (recharts@2.x). Rationale: lightweight, React-native, composabl
 | Restock toggle label | "Restock items?" |
 | Restock toggle hint | "Add these items back to stock if they are in a sellable condition." |
 | Refund confirm button | "Confirm Refund" |
-| Refund cancel | "Cancel" |
+| Refund cancel | "Back to Order" |
 | Refund success toast | "Refund processed. [Amount] returned to customer." |
 | Refund error inline | "Refund failed. Check your Stripe dashboard and try again." |
 | Cash-up open session button (POS bar) | "Open Session" |
@@ -258,6 +261,8 @@ No third-party registries. All components are custom-built following the existin
 7. **Cash denomination inputs** — each is a number input with min=0. Auto-calculate total from denominations client-side using `useReducer`. The total field is the source of truth for Server Action submission — denominations are cosmetic/UX only.
 
 8. **Order status badges** must use semantic CSS tokens, not hardcoded hex values: `bg-success`, `bg-warning`, `bg-error`, `bg-info` at 15% opacity backgrounds with full-opacity text variants.
+
+9. **Font weight convention.** Two weights only: `font-normal` (400) for body and data, `font-bold` (700) for labels, headings, and display numbers. Do not use `font-semibold` (600) anywhere in this phase.
 
 ---
 
