@@ -30,34 +30,42 @@ export default async function PosPage() {
 
   const supabase = createSupabaseAdminClient()
 
-  const [productsResult, categoriesResult, staffResult, storeResult] = await Promise.all([
-    supabase
-      .from('products')
-      .select('*')
-      .eq('store_id', storeId)
-      .eq('is_active', true)
-      .order('name'),
-    supabase
-      .from('categories')
-      .select('*')
-      .eq('store_id', storeId)
-      .order('sort_order'),
-    supabase
-      .from('staff')
-      .select('id, name')
-      .eq('id', staffId)
-      .single(),
-    supabase
-      .from('stores')
-      .select('id, name')
-      .eq('id', storeId)
-      .single(),
-  ])
+  const [productsResult, categoriesResult, staffResult, storeResult, staffListResult] =
+    await Promise.all([
+      supabase
+        .from('products')
+        .select('*')
+        .eq('store_id', storeId)
+        .eq('is_active', true)
+        .order('name'),
+      supabase
+        .from('categories')
+        .select('*')
+        .eq('store_id', storeId)
+        .order('sort_order'),
+      supabase
+        .from('staff')
+        .select('id, name')
+        .eq('id', staffId)
+        .single(),
+      supabase
+        .from('stores')
+        .select('id, name')
+        .eq('id', storeId)
+        .single(),
+      // Fetch all active staff for out-of-stock owner PIN override
+      supabase
+        .from('staff')
+        .select('id, name, role')
+        .eq('store_id', storeId)
+        .eq('is_active', true),
+    ])
 
   const products = productsResult.data ?? []
   const categories = categoriesResult.data ?? []
   const staffName = staffResult.data?.name ?? 'Staff'
   const storeName = storeResult.data?.name ?? 'NZPOS'
+  const staffList = (staffListResult.data ?? []) as { id: string; name: string; role: 'owner' | 'staff' }[]
 
   return (
     <POSClientShell
@@ -66,6 +74,8 @@ export default async function PosPage() {
       staffName={staffName}
       staffRole={staffRole}
       storeName={storeName}
+      storeId={storeId}
+      staffList={staffList}
     />
   )
 }
