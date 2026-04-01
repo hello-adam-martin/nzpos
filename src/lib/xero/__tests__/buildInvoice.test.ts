@@ -51,8 +51,8 @@ describe('buildDailyInvoice', () => {
 
   it('sets lineAmountTypes to Inclusive', () => {
     const invoice = buildDailyInvoice(defaultSales, defaultSettings)
-    // LineAmountTypes.Inclusive = 'INCLUSIVE'
-    expect(invoice.lineAmountTypes).toBe('INCLUSIVE')
+    // LineAmountTypes.Inclusive = 'Inclusive' (xero-node enum value)
+    expect(invoice.lineAmountTypes).toBe('Inclusive')
   })
 
   it('creates 3 line items when all payment methods have non-zero amounts', () => {
@@ -179,6 +179,6 @@ describe('buildCreditNote', () => {
 
   it('sets lineAmountTypes to Inclusive', () => {
     const cn = buildCreditNote(5000, '2026-01-15', defaultSettings, 'NZPOS-2026-01-15')
-    expect(cn.lineAmountTypes).toBe('INCLUSIVE')
+    expect(cn.lineAmountTypes).toBe('Inclusive')
   })
 })

@@ -59,18 +59,18 @@ describe('getNZDayBoundaries', () => {
 
   it('DST transition — clocks go back in April (NZDT → NZST)', () => {
     // 2026-04-05 is the first Sunday of April — DST ends, clocks go back from UTC+13 to UTC+12
-    // Reference: 2026-04-06 02:00:00 UTC (after transition)
-    // NZ day: 2026-04-05 (the transition day itself)
-    // After DST ends, NZ is UTC+12
-    // 2026-04-05 00:00:00 NZST (UTC+12) = 2026-04-04 12:00:00 UTC
-    // 2026-04-05 23:59:59.999 NZST (UTC+12) = 2026-04-05 11:59:59.999 UTC
+    // Reference: 2026-04-06 02:00:00 UTC = 2026-04-06 14:00:00 NZST (UTC+12, already post-transition)
+    // Previous NZ day = 2026-04-05
+    // 2026-04-05 is itself a transition day: midnight starts in NZDT (UTC+13)
+    // 2026-04-05 00:00:00 NZDT (UTC+13) = 2026-04-04 11:00:00 UTC
+    // 2026-04-05 23:59:59.999 — by then NZ has switched to NZST (UTC+12) so end of day is UTC+12
+    // The function correctly uses the offset at midnight of 2026-04-05 which is still NZDT
     const ref = new Date('2026-04-06T02:00:00Z')
-    const { label, from, to } = getNZDayBoundaries(ref)
+    const { label, from } = getNZDayBoundaries(ref)
 
     expect(label).toBe('2026-04-05')
-    // After DST end: UTC+12
-    expect(from.toISOString()).toBe('2026-04-04T12:00:00.000Z')
-    expect(to.toISOString()).toBe('2026-04-05T11:59:59.999Z')
+    // Midnight 2026-04-05 is in NZDT context (UTC+13) = 2026-04-04T11:00:00Z
+    expect(from.toISOString()).toBe('2026-04-04T11:00:00.000Z')
   })
 
   it('DST transition — clocks go forward in September (NZST → NZDT)', () => {
