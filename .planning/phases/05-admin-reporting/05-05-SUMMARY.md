@@ -124,6 +124,10 @@ None — no external service configuration required.
 - POSTopBar now accepts `activeSession` prop — POS page layout must pass the current open session (if any) to render the banner or "Open Session" button correctly
 - Admin /admin/cash-up page is live at that route; AdminSidebar link to Cash-Up was added in Plan 05-01
 
+## Self-Check: PASSED
+
+All 8 created/modified files verified present on disk. Both task commits (05e7ea6, 2f27b53) confirmed in git log.
+
 ---
 *Phase: 05-admin-reporting*
 *Completed: 2026-04-01*

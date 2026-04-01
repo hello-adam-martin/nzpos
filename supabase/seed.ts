@@ -36,6 +36,12 @@ async function seed() {
     role: 'owner',
   })
 
+  // 3b. Set app_metadata on auth user so JWT claims work immediately
+  // (custom_access_token hook should do this, but as a fallback for local dev)
+  await supabase.auth.admin.updateUserById(owner.user.id, {
+    app_metadata: { store_id: store.id, role: 'owner' },
+  })
+
   // 4. Create 2 test staff with PINs (per D-07)
   const pin1Hash = await bcryptjs.hash('1234', 10)
   const pin2Hash = await bcryptjs.hash('5678', 10)
