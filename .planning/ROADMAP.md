@@ -91,7 +91,7 @@ Plans:
   5. Staff can update a click-and-collect order through PENDING_PICKUP -> READY -> COLLECTED; the status is visible to the owner in the admin order list
 **Plans:** 7 plans
 Plans:
-- [ ] 04-01-PLAN.md — Schema fixes, online store migration, server utilities, Wave 0 test stubs
+- [x] 04-01-PLAN.md — Schema fixes, online store migration, server utilities, Wave 0 test stubs
 - [ ] 04-02-PLAN.md — Cart context with localStorage persistence, storefront layout and header
 - [ ] 04-03-PLAN.md — Product listing page, product detail page, category pills, search, sold-out handling
 - [ ] 04-04-PLAN.md — Promo code CRUD admin page, validate Server Action with rate limiting
