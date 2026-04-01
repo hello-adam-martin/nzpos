@@ -48,8 +48,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Online Store
 
-- [ ] **STORE-01**: Public storefront displays products with images, categories, search
-- [ ] **STORE-02**: Product detail pages are server-rendered for SEO
+- [x] **STORE-01**: Public storefront displays products with images, categories, search
+- [x] **STORE-02**: Product detail pages are server-rendered for SEO
 - [x] **STORE-03**: Customer can add products to cart and proceed to Stripe Checkout
 - [ ] **STORE-04**: Customer can apply promo codes (percentage or fixed, with validation)
 - [ ] **STORE-05**: Stripe webhook confirms payment, atomically decrements stock, creates order
@@ -167,8 +167,8 @@ Explicitly excluded. Documented to prevent scope creep.
 | POS-09 | Phase 3 | Pending |
 | DISC-03 | Phase 3 | Pending |
 | DISC-04 | Phase 3 | Pending |
-| STORE-01 | Phase 4 | Pending |
-| STORE-02 | Phase 4 | Pending |
+| STORE-01 | Phase 4 | Complete |
+| STORE-02 | Phase 4 | Complete |
 | STORE-03 | Phase 4 | Complete |
 | STORE-04 | Phase 4 | Pending |
 | STORE-05 | Phase 4 | Pending |

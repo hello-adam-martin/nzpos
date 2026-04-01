@@ -89,12 +89,12 @@ Plans:
   3. After Stripe payment succeeds, stock decrements atomically and an order record is created; replaying the same Stripe event a second time does not create a duplicate order or decrement stock again
   4. Sold-out products display "Sold Out" and cannot be added to cart by any customer
   5. Staff can update a click-and-collect order through PENDING_PICKUP -> READY -> COLLECTED; the status is visible to the owner in the admin order list
-**Plans:** 3/7 plans executed
+**Plans:** 4/7 plans executed
 Plans:
 - [x] 04-01-PLAN.md — Schema fixes, online store migration, server utilities, Wave 0 test stubs
 - [x] 04-02-PLAN.md — Cart context with localStorage persistence, storefront layout and header
 - [x] 04-03-PLAN.md — Product listing page, product detail page, category pills, search, sold-out handling
-- [ ] 04-04-PLAN.md — Promo code CRUD admin page, validate Server Action with rate limiting
+- [x] 04-04-PLAN.md — Promo code CRUD admin page, validate Server Action with rate limiting
 - [ ] 04-05-PLAN.md — Cart drawer UI components, createCheckoutSession Server Action
 - [ ] 04-06-PLAN.md — Click-and-collect status transitions, POS Pickups tab with navigation
 - [ ] 04-07-PLAN.md — Stripe webhook handler with idempotency, order confirmation and status pages
