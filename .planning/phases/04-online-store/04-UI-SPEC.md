@@ -32,7 +32,6 @@ Declared values (multiples of 4, sourced from DESIGN.md):
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| 2xs | 2px | Fine separators only |
 | xs | 4px | Icon gaps, inline padding, chip internal padding |
 | sm | 8px | Compact element spacing, card internal gaps |
 | md | 16px | Default element spacing, input padding, button padding |
@@ -46,6 +45,7 @@ Exceptions:
 - Product card minimum width: 160px on desktop, 140px on mobile
 - Max content width: 1200px centered (storefront specific, from DESIGN.md)
 - Storefront header height: 64px fixed
+- Fine separators (2px): inherited from DESIGN.md spacing scale (`2xs: 2px`). Achieved via 1px border width rather than a spacing token where possible. Not a standard spacing step — use only for decorative dividers with no layout spacing responsibility.
 
 ---
 
@@ -53,17 +53,21 @@ Exceptions:
 
 Sourced from DESIGN.md. Storefront uses exactly 4 roles: Body, Label, Heading, Display.
 
+Note: This phase uses 2 weights — 400 (regular) and 600 (semibold). These are a subset of the full DESIGN.md weight range (400–700). The full range is available in globals.css but only 400 and 600 are in use for this phase to maintain visual hierarchy with minimal weight variation.
+
 | Role | Font | Size | Weight | Line Height | Usage |
 |------|------|------|--------|-------------|-------|
 | Body | DM Sans | 16px (base) | 400 | 1.5 | Product descriptions, cart summary text, footer copy, product name on card (weight 600 for differentiation), price on product list card (weight 600), cart total, checkout summary total |
-| Label | DM Sans | 14px (sm) | 500 | 1.4 | Category pills, form labels, badge text, nav links, stock badge labels, timestamp/meta text, legal footnotes |
+| Label | DM Sans | 14px (sm) | 600 | 1.4 | Category pills, form labels, badge text, nav links, stock badge labels, timestamp/meta text, legal footnotes |
 | Heading | DM Sans | 24px (2xl) | 600 | 1.3 | Product names on detail page, section headings |
-| Display | Satoshi | 36px (4xl) | 700 | 1.2 | Store name/hero headline, page-level titles |
+| Display | Satoshi | 36px (4xl) | 600 | 1.2 | Store name/hero headline, page-level titles |
 
 Notes on role assignment:
-- Badge/meta text (previously 12px) uses Label (14px) — minimum legible size for touch devices
-- Product card name and price (previously 18px) use Body (16px) at weight 600 for visual differentiation from description text
-- Cart total and checkout summary total (previously 20px) use Body (16px) at weight 600; the larger Heading role (24px) is reserved for section headings on the detail page
+- Label weight changed from 500 to 600 to conform to the 2-weight constraint. At 14px, 600 reads clearly as a label without competing with body text.
+- Display weight changed from 700 to 600. Satoshi at 600 and 36px still reads as a strong display-weight heading. Full 700 is available if a future phase requires stronger hero contrast.
+- Badge/meta text (previously 12px) uses Label (14px) — minimum legible size for touch devices.
+- Product card name and price (previously 18px) use Body (16px) at weight 600 for visual differentiation from description text.
+- Cart total and checkout summary total (previously 20px) use Body (16px) at weight 600; the larger Heading role (24px) is reserved for section headings on the detail page.
 
 Price figures: DM Sans, `tabular-nums` feature enabled (`font-feature-settings: 'tnum' 1`), weight 600.
 
@@ -187,13 +191,13 @@ All copy is NZ English (not US English). Prices always display with NZD prefix o
 | Cart empty state body | "Browse our products and add something you like." |
 | Cart empty state CTA | "Continue Shopping" |
 | No products (category filter) | "No products in this category" |
-| No products (search) | "No products match your search" |
+| No products (search) | "No products match your search. Try browsing all products." |
 | Sold out badge | "Sold Out" |
 | Low stock notice | "Only {n} left" |
 | Promo code placeholder | "Promo code" |
 | Promo code CTA | "Apply Code" |
 | Promo applied success | "Code applied — {value} off" |
-| Promo invalid error | "That code is invalid or has expired." |
+| Promo invalid error | "That code is invalid or has expired. Double-check the code or contact us for help." |
 | Promo rate limit error | "Too many attempts. Try again in a moment." |
 | Order confirmation heading | "Order confirmed" |
 | Order confirmation body | "Thanks for your order. Bring your order number when you collect." |
