@@ -34,7 +34,7 @@ export function SalesBarChart({ data }: SalesBarChartProps) {
           tickLine={false}
         />
         <YAxis
-          tickFormatter={(v) => '$' + (v / 100).toFixed(0)}
+          tickFormatter={(v: number) => '$' + (v / 100).toFixed(0)}
           tick={{ fontSize: 12, fontFamily: 'DM Sans' }}
           axisLine={false}
           tickLine={false}
