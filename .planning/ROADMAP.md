@@ -110,7 +110,14 @@ Plans:
   3. Owner can view a sales report for any date range showing daily totals, top products by revenue, and current stock levels
   4. Owner can view GST period summary with per-line breakdown suitable for IRD filing
   5. Owner can process a full refund on any order; refunded orders appear with refund status in the order list and in reporting
-**Plans**: TBD
+**Plans:** 6 plans
+Plans:
+- [ ] 05-01-PLAN.md — Foundation: schema fix, Recharts install, sidebar extension, shared utilities and badges
+- [ ] 05-02-PLAN.md — Dashboard: hero cards (today's sales, orders, channel split) and low stock alerts
+- [ ] 05-03-PLAN.md — Order list: data table, filter bar, pagination, order detail drawer with click-and-collect
+- [ ] 05-04-PLAN.md — Refund flow: processRefund Server Action (Stripe integration), confirmation UI in drawer
+- [ ] 05-05-PLAN.md — Cash-up: session open/close Server Actions, POS top bar integration, denomination breakdown, admin page
+- [ ] 05-06-PLAN.md — Reports: sales charts (Recharts), date range presets, GST summary/detail, top products, CSV export
 **UI hint**: yes
 
 ### Phase 6: Xero Integration
@@ -136,5 +143,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 2. Product Catalog | 2/5 | In Progress|  |
 | 3. POS Checkout | 6/6 | Complete   | 2026-04-01 |
 | 4. Online Store | 7/7 | Complete   | 2026-04-01 |
-| 5. Admin & Reporting | 0/TBD | Not started | - |
+| 5. Admin & Reporting | 0/6 | Not started | - |
 | 6. Xero Integration | 0/TBD | Not started | - |
