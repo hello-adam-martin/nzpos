@@ -225,6 +225,7 @@ export type Database = {
           subtotal_cents: number
           total_cents: number
           updated_at: string
+          xero_invoice_id: string | null
         }
         Insert: {
           cash_tendered_cents?: number | null
@@ -248,6 +249,7 @@ export type Database = {
           subtotal_cents: number
           total_cents: number
           updated_at?: string
+          xero_invoice_id?: string | null
         }
         Update: {
           cash_tendered_cents?: number | null
@@ -271,6 +273,7 @@ export type Database = {
           subtotal_cents?: number
           total_cents?: number
           updated_at?: string
+          xero_invoice_id?: string | null
         }
         Relationships: [
           {
@@ -432,6 +435,103 @@ export type Database = {
           window_start?: string
         }
         Relationships: []
+      }
+      refund_items: {
+        Row: {
+          id: string
+          refund_id: string
+          order_item_id: string
+          quantity_refunded: number
+          line_total_refunded_cents: number
+        }
+        Insert: {
+          id?: string
+          refund_id: string
+          order_item_id: string
+          quantity_refunded: number
+          line_total_refunded_cents: number
+        }
+        Update: {
+          id?: string
+          refund_id?: string
+          order_item_id?: string
+          quantity_refunded?: number
+          line_total_refunded_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refund_items_refund_id_fkey"
+            columns: ["refund_id"]
+            isOneToOne: false
+            referencedRelation: "refunds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refund_items_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      refunds: {
+        Row: {
+          id: string
+          order_id: string
+          store_id: string
+          reason: string
+          total_cents: number
+          stripe_refund_id: string | null
+          created_by: string | null
+          created_at: string
+          customer_notified: boolean
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          store_id: string
+          reason: string
+          total_cents: number
+          stripe_refund_id?: string | null
+          created_by?: string | null
+          created_at?: string
+          customer_notified?: boolean
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          store_id?: string
+          reason?: string
+          total_cents?: number
+          stripe_refund_id?: string | null
+          created_by?: string | null
+          created_at?: string
+          customer_notified?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refunds_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refunds_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refunds_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       staff: {
         Row: {
