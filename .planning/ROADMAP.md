@@ -75,7 +75,7 @@ Plans:
 - [x] 09-01-PLAN.md — Email infrastructure + React Email templates (Resend SDK, sendEmail helper, 4 templates)
 - [ ] 09-02-PLAN.md — Email trigger wiring (Stripe webhook, POS receipt action, pickup-ready)
 - [ ] 09-03-PLAN.md — Daily summary cron handler (sales aggregation, low stock, vercel.json)
-- [ ] 09-04-PLAN.md — Order sound alert (polling endpoint, chime, badge, mute toggle, toast)
+- [x] 09-04-PLAN.md — Order sound alert (polling endpoint, chime, badge, mute toggle, toast)
 **UI hint**: yes
 
 ### Phase 10: Customer Accounts
