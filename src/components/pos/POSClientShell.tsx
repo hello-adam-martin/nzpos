@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic'
 import { cartReducer, initialCartState, calcCartTotals, calcChangeDue } from '@/lib/cart'
 import { formatNZD } from '@/lib/money'
 import { completeSale } from '@/actions/orders/completeSale'
+import { sendPosReceipt } from '@/actions/orders/sendPosReceipt'
 import type { Database } from '@/types/database'
 import { POSTopBar } from './POSTopBar'
 import { NewOrderToast } from './NewOrderToast'
@@ -422,11 +423,7 @@ export function POSClientShell({
             setLastReceiptData(null)
           }}
           onEmailCapture={async (email) => {
-            const supabase = (await import('@/lib/supabase/client')).createSupabaseBrowserClient()
-            await supabase
-              .from('orders')
-              .update({ customer_email: email })
-              .eq('id', lastReceiptData.orderId)
+            await sendPosReceipt({ orderId: lastReceiptData.orderId, email })
           }}
           mode="pos"
         />

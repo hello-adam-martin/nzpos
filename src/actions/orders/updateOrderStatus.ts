@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { resolveStaffAuth } from '@/lib/resolveAuth'
+import { sendEmail } from '@/lib/email'
+import { PickupReadyEmail } from '@/emails/PickupReadyEmail'
 
 // Allowed status transitions per D-22
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
@@ -67,8 +69,43 @@ export async function updateOrderStatus(input: unknown): Promise<
     return { error: 'Failed to update order status. Please try again.' }
   }
 
-  // TODO D-14: Send pickup-ready email notification (Resend integration deferred — not implemented in Phase 4)
-  // When newStatus === 'ready', notify customer their order is ready for collection.
+  // NOTIF-03: Send pickup-ready email when status changes to "ready"
+  if (newStatus === 'ready') {
+    const { data: orderForEmail } = await supabase
+      .from('orders')
+      .select('customer_email, order_items(quantity, products(name))')
+      .eq('id', orderId)
+      .single()
+
+    if (orderForEmail?.customer_email) {
+      const { data: store } = await supabase
+        .from('stores')
+        .select('name, address, phone, opening_hours')
+        .eq('id', storeId)
+        .single()
+
+      if (store) {
+        const orderItems = (orderForEmail.order_items ?? []).map((item: { quantity: number; products: { name: string } | null }) => ({
+          productName: item.products?.name ?? 'Unknown',
+          quantity: item.quantity,
+        }))
+
+        // Fire-and-forget per D-05 — email failure must not block status update response
+        void sendEmail({
+          to: orderForEmail.customer_email,
+          subject: 'Your order is ready for pickup',
+          react: PickupReadyEmail({
+            orderItems,
+            storeName: store.name,
+            storeAddress: store.address ?? '',
+            storePhone: store.phone ?? '',
+            openingHours: store.opening_hours ?? '',
+            orderNumber: orderId.slice(0, 8).toUpperCase(),
+          }),
+        })
+      }
+    }
+  }
 
   // 6. Revalidate relevant paths for cache invalidation
   revalidatePath('/pos/pickups')

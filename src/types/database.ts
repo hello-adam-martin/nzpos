@@ -490,6 +490,7 @@ export type Database = {
           gst_number: string | null
           id: string
           name: string
+          opening_hours: string | null
           owner_auth_id: string
           phone: string | null
           updated_at: string
@@ -500,6 +501,7 @@ export type Database = {
           gst_number?: string | null
           id?: string
           name: string
+          opening_hours?: string | null
           owner_auth_id: string
           phone?: string | null
           updated_at?: string
@@ -510,6 +512,7 @@ export type Database = {
           gst_number?: string | null
           id?: string
           name?: string
+          opening_hours?: string | null
           owner_auth_id?: string
           phone?: string | null
           updated_at?: string
