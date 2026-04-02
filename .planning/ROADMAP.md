@@ -89,7 +89,11 @@ Plans:
   4. The JWT auth hook injects customer role and store_id so RLS policies scope data correctly
   5. Visiting POS routes while logged in as a customer results in a block or redirect (no cross-role access)
   6. A customer can verify their email and reset a forgotten password
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 10-01-PLAN.md — Database migration (customers table, auth hook, RLS policies, order-linking RPC) + middleware customer blocking
+- [ ] 10-02-PLAN.md — Customer auth Server Actions (signup, signin, signout, verify, reset) + auth pages
+- [ ] 10-03-PLAN.md — StorefrontHeader integration, account pages (orders, profile), post-purchase prompt
 **UI hint**: yes
 
 ### Phase 11: Partial Refunds
@@ -117,5 +121,5 @@ Plans:
 | 7. Production Launch | v1.1 | 1/3 | In Progress|  |
 | 8. Checkout Speed | v1.1 | 3/3 | Complete   | 2026-04-02 |
 | 9. Notifications | v1.1 | 4/4 | Complete   | 2026-04-02 |
-| 10. Customer Accounts | v1.1 | 0/? | Not started | — |
+| 10. Customer Accounts | v1.1 | 0/3 | Planned | — |
 | 11. Partial Refunds | v1.1 | 0/? | Not started | — |
