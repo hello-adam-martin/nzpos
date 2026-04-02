@@ -121,5 +121,5 @@ Plans:
 | 7. Production Launch | v1.1 | 1/3 | In Progress|  |
 | 8. Checkout Speed | v1.1 | 3/3 | Complete   | 2026-04-02 |
 | 9. Notifications | v1.1 | 4/4 | Complete   | 2026-04-02 |
-| 10. Customer Accounts | v1.1 | 3/3 | Complete   | 2026-04-02 |
+| 10. Customer Accounts | v1.1 | 3/3 | Complete    | 2026-04-02 |
 | 11. Partial Refunds | v1.1 | 0/? | Not started | — |
