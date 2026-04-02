@@ -11,8 +11,8 @@ Requirements for the v2.0 SaaS Platform milestone. Each maps to roadmap phases.
 
 - [ ] **TENANT-01**: Wildcard subdomain routing resolves {slug}.domain.tld to the correct store
 - [x] **TENANT-02**: Schema supports multi-tenant SaaS (stores.slug, store_plans table, stripe_customer_id)
-- [ ] **TENANT-03**: RLS policies enforce tenant isolation via JWT claims (not middleware headers)
-- [ ] **TENANT-04**: Super admin JWT claim (is_super_admin) bypasses store-scoped RLS where needed
+- [x] **TENANT-03**: RLS policies enforce tenant isolation via JWT claims (not middleware headers)
+- [x] **TENANT-04**: Super admin JWT claim (is_super_admin) bypasses store-scoped RLS where needed
 - [ ] **TENANT-05**: Cross-tenant isolation verified with E2E tests (tenant A cannot access tenant B data)
 
 ### Merchant Signup
@@ -105,8 +105,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | TENANT-01 | Phase 12 | Pending |
 | TENANT-02 | Phase 12 | Complete |
-| TENANT-03 | Phase 12 | Pending |
-| TENANT-04 | Phase 12 | Pending |
+| TENANT-03 | Phase 12 | Complete |
+| TENANT-04 | Phase 12 | Complete |
 | TENANT-05 | Phase 12 | Pending |
 | SIGNUP-01 | Phase 13 | Pending |
 | SIGNUP-02 | Phase 13 | Pending |

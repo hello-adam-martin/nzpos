@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production Launch + Feature Waves
 status: executing
-stopped_at: Completed 12-01-PLAN.md
-last_updated: "2026-04-02T19:46:36.005Z"
+stopped_at: Completed 12-03-PLAN.md
+last_updated: "2026-04-02T19:51:07.722Z"
 last_activity: 2026-04-02
 progress:
   total_phases: 10
   completed_phases: 5
   total_plans: 19
-  completed_plans: 16
+  completed_plans: 17
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 12 (multi-tenant-infrastructure) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-04-02
 
@@ -52,6 +52,9 @@ Progress: [░░░░░░░░░░] 0%
 - [v1.1]: Phase 7 (production deploy) partially complete — DEPLOY-02/03/04 still pending real infrastructure
 - [Phase 12]: slug DEFAULT 'demo' trick allows migration on existing rows before default is dropped — ensures new stores must explicitly provide slug
 - [Phase 12]: middlewareAdmin.ts omits server-only and Database type generic to remain compatible with Edge Runtime
+- [Phase 12-multi-tenant-infrastructure]: orders_public_read policy preserved from 006 (guest checkout confirmation requires anon read of online orders)
+- [Phase 12-multi-tenant-infrastructure]: store_plans owner-read only (not staff) — billing info is owner-sensitive
+- [Phase 12-multi-tenant-infrastructure]: super admin check runs before staff/customer in auth hook (D-12: cross-tenant, no store_id required)
 
 ### Blockers/Concerns
 
@@ -61,6 +64,6 @@ Progress: [░░░░░░░░░░] 0%
 
 ## Session Continuity
 
-Last session: 2026-04-02T19:46:36.003Z
-Stopped at: Completed 12-01-PLAN.md
+Last session: 2026-04-02T19:51:07.719Z
+Stopped at: Completed 12-03-PLAN.md
 Resume file: None
