@@ -65,11 +65,12 @@ All sizes from the DESIGN.md scale. No new sizes introduced.
 
 | Role | Size | Weight | Line Height | Font | Usage |
 |------|------|--------|-------------|------|-------|
-| Body | 16px / 1rem | 400 (DM Sans) | 1.5 | `--font-sans` | Line item names on receipt, scanner instruction text |
-| Label | 14px / 0.875rem | 500 (DM Sans) | 1.4 | `--font-sans` | Subtotal / GST row labels, payment method label, scanner status text |
+| Body | 16px / 1rem | 500 (DM Sans) | 1.5 | `--font-sans` | Line item names on receipt, scanner instruction text |
+| Label | 14px / 0.875rem | 500 (DM Sans) | 1.4 | `--font-sans` | Subtotal / GST row labels, payment method label, scanner status text, order ID (`font-mono` class applied on top of 14px size) |
 | Heading | 20px / 1.25rem | 700 (DM Sans) | 1.2 | `--font-sans` | Receipt "Sale Complete" header, scanner overlay title |
 | Display (total) | 30px / 1.875rem | 700 (Satoshi) | 1.1 | `--font-display` | Total amount on receipt — matches existing `SaleSummaryScreen` pattern |
-| Mono | 12px / 0.75rem | 400 (Geist Mono) | 1.4 | `--font-mono` | Order ID on receipt (e.g. `#A1B2C3D4`) |
+
+**Note on order ID:** Rendered at 14px Label size with `font-mono` (`--font-mono` / Geist Mono) applied as a class override. No separate size row needed.
 
 **Tabular numbers:** Apply `tabular-nums` (`font-feature-settings: 'tnum' 1`) to all currency values on the receipt. Existing codebase pattern — already present in `SaleSummaryScreen.tsx`.
 
@@ -100,7 +101,7 @@ Destructive: none in this phase.
 
 | Component | File path | Type | Description |
 |-----------|-----------|------|-------------|
-| `BarcodeScannerSheet` | `src/components/pos/BarcodeScannerSheet.tsx` | Client, overlay | Full-screen dark overlay with camera viewfinder area, status text, and cancel button |
+| `BarcodeScannerSheet` | `src/components/pos/BarcodeScannerSheet.tsx` | Client, overlay | Full-screen dark overlay with camera viewfinder area, status text, and close button |
 | `BarcodeScannerButton` | `src/components/pos/BarcodeScannerButton.tsx` | Client | Icon button for POS top bar. Renders a barcode/scan icon from lucide-react. Taps to open scanner sheet. |
 | `ReceiptScreen` | `src/components/pos/ReceiptScreen.tsx` | Client, overlay | Replaces `SaleSummaryScreen`. Adds store name header. Shares a `ReceiptData` type usable by future print path. |
 | `ReceiptData` (type) | `src/lib/receipt.ts` | Type + util | Shared data model for screen and future physical printer. Derived from completed order. |
@@ -139,7 +140,7 @@ Destructive: none in this phase.
 │   [Status pill]  idle / scanning /  │
 │                  match / no-match   │
 │                                     │
-│   [Cancel button]  ghost, full-width│
+│   [Close Scanner button] ghost, full-width│
 └─────────────────────────────────────┘
 ```
 
@@ -163,7 +164,7 @@ Destructive: none in this phase.
 
 - `role="dialog"` `aria-modal="true"` `aria-label="Barcode scanner"`.
 - Focus trap on mount (same pattern as `EftposConfirmScreen`).
-- Cancel button must be keyboard-reachable. `autoFocus` on Cancel when sheet opens — allows iPad hardware keyboard ESC escape.
+- Close Scanner button must be keyboard-reachable. `autoFocus` on Close Scanner when sheet opens — allows iPad hardware keyboard ESC escape.
 - Camera permission denied: show error state with copy "Camera access denied. Use the search bar to find products." No retry button — staff must resolve in OS settings.
 
 ---
@@ -234,7 +235,7 @@ This type is the single source of truth. `ReceiptScreen` renders it. Future `Pri
 | Field | Old `SaleSummaryScreen` | New `ReceiptScreen` |
 |-------|------------------------|---------------------|
 | Store name | Absent | Present in header (heading weight) |
-| Order ID | 8-char uppercase slice | 8-char uppercase, Geist Mono font |
+| Order ID | 8-char uppercase slice | 8-char uppercase, 14px + `font-mono` class |
 | Data model | Props spread from POSClientShell | Accepts `ReceiptData` object (typed) |
 | Export path | Screen only | `ReceiptData` serialisable for printer |
 
@@ -253,7 +254,7 @@ This type is the single source of truth. `ReceiptScreen` renders it. Future `Pri
 | Scanner no-match sub-text | "Search by name or SKU below." |
 | Scanner no-match sub-text (aria-live) | Announced via `aria-live="assertive"` on status region |
 | Camera denied error | "Camera access denied. Use the search bar to find products." |
-| Cancel button | "Cancel" |
+| Close/dismiss button | "Close Scanner" |
 | Receipt header | "Sale Complete" |
 | Receipt order ID prefix | "Order #" |
 | Receipt GST row | "GST (15% incl.)" |
@@ -279,7 +280,7 @@ No destructive actions in this phase.
 3. On successful decode (EAN-13 or UPC-A):
    - Match found: dispatch `ADD_PRODUCT`, sheet closes. Cart updates instantly. No confirmation step.
    - No match: sheet shows error state for 1500ms, then closes. `POSClientShell` focuses the search input.
-4. Staff can tap "Cancel" at any time to close without adding.
+4. Staff can tap "Close Scanner" at any time to close without adding.
 
 ### Scan button placement
 
