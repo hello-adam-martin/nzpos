@@ -1,3 +1,4 @@
+// @deprecated — Use processPartialRefund instead. This action only supports full refunds.
 'use server'
 import 'server-only'
 import { revalidatePath } from 'next/cache'
