@@ -56,7 +56,7 @@ Plans:
 **Plans**: 3 plans
 Plans:
 - [x] 08-01-PLAN.md — Receipt data types, database migration, schema updates
-- [ ] 08-02-PLAN.md — Barcode scanner (camera overlay, Quagga2, cart integration)
+- [x] 08-02-PLAN.md — Barcode scanner (camera overlay, Quagga2, cart integration)
 - [ ] 08-03-PLAN.md — Receipt screen, completeSale wiring, admin View Receipt
 **UI hint**: yes
 
@@ -109,7 +109,7 @@ Plans:
 | 5. Admin & Reporting | v1.0 | 6/6 | Complete | 2026-04-01 |
 | 6. Xero Integration | v1.0 | 4/4 | Complete | 2026-04-01 |
 | 7. Production Launch | v1.1 | 1/3 | In Progress|  |
-| 8. Checkout Speed | v1.1 | 1/3 | In Progress|  |
+| 8. Checkout Speed | v1.1 | 2/3 | In Progress|  |
 | 9. Notifications | v1.1 | 0/? | Not started | — |
 | 10. Customer Accounts | v1.1 | 0/? | Not started | — |
 | 11. Partial Refunds | v1.1 | 0/? | Not started | — |

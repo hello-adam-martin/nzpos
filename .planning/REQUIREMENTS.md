@@ -16,8 +16,8 @@ Requirements for the v1.1 milestone. Each maps to roadmap phases.
 
 ### Checkout Speed
 
-- [ ] **SCAN-01**: Staff can scan EAN-13/UPC-A barcode via iPad camera to add product to cart
-- [ ] **SCAN-02**: If scanned barcode has no match, error shown and search bar focused
+- [x] **SCAN-01**: Staff can scan EAN-13/UPC-A barcode via iPad camera to add product to cart
+- [x] **SCAN-02**: If scanned barcode has no match, error shown and search bar focused
 - [ ] **RCPT-01**: Screen receipt displays after sale completion (store info, items, GST, total, payment method)
 - [x] **RCPT-02**: Receipt data model is shared between screen display and future physical printer
 
@@ -88,8 +88,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DEPLOY-02 | Phase 7 | Pending |
 | DEPLOY-03 | Phase 7 | Pending |
 | DEPLOY-04 | Phase 7 | Pending |
-| SCAN-01 | Phase 8 | Pending |
-| SCAN-02 | Phase 8 | Pending |
+| SCAN-01 | Phase 8 | Complete |
+| SCAN-02 | Phase 8 | Complete |
 | RCPT-01 | Phase 8 | Pending |
 | RCPT-02 | Phase 8 | Complete |
 | NOTIF-01 | Phase 9 | Pending |
