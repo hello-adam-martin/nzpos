@@ -15,7 +15,8 @@ import { DiscountSheet } from './DiscountSheet'
 import { EftposConfirmScreen } from './EftposConfirmScreen'
 import { CashEntryScreen } from './CashEntryScreen'
 import { OutOfStockDialog } from './OutOfStockDialog'
-import { SaleSummaryScreen } from './SaleSummaryScreen'
+import { ReceiptScreen } from './ReceiptScreen'
+import type { ReceiptData } from '@/lib/receipt'
 
 // Dynamically import BarcodeScannerSheet to prevent SSR issues (Quagga2 requires browser APIs)
 const BarcodeScannerSheet = dynamic(
@@ -73,6 +74,9 @@ export function POSClientShell({
   // Track cash tendered for sale summary
   const [lastCashTenderedCents, setLastCashTenderedCents] = useState<number | null>(null)
 
+  // Receipt data from last completed sale
+  const [lastReceiptData, setLastReceiptData] = useState<ReceiptData | null>(null)
+
   // Auto-close discount sheet if target item was removed from cart
   useEffect(() => {
     if (discountTarget !== null) {
@@ -103,6 +107,7 @@ export function POSClientShell({
         dispatch({ type: 'NEW_SALE' })
         setSplitCashCents(null)
         setSaleError(null)
+        setLastReceiptData(null)
       }, 2000)
       return () => clearTimeout(timer)
     }
@@ -236,6 +241,9 @@ export function POSClientShell({
       return
     }
 
+    if ('receiptData' in result && result.receiptData) {
+      setLastReceiptData(result.receiptData as ReceiptData)
+    }
     dispatch({ type: 'SALE_COMPLETE', orderId: result.orderId })
     router.refresh() // Refresh stock counts after sale (POS-08)
   }
@@ -394,23 +402,53 @@ export function POSClientShell({
         />
       )}
 
-      {/* Sale summary */}
-      {cart.phase === 'sale_complete' && cart.completedOrderId && (
-        <SaleSummaryScreen
-          items={cart.items}
-          totalCents={totals.totalCents}
-          gstCents={totals.gstCents}
-          paymentMethod={splitCashCents != null ? 'split' : (cart.paymentMethod ?? 'eftpos')}
-          orderId={cart.completedOrderId}
-          cashTenderedCents={lastCashTenderedCents ?? undefined}
-          changeDueCents={changeDueCents}
+      {/* Receipt screen (replaces SaleSummaryScreen) */}
+      {cart.phase === 'sale_complete' && lastReceiptData && (
+        <ReceiptScreen
+          receiptData={lastReceiptData}
           onNewSale={() => {
             dispatch({ type: 'NEW_SALE' })
             setSplitCashCents(null)
             setLastCashTenderedCents(null)
             setSaleError(null)
+            setLastReceiptData(null)
           }}
+          onEmailCapture={async (email) => {
+            const supabase = (await import('@/lib/supabase/client')).createSupabaseBrowserClient()
+            await supabase
+              .from('orders')
+              .update({ customer_email: email })
+              .eq('id', lastReceiptData.orderId)
+          }}
+          mode="pos"
         />
+      )}
+
+      {/* Fallback: sale complete but no receipt data (edge case) */}
+      {cart.phase === 'sale_complete' && !lastReceiptData && cart.completedOrderId && (
+        <div
+          className="fixed inset-0 z-50 bg-navy-dark/80 flex items-center justify-center"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="bg-card rounded-xl shadow-2xl w-full max-w-md p-8 flex flex-col items-center gap-6">
+            <p className="text-xl font-bold text-text text-center">Sale Complete</p>
+            <p className="text-sm text-text-muted text-center">
+              Order #{cart.completedOrderId.slice(0, 8).toUpperCase()}
+            </p>
+            <button
+              onClick={() => {
+                dispatch({ type: 'NEW_SALE' })
+                setSplitCashCents(null)
+                setLastCashTenderedCents(null)
+                setSaleError(null)
+              }}
+              className="w-full min-h-[56px] bg-amber text-white text-base font-bold rounded-lg hover:opacity-90 transition-opacity"
+            >
+              New Sale
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Out-of-stock override dialog */}

@@ -29,6 +29,7 @@ export type OrderWithStaff = {
   stripe_payment_intent_id: string | null
   customer_email: string | null
   notes: string | null
+  receipt_data: Record<string, unknown> | null
 }
 
 type SortColumn = 'created_at' | 'total_cents' | 'status'

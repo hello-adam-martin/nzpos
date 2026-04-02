@@ -5,6 +5,8 @@ import { OrderStatusBadge } from './OrderStatusBadge'
 import { updateOrderStatus } from '@/actions/orders/updateOrderStatus'
 import { RefundConfirmationStep } from './RefundConfirmationStep'
 import type { OrderWithStaff } from './OrderDataTable'
+import { ReceiptScreen } from '@/components/pos/ReceiptScreen'
+import type { ReceiptData } from '@/lib/receipt'
 
 const NZ_DATE_FORMAT = new Intl.DateTimeFormat('en-NZ', {
   dateStyle: 'long',
@@ -35,6 +37,7 @@ export function OrderDetailDrawer({ order, onClose, onRefundClick, onRefundCompl
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [transitionError, setTransitionError] = useState<string | null>(null)
   const [showRefundStep, setShowRefundStep] = useState(false)
+  const [showReceipt, setShowReceipt] = useState(false)
 
   // Escape key handler (only if not in refund step — refund step requires explicit cancel)
   useEffect(() => {
@@ -49,10 +52,11 @@ export function OrderDetailDrawer({ order, onClose, onRefundClick, onRefundCompl
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [order, onClose, showRefundStep])
 
-  // Reset refund step and error when order changes
+  // Reset refund step, receipt, and error when order changes
   useEffect(() => {
     setTransitionError(null)
     setShowRefundStep(false)
+    setShowReceipt(false)
   }, [order?.id])
 
   async function handleStatusTransition(newStatus: string) {
@@ -234,6 +238,19 @@ export function OrderDetailDrawer({ order, onClose, onRefundClick, onRefundCompl
                 </div>
               </section>
 
+              {/* View Receipt button (only for orders with receipt_data) */}
+              {order.receipt_data && (
+                <section>
+                  <button
+                    type="button"
+                    onClick={() => setShowReceipt(true)}
+                    className="text-sm text-navy hover:underline font-medium"
+                  >
+                    View Receipt
+                  </button>
+                </section>
+              )}
+
               {/* Click-and-collect status transitions */}
               {CLICK_COLLECT_STATUSES.has(order.status) && (
                 <section>
@@ -296,6 +313,26 @@ export function OrderDetailDrawer({ order, onClose, onRefundClick, onRefundCompl
           </div>
         )}
       </div>
+
+      {/* Receipt modal (admin mode, z-60 to render above drawer z-50) */}
+      {showReceipt && order?.receipt_data && (
+        <div className="fixed inset-0 z-[60] bg-navy-dark/80 flex items-center justify-center">
+          <div className="relative w-full max-w-md px-4">
+            <ReceiptScreen
+              receiptData={order.receipt_data as ReceiptData}
+              mode="admin"
+            />
+            <button
+              type="button"
+              onClick={() => setShowReceipt(false)}
+              className="absolute top-2 right-6 text-text-muted hover:text-text text-sm font-medium"
+              aria-label="Close receipt"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </>
   )
 }
