@@ -12,6 +12,22 @@ The complete v1 is built and tested: 191 source files, 17,423 LOC TypeScript, 50
 
 **Known gaps:** Xero integration requires live OAuth credentials for final UAT (4 of 5 tests pending). All automated tests pass.
 
+## Current Milestone: v1.1 Production Launch + Feature Waves
+
+**Goal:** Get the store running on real products, real payments, and real customers, then iteratively add checkout speed, notifications, customer accounts, and partial refunds.
+
+**Target features:**
+- Production deployment (Vercel + Supabase + real Stripe/Xero)
+- Barcode scanning (iPad camera, EAN-13/UPC-A via html5-qrcode)
+- Screen receipt display (physical printer deferred until hardware purchased)
+- Email receipts + pickup notifications (Resend)
+- Daily summary email + low stock email alerts
+- Order sound notification on iPad (polling + localStorage)
+- Customer accounts (sign-up, login, order history, profile)
+- Partial refunds (line-item selection, Stripe partial, Xero credit notes)
+
+**Approach:** Iterative staged (5 waves). Deploy first, add features in waves based on real usage.
+
 ## Core Value
 
 A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
@@ -38,7 +54,7 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 
 ### Active
 
-(No active requirements. Next milestone not yet planned.)
+See `.planning/REQUIREMENTS.md` for v1.1 requirements with REQ-IDs.
 
 ### Out of Scope
 
@@ -49,12 +65,10 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - Lay-by management — not needed for supplies store
 - Staff rostering — separate concern, use existing tools
 - Advanced analytics / charts — basic reporting is sufficient for v1
-- Integrated EFTPOS terminal — standalone terminal with manual entry for v1, software integration in v1.1
-- Barcode scanning — v1.1 (html5-qrcode library)
-- Receipt printing — v1.1 (ESC/POS thermal printer)
-- Email receipts — v1.1
-- Partial refunds — full refund only in v1, partial needs its own data model + Xero credit notes
-- Customer accounts — online customers check out as guests, accounts deferred to v1.1
+- Integrated EFTPOS terminal — standalone terminal with manual entry, Windcave integration deferred (TODOS.md)
+- Physical receipt printer integration — screen receipt in v1.1, printer when hardware purchased
+- Repeat order button — deferred until customer accounts have real usage data
+- Supabase Realtime — polling sufficient for single terminal
 
 ## Context
 
@@ -111,4 +125,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-02 after v1.0 milestone completion*
+*Last updated: 2026-04-02 after v1.1 milestone start*
