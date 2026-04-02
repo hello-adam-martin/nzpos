@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production Launch + Feature Waves
-status: executing
-stopped_at: Completed 12-02-PLAN.md
-last_updated: "2026-04-02T19:51:46.057Z"
+status: verifying
+stopped_at: Completed 12-04-PLAN.md
+last_updated: "2026-04-02T20:02:44.801Z"
 last_activity: 2026-04-02
 progress:
   total_phases: 10
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 19
-  completed_plans: 18
+  completed_plans: 19
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 
 Phase: 12 (multi-tenant-infrastructure) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-02
 
 Progress: [░░░░░░░░░░] 0%
@@ -58,6 +58,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 12]: storeId TypeScript narrowing: explicit string variable with if/else branch avoids null type error when assigning from cache vs DB lookup
 - [Phase 12]: x-store-id middleware header takes priority over JWT store_id in resolveAuth — subdomain is authoritative tenant context
 - [Phase 12]: allowedDevOrigins added to next.config.ts for *.lvh.me subdomain dev compatibility
+- [Phase 12-multi-tenant-infrastructure]: app_metadata set via admin.auth.admin.updateUserById before sign-in in RLS tests — auth hook not firing in Vitest jsdom test environment; mirrors established seed.ts pattern
+- [Phase 12-multi-tenant-infrastructure]: Store B product created as is_active=false in RLS tests to bypass products_public_read and test tenant_access RLS isolation
 
 ### Blockers/Concerns
 
@@ -67,6 +69,6 @@ Progress: [░░░░░░░░░░] 0%
 
 ## Session Continuity
 
-Last session: 2026-04-02T19:51:46.054Z
-Stopped at: Completed 12-02-PLAN.md
+Last session: 2026-04-02T20:02:44.798Z
+Stopped at: Completed 12-04-PLAN.md
 Resume file: None

@@ -33,7 +33,7 @@
 
 ### v2.0 SaaS Platform
 
-- [ ] **Phase 12: Multi-Tenant Infrastructure** — Wildcard subdomain routing, schema upgrades, and tenant-isolated RLS in place
+- [x] **Phase 12: Multi-Tenant Infrastructure** — Wildcard subdomain routing, schema upgrades, and tenant-isolated RLS in place (completed 2026-04-02)
 - [ ] **Phase 13: Merchant Self-Serve Signup** — Any NZ business can sign up and get a working POS + storefront immediately
 - [ ] **Phase 14: Store Setup Wizard + Marketing** — Merchants onboard in under 5 minutes and a public landing page drives signups
 - [ ] **Phase 15: Stripe Billing + Feature Gating** — Paid add-ons are purchasable, enforced server-side, and self-manageable
@@ -139,7 +139,7 @@ Plans:
 - [x] 12-01-PLAN.md — Schema migration (stores.slug, store_plans, branding, super_admins) + seed update + middleware admin client
 - [x] 12-02-PLAN.md — Middleware rewrite for subdomain tenant resolution with in-memory TTL cache
 - [x] 12-03-PLAN.md — RLS policy full rewrite (unified pattern) + super admin auth hook extension
-- [ ] 12-04-PLAN.md — Cross-tenant isolation test suite (Vitest 4 attack vectors + Playwright E2E) + type regeneration
+- [x] 12-04-PLAN.md — Cross-tenant isolation test suite (Vitest 4 attack vectors + Playwright E2E) + type regeneration
 **UI hint**: no
 
 ### Phase 13: Merchant Self-Serve Signup
@@ -208,7 +208,7 @@ Plans:
 | 9. Notifications | v1.1 | 4/4 | Complete | 2026-04-02 |
 | 10. Customer Accounts | v1.1 | 3/3 | Complete | 2026-04-02 |
 | 11. Partial Refunds | v1.1 | 2/2 | Complete | 2026-04-02 |
-| 12. Multi-Tenant Infrastructure | v2.0 | 3/4 | In Progress|  |
+| 12. Multi-Tenant Infrastructure | v2.0 | 4/4 | Complete   | 2026-04-02 |
 | 13. Merchant Self-Serve Signup | v2.0 | 0/? | Not started | — |
 | 14. Store Setup Wizard + Marketing | v2.0 | 0/? | Not started | — |
 | 15. Stripe Billing + Feature Gating | v2.0 | 0/? | Not started | — |
