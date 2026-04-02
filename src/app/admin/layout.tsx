@@ -1,5 +1,6 @@
 import AdminSidebar from '@/components/admin/AdminSidebar'
 import XeroDisconnectBanner from '@/components/admin/integrations/XeroDisconnectBanner'
+import StripeTestModeBanner from '@/components/StripeTestModeBanner'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
@@ -27,6 +28,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="flex min-h-screen bg-bg">
       <AdminSidebar userEmail={userEmail} />
       <div className="flex-1 flex flex-col overflow-auto">
+        <StripeTestModeBanner />
         {(xeroStatus === 'disconnected' || xeroStatus === 'token_expired') && (
           <XeroDisconnectBanner status={xeroStatus} />
         )}

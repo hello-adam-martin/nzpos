@@ -1,6 +1,7 @@
 import { CartProvider } from '@/contexts/CartContext'
 import { StorefrontHeader } from '@/components/store/StorefrontHeader'
 import { CartDrawer } from '@/components/store/CartDrawer'
+import StripeTestModeBanner from '@/components/StripeTestModeBanner'
 
 export const metadata = {
   title: 'Shop | NZPOS',
@@ -11,6 +12,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
   return (
     <CartProvider>
       <div className="min-h-screen bg-bg">
+        <StripeTestModeBanner />
         <StorefrontHeader />
         <CartDrawer />
         <main className="mx-auto max-w-[1200px] px-6 lg:px-8">
