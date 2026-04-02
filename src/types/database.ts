@@ -1,3 +1,34 @@
+Connecting to db 5432
+v0.96.2: Pulling from supabase/postgres-meta
+8fe3f02e677c: Pulling fs layer
+178d432d7435: Pulling fs layer
+d8646ad9a82b: Pulling fs layer
+9317fbe8c492: Pulling fs layer
+e98b56fa233c: Pulling fs layer
+5b87ba79cccd: Pulling fs layer
+cbcfcb5cf281: Pulling fs layer
+8406ff1aa65b: Pulling fs layer
+3dfce94b11fc: Pulling fs layer
+8fe3f02e677c: Download complete
+9317fbe8c492: Download complete
+cbcfcb5cf281: Download complete
+3dfce94b11fc: Download complete
+e98b56fa233c: Download complete
+3dfce94b11fc: Pull complete
+d8646ad9a82b: Download complete
+5b87ba79cccd: Download complete
+8406ff1aa65b: Download complete
+178d432d7435: Download complete
+9317fbe8c492: Pull complete
+cbcfcb5cf281: Pull complete
+5b87ba79cccd: Pull complete
+e98b56fa233c: Pull complete
+8406ff1aa65b: Pull complete
+8fe3f02e677c: Pull complete
+d8646ad9a82b: Pull complete
+178d432d7435: Pull complete
+Digest: sha256:4ed8f7c5d3b2e25aa4aa29794605b49799b66da4b36a3c70894cd5241af63f97
+Status: Downloaded newer image for public.ecr.aws/supabase/postgres-meta:v0.96.2
 export type Json =
   | string
   | number
@@ -7,11 +38,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -138,6 +164,47 @@ export type Database = {
           },
         ]
       }
+      customers: {
+        Row: {
+          auth_user_id: string
+          created_at: string
+          email: string
+          id: string
+          name: string | null
+          preferences: Json
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          auth_user_id: string
+          created_at?: string
+          email: string
+          id?: string
+          name?: string | null
+          preferences?: Json
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          auth_user_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string | null
+          preferences?: Json
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string
@@ -208,6 +275,7 @@ export type Database = {
           channel: string
           created_at: string
           customer_email: string | null
+          customer_id: string | null
           discount_cents: number
           gst_cents: number
           id: string
@@ -215,7 +283,7 @@ export type Database = {
           notes: string | null
           payment_method: string | null
           promo_id: string | null
-          receipt_data: Record<string, unknown> | null
+          receipt_data: Json | null
           staff_id: string | null
           status: string
           store_id: string
@@ -232,6 +300,7 @@ export type Database = {
           channel: string
           created_at?: string
           customer_email?: string | null
+          customer_id?: string | null
           discount_cents?: number
           gst_cents: number
           id?: string
@@ -239,7 +308,7 @@ export type Database = {
           notes?: string | null
           payment_method?: string | null
           promo_id?: string | null
-          receipt_data?: Record<string, unknown> | null
+          receipt_data?: Json | null
           staff_id?: string | null
           status: string
           store_id: string
@@ -256,6 +325,7 @@ export type Database = {
           channel?: string
           created_at?: string
           customer_email?: string | null
+          customer_id?: string | null
           discount_cents?: number
           gst_cents?: number
           id?: string
@@ -263,7 +333,7 @@ export type Database = {
           notes?: string | null
           payment_method?: string | null
           promo_id?: string | null
-          receipt_data?: Record<string, unknown> | null
+          receipt_data?: Json | null
           staff_id?: string | null
           status?: string
           store_id?: string
@@ -439,33 +509,26 @@ export type Database = {
       refund_items: {
         Row: {
           id: string
-          refund_id: string
+          line_total_refunded_cents: number
           order_item_id: string
           quantity_refunded: number
-          line_total_refunded_cents: number
+          refund_id: string
         }
         Insert: {
           id?: string
-          refund_id: string
+          line_total_refunded_cents: number
           order_item_id: string
           quantity_refunded: number
-          line_total_refunded_cents: number
+          refund_id: string
         }
         Update: {
           id?: string
-          refund_id?: string
+          line_total_refunded_cents?: number
           order_item_id?: string
           quantity_refunded?: number
-          line_total_refunded_cents?: number
+          refund_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "refund_items_refund_id_fkey"
-            columns: ["refund_id"]
-            isOneToOne: false
-            referencedRelation: "refunds"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "refund_items_order_item_id_fkey"
             columns: ["order_item_id"]
@@ -473,43 +536,57 @@ export type Database = {
             referencedRelation: "order_items"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "refund_items_refund_id_fkey"
+            columns: ["refund_id"]
+            isOneToOne: false
+            referencedRelation: "refunds"
+            referencedColumns: ["id"]
+          },
         ]
       }
       refunds: {
         Row: {
+          created_at: string
+          created_by: string | null
+          customer_notified: boolean
           id: string
           order_id: string
-          store_id: string
           reason: string
-          total_cents: number
+          store_id: string
           stripe_refund_id: string | null
-          created_by: string | null
-          created_at: string
-          customer_notified: boolean
+          total_cents: number
         }
         Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_notified?: boolean
           id?: string
           order_id: string
-          store_id: string
           reason: string
-          total_cents: number
+          store_id: string
           stripe_refund_id?: string | null
-          created_by?: string | null
-          created_at?: string
-          customer_notified?: boolean
+          total_cents: number
         }
         Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_notified?: boolean
           id?: string
           order_id?: string
-          store_id?: string
           reason?: string
-          total_cents?: number
+          store_id?: string
           stripe_refund_id?: string | null
-          created_by?: string | null
-          created_at?: string
-          customer_notified?: boolean
+          total_cents?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "refunds_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "refunds_order_id_fkey"
             columns: ["order_id"]
@@ -522,13 +599,6 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "refunds_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "staff"
             referencedColumns: ["id"]
           },
         ]
@@ -583,16 +653,66 @@ export type Database = {
           },
         ]
       }
+      store_plans: {
+        Row: {
+          created_at: string
+          has_custom_domain: boolean
+          has_email_notifications: boolean
+          has_xero: boolean
+          id: string
+          store_id: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          has_custom_domain?: boolean
+          has_email_notifications?: boolean
+          has_xero?: boolean
+          id?: string
+          store_id: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          has_custom_domain?: boolean
+          has_email_notifications?: boolean
+          has_xero?: boolean
+          id?: string
+          store_id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_plans_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: true
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stores: {
         Row: {
           address: string | null
           created_at: string
           gst_number: string | null
           id: string
+          is_active: boolean
+          logo_url: string | null
           name: string
           opening_hours: string | null
           owner_auth_id: string
           phone: string | null
+          primary_color: string | null
+          slug: string
+          store_description: string | null
+          stripe_customer_id: string | null
           updated_at: string
         }
         Insert: {
@@ -600,10 +720,16 @@ export type Database = {
           created_at?: string
           gst_number?: string | null
           id?: string
+          is_active?: boolean
+          logo_url?: string | null
           name: string
           opening_hours?: string | null
           owner_auth_id: string
           phone?: string | null
+          primary_color?: string | null
+          slug: string
+          store_description?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -611,10 +737,16 @@ export type Database = {
           created_at?: string
           gst_number?: string | null
           id?: string
+          is_active?: boolean
+          logo_url?: string | null
           name?: string
           opening_hours?: string | null
           owner_auth_id?: string
           phone?: string | null
+          primary_color?: string | null
+          slug?: string
+          store_description?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -647,6 +779,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      super_admins: {
+        Row: {
+          auth_user_id: string
+          created_at: string
+          email: string
+          id: string
+        }
+        Insert: {
+          auth_user_id: string
+          created_at?: string
+          email: string
+          id?: string
+        }
+        Update: {
+          auth_user_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+        }
+        Relationships: []
       }
       xero_connections: {
         Row: {
@@ -777,23 +930,39 @@ export type Database = {
         }
         Returns: undefined
       }
-      complete_pos_sale: {
-        Args: {
-          p_cash_tendered_cents?: number
-          p_customer_email?: string
-          p_discount_cents: number
-          p_gst_cents: number
-          p_items?: Json
-          p_notes?: string
-          p_payment_method: string
-          p_receipt_data?: Record<string, unknown>
-          p_staff_id: string
-          p_store_id: string
-          p_subtotal_cents: number
-          p_total_cents: number
-        }
-        Returns: Json
-      }
+      complete_pos_sale:
+        | {
+            Args: {
+              p_cash_tendered_cents?: number
+              p_discount_cents: number
+              p_gst_cents: number
+              p_items?: Json
+              p_notes?: string
+              p_payment_method: string
+              p_staff_id: string
+              p_store_id: string
+              p_subtotal_cents: number
+              p_total_cents: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_cash_tendered_cents?: number
+              p_customer_email?: string
+              p_discount_cents: number
+              p_gst_cents: number
+              p_items?: Json
+              p_notes?: string
+              p_payment_method: string
+              p_receipt_data?: Json
+              p_staff_id: string
+              p_store_id: string
+              p_subtotal_cents: number
+              p_total_cents: number
+            }
+            Returns: Json
+          }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       delete_xero_tokens: { Args: { p_store_id: string }; Returns: undefined }
       get_xero_tokens: {
@@ -805,6 +974,10 @@ export type Database = {
         }[]
       }
       increment_promo_uses: { Args: { p_promo_id: string }; Returns: undefined }
+      link_customer_orders: {
+        Args: { p_auth_user_id: string; p_email: string }
+        Returns: number
+      }
       restore_stock: {
         Args: { p_product_id: string; p_quantity: number }
         Returns: undefined
@@ -948,3 +1121,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
