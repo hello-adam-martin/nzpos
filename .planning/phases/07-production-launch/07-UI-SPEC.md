@@ -34,7 +34,6 @@ Source: `src/app/globals.css` (custom properties), DESIGN.md.
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| 2xs | 2px | Not used in components — reserved |
 | xs | 4px | Icon gaps, inline padding |
 | sm | 8px | Compact element spacing |
 | md | 16px | Default element spacing |
@@ -54,15 +53,14 @@ Exceptions:
 
 Source: DESIGN.md + `src/app/globals.css` `@theme` block.
 
+Phase 7 builds no new UI. Any new elements (e.g. Stripe test mode banner) inherit from `globals.css`. Two primary weights are permitted for new elements.
+
 | Role | Size | Weight | Line Height | Font | Usage |
 |------|------|--------|-------------|------|-------|
-| Body | 16px | 400 | 1.5 | DM Sans | All body text, form labels, descriptions |
-| Label / UI | 14px | 500 | 1.4 | DM Sans | Button text, nav items, table headers, badges |
-| Heading | 20px | 600 | 1.3 | DM Sans | Section headings, drawer titles, card headers |
-| Display | 30px | 700 | 1.2 | Satoshi | Page titles, dashboard hero numbers |
-| Data / Mono | 14px | 400 | 1.4 | Geist Mono | SKUs, order numbers, barcodes, receipt previews |
+| Body / Data | 16px / 14px | 400 | 1.5 / 1.4 | DM Sans / Geist Mono | Body text, form labels, descriptions, SKUs, order numbers, barcodes, receipt previews |
+| Label / Heading / Display | 14px / 20px / 30px | 600 | 1.4 / 1.3 / 1.2 | DM Sans / Satoshi | Button text, nav items, table headers, badges, section headings, drawer titles, card headers, page titles, dashboard hero numbers |
 
-Font loading: Bunny Fonts CDN — `https://fonts.bunny.net/css?family=satoshi:400,500,700,900|dm-sans:400,500,600,700`
+Font loading: Bunny Fonts CDN — `https://fonts.bunny.net/css?family=satoshi:400,600|dm-sans:400,600`
 
 Tabular numbers: Apply `font-feature-settings: 'tnum' 1` to all price, stock, and quantity displays.
 
