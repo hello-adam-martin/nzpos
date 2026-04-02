@@ -1,60 +1,70 @@
-# Requirements: NZPOS v1.1
+# Requirements: NZPOS v2.0
 
-**Defined:** 2026-04-02
+**Defined:** 2026-04-03
 **Core Value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
 
-## v1.1 Requirements
+## v2.0 Requirements
 
-Requirements for the v1.1 milestone. Each maps to roadmap phases.
+Requirements for the v2.0 SaaS Platform milestone. Each maps to roadmap phases.
 
-### Production & Deployment
+### Multi-Tenant Infrastructure
 
-- [x] **DEPLOY-01**: Store is deployed to Vercel production with all env vars configured
-- [ ] **DEPLOY-02**: Supabase production instance has migrated schema and seeded reference data
-- [ ] **DEPLOY-03**: Stripe live keys configured and webhook endpoint verified in production
-- [ ] **DEPLOY-04**: Product catalog imported (200+ SKUs with barcodes, categories, stock levels, images)
+- [ ] **TENANT-01**: Wildcard subdomain routing resolves {slug}.domain.tld to the correct store
+- [ ] **TENANT-02**: Schema supports multi-tenant SaaS (stores.slug, store_plans table, stripe_customer_id)
+- [ ] **TENANT-03**: RLS policies enforce tenant isolation via JWT claims (not middleware headers)
+- [ ] **TENANT-04**: Super admin JWT claim (is_super_admin) bypasses store-scoped RLS where needed
+- [ ] **TENANT-05**: Cross-tenant isolation verified with E2E tests (tenant A cannot access tenant B data)
 
-### Checkout Speed
+### Merchant Signup
 
-- [x] **SCAN-01**: Staff can scan EAN-13/UPC-A barcode via iPad camera to add product to cart
-- [x] **SCAN-02**: If scanned barcode has no match, error shown and search bar focused
-- [x] **RCPT-01**: Screen receipt displays after sale completion (store info, items, GST, total, payment method)
-- [x] **RCPT-02**: Receipt data model is shared between screen display and future physical printer
+- [ ] **SIGNUP-01**: Merchant can sign up with email and password and get a provisioned store automatically
+- [ ] **SIGNUP-02**: Store provisioning is atomic (auth user + store + staff + store_plans in one transaction)
+- [ ] **SIGNUP-03**: Merchant must verify email before accessing the dashboard
+- [ ] **SIGNUP-04**: Reserved slugs (admin, www, api, app, etc.) are blocked during signup
+- [ ] **SIGNUP-05**: Signup is rate-limited (1 store per verified email, throttled requests)
 
-### Notifications
+### Store Setup & Onboarding
 
-- [x] **NOTIF-01**: Online customer receives email receipt within 60s of Stripe payment
-- [x] **NOTIF-02**: POS customer receives email receipt if email provided at checkout
-- [x] **NOTIF-03**: Customer receives pickup-ready email when order status changes to "ready"
-- [x] **NOTIF-04**: Founder receives daily summary email (sales count, revenue split, top products, stock warnings)
-- [x] **NOTIF-05**: Founder receives low stock email when product drops below reorder_threshold (batched daily)
-- [x] **NOTIF-06**: iPad plays sound when new online order arrives (within 30s)
+- [ ] **SETUP-01**: Merchant completes a 3-step setup wizard (store name/slug, logo, first product)
+- [ ] **SETUP-02**: Every wizard step is skippable
+- [ ] **SETUP-03**: Admin dashboard shows a persistent setup completion checklist
 
-### Customer Accounts
+### Marketing
 
-- [x] **CUST-01**: Customer can create account with email/password (scoped to store)
-- [x] **CUST-02**: Customer can log in and view their order history
-- [x] **CUST-03**: Customer can update their profile (name, email, preferences)
-- [x] **CUST-04**: Auth hook extended to inject customer role and store_id into JWT
-- [x] **CUST-05**: Customer login/signup blocked on POS routes
-- [x] **CUST-06**: Customer can verify email and reset password
+- [ ] **MKTG-01**: Public marketing landing page with hero, pricing, and signup CTA
+- [ ] **MKTG-02**: Landing page is mobile-optimised and statically rendered for fast load
 
-### Partial Refunds
+### Billing & Feature Gating
 
-- [x] **REFUND-01**: Staff can select individual line items to refund from an order
-- [x] **REFUND-02**: Stripe processes partial refund for selected items' total amount
-- [x] **REFUND-03**: Stock restored for refunded line items via atomic RPC
-- [x] **REFUND-04**: Xero credit note generated for partial refund amount
-- [x] **REFUND-05**: Refund audit trail (items, amounts, reason) stored on order
+- [ ] **BILL-01**: Merchant can subscribe to paid add-ons (Xero, Email Notifications) via Stripe Checkout
+- [ ] **BILL-02**: Stripe subscription state syncs to store_plans via dedicated billing webhook endpoint
+- [ ] **BILL-03**: Feature gating is enforced server-side (requireFeature() on all Xero + email Server Actions)
+- [ ] **BILL-04**: Gated features show contextual upgrade prompts in the UI
+- [ ] **BILL-05**: Merchant can manage billing via Stripe Customer Portal (cancel, payment method, invoices)
+- [ ] **BILL-06**: Admin billing page shows current plan, active add-ons, and portal link
+
+### Super Admin
+
+- [ ] **SADMIN-01**: Super admin can view a paginated, searchable list of all tenants
+- [ ] **SADMIN-02**: Super admin can view tenant detail (plan, subscription status, created date, last active)
+- [ ] **SADMIN-03**: Super admin can suspend and unsuspend a tenant with 30-day recovery window
+- [ ] **SADMIN-04**: Super admin can manually override a tenant's plan (comp free add-ons)
 
 ## Future Requirements
 
 Deferred to future releases. Tracked but not in current roadmap.
 
-### Xero
+### Custom Domains
 
-- **XERO-01**: Xero OAuth completed with real production credentials
-- **XERO-02**: Daily Xero sync verified against live Xero org
+- **DOMAIN-01**: Merchant can add a custom domain as a paid add-on
+- **DOMAIN-02**: DNS verification UX with polling and status display
+- **DOMAIN-03**: Canonical redirect from subdomain to custom domain once active
+
+### Production Deploy (carried from v1.1)
+
+- **DEPLOY-02**: Supabase production instance has migrated schema and seeded reference data
+- **DEPLOY-03**: Stripe live keys configured and webhook endpoint verified in production
+- **DEPLOY-04**: Product catalog imported (200+ SKUs with barcodes, categories, stock levels, images)
 
 ### Hardware Integration
 
@@ -66,17 +76,26 @@ Deferred to future releases. Tracked but not in current roadmap.
 - **CX-01**: Customer can reorder a previous order with one tap
 - **CX-02**: Customer receives order tracking updates
 
+### Advanced SaaS
+
+- **SAAS-01**: Tenant impersonation for super admin support debugging
+- **SAAS-02**: Per-tenant usage metrics in super admin
+- **SAAS-03**: Email drip onboarding sequences
+
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Offline mode | Requires local-first architecture rewrite (v2) |
-| Multi-store UI | store_id exists but no tenant management UI (v2) |
-| Delivery/shipping | Click-and-collect only, shipping integration too complex for v1.1 |
-| Loyalty program | Not needed for supplies store |
-| Supabase Realtime | Polling sufficient for single terminal |
-| Advanced analytics | Basic reporting is sufficient |
-| Barcode scanning (QR) | EAN-13/UPC-A only for retail barcodes |
+| Offline mode | Requires local-first architecture rewrite (v3) |
+| Multi-store per merchant | One store per signup for v2.0, multi-store is v3 |
+| Database-per-tenant | Row-level isolation via store_id + RLS scales to thousands of tenants |
+| White-label / remove branding | Premature — no demand signal |
+| Multi-plan tiers (Starter/Pro/Enterprise) | Per-add-on billing is simpler and avoids upgrade cliffs |
+| Free trial with credit card | NZ SMB market expects no-card signup (Square model) |
+| Subdomain slug changes | Slug is immutable after creation; display name is editable |
+| Live storefront preview in wizard | High complexity, defer to v3 |
+| Delivery/shipping | Click-and-collect only |
+| Supabase Realtime | Polling sufficient for single terminal per store |
 
 ## Traceability
 
@@ -84,37 +103,37 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DEPLOY-01 | Phase 7 | Complete |
-| DEPLOY-02 | Phase 7 | Pending |
-| DEPLOY-03 | Phase 7 | Pending |
-| DEPLOY-04 | Phase 7 | Pending |
-| SCAN-01 | Phase 8 | Complete |
-| SCAN-02 | Phase 8 | Complete |
-| RCPT-01 | Phase 8 | Complete |
-| RCPT-02 | Phase 8 | Complete |
-| NOTIF-01 | Phase 9 | Complete |
-| NOTIF-02 | Phase 9 | Complete |
-| NOTIF-03 | Phase 9 | Complete |
-| NOTIF-04 | Phase 9 | Complete |
-| NOTIF-05 | Phase 9 | Complete |
-| NOTIF-06 | Phase 9 | Complete |
-| CUST-01 | Phase 10 | Complete |
-| CUST-02 | Phase 10 | Complete |
-| CUST-03 | Phase 10 | Complete |
-| CUST-04 | Phase 10 | Complete |
-| CUST-05 | Phase 10 | Complete |
-| CUST-06 | Phase 10 | Complete |
-| REFUND-01 | Phase 11 | Complete |
-| REFUND-02 | Phase 11 | Complete |
-| REFUND-03 | Phase 11 | Complete |
-| REFUND-04 | Phase 11 | Complete |
-| REFUND-05 | Phase 11 | Complete |
+| TENANT-01 | — | Pending |
+| TENANT-02 | — | Pending |
+| TENANT-03 | — | Pending |
+| TENANT-04 | — | Pending |
+| TENANT-05 | — | Pending |
+| SIGNUP-01 | — | Pending |
+| SIGNUP-02 | — | Pending |
+| SIGNUP-03 | — | Pending |
+| SIGNUP-04 | — | Pending |
+| SIGNUP-05 | — | Pending |
+| SETUP-01 | — | Pending |
+| SETUP-02 | — | Pending |
+| SETUP-03 | — | Pending |
+| MKTG-01 | — | Pending |
+| MKTG-02 | — | Pending |
+| BILL-01 | — | Pending |
+| BILL-02 | — | Pending |
+| BILL-03 | — | Pending |
+| BILL-04 | — | Pending |
+| BILL-05 | — | Pending |
+| BILL-06 | — | Pending |
+| SADMIN-01 | — | Pending |
+| SADMIN-02 | — | Pending |
+| SADMIN-03 | — | Pending |
+| SADMIN-04 | — | Pending |
 
 **Coverage:**
-- v1.1 requirements: 25 total
-- Mapped to phases: 25
-- Unmapped: 0
+- v2.0 requirements: 25 total
+- Mapped to phases: 0
+- Unmapped: 25
 
 ---
-*Requirements defined: 2026-04-02*
-*Last updated: 2026-04-02 — traceability table completed after roadmap creation*
+*Requirements defined: 2026-04-03*
+*Last updated: 2026-04-03 after initial definition*
