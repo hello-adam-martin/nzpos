@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production Launch + Feature Waves
-status: verifying
-stopped_at: Phase 11 context gathered
-last_updated: "2026-04-02T11:31:23.686Z"
+status: executing
+stopped_at: Completed 11-01-PLAN.md
+last_updated: "2026-04-02T11:57:38.847Z"
 last_activity: 2026-04-02
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 13
-  completed_plans: 13
+  total_plans: 15
+  completed_plans: 14
   percent: 0
 ---
 
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-02)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 10 — customer-accounts
+**Current focus:** Phase 11 — partial-refunds
 
 ## Current Position
 
-Phase: 11
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 11 (partial-refunds) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-02
 
 Progress: [░░░░░░░░░░] 0%
 
 ## Session Continuity
 
-Last session: 2026-04-02T11:31:23.683Z
-Stopped at: Phase 11 context gathered
-Resume file: .planning/phases/11-partial-refunds/11-CONTEXT.md
+Last session: 2026-04-02T11:57:38.845Z
+Stopped at: Completed 11-01-PLAN.md
+Resume file: None
 
 ## Accumulated Context
 
