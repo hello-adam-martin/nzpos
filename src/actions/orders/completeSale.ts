@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { resolveStaffAuth } from '@/lib/resolveAuth'
 import { CreateOrderSchema } from '@/schemas/order'
+import { buildReceiptData } from '@/lib/receipt'
+import { calcChangeDue } from '@/lib/cart'
 
 export async function completeSale(input: unknown) {
   // 1. Verify staff JWT from staff_session cookie
@@ -16,8 +18,23 @@ export async function completeSale(input: unknown) {
     return { error: 'Invalid order data', details: parsed.error.flatten().fieldErrors }
   }
 
-  // 3. Call atomic RPC via admin client (bypasses RLS — admin client required for stock decrement)
+  // 3. Query staff name and store details (for receipt)
   const supabase = createSupabaseAdminClient()
+
+  const { data: staffRecord } = await supabase
+    .from('staff')
+    .select('name')
+    .eq('id', staff.staff_id)
+    .single()
+  const staffName = staffRecord?.name ?? 'Staff'
+
+  const { data: store } = await supabase
+    .from('stores')
+    .select('name, address, phone, gst_number')
+    .eq('id', staff.store_id)
+    .single()
+
+  // 4. Call atomic RPC via admin client (bypasses RLS — admin client required for stock decrement)
   const { data, error } = await supabase.rpc('complete_pos_sale', {
     p_store_id: staff.store_id,
     p_staff_id: staff.staff_id,
@@ -29,9 +46,11 @@ export async function completeSale(input: unknown) {
     p_cash_tendered_cents: parsed.data.cash_tendered_cents ?? undefined,
     p_notes: parsed.data.notes ?? undefined,
     p_items: parsed.data.items,
+    p_receipt_data: undefined,
+    p_customer_email: parsed.data.customer_email ?? undefined,
   })
 
-  // 4. Handle RPC errors with structured codes
+  // 5. Handle RPC errors with structured codes
   if (error) {
     if (error.message.includes('OUT_OF_STOCK')) {
       const parts = error.message.split(':')
@@ -51,8 +70,45 @@ export async function completeSale(input: unknown) {
     return { error: 'Sale could not be recorded. Please try again or note the order manually.' }
   }
 
-  // 5. Revalidate POS page for inventory refresh-on-transaction
+  // 6. Build receipt data now that we have the order ID
+  const orderId = (data as { order_id: string }).order_id
+
+  const changeDueCents = parsed.data.cash_tendered_cents
+    ? calcChangeDue(parsed.data.total_cents, parsed.data.cash_tendered_cents)
+    : undefined
+
+  const receiptData = buildReceiptData({
+    orderId,
+    store: store ?? { name: '', address: null, phone: null, gst_number: null },
+    staffName,
+    items: parsed.data.items.map((i) => ({
+      productId: i.product_id,
+      productName: i.product_name,
+      unitPriceCents: i.unit_price_cents,
+      quantity: i.quantity,
+      discountCents: i.discount_cents,
+      lineTotalCents: i.line_total_cents,
+      gstCents: i.gst_cents,
+    })),
+    totals: {
+      subtotalCents: parsed.data.subtotal_cents,
+      gstCents: parsed.data.gst_cents,
+      totalCents: parsed.data.total_cents,
+    },
+    paymentMethod: (parsed.data.payment_method ?? 'eftpos') as 'eftpos' | 'cash' | 'split',
+    cashTenderedCents: parsed.data.cash_tendered_cents,
+    changeDueCents: changeDueCents && changeDueCents > 0 ? changeDueCents : undefined,
+    customerEmail: parsed.data.customer_email,
+  })
+
+  // 7. Update the order with receipt_data
+  await supabase
+    .from('orders')
+    .update({ receipt_data: receiptData as unknown as Record<string, unknown> })
+    .eq('id', orderId)
+
+  // 8. Revalidate POS page for inventory refresh-on-transaction
   revalidatePath('/pos')
 
-  return { success: true, orderId: (data as { order_id: string }).order_id }
+  return { success: true, orderId, receiptData }
 }
