@@ -66,7 +66,7 @@ export default async function OrderStatusPage({ params, searchParams: searchPara
     notFound()
   }
 
-  const items = (order as typeof order & { order_items: Array<{
+  type OrderItem = {
     id: string
     product_name: string
     quantity: number
@@ -74,7 +74,8 @@ export default async function OrderStatusPage({ params, searchParams: searchPara
     discount_cents: number
     line_total_cents: number
     gst_cents: number
-  }> }).order_items ?? []
+  }
+  const items: OrderItem[] = (order as typeof order & { order_items: OrderItem[] }).order_items ?? []
 
   const statusMessage = getStatusMessage(order.status)
   const statusLabel = getStatusLabel(order.status)

@@ -71,7 +71,7 @@ export async function validatePromoCode(
   }
 
   // Minimum order not met
-  if (promo.min_order_cents > 0 && cartTotalCents < promo.min_order_cents) {
+  if (promo.min_order_cents && promo.min_order_cents > 0 && cartTotalCents < promo.min_order_cents) {
     return {
       error: 'min_order',
       message: `Minimum order NZ${formatNZD(promo.min_order_cents)} required.`,
@@ -93,7 +93,7 @@ export async function validatePromoCode(
     success: true,
     promoId: promo.id,
     discountCents,
-    discountType: promo.discount_type,
+    discountType: promo.discount_type as 'fixed' | 'percentage',
     code: promo.code,
   }
 }

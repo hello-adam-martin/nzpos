@@ -49,7 +49,7 @@ const mockFrom = vi.fn(() => {
 
 vi.mock('@/lib/supabase/admin', () => ({
   createSupabaseAdminClient: () => ({
-    from: (...args: any[]) => mockFrom(...args),
+    from: (..._args: unknown[]) => mockFrom(),
     rpc: mockRpc,
   }),
 }))

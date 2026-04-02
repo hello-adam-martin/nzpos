@@ -127,7 +127,7 @@ export default function PromoList({ promos }: PromoListProps) {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-text">
-                    {promo.min_order_cents > 0
+                    {promo.min_order_cents && promo.min_order_cents > 0
                       ? `NZ${formatNZD(promo.min_order_cents)}`
                       : <span className="text-text-muted">None</span>
                     }

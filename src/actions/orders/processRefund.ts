@@ -50,7 +50,7 @@ export async function processRefund(input: unknown): Promise<
     .from('orders')
     .update({ status: 'refunded', notes: reason })
     .eq('id', orderId)
-    .in('status', Array.from(REFUNDABLE_STATUSES))
+    .in('status', Array.from(REFUNDABLE_STATUSES) as ('completed' | 'pending_pickup' | 'ready' | 'collected')[])
     .select('id')
     .single()
 

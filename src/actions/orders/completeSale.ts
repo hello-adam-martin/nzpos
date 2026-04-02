@@ -26,8 +26,8 @@ export async function completeSale(input: unknown) {
     p_gst_cents: parsed.data.gst_cents,
     p_total_cents: parsed.data.total_cents,
     p_discount_cents: parsed.data.discount_cents ?? 0,
-    p_cash_tendered_cents: parsed.data.cash_tendered_cents ?? null,
-    p_notes: parsed.data.notes ?? null,
+    p_cash_tendered_cents: parsed.data.cash_tendered_cents ?? undefined,
+    p_notes: parsed.data.notes ?? undefined,
     p_items: parsed.data.items,
   })
 

@@ -82,7 +82,7 @@ async function handleCheckoutComplete(
     p_order_id: orderId,
     p_stripe_session_id: session.id,
     p_stripe_payment_intent_id: (session.payment_intent as string) ?? null,
-    p_customer_email: session.customer_details?.email ?? null,
+    p_customer_email: session.customer_details?.email ?? undefined,
     p_items: JSON.stringify(orderItems ?? []),
   })
 
