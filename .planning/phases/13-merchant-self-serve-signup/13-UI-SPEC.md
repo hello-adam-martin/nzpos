@@ -56,14 +56,18 @@ Source: DESIGN.md full type scale, confirmed in globals.css @theme tokens.
 |------|------|--------|-------------|------|
 | Body | 16px (base) | 400 (regular) | 1.5 | DM Sans |
 | Label | 14px (sm) | 600 (semibold) | 1.4 | DM Sans |
-| Heading | 24px (2xl) | 700 (bold) | 1.2 | Satoshi |
-| Display (page title / brand mark) | 30px (3xl) | 700 (bold) | 1.1 | Satoshi |
+| Heading | 24px (2xl) | 600 (semibold) | 1.2 | Satoshi |
+| Display (page title / brand mark) | 30px (3xl) | 600 (semibold) | 1.1 | Satoshi |
 
 Additional type rules for this phase:
-- Helper text beneath form inputs: 12px (xs), weight 400, color `--color-text-muted`
-- Slug availability status text: 12px (xs), weight 500, color `--color-success` (available) or `--color-error` (taken/invalid)
-- Provisioning step labels: 14px (sm), weight 500, color `--color-text-muted` (pending) or `--color-text` (active)
+- Helper text beneath form inputs: 14px (sm), weight 400, color `--color-text-muted` — visually distinguished from labels by muted color alone, not by a separate size step
+- Slug availability status text: 14px (sm), weight 600, color `--color-success` (available) or `--color-error` (taken/invalid)
+- Provisioning step labels: 14px (sm), weight 600 (active) or weight 400 (pending/complete), color `--color-text` (active) or `--color-text-muted` (pending/complete)
 - Error alert body: 14px (sm), weight 400, color `--color-error`
+- Rate-limit copy: 14px (sm), weight 400, color `--color-text-muted`
+
+Declared sizes (4 total): 14px, 16px, 24px, 30px.
+Declared weights (2 total): 400 (regular), 600 (semibold).
 
 ---
 
@@ -112,9 +116,9 @@ Card width: max-w-sm (384px). Card padding: 32px (xl).
 - Debounce: 400ms after last keystroke before triggering availability API call
 - States while typing: neutral (no indicator)
 - State while checking: spinner icon trailing the input
-- State available: green checkmark trailing icon + "slug-name is available" text below (12px, `--color-success`)
-- State taken: red X trailing icon + "slug-name is taken — try another" text below (12px, `--color-error`)
-- State reserved/invalid: red X trailing icon + "This name is reserved" or "Slug must be 3–30 characters, letters and hyphens only" (12px, `--color-error`)
+- State available: green checkmark trailing icon + "slug-name is available" text below (14px, `--color-success`)
+- State taken: red X trailing icon + "slug-name is taken — try another" text below (14px, `--color-error`)
+- State reserved/invalid: red X trailing icon + "This name is reserved" or "Slug must be 3–30 characters, letters and hyphens only" (14px, `--color-error`)
 
 **Form-level error (above submit button):** Tinted error alert, `--color-error` text, 1px error-tinted border, icon. Copy defined in Copywriting Contract below.
 
@@ -129,15 +133,15 @@ Card width: max-w-sm (384px). Card padding: 32px (xl).
 Layout: Full-screen centered panel. No card chrome — just centered content on bg.
 
 **Structure:**
-- NZPOS brand mark (Satoshi 30px bold, navy) — top center
-- Heading: "Setting up your store" — Satoshi 24px bold, navy, below brand mark, margin-top 32px
+- NZPOS brand mark (Satoshi 30px semibold, navy) — top center
+- Heading: "Setting up your store" — Satoshi 24px semibold, navy, below brand mark, margin-top 32px
 - Sub-heading: "This takes about 10 seconds." — DM Sans 14px, text-muted, margin-top 8px
 - Progress step list (3 steps, vertical, 16px gap between items):
   - "Creating your account" — step 1
   - "Provisioning your store" — step 2
   - "Preparing your dashboard" — step 3
 - Step visual: 20px circle indicator left of label. State: pending = hollow `--color-border` circle, active = navy spinner, complete = `--color-success` filled circle with white checkmark
-- Active step label: `--color-text`, weight 500. Pending/complete step label: `--color-text-muted`, weight 400
+- Active step label: `--color-text`, weight 600. Pending/complete step label: `--color-text-muted`, weight 400
 - Below steps, after all complete: "Redirecting to your dashboard..." — 14px, text-muted, fade-in at 250ms
 
 **Animation rules:**
@@ -152,13 +156,13 @@ Layout: Full-screen centered panel. No card chrome — just centered content on 
 Layout: Full-screen centered card. Same card pattern as Screen 1 (max-w-sm, white, border, shadow-sm).
 
 **Structure:**
-- NZPOS brand mark (Satoshi 30px bold, navy)
+- NZPOS brand mark (Satoshi 30px semibold, navy)
 - Icon: envelope SVG — 48px, `--color-navy`, centered, margin-bottom 16px
-- Heading: "Check your email" — Satoshi 24px bold, navy
+- Heading: "Check your email" — Satoshi 24px semibold, navy
 - Body: "We sent a verification link to {email}. Click it to activate your store." — DM Sans 16px, text, 1.5 line-height, margin-top 8px
 - Resend button: full-width, ghost variant (border `--color-border`, navy text, white background), 44px height, border-radius md. Loading state: "Sending..." disabled 50% opacity. Post-send state: "Email sent" with success icon, temporarily disabled (30-second cooldown per D-09)
-- "Wrong email? Sign out" link — 14px, `--color-text-muted`, centered below resend button, margin-top 16px
-- Rate-limit copy (shown only if resend is rate-limited): "Please wait before requesting another email." — 12px, `--color-text-muted`
+- "Wrong email? Sign out" link — 14px, `--color-text-muted`, centered below resend button, margin-top 8px
+- Rate-limit copy (shown only if resend is rate-limited): "Please wait before requesting another email." — 14px, `--color-text-muted`
 
 **Unverified redirect:** Middleware redirects unverified sessions hitting any admin route to `/signup/verify-email?email={encoded_email}`. The email param pre-populates the body copy.
 
@@ -170,10 +174,10 @@ Replaces the progress step list when provisioning fails (D-06).
 
 **Structure:**
 - Error icon: 48px, `--color-error`, centered
-- Heading: "Something went wrong" — Satoshi 24px bold, navy
+- Heading: "Something went wrong" — Satoshi 24px semibold, navy
 - Body: "We couldn't finish setting up your store. Your account has been created — just retry below." — DM Sans 16px, text, 1.5 line-height
 - "Retry provisioning" button: full-width, navy background, white text, 44px height — primary action
-- "Contact support" link: 14px, `--color-text-muted`, centered below, margin-top 12px
+- "Contact support" link: 14px, `--color-text-muted`, centered below, margin-top 8px
 
 ---
 
@@ -232,7 +236,7 @@ New components to build (named for executor):
 Reuse from existing codebase:
 - Input pattern: from `src/app/login/page.tsx` — exact same class string for consistency
 - Button pattern: from `src/app/login/page.tsx` — same primary button pattern, swap `bg-navy` to `bg-amber` for CTA
-- Brand mark: replicate NZPOS heading from login page (Satoshi 2xl bold navy)
+- Brand mark: replicate NZPOS heading from login page (Satoshi 2xl semibold navy)
 
 ---
 
