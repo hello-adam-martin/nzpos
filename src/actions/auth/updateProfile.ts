@@ -1,6 +1,7 @@
 'use server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 const ProfileSchema = z.object({
   name: z.string().max(100).optional(),
@@ -25,7 +26,10 @@ export async function updateProfile(formData: FormData) {
     marketing_emails: parsed.data.marketing_emails === 'on',
   }
 
-  const { error } = await supabase.from('customers').update({
+  // customers table is not in generated types yet (added in migration 012_customer_accounts.sql)
+  // Cast to untyped client until `supabase gen types` is re-run post-migration
+  const untypedSupabase = supabase as unknown as SupabaseClient
+  const { error } = await untypedSupabase.from('customers').update({
     name: parsed.data.name ?? null,
     preferences,
     updated_at: new Date().toISOString(),

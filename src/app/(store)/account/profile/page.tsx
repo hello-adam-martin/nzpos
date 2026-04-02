@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { ProfileForm } from './ProfileForm'
 
 export const metadata = {
@@ -14,17 +15,20 @@ export default async function ProfilePage() {
     redirect('/account/signin')
   }
 
-  const { data: customer } = await supabase
+  // customers table is not in generated types yet (added in migration 012_customer_accounts.sql)
+  // Cast to untyped client until `supabase gen types` is re-run post-migration
+  const untypedSupabase = supabase as unknown as SupabaseClient
+  const { data: customer } = await untypedSupabase
     .from('customers')
     .select('*')
     .eq('auth_user_id', user.id)
-    .single()
+    .single() as { data: { name?: string | null; preferences?: { email_receipts?: boolean; marketing_emails?: boolean } | null } | null }
 
   const initialData = {
-    name: (customer?.name as string | null) ?? '',
+    name: customer?.name ?? '',
     email: user.email ?? '',
-    emailReceiptsEnabled: (customer?.preferences as { email_receipts?: boolean } | null)?.email_receipts ?? true,
-    marketingEmailsEnabled: (customer?.preferences as { marketing_emails?: boolean } | null)?.marketing_emails ?? false,
+    emailReceiptsEnabled: customer?.preferences?.email_receipts ?? true,
+    marketingEmailsEnabled: customer?.preferences?.marketing_emails ?? false,
   }
 
   return (
