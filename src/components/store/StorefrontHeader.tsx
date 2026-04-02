@@ -4,8 +4,19 @@ import { useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
+import { AccountMenuButton } from './AccountMenuButton'
 
-export function StorefrontHeader() {
+type CustomerInfo = {
+  name?: string | null
+  email: string
+  emailVerified: boolean
+}
+
+type Props = {
+  customer?: CustomerInfo | null
+}
+
+export function StorefrontHeader({ customer }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { itemCount, dispatch } = useCart()
@@ -91,6 +102,9 @@ export function StorefrontHeader() {
             </span>
           )}
         </button>
+
+        {/* Account icon / Sign in link */}
+        <AccountMenuButton user={customer ?? null} />
       </div>
     </header>
   )
