@@ -4,6 +4,7 @@
 
 - ✅ **v1.0 MVP** — Phases 1-6 (shipped 2026-04-02). [Archive](milestones/v1.0-ROADMAP.md)
 - 🚧 **v1.1 Production Launch + Feature Waves** — Phases 7-11 (in progress)
+- 🔲 **v2.0 SaaS Platform** — Phases 12-16 (planned)
 
 ## Phases
 
@@ -19,13 +20,24 @@
 
 </details>
 
-### v1.1 Production Launch + Feature Waves
+<details>
+<summary>🚧 v1.1 Production Launch + Feature Waves (Phases 7-11) — In Progress</summary>
 
-- [ ] **Phase 7: Production Launch** — Store is live on real infrastructure with real products
+- [ ] **Phase 7: Production Launch** — Store is live on real infrastructure with real products (1/3 plans — DEPLOY-02/03/04 pending)
 - [x] **Phase 8: Checkout Speed** — Barcode scanning and screen receipts at point of sale (completed 2026-04-02)
 - [x] **Phase 9: Notifications** — Automated emails and sound alert for new online orders (completed 2026-04-02)
 - [x] **Phase 10: Customer Accounts** — Customers can create accounts and view order history (completed 2026-04-02)
 - [x] **Phase 11: Partial Refunds** — Staff can issue partial refunds with full audit trail (completed 2026-04-02)
+
+</details>
+
+### v2.0 SaaS Platform
+
+- [ ] **Phase 12: Multi-Tenant Infrastructure** — Wildcard subdomain routing, schema upgrades, and tenant-isolated RLS in place
+- [ ] **Phase 13: Merchant Self-Serve Signup** — Any NZ business can sign up and get a working POS + storefront immediately
+- [ ] **Phase 14: Store Setup Wizard + Marketing** — Merchants onboard in under 5 minutes and a public landing page drives signups
+- [ ] **Phase 15: Stripe Billing + Feature Gating** — Paid add-ons are purchasable, enforced server-side, and self-manageable
+- [ ] **Phase 16: Super Admin Panel** — Platform operator can view, manage, and support all tenants
 
 ## Phase Details
 
@@ -112,6 +124,70 @@ Plans:
 - [x] 11-02-PLAN.md — Partial refund UI (item selector, multi-step flow, drawer wiring, status badge/filter)
 **UI hint**: yes
 
+### Phase 12: Multi-Tenant Infrastructure
+**Goal**: Any subdomain resolves to the correct tenant store, with schema and RLS guaranteeing data isolation before any tenant-aware feature is built
+**Depends on**: Phase 11 (v1.1 in progress)
+**Requirements**: TENANT-01, TENANT-02, TENANT-03, TENANT-04, TENANT-05
+**Success Criteria** (what must be TRUE):
+  1. Navigating to {slug}.domain.tld loads the correct store's storefront without any additional configuration
+  2. A request with tenant A's session JWT cannot read or write tenant B's data even with direct API calls
+  3. A super admin JWT claim (`is_super_admin`) grants cross-tenant read access without bypassing field-level RLS
+  4. An E2E test suite asserts cross-tenant isolation: attempting tenant A's operations with tenant B's session returns 403 or empty results
+  5. The `store_plans` table and `stores.stripe_customer_id` column exist and are ready for billing data
+**Plans**: TBD
+**UI hint**: no
+
+### Phase 13: Merchant Self-Serve Signup
+**Goal**: A merchant can visit the signup page, enter their email and store slug, and land on a working admin dashboard within minutes
+**Depends on**: Phase 12
+**Requirements**: SIGNUP-01, SIGNUP-02, SIGNUP-03, SIGNUP-04, SIGNUP-05
+**Success Criteria** (what must be TRUE):
+  1. A new merchant completes signup and is redirected to a working admin dashboard for their provisioned store
+  2. If provisioning fails mid-flight (network error, DB error), the merchant sees a "provisioning failed — retry" screen rather than an empty or broken dashboard
+  3. A merchant cannot access their dashboard until their email is verified
+  4. Attempting to register with a reserved slug (admin, www, api, app) returns a clear validation error before any DB write
+  5. Attempting to create a second store from the same verified email is blocked with a clear message
+**Plans**: TBD
+
+### Phase 14: Store Setup Wizard + Marketing
+**Goal**: A newly provisioned merchant can configure their store in under 5 minutes, and a public landing page explains the product to prospective merchants
+**Depends on**: Phase 13
+**Requirements**: SETUP-01, SETUP-02, SETUP-03, MKTG-01, MKTG-02
+**Success Criteria** (what must be TRUE):
+  1. A new merchant is guided through a 3-step wizard (store name/slug, logo upload, first product) immediately after email verification
+  2. Skipping any or all wizard steps still results in a usable admin dashboard with no broken states
+  3. The admin dashboard shows a persistent setup checklist reflecting which wizard steps have been completed
+  4. The marketing landing page renders in under 2 seconds on a mobile connection (statically rendered, no client-side data fetch)
+  5. A visitor on the landing page can reach the signup form in one tap/click from the hero CTA
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 15: Stripe Billing + Feature Gating
+**Goal**: Merchants can subscribe to paid add-ons, the platform enforces access server-side, and merchants can self-serve their billing
+**Depends on**: Phase 13
+**Requirements**: BILL-01, BILL-02, BILL-03, BILL-04, BILL-05, BILL-06
+**Success Criteria** (what must be TRUE):
+  1. A merchant can subscribe to the Xero add-on or Email Notifications add-on via Stripe Checkout and the feature activates on return without any manual step
+  2. Cancelling a subscription via the Stripe Customer Portal deactivates the feature within the same session (next JWT refresh)
+  3. Attempting to use a gated Server Action (Xero sync, send email) without the matching active subscription returns an authorization error regardless of UI state
+  4. A merchant without an active subscription sees a contextual upgrade prompt at each gated feature rather than a generic error
+  5. The admin billing page shows the current plan, which add-ons are active, and a direct link to the Stripe Customer Portal
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 16: Super Admin Panel
+**Goal**: The platform operator can view all tenants, inspect their status, and take corrective action without touching the database directly
+**Depends on**: Phase 15
+**Requirements**: SADMIN-01, SADMIN-02, SADMIN-03, SADMIN-04
+**Success Criteria** (what must be TRUE):
+  1. A super admin can search and paginate a list of all tenants showing store name, plan status, and created date
+  2. Clicking a tenant shows full detail: subscription status, active add-ons, created date, and last active timestamp
+  3. A suspended tenant's storefront and admin dashboard return a 403 or suspension notice rather than normal content
+  4. A tenant suspended by mistake can be unsuspended and their data is fully intact within the 30-day window
+  5. A super admin can manually activate a paid add-on for a tenant without requiring a Stripe payment
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -122,8 +198,13 @@ Plans:
 | 4. Online Store | v1.0 | 7/7 | Complete | 2026-04-01 |
 | 5. Admin & Reporting | v1.0 | 6/6 | Complete | 2026-04-01 |
 | 6. Xero Integration | v1.0 | 4/4 | Complete | 2026-04-01 |
-| 7. Production Launch | v1.1 | 1/3 | In Progress|  |
-| 8. Checkout Speed | v1.1 | 3/3 | Complete   | 2026-04-02 |
-| 9. Notifications | v1.1 | 4/4 | Complete   | 2026-04-02 |
-| 10. Customer Accounts | v1.1 | 3/3 | Complete    | 2026-04-02 |
-| 11. Partial Refunds | v1.1 | 2/2 | Complete   | 2026-04-02 |
+| 7. Production Launch | v1.1 | 1/3 | In Progress | — |
+| 8. Checkout Speed | v1.1 | 3/3 | Complete | 2026-04-02 |
+| 9. Notifications | v1.1 | 4/4 | Complete | 2026-04-02 |
+| 10. Customer Accounts | v1.1 | 3/3 | Complete | 2026-04-02 |
+| 11. Partial Refunds | v1.1 | 2/2 | Complete | 2026-04-02 |
+| 12. Multi-Tenant Infrastructure | v2.0 | 0/? | Not started | — |
+| 13. Merchant Self-Serve Signup | v2.0 | 0/? | Not started | — |
+| 14. Store Setup Wizard + Marketing | v2.0 | 0/? | Not started | — |
+| 15. Stripe Billing + Feature Gating | v2.0 | 0/? | Not started | — |
+| 16. Super Admin Panel | v2.0 | 0/? | Not started | — |

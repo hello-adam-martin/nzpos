@@ -103,37 +103,37 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TENANT-01 | — | Pending |
-| TENANT-02 | — | Pending |
-| TENANT-03 | — | Pending |
-| TENANT-04 | — | Pending |
-| TENANT-05 | — | Pending |
-| SIGNUP-01 | — | Pending |
-| SIGNUP-02 | — | Pending |
-| SIGNUP-03 | — | Pending |
-| SIGNUP-04 | — | Pending |
-| SIGNUP-05 | — | Pending |
-| SETUP-01 | — | Pending |
-| SETUP-02 | — | Pending |
-| SETUP-03 | — | Pending |
-| MKTG-01 | — | Pending |
-| MKTG-02 | — | Pending |
-| BILL-01 | — | Pending |
-| BILL-02 | — | Pending |
-| BILL-03 | — | Pending |
-| BILL-04 | — | Pending |
-| BILL-05 | — | Pending |
-| BILL-06 | — | Pending |
-| SADMIN-01 | — | Pending |
-| SADMIN-02 | — | Pending |
-| SADMIN-03 | — | Pending |
-| SADMIN-04 | — | Pending |
+| TENANT-01 | Phase 12 | Pending |
+| TENANT-02 | Phase 12 | Pending |
+| TENANT-03 | Phase 12 | Pending |
+| TENANT-04 | Phase 12 | Pending |
+| TENANT-05 | Phase 12 | Pending |
+| SIGNUP-01 | Phase 13 | Pending |
+| SIGNUP-02 | Phase 13 | Pending |
+| SIGNUP-03 | Phase 13 | Pending |
+| SIGNUP-04 | Phase 13 | Pending |
+| SIGNUP-05 | Phase 13 | Pending |
+| SETUP-01 | Phase 14 | Pending |
+| SETUP-02 | Phase 14 | Pending |
+| SETUP-03 | Phase 14 | Pending |
+| MKTG-01 | Phase 14 | Pending |
+| MKTG-02 | Phase 14 | Pending |
+| BILL-01 | Phase 15 | Pending |
+| BILL-02 | Phase 15 | Pending |
+| BILL-03 | Phase 15 | Pending |
+| BILL-04 | Phase 15 | Pending |
+| BILL-05 | Phase 15 | Pending |
+| BILL-06 | Phase 15 | Pending |
+| SADMIN-01 | Phase 16 | Pending |
+| SADMIN-02 | Phase 16 | Pending |
+| SADMIN-03 | Phase 16 | Pending |
+| SADMIN-04 | Phase 16 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 25 total
-- Mapped to phases: 0
-- Unmapped: 25
+- Mapped to phases: 25
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-03*
-*Last updated: 2026-04-03 after initial definition*
+*Last updated: 2026-04-03 after roadmap creation*
