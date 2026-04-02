@@ -41,7 +41,7 @@ Requirements for the v1.1 milestone. Each maps to roadmap phases.
 
 ### Partial Refunds
 
-- [ ] **REFUND-01**: Staff can select individual line items to refund from an order
+- [x] **REFUND-01**: Staff can select individual line items to refund from an order
 - [x] **REFUND-02**: Stripe processes partial refund for selected items' total amount
 - [x] **REFUND-03**: Stock restored for refunded line items via atomic RPC
 - [x] **REFUND-04**: Xero credit note generated for partial refund amount
@@ -104,7 +104,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CUST-04 | Phase 10 | Complete |
 | CUST-05 | Phase 10 | Complete |
 | CUST-06 | Phase 10 | Complete |
-| REFUND-01 | Phase 11 | Pending |
+| REFUND-01 | Phase 11 | Complete |
 | REFUND-02 | Phase 11 | Complete |
 | REFUND-03 | Phase 11 | Complete |
 | REFUND-04 | Phase 11 | Complete |

@@ -25,7 +25,7 @@
 - [x] **Phase 8: Checkout Speed** — Barcode scanning and screen receipts at point of sale (completed 2026-04-02)
 - [x] **Phase 9: Notifications** — Automated emails and sound alert for new online orders (completed 2026-04-02)
 - [x] **Phase 10: Customer Accounts** — Customers can create accounts and view order history (completed 2026-04-02)
-- [ ] **Phase 11: Partial Refunds** — Staff can issue partial refunds with full audit trail
+- [x] **Phase 11: Partial Refunds** — Staff can issue partial refunds with full audit trail (completed 2026-04-02)
 
 ## Phase Details
 
@@ -109,7 +109,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 11-01-PLAN.md — Database migration, Zod schema, processPartialRefund server action + tests
-- [ ] 11-02-PLAN.md — Partial refund UI (item selector, multi-step flow, drawer wiring, status badge/filter)
+- [x] 11-02-PLAN.md — Partial refund UI (item selector, multi-step flow, drawer wiring, status badge/filter)
 **UI hint**: yes
 
 ## Progress
@@ -126,4 +126,4 @@ Plans:
 | 8. Checkout Speed | v1.1 | 3/3 | Complete   | 2026-04-02 |
 | 9. Notifications | v1.1 | 4/4 | Complete   | 2026-04-02 |
 | 10. Customer Accounts | v1.1 | 3/3 | Complete    | 2026-04-02 |
-| 11. Partial Refunds | v1.1 | 1/2 | In Progress|  |
+| 11. Partial Refunds | v1.1 | 2/2 | Complete   | 2026-04-02 |
