@@ -1,6 +1,7 @@
 'use client'
 
 import { useReducer, useState, useEffect, useRef } from 'react'
+import { useNewOrderAlert } from '@/hooks/useNewOrderAlert'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { cartReducer, initialCartState, calcCartTotals, calcChangeDue } from '@/lib/cart'
@@ -8,6 +9,7 @@ import { formatNZD } from '@/lib/money'
 import { completeSale } from '@/actions/orders/completeSale'
 import type { Database } from '@/types/database'
 import { POSTopBar } from './POSTopBar'
+import { NewOrderToast } from './NewOrderToast'
 import { CategoryFilterBar } from './CategoryFilterBar'
 import { ProductGrid } from './ProductGrid'
 import { CartPanel } from './CartPanel'
@@ -49,6 +51,9 @@ export function POSClientShell({
 }: POSClientShellProps) {
   const [cart, dispatch] = useReducer(cartReducer, initialCartState)
   const router = useRouter()
+
+  // New order sound alert: polls every 30s, plays chime, manages badge and toast (NOTIF-06)
+  const { unreadCount, toast, isMuted, toggleMute } = useNewOrderAlert()
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [search, setSearch] = useState('')
@@ -311,6 +316,9 @@ export function POSClientShell({
           onLogout={handleLogout}
           onScanOpen={handleScanOpen}
           scanDisabled={!scannerAvailable}
+          unreadOrderCount={unreadCount}
+          isMuted={isMuted}
+          onToggleMute={toggleMute}
         />
         <CategoryFilterBar
           categories={categories}
@@ -465,6 +473,9 @@ export function POSClientShell({
           onCancel={() => setOutOfStockProduct(null)}
         />
       )}
+
+      {/* New order toast notification (NOTIF-06) */}
+      {toast && <NewOrderToast count={toast.count} totalCents={toast.totalCents} />}
     </div>
   )
 }

@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation'
 import { CashSessionBanner } from '@/components/admin/cash-up/CashSessionBanner'
 import { CashUpModal } from '@/components/admin/cash-up/CashUpModal'
 import { BarcodeScannerButton } from './BarcodeScannerButton'
+import { OrderNotificationBadge } from './OrderNotificationBadge'
+import { MuteToggleButton } from './MuteToggleButton'
 
 type POSTopBarProps = {
   storeName: string
@@ -14,9 +16,13 @@ type POSTopBarProps = {
   activeSession?: { id: string; opened_at: string; opening_float_cents: number } | null
   onScanOpen?: () => void
   scanDisabled?: boolean
+  // New for NOTIF-06:
+  unreadOrderCount?: number
+  isMuted?: boolean
+  onToggleMute?: () => void
 }
 
-export function POSTopBar({ storeName, staffName, onLogout, activeSession, onScanOpen, scanDisabled = false }: POSTopBarProps) {
+export function POSTopBar({ storeName, staffName, onLogout, activeSession, onScanOpen, scanDisabled = false, unreadOrderCount, isMuted, onToggleMute }: POSTopBarProps) {
   const pathname = usePathname()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -36,9 +42,12 @@ export function POSTopBar({ storeName, staffName, onLogout, activeSession, onSca
             <Link href="/pos" className={navClass('/pos')}>
               POS
             </Link>
-            <Link href="/pos/pickups" className={navClass('/pos/pickups')}>
-              Pickups
-            </Link>
+            <span className="relative">
+              <Link href="/pos/pickups" className={navClass('/pos/pickups')}>
+                Pickups
+              </Link>
+              <OrderNotificationBadge count={unreadOrderCount ?? 0} />
+            </span>
           </nav>
           {onScanOpen && (
             <BarcodeScannerButton onScanOpen={onScanOpen} disabled={scanDisabled} />
@@ -60,6 +69,10 @@ export function POSTopBar({ storeName, staffName, onLogout, activeSession, onSca
             >
               Open Session
             </button>
+          )}
+
+          {onToggleMute && (
+            <MuteToggleButton isMuted={isMuted ?? false} onToggle={onToggleMute} />
           )}
 
           <span className="text-white/20 text-sm">|</span>

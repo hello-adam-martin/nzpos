@@ -58,6 +58,16 @@
   --space-3xl: 64px;
 }
 
+/* Toast slide-up animation (used by NewOrderToast) */
+@keyframes slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slide-up 150ms ease-out;
+}
+
 /* Grain texture per DESIGN.md: subtle tactility at 3% opacity */
 body {
   background-color: var(--color-bg);
