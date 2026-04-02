@@ -70,7 +70,13 @@ Plans:
   3. A customer receives a pickup-ready email when their order status changes to "ready"
   4. The founder receives a daily summary email covering sales count, revenue split, top products, and stock warnings
   5. The iPad plays an audible sound within 30 seconds when a new online order arrives
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 09-01-PLAN.md — Email infrastructure + React Email templates (Resend SDK, sendEmail helper, 4 templates)
+- [ ] 09-02-PLAN.md — Email trigger wiring (Stripe webhook, POS receipt action, pickup-ready)
+- [ ] 09-03-PLAN.md — Daily summary cron handler (sales aggregation, low stock, vercel.json)
+- [ ] 09-04-PLAN.md — Order sound alert (polling endpoint, chime, badge, mute toggle, toast)
+**UI hint**: yes
 
 ### Phase 10: Customer Accounts
 **Goal**: Customers can create accounts on the storefront, log in, and view their order history
@@ -110,6 +116,6 @@ Plans:
 | 6. Xero Integration | v1.0 | 4/4 | Complete | 2026-04-01 |
 | 7. Production Launch | v1.1 | 1/3 | In Progress|  |
 | 8. Checkout Speed | v1.1 | 3/3 | Complete   | 2026-04-02 |
-| 9. Notifications | v1.1 | 0/? | Not started | — |
+| 9. Notifications | v1.1 | 0/4 | Not started | — |
 | 10. Customer Accounts | v1.1 | 0/? | Not started | — |
 | 11. Partial Refunds | v1.1 | 0/? | Not started | — |
