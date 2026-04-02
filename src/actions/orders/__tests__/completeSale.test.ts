@@ -26,9 +26,33 @@ vi.mock('jose', () => ({
 
 // Mock Supabase admin client
 const mockRpc = vi.fn()
+const mockFromResult = vi.fn()
+
+function createChain(terminal: () => unknown) {
+  const chain: Record<string, unknown> = {}
+  const self = () => chain
+  chain.select = vi.fn(self)
+  chain.eq = vi.fn(self)
+  chain.single = vi.fn(terminal)
+  chain.update = vi.fn(self)
+  return chain
+}
+
 vi.mock('@/lib/supabase/admin', () => ({
   createSupabaseAdminClient: () => ({
     rpc: mockRpc,
+    from: vi.fn((table: string) => {
+      if (table === 'staff') {
+        return createChain(() => Promise.resolve({ data: { name: 'Alice' }, error: null }))
+      }
+      if (table === 'stores') {
+        return createChain(() =>
+          Promise.resolve({ data: { name: 'Test Store', address: null, phone: null, gst_number: null }, error: null })
+        )
+      }
+      // orders table (update call)
+      return createChain(() => Promise.resolve({ data: null, error: null }))
+    }),
   }),
 }))
 
@@ -106,7 +130,9 @@ describe('completeSale', () => {
     mockRpc.mockResolvedValue({ data: { order_id: 'order-123' }, error: null })
 
     const result = await completeSale(validOrderInput)
-    expect(result).toEqual({ success: true, orderId: 'order-123' })
+    expect(result).toHaveProperty('success', true)
+    expect(result).toHaveProperty('orderId', 'order-123')
+    expect(result).toHaveProperty('receiptData')
   })
 
   it('returns out_of_stock error when RPC raises OUT_OF_STOCK', async () => {
