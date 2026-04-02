@@ -208,7 +208,7 @@ Plans:
 | 9. Notifications | v1.1 | 4/4 | Complete | 2026-04-02 |
 | 10. Customer Accounts | v1.1 | 3/3 | Complete | 2026-04-02 |
 | 11. Partial Refunds | v1.1 | 2/2 | Complete | 2026-04-02 |
-| 12. Multi-Tenant Infrastructure | v2.0 | 4/4 | Complete   | 2026-04-02 |
+| 12. Multi-Tenant Infrastructure | v2.0 | 4/4 | Complete    | 2026-04-02 |
 | 13. Merchant Self-Serve Signup | v2.0 | 0/? | Not started | — |
 | 14. Store Setup Wizard + Marketing | v2.0 | 0/? | Not started | — |
 | 15. Stripe Billing + Feature Gating | v2.0 | 0/? | Not started | — |
