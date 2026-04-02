@@ -42,7 +42,7 @@
 Plans:
 - [x] 07-01-PLAN.md — Stripe test mode banner + production env validation script
 - [x] 07-02-PLAN.md — Supabase production setup + Vercel deployment
-- [ ] 07-03-PLAN.md — Stripe webhook configuration + product catalog import
+- [x] 07-03-PLAN.md — Stripe webhook configuration + product catalog import
 
 ### Phase 8: Checkout Speed
 **Goal**: Staff can scan barcodes to add products instantly and customers see a receipt after every sale
