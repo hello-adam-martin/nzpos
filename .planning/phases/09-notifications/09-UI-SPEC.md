@@ -34,7 +34,6 @@ Declared values from `globals.css` — multiples of 4 only:
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| 2xs | 2px | Subtle gaps only (not in this phase) |
 | xs | 4px | Icon gaps, badge inner padding, inline spacing |
 | sm | 8px | Element spacing within POS top bar, toast internals |
 | md | 16px | Default element spacing, email section padding |
@@ -55,23 +54,26 @@ Source: `DESIGN.md` + `src/app/globals.css` `:root` spacing vars
 
 Source: `DESIGN.md` — scale and weight definitions, confirmed in `globals.css`.
 
+Declared sizes: 12px, 14px, 16px, 20px (4 sizes).
+Declared weights: 400 (regular) and 600 (semibold/emphasis) — 2 weights only.
+
 ### Application UI
 
 | Role | Font | Size | Weight | Line Height | Usage |
 |------|------|------|--------|-------------|-------|
 | Body | DM Sans | 16px (base) | 400 | 1.5 | General prose (not in this phase's UI) |
-| Label / nav | DM Sans | 14px (sm) | 500 | 1.4 | POS nav links, toast body, badge count |
+| Label / nav | DM Sans | 14px (sm) | 400 | 1.4 | POS nav links, badge count |
 | Heading / toast title | DM Sans | 16px (base) | 600 | 1.4 | Toast heading ("New order"), section labels |
-| Mute icon label | DM Sans | 12px (xs) | 500 | 1.0 | Accessible label only (visually hidden) |
+| Mute icon label | DM Sans | 12px (xs) | 400 | 1.0 | Accessible label only (visually hidden) |
 
 ### Email Templates
 
 | Role | Font stack | Size | Weight | Line Height | Usage |
 |------|-----------|------|--------|-------------|-------|
-| Store name / header | `'DM Sans', 'Helvetica Neue', Arial, sans-serif` | 20px | 700 | 1.2 | Email header store branding |
+| Store name / header | `'DM Sans', 'Helvetica Neue', Arial, sans-serif` | 20px | 600 | 1.2 | Email header store branding |
 | Section heading | `'DM Sans', 'Helvetica Neue', Arial, sans-serif` | 16px | 600 | 1.3 | "Order Summary", "Pickup Details", etc. |
 | Body / line items | `'DM Sans', 'Helvetica Neue', Arial, sans-serif` | 14px | 400 | 1.5 | Line item rows, descriptive text |
-| Price / total | `'DM Sans', 'Helvetica Neue', Arial, sans-serif` | 14px | 700 | 1.4 | Totals, GST amounts — tabular-nums where possible |
+| Price / total | `'DM Sans', 'Helvetica Neue', Arial, sans-serif` | 14px | 600 | 1.4 | Totals, GST amounts — tabular-nums where possible |
 | Footer / metadata | `'DM Sans', 'Helvetica Neue', Arial, sans-serif` | 12px | 400 | 1.5 | Unsubscribe note, store contact details |
 
 Note: Satoshi is NOT used in email templates. Email clients do not support web fonts from Bunny Fonts CDN. DM Sans system fallback is used throughout all email templates.
@@ -81,6 +83,10 @@ Note: Satoshi is NOT used in email templates. Email clients do not support web f
 ## Color
 
 Source: `DESIGN.md` + `src/app/globals.css` `@theme` block.
+
+### Focal Point Declaration
+
+Primary focal point on the POS UI is the amber badge on the Pickups nav link — the persistent unread count indicator. The toast is secondary and ephemeral.
 
 ### Application UI
 
@@ -128,7 +134,7 @@ New components this phase. All use existing token system — no new design primi
 Position: absolute overlay on the Pickups nav link in POSTopBar
 Size: 20px diameter circle (minimum)
 Background: --color-amber (#E67E22)
-Text: white, 11px, weight 700
+Text: white, 11px, weight 600
 Border: 2px solid #1E293B (navy, to separate from navy bar)
 Position: top-right corner of the "Pickups" nav link text
 Visibility: hidden when count = 0, shown when count >= 1
@@ -165,7 +171,7 @@ Layout:
   - No close button (auto-dismiss only, badge is the persistent indicator)
 
 Heading: DM Sans 14px weight 600, --color-text
-Body: DM Sans 13px weight 400, --color-text-muted
+Body: DM Sans 14px weight 400, --color-text-muted
 Amber dot: 8px circle, background --color-amber
 
 Animation:
@@ -179,7 +185,7 @@ Animation:
 HTML table-based (React Email convention)
 Background: #1E293B (navy)
 Padding: 24px horizontally, 20px vertically
-Store name text: #FFFFFF, 20px, weight 700
+Store name text: #FFFFFF, 20px, weight 600
 Optional: thin 3px amber (#E67E22) bottom border strip
 ```
 
@@ -196,11 +202,11 @@ Content: store address + phone + hours (context-dependent per template)
 
 ```
 No actual HTML table — use React Email Section/Row components
-Each line item row: product name left, price right, DM Sans 14px
-Discount row (if present): indented 8px, --color-amber text, 13px
+Each line item row: product name left, price right, DM Sans 14px weight 400
+Discount row (if present): indented 8px, --color-amber text, 12px weight 400
 Separator: <Hr> color #E7E5E4 before totals section
 GST row: "GST (15%)" label + amount, 14px weight 400
-Total row: "Total" label + amount, 16px weight 700
+Total row: "Total" label + amount, 16px weight 600
 ```
 
 ---
@@ -318,7 +324,7 @@ Container width: 600px max, centered, white background on stone-white canvas.
 Structure:
   1. EmailHeader (navy, store name)
   2. "Thanks for your order" / "Here's your receipt" heading — 16px, weight 600
-  3. Order number + date — 13px muted
+  3. Order number + date — 12px muted
   4. LineItemTable (all items, quantities, prices, discounts)
   5. <Hr>
   6. GST row + Total row
@@ -333,7 +339,7 @@ Structure:
 Structure:
   1. EmailHeader (navy, store name)
   2. Success status pill — "Ready for pickup" (emerald #059669 background, white text, radius-full)
-  3. "Your order is ready" heading — 20px, weight 700
+  3. "Your order is ready" heading — 20px, weight 600
   4. Order summary (condensed — item names + quantities only, no prices)
   5. <Hr>
   6. Collection details section:
