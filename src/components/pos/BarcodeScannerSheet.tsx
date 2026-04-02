@@ -18,14 +18,21 @@ type ScanState = 'idle' | 'scanning' | 'match' | 'no_match' | 'denied'
 
 export function BarcodeScannerSheet({ onProductFound, onClose, audioContext }: BarcodeScannerSheetProps) {
   const viewfinderRef = useRef<HTMLDivElement>(null)
-  const initializedRef = useRef(false)
   const scanLockRef = useRef(false)
+  const streamRef = useRef<MediaStream | null>(null)
   const audioCtxRef = useRef<AudioContext | null>(audioContext ?? null)
   const hadErrorRef = useRef(false)
 
   const [scanState, setScanState] = useState<ScanState>('idle')
+  const [lastScanned, setLastScanned] = useState<string | null>(null)
   const [manualMode, setManualMode] = useState(false)
   const [manualInput, setManualInput] = useState('')
+
+  // Consensus buffer: accumulate reads, only accept when same code appears CONSENSUS_THRESHOLD times
+  const readBufferRef = useRef<Map<string, number>>(new Map())
+  const bufferTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const CONSENSUS_THRESHOLD = 3
+  const BUFFER_WINDOW_MS = 1500
 
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const manualInputRef = useRef<HTMLInputElement>(null)
@@ -63,12 +70,9 @@ export function BarcodeScannerSheet({ onProductFound, onClose, audioContext }: B
   const handleBarcodeDetected = useCallback(async (code: string) => {
     if (scanLockRef.current) return
 
-    // Validate: EAN-13 = 13 digits, UPC-A = 12 digits
-    const isValid = /^\d{12,13}$/.test(code)
-    if (!isValid) return
-
     scanLockRef.current = true
     setScanState('scanning')
+    setLastScanned(code)
 
     try {
       // Beep and haptic feedback on detection
@@ -77,48 +81,70 @@ export function BarcodeScannerSheet({ onProductFound, onClose, audioContext }: B
         navigator.vibrate(80)
       }
 
-      const result = await lookupBarcode(code)
+      // Try exact match first, then without check digit for EAN-13/UPC-A
+      let result = await lookupBarcode(code)
+
+      if (!('product' in result && result.product) && code.length === 13) {
+        // EAN-13: try without check digit (12 digits)
+        result = await lookupBarcode(code.slice(0, 12))
+      }
+      if (!('product' in result && result.product) && code.length === 12) {
+        // UPC-A: try without check digit (11 digits)
+        result = await lookupBarcode(code.slice(0, 11))
+      }
 
       if ('product' in result && result.product) {
         // Match — flash green, add product, scanner stays open (batch mode D-02)
         setScanState('match')
         onProductFound(result.product)
-        setTimeout(() => setScanState('idle'), 300)
+        setTimeout(() => {
+          setScanState('idle')
+          setLastScanned(null)
+        }, 800)
       } else {
-        // No match — show error pill, then close after 1500ms (D-05, D-06)
+        // No match — show error pill with scanned code, stay open for retry
         hadErrorRef.current = true
         setScanState('no_match')
         setTimeout(() => {
-          onClose(true)
-        }, 1500)
+          setScanState('idle')
+        }, 2500)
       }
     } catch {
       hadErrorRef.current = true
       setScanState('no_match')
       setTimeout(() => {
-        onClose(true)
-      }, 1500)
+        setScanState('idle')
+      }, 2500)
     } finally {
-      // Unlock after 200ms minimum gap between scans
+      // Unlock after cooldown
       setTimeout(() => {
         scanLockRef.current = false
-      }, 200)
+      }, 500)
     }
-  }, [onProductFound, onClose]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [onProductFound]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---------------------------------------------------------------------------
-  // Quagga2 initialization
+  // Stable ref for detection callback (avoids re-init on every render)
+  // ---------------------------------------------------------------------------
+
+  const handleBarcodeDetectedRef = useRef(handleBarcodeDetected)
+  handleBarcodeDetectedRef.current = handleBarcodeDetected
+
+  // ---------------------------------------------------------------------------
+  // Quagga2 initialization — runs once on mount, cleans up on unmount
   // ---------------------------------------------------------------------------
 
   useEffect(() => {
     if (!viewfinderRef.current) return
-    if (initializedRef.current) return
 
-    initializedRef.current = true
+    let quagga: typeof import('@ericblade/quagga2').default | null = null
+    let cancelled = false
 
     // Dynamic import to ensure SSR safety (this component is always loaded with ssr: false)
     import('@ericblade/quagga2').then(({ default: Quagga }) => {
-      if (!viewfinderRef.current || !initializedRef.current) return
+      if (cancelled || !viewfinderRef.current) return
+
+      quagga = Quagga
 
       Quagga.init(
         {
@@ -132,43 +158,77 @@ export function BarcodeScannerSheet({ onProductFound, onClose, audioContext }: B
             },
           },
           decoder: {
-            readers: ['ean_reader', 'upc_reader'],
+            readers: ['ean_reader', 'upc_reader', 'code_128_reader', 'code_39_reader'],
           },
           locate: true,
         },
         (err: Error | null) => {
+          if (cancelled) return
           if (err) {
-            // Camera permission denied or unavailable
-            if (err.name === 'NotAllowedError' || err.message?.includes('Permission')) {
-              setScanState('denied')
-            } else {
-              setScanState('denied')
-            }
+            setScanState('denied')
             return
           }
           Quagga.start()
+
+          // Capture the media stream for guaranteed cleanup
+          const video = viewfinderRef.current?.querySelector('video')
+          if (video?.srcObject instanceof MediaStream) {
+            streamRef.current = video.srcObject
+          }
+
           setScanState('idle')
         }
       )
 
       Quagga.onDetected((result: { codeResult: { code: string | null } }) => {
         const code = result.codeResult.code
-        if (code) {
-          void handleBarcodeDetected(code)
+        if (!code || !/^\d+$/.test(code)) return
+        if (scanLockRef.current) return
+
+        // Accumulate reads in buffer
+        const buf = readBufferRef.current
+        const count = (buf.get(code) ?? 0) + 1
+        buf.set(code, count)
+
+        // Start/reset the buffer window timer
+        if (bufferTimerRef.current) clearTimeout(bufferTimerRef.current)
+        bufferTimerRef.current = setTimeout(() => {
+          readBufferRef.current.clear()
+        }, BUFFER_WINDOW_MS)
+
+        // Only fire when consensus reached
+        if (count >= CONSENSUS_THRESHOLD) {
+          readBufferRef.current.clear()
+          if (bufferTimerRef.current) clearTimeout(bufferTimerRef.current)
+          void handleBarcodeDetectedRef.current(code)
         }
       })
     }).catch(() => {
-      setScanState('denied')
+      if (!cancelled) setScanState('denied')
     })
 
     return () => {
-      import('@ericblade/quagga2').then(({ default: Quagga }) => {
-        Quagga.offDetected()
-        Quagga.stop()
-      }).catch(() => {})
-      initializedRef.current = false
+      cancelled = true
+
+      // Clear consensus buffer
+      if (bufferTimerRef.current) clearTimeout(bufferTimerRef.current)
+      readBufferRef.current.clear()
+
+      // Stop Quagga
+      if (quagga) {
+        quagga.offDetected()
+        quagga.stop()
+      }
+
+      // Kill the camera stream directly — belt and suspenders
+      const stream = streamRef.current
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop())
+        streamRef.current = null
+      }
     }
-  }, [handleBarcodeDetected])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Mount once only — callback accessed via ref
 
   // ---------------------------------------------------------------------------
   // Focus management
@@ -287,15 +347,15 @@ export function BarcodeScannerSheet({ onProductFound, onClose, audioContext }: B
         </div>
       ) : (
         /* Viewfinder */
-        <div className="w-full max-w-md flex-1 flex flex-col gap-3 mt-4">
+        <div className="w-full max-w-md flex flex-col gap-3 mt-4">
           <div
             ref={viewfinderRef}
             className={[
-              'relative w-full rounded-lg overflow-hidden border-2 transition-colors duration-150 bg-black',
-              'min-h-[280px]',
+              'relative w-full aspect-video rounded-lg overflow-hidden border-2 transition-colors duration-150 bg-black',
+              '[&_video]:absolute [&_video]:inset-0 [&_video]:w-full [&_video]:h-full [&_video]:object-cover',
+              '[&_canvas]:absolute [&_canvas]:inset-0 [&_canvas]:w-full [&_canvas]:h-full [&_canvas]:object-cover',
               viewfinderBorderClass,
             ].join(' ')}
-            style={{ minHeight: '280px' }}
           >
             {/* Scan line animation (respects prefers-reduced-motion) */}
             <div
@@ -315,12 +375,17 @@ export function BarcodeScannerSheet({ onProductFound, onClose, audioContext }: B
           >
             {scanState === 'scanning' && (
               <span className="px-3 py-1 rounded-full text-sm font-medium bg-white/10 text-white/70">
-                Scanning...
+                Looking up{lastScanned ? ` ${lastScanned}` : ''}...
+              </span>
+            )}
+            {scanState === 'match' && (
+              <span className="px-3 py-1 rounded-full text-sm font-medium bg-success text-white">
+                Added!
               </span>
             )}
             {scanState === 'no_match' && (
               <span className="px-3 py-1 rounded-full text-sm font-medium bg-error text-white">
-                Barcode not found
+                {lastScanned ? `${lastScanned} — not found` : 'Barcode not found'}
               </span>
             )}
           </div>

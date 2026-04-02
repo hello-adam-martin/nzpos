@@ -6,10 +6,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('server-only', () => ({}))
 
-// Mock resolveStaffAuth
-const mockResolveStaffAuth = vi.fn()
+// Mock resolveAuth (owner + staff auth)
+const mockResolveAuth = vi.fn()
 vi.mock('@/lib/resolveAuth', () => ({
-  resolveStaffAuth: () => mockResolveStaffAuth(),
+  resolveAuth: () => mockResolveAuth(),
 }))
 
 // Mock Supabase admin client with chainable query builder
@@ -65,10 +65,9 @@ const mockProduct = {
 describe('lookupBarcode', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockResolveStaffAuth.mockResolvedValue({
+    mockResolveAuth.mockResolvedValue({
       store_id: 'store-abc',
       staff_id: 'staff-1',
-      role: 'staff',
     })
   })
 
@@ -105,7 +104,7 @@ describe('lookupBarcode', () => {
   })
 
   it('Test 4: returns not_authenticated when staff session is missing', async () => {
-    mockResolveStaffAuth.mockResolvedValue(null)
+    mockResolveAuth.mockResolvedValue(null)
 
     const result = await lookupBarcode('9400012345670')
 
