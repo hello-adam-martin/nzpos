@@ -38,7 +38,11 @@
   2. A real Stripe test transaction completes end-to-end in the production environment
   3. The product catalog contains 200+ SKUs with barcodes, categories, stock levels, and images
   4. The Supabase production database has the full schema and reference data loaded
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 07-01-PLAN.md — Stripe test mode banner + production env validation script
+- [ ] 07-02-PLAN.md — Supabase production setup + Vercel deployment
+- [ ] 07-03-PLAN.md — Stripe webhook configuration + product catalog import
 
 ### Phase 8: Checkout Speed
 **Goal**: Staff can scan barcodes to add products instantly and customers see a receipt after every sale
@@ -100,7 +104,7 @@
 | 4. Online Store | v1.0 | 7/7 | Complete | 2026-04-01 |
 | 5. Admin & Reporting | v1.0 | 6/6 | Complete | 2026-04-01 |
 | 6. Xero Integration | v1.0 | 4/4 | Complete | 2026-04-01 |
-| 7. Production Launch | v1.1 | 0/? | Not started | — |
+| 7. Production Launch | v1.1 | 0/3 | Planning | — |
 | 8. Checkout Speed | v1.1 | 0/? | Not started | — |
 | 9. Notifications | v1.1 | 0/? | Not started | — |
 | 10. Customer Accounts | v1.1 | 0/? | Not started | — |
