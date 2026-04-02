@@ -22,7 +22,7 @@
 ### v1.1 Production Launch + Feature Waves
 
 - [ ] **Phase 7: Production Launch** — Store is live on real infrastructure with real products
-- [ ] **Phase 8: Checkout Speed** — Barcode scanning and screen receipts at point of sale
+- [x] **Phase 8: Checkout Speed** — Barcode scanning and screen receipts at point of sale (completed 2026-04-02)
 - [ ] **Phase 9: Notifications** — Automated emails and sound alert for new online orders
 - [ ] **Phase 10: Customer Accounts** — Customers can create accounts and view order history
 - [ ] **Phase 11: Partial Refunds** — Staff can issue partial refunds with full audit trail
@@ -57,7 +57,7 @@ Plans:
 Plans:
 - [x] 08-01-PLAN.md — Receipt data types, database migration, schema updates
 - [x] 08-02-PLAN.md — Barcode scanner (camera overlay, Quagga2, cart integration)
-- [ ] 08-03-PLAN.md — Receipt screen, completeSale wiring, admin View Receipt
+- [x] 08-03-PLAN.md — Receipt screen, completeSale wiring, admin View Receipt
 **UI hint**: yes
 
 ### Phase 9: Notifications
@@ -109,7 +109,7 @@ Plans:
 | 5. Admin & Reporting | v1.0 | 6/6 | Complete | 2026-04-01 |
 | 6. Xero Integration | v1.0 | 4/4 | Complete | 2026-04-01 |
 | 7. Production Launch | v1.1 | 1/3 | In Progress|  |
-| 8. Checkout Speed | v1.1 | 2/3 | In Progress|  |
+| 8. Checkout Speed | v1.1 | 3/3 | Complete   | 2026-04-02 |
 | 9. Notifications | v1.1 | 0/? | Not started | — |
 | 10. Customer Accounts | v1.1 | 0/? | Not started | — |
 | 11. Partial Refunds | v1.1 | 0/? | Not started | — |
