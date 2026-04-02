@@ -30,6 +30,10 @@ export async function middleware(request: NextRequest) {
       data: { session },
     } = await supabase.auth.getSession()
     const role = session?.user?.app_metadata?.role
+    // D-10: Block customer role from admin routes — silent redirect to storefront
+    if (role === 'customer') {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
     if (role !== 'owner') {
       return NextResponse.redirect(new URL('/unauthorized', request.url))
     }
@@ -43,6 +47,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
   if (pathname.startsWith('/pos')) {
+    // D-10: Block customer role from POS routes — silent redirect to storefront
+    const { supabase: posSupabase } = await createSupabaseMiddlewareClient(request)
+    const {
+      data: { user: posUser },
+    } = await posSupabase.auth.getUser()
+    if (posUser?.app_metadata?.role === 'customer') {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+
     const staffToken = request.cookies.get('staff_session')?.value
 
     if (staffToken) {
