@@ -106,7 +106,11 @@ Plans:
   3. Stock for each refunded line item is atomically restored to the product's available quantity
   4. A Xero credit note is generated for the partial refund amount
   5. The order record shows a full audit trail: which items were refunded, the amount, and the reason
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 11-01-PLAN.md — Database migration, Zod schema, processPartialRefund server action + tests
+- [ ] 11-02-PLAN.md — Partial refund UI (item selector, multi-step flow, drawer wiring, status badge/filter)
+**UI hint**: yes
 
 ## Progress
 
@@ -122,4 +126,4 @@ Plans:
 | 8. Checkout Speed | v1.1 | 3/3 | Complete   | 2026-04-02 |
 | 9. Notifications | v1.1 | 4/4 | Complete   | 2026-04-02 |
 | 10. Customer Accounts | v1.1 | 3/3 | Complete    | 2026-04-02 |
-| 11. Partial Refunds | v1.1 | 0/? | Not started | — |
+| 11. Partial Refunds | v1.1 | 0/2 | Not started | — |
