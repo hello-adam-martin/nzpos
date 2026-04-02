@@ -34,7 +34,7 @@ export type ReceiptData = {
   subtotalCents: number
   gstCents: number
   totalCents: number
-  paymentMethod: 'eftpos' | 'cash' | 'split'
+  paymentMethod: 'eftpos' | 'cash' | 'split' | 'online'
   cashTenderedCents?: number
   changeDueCents?: number
   customerEmail?: string      // captured on receipt, email sent in Phase 9
@@ -59,7 +59,7 @@ export type BuildReceiptDataParams = {
     gstCents: number
     totalCents: number
   }
-  paymentMethod: 'eftpos' | 'cash' | 'split'
+  paymentMethod: 'eftpos' | 'cash' | 'split' | 'online'
   cashTenderedCents?: number
   changeDueCents?: number
   customerEmail?: string

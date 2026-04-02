@@ -2,6 +2,9 @@ import 'server-only'
 import { headers } from 'next/headers'
 import Stripe from 'stripe'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
+import { sendEmail } from '@/lib/email'
+import { OnlineReceiptEmail } from '@/emails/OnlineReceiptEmail'
+import type { ReceiptData } from '@/lib/receipt'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
@@ -88,6 +91,72 @@ async function handleCheckoutComplete(
   })
 
   if (rpcError) throw rpcError
+
+  // NOTIF-01: Send online receipt email (fire-and-forget per D-05 — must not block webhook response)
+  const customerEmail = session.customer_details?.email
+  if (customerEmail) {
+    // Fetch order with receipt_data (stored by complete_online_sale RPC if available)
+    const { data: orderData } = await supabase
+      .from('orders')
+      .select('id, total_cents, created_at, receipt_data')
+      .eq('id', orderId)
+      .single()
+
+    if (orderData?.receipt_data) {
+      // Use pre-built receipt_data stored by the RPC
+      const receipt = orderData.receipt_data as ReceiptData
+      void sendEmail({
+        to: customerEmail,
+        subject: `Your receipt from ${receipt.storeName}`,
+        react: OnlineReceiptEmail({ receipt }),
+      })
+    } else {
+      // Fallback: build receipt from order_items joined with products + store
+      const { data: fullItems } = await supabase
+        .from('order_items')
+        .select('product_id, quantity, unit_price_cents, line_total_cents, discount_cents, products(name)')
+        .eq('order_id', orderId)
+
+      const { data: store } = await supabase
+        .from('stores')
+        .select('name, address, phone, gst_number')
+        .eq('id', storeId)
+        .single()
+
+      if (fullItems && store) {
+        const items = fullItems.map(item => ({
+          productId: item.product_id,
+          productName: (item.products as { name: string } | null)?.name ?? 'Unknown',
+          quantity: item.quantity,
+          unitPriceCents: item.unit_price_cents,
+          discountCents: item.discount_cents ?? 0,
+          lineTotalCents: item.line_total_cents,
+          gstCents: Math.round(item.line_total_cents * 3 / 23),
+        }))
+        const totalCents = orderData?.total_cents ?? items.reduce((s, i) => s + i.lineTotalCents, 0)
+        const gstCents = Math.round(totalCents * 3 / 23)
+        const receipt: ReceiptData = {
+          orderId,
+          storeName: store.name,
+          storeAddress: store.address ?? '',
+          storePhone: store.phone ?? '',
+          gstNumber: store.gst_number ?? '',
+          completedAt: orderData?.created_at ?? new Date().toISOString(),
+          staffName: 'Online',
+          items,
+          subtotalCents: totalCents,
+          gstCents,
+          totalCents,
+          paymentMethod: 'online',
+        }
+        void sendEmail({
+          to: customerEmail,
+          subject: `Your receipt from ${store.name}`,
+          react: OnlineReceiptEmail({ receipt }),
+        })
+      }
+    }
+  }
 
   // Mark event as processed AFTER successful RPC — retries will work if RPC fails
   const { error: dedupError } = await supabase
