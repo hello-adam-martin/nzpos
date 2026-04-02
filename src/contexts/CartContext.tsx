@@ -5,6 +5,7 @@ import {
   useContext,
   useReducer,
   useEffect,
+  useRef,
   useMemo,
   type ReactNode,
 } from 'react'
@@ -212,6 +213,7 @@ const CartContext = createContext<CartContextValue | null>(null)
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, initialState)
+  const hydrated = useRef(false)
 
   // Hydrate from localStorage on mount
   useEffect(() => {
@@ -224,10 +226,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch {
       // Corrupt or missing localStorage — ignore and use default state
     }
+    hydrated.current = true
   }, [])
 
   // Persist to localStorage when state changes (exclude isDrawerOpen)
+  // Skip persisting until hydration has run to avoid writing empty initial state
   useEffect(() => {
+    if (!hydrated.current) return
     try {
       const { isDrawerOpen: _, ...persistable } = state
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(persistable))
