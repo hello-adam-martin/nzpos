@@ -23,7 +23,7 @@
 
 - [ ] **Phase 7: Production Launch** — Store is live on real infrastructure with real products
 - [x] **Phase 8: Checkout Speed** — Barcode scanning and screen receipts at point of sale (completed 2026-04-02)
-- [ ] **Phase 9: Notifications** — Automated emails and sound alert for new online orders
+- [x] **Phase 9: Notifications** — Automated emails and sound alert for new online orders (completed 2026-04-02)
 - [ ] **Phase 10: Customer Accounts** — Customers can create accounts and view order history
 - [ ] **Phase 11: Partial Refunds** — Staff can issue partial refunds with full audit trail
 
@@ -73,7 +73,7 @@ Plans:
 **Plans**: 4 plans
 Plans:
 - [x] 09-01-PLAN.md — Email infrastructure + React Email templates (Resend SDK, sendEmail helper, 4 templates)
-- [ ] 09-02-PLAN.md — Email trigger wiring (Stripe webhook, POS receipt action, pickup-ready)
+- [x] 09-02-PLAN.md — Email trigger wiring (Stripe webhook, POS receipt action, pickup-ready)
 - [x] 09-03-PLAN.md — Daily summary cron handler (sales aggregation, low stock, vercel.json)
 - [x] 09-04-PLAN.md — Order sound alert (polling endpoint, chime, badge, mute toggle, toast)
 **UI hint**: yes
@@ -116,6 +116,6 @@ Plans:
 | 6. Xero Integration | v1.0 | 4/4 | Complete | 2026-04-01 |
 | 7. Production Launch | v1.1 | 1/3 | In Progress|  |
 | 8. Checkout Speed | v1.1 | 3/3 | Complete   | 2026-04-02 |
-| 9. Notifications | v1.1 | 3/4 | In Progress|  |
+| 9. Notifications | v1.1 | 4/4 | Complete   | 2026-04-02 |
 | 10. Customer Accounts | v1.1 | 0/? | Not started | — |
 | 11. Partial Refunds | v1.1 | 0/? | Not started | — |
