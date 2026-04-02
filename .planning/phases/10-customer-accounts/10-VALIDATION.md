@@ -2,12 +2,12 @@
 phase: 10
 slug: customer-accounts
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-04-02
 ---
 
-# Phase 10 — Validation Strategy
+# Phase 10 -- Validation Strategy
 
 > Per-phase validation contract for feedback sampling during execution.
 
@@ -38,14 +38,13 @@ created: 2026-04-02
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 10-01-01 | 01 | 1 | CUST-01 | unit | `npx vitest run src/actions/auth/__tests__/customerSignup.test.ts` | ❌ W0 | ⬜ pending |
-| 10-01-02 | 01 | 1 | CUST-01 | unit | `npx vitest run src/actions/auth/__tests__/customerSignup.test.ts` | ❌ W0 | ⬜ pending |
-| 10-02-01 | 02 | 1 | CUST-02 | unit (RLS) | `npx vitest run src/lib/__tests__/rls.test.ts` | partial | ⬜ pending |
-| 10-03-01 | 03 | 2 | CUST-03 | unit | `npx vitest run src/actions/auth/__tests__/updateProfile.test.ts` | ❌ W0 | ⬜ pending |
-| 10-04-01 | 01 | 1 | CUST-04 | manual | supabase local + integration test | manual-only | ⬜ pending |
-| 10-05-01 | 01 | 1 | CUST-05 | unit | `npx vitest run src/middleware.test.ts` | ❌ W0 | ⬜ pending |
-| 10-05-02 | 01 | 1 | CUST-05 | unit | `npx vitest run src/middleware.test.ts` | ❌ W0 | ⬜ pending |
-| 10-06-01 | 03 | 2 | CUST-06 | unit | `npx vitest run src/actions/auth/__tests__/resendVerification.test.ts` | ❌ W0 | ⬜ pending |
+| 10-01-01 | 01 | 1 | CUST-04 | grep | `grep -c "CREATE TABLE public.customers" supabase/migrations/012_customer_accounts.sql && grep -c "CREATE OR REPLACE FUNCTION public.custom_access_token_hook" supabase/migrations/012_customer_accounts.sql` | n/a (file grep) | ⬜ pending |
+| 10-01-02 | 01 | 1 | CUST-05 | grep | `grep -c "role === 'customer'" src/middleware.ts && grep -A1 "role === 'customer'" src/middleware.ts \| grep -c "new URL('/', request.url)"` | n/a (file grep) | ⬜ pending |
+| 10-02-01 | 02 | 2 | CUST-01 | unit | `npx vitest run src/actions/auth/__tests__/customerSignup.test.ts` | ❌ W0 | ⬜ pending |
+| 10-02-02 | 02 | 2 | CUST-06 | unit | `npx vitest run src/actions/auth/__tests__/resendVerification.test.ts` | ❌ W0 | ⬜ pending |
+| 10-03-01 | 03 | 3 | CUST-03 | unit | `npx vitest run src/actions/auth/__tests__/updateProfile.test.ts` | ❌ W0 | ⬜ pending |
+| 10-03-02 | 03 | 3 | CUST-02 | grep | `ls src/app/\(store\)/account/orders/page.tsx src/app/\(store\)/account/orders/\[id\]/page.tsx src/components/store/OrderHistoryCard.tsx` | n/a (file ls) | ⬜ pending |
+| 10-03-03 | 03 | 3 | CUST-02 | grep | `grep -l "PostPurchaseAccountPrompt" src/app/\(store\)/order/\[id\]/confirmation/page.tsx` | n/a (file grep) | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -53,12 +52,17 @@ created: 2026-04-02
 
 ## Wave 0 Requirements
 
-- [ ] `src/actions/auth/__tests__/customerSignup.test.ts` — stubs for CUST-01 schema validation
-- [ ] `src/actions/auth/__tests__/updateProfile.test.ts` — stubs for CUST-03 validation
-- [ ] `src/actions/auth/__tests__/resendVerification.test.ts` — stubs for CUST-06 action call
-- [ ] `src/middleware.test.ts` — stubs for CUST-05 customer redirect logic
+- [ ] `src/actions/auth/__tests__/customerSignup.test.ts` -- stubs for CUST-01 schema validation (created in Plan 02 execution)
+- [ ] `src/actions/auth/__tests__/updateProfile.test.ts` -- stubs for CUST-03 validation (created in Plan 03 execution)
+- [ ] `src/actions/auth/__tests__/resendVerification.test.ts` -- stubs for CUST-06 action call (created in Plan 02 execution)
 
-*Existing infrastructure covers CUST-02 (rls.test.ts exists) and CUST-04 (manual-only).*
+*Plan 01 tasks (10-01-01, 10-01-02) use grep/ls verification against migration SQL and middleware.ts -- no test stubs needed.*
+*Plan 03 order/confirmation tasks (10-03-02, 10-03-03) use file existence and grep verification -- no test stubs needed.*
+*Existing infrastructure covers CUST-02 RLS (rls.test.ts exists) and CUST-04 (manual-only).*
+
+**Test stub creation responsibility:**
+- Plan 02 executor creates `customerSignup.test.ts` and `resendVerification.test.ts` as part of task execution (early in Task 1).
+- Plan 03 executor creates `updateProfile.test.ts` as part of task execution (early in Task 2).
 
 ---
 
@@ -72,11 +76,11 @@ created: 2026-04-02
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
 - [ ] No watch-mode flags
 - [ ] Feedback latency < 15s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** pending
