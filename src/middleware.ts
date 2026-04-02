@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseMiddlewareClient } from '@/lib/supabase/middleware'
+import { createMiddlewareAdminClient } from '@/lib/supabase/middlewareAdmin'
+import { getCachedStoreId, setCachedStoreId } from '@/lib/tenantCache'
 import { jwtVerify } from 'jose'
 
 const staffSecret = new TextEncoder().encode(process.env.STAFF_JWT_SECRET!)
@@ -7,12 +9,52 @@ const staffSecret = new TextEncoder().encode(process.env.STAFF_JWT_SECRET!)
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Public routes — no auth required
+  // 1. Webhook routes — no auth, no tenant resolution
   if (pathname.startsWith('/api/webhooks')) {
     return NextResponse.next()
   }
 
-  // Admin routes — owner only (Supabase Auth)
+  // 2. Determine if this is the root domain or a store subdomain
+  const host = request.headers.get('host') ?? ''
+  const rootDomain = process.env.ROOT_DOMAIN ?? 'lvh.me:3000'
+  const isRoot = host === rootDomain || host === `www.${rootDomain}` || host.startsWith('localhost')
+
+  // 3. Root domain — marketing site (per D-05). Pass through with session refresh.
+  if (isRoot) {
+    const { response } = await createSupabaseMiddlewareClient(request)
+    return response
+  }
+
+  // 4. Subdomain — extract slug and resolve store_id (per D-01)
+  const slug = host.split('.')[0]
+  const cached = getCachedStoreId(slug)
+  let storeId: string
+
+  if (cached) {
+    storeId = cached
+  } else {
+    const admin = createMiddlewareAdminClient()
+    const { data } = await admin
+      .from('stores')
+      .select('id')
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .single()
+
+    if (!data) {
+      // Unknown or inactive subdomain — 404 (per D-03)
+      return NextResponse.rewrite(new URL('/not-found', request.url))
+    }
+    storeId = data.id
+    setCachedStoreId(slug, storeId)
+  }
+
+  // 5. Prepare tenant headers for downstream consumption
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-store-id', storeId)
+  requestHeaders.set('x-store-slug', slug)
+
+  // 6. Admin routes — owner only (Supabase Auth) — PRESERVED from original
   if (pathname.startsWith('/admin')) {
     const { supabase, response } = await createSupabaseMiddlewareClient(request)
     const {
@@ -25,7 +67,6 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl)
     }
 
-    // Verify user has owner role via JWT claims
     const {
       data: { session },
     } = await supabase.auth.getSession()
@@ -38,14 +79,20 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/unauthorized', request.url))
     }
 
+    // Inject tenant headers into the response for downstream Server Components
+    response.headers.set('x-store-id', storeId)
+    response.headers.set('x-store-slug', slug)
     return response
   }
 
-  // POS routes — staff or owner (staff_session cookie with jose JWT)
-  // Allow POS login page through without auth
+  // 7. POS login — pass through with tenant headers (PRESERVED)
   if (pathname === '/pos/login') {
-    return NextResponse.next()
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    })
   }
+
+  // 8. POS routes — staff or owner (PRESERVED)
   if (pathname.startsWith('/pos')) {
     // D-10: Block customer role from POS routes — silent redirect to storefront
     const { supabase: posSupabase } = await createSupabaseMiddlewareClient(request)
@@ -57,19 +104,20 @@ export async function middleware(request: NextRequest) {
     }
 
     const staffToken = request.cookies.get('staff_session')?.value
-
     if (staffToken) {
       try {
         const { payload } = await jwtVerify(staffToken, staffSecret)
         if (payload.role === 'staff' || payload.role === 'owner') {
-          return NextResponse.next()
+          return NextResponse.next({
+            request: { headers: requestHeaders },
+          })
         }
       } catch {
-        // Token expired or invalid — fall through to check Supabase auth
+        // Token expired/invalid — fall through
       }
     }
 
-    // Also allow owner access via Supabase Auth session
+    // Check Supabase Auth owner session
     const { supabase, response } = await createSupabaseMiddlewareClient(request)
     const {
       data: { user },
@@ -79,16 +127,20 @@ export async function middleware(request: NextRequest) {
         data: { session },
       } = await supabase.auth.getSession()
       if (session?.user?.app_metadata?.role === 'owner') {
+        response.headers.set('x-store-id', storeId)
+        response.headers.set('x-store-slug', slug)
         return response
       }
     }
 
-    // No valid session — redirect to PIN login
     return NextResponse.redirect(new URL('/pos/login', request.url))
   }
 
-  // Store routes — public, but refresh Supabase session if present
+  // 9. Storefront routes — public, refresh session if present (PRESERVED)
+  // Use response headers to pass tenant context downstream
   const { response } = await createSupabaseMiddlewareClient(request)
+  response.headers.set('x-store-id', storeId)
+  response.headers.set('x-store-slug', slug)
   return response
 }
 
