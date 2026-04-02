@@ -84,37 +84,37 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DEPLOY-01 | — | Pending |
-| DEPLOY-02 | — | Pending |
-| DEPLOY-03 | — | Pending |
-| DEPLOY-04 | — | Pending |
-| SCAN-01 | — | Pending |
-| SCAN-02 | — | Pending |
-| RCPT-01 | — | Pending |
-| RCPT-02 | — | Pending |
-| NOTIF-01 | — | Pending |
-| NOTIF-02 | — | Pending |
-| NOTIF-03 | — | Pending |
-| NOTIF-04 | — | Pending |
-| NOTIF-05 | — | Pending |
-| NOTIF-06 | — | Pending |
-| CUST-01 | — | Pending |
-| CUST-02 | — | Pending |
-| CUST-03 | — | Pending |
-| CUST-04 | — | Pending |
-| CUST-05 | — | Pending |
-| CUST-06 | — | Pending |
-| REFUND-01 | — | Pending |
-| REFUND-02 | — | Pending |
-| REFUND-03 | — | Pending |
-| REFUND-04 | — | Pending |
-| REFUND-05 | — | Pending |
+| DEPLOY-01 | Phase 7 | Pending |
+| DEPLOY-02 | Phase 7 | Pending |
+| DEPLOY-03 | Phase 7 | Pending |
+| DEPLOY-04 | Phase 7 | Pending |
+| SCAN-01 | Phase 8 | Pending |
+| SCAN-02 | Phase 8 | Pending |
+| RCPT-01 | Phase 8 | Pending |
+| RCPT-02 | Phase 8 | Pending |
+| NOTIF-01 | Phase 9 | Pending |
+| NOTIF-02 | Phase 9 | Pending |
+| NOTIF-03 | Phase 9 | Pending |
+| NOTIF-04 | Phase 9 | Pending |
+| NOTIF-05 | Phase 9 | Pending |
+| NOTIF-06 | Phase 9 | Pending |
+| CUST-01 | Phase 10 | Pending |
+| CUST-02 | Phase 10 | Pending |
+| CUST-03 | Phase 10 | Pending |
+| CUST-04 | Phase 10 | Pending |
+| CUST-05 | Phase 10 | Pending |
+| CUST-06 | Phase 10 | Pending |
+| REFUND-01 | Phase 11 | Pending |
+| REFUND-02 | Phase 11 | Pending |
+| REFUND-03 | Phase 11 | Pending |
+| REFUND-04 | Phase 11 | Pending |
+| REFUND-05 | Phase 11 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 25 total
-- Mapped to phases: 0
-- Unmapped: 25 (pending roadmap creation)
+- Mapped to phases: 25
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-02*
-*Last updated: 2026-04-02 after initial definition*
+*Last updated: 2026-04-02 — traceability table completed after roadmap creation*
