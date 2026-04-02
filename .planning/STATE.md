@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production Launch + Feature Waves
 status: executing
-stopped_at: Completed 12-03-PLAN.md
-last_updated: "2026-04-02T19:51:07.722Z"
+stopped_at: Completed 12-02-PLAN.md
+last_updated: "2026-04-02T19:51:46.057Z"
 last_activity: 2026-04-02
 progress:
   total_phases: 10
   completed_phases: 5
   total_plans: 19
-  completed_plans: 17
+  completed_plans: 18
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 12 (multi-tenant-infrastructure) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-04-02
 
@@ -55,6 +55,9 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 12-multi-tenant-infrastructure]: orders_public_read policy preserved from 006 (guest checkout confirmation requires anon read of online orders)
 - [Phase 12-multi-tenant-infrastructure]: store_plans owner-read only (not staff) — billing info is owner-sensitive
 - [Phase 12-multi-tenant-infrastructure]: super admin check runs before staff/customer in auth hook (D-12: cross-tenant, no store_id required)
+- [Phase 12]: storeId TypeScript narrowing: explicit string variable with if/else branch avoids null type error when assigning from cache vs DB lookup
+- [Phase 12]: x-store-id middleware header takes priority over JWT store_id in resolveAuth — subdomain is authoritative tenant context
+- [Phase 12]: allowedDevOrigins added to next.config.ts for *.lvh.me subdomain dev compatibility
 
 ### Blockers/Concerns
 
@@ -64,6 +67,6 @@ Progress: [░░░░░░░░░░] 0%
 
 ## Session Continuity
 
-Last session: 2026-04-02T19:51:07.719Z
-Stopped at: Completed 12-03-PLAN.md
+Last session: 2026-04-02T19:51:46.054Z
+Stopped at: Completed 12-02-PLAN.md
 Resume file: None

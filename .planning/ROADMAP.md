@@ -137,7 +137,7 @@ Plans:
 **Plans**: 4 plans
 Plans:
 - [x] 12-01-PLAN.md — Schema migration (stores.slug, store_plans, branding, super_admins) + seed update + middleware admin client
-- [ ] 12-02-PLAN.md — Middleware rewrite for subdomain tenant resolution with in-memory TTL cache
+- [x] 12-02-PLAN.md — Middleware rewrite for subdomain tenant resolution with in-memory TTL cache
 - [x] 12-03-PLAN.md — RLS policy full rewrite (unified pattern) + super admin auth hook extension
 - [ ] 12-04-PLAN.md — Cross-tenant isolation test suite (Vitest 4 attack vectors + Playwright E2E) + type regeneration
 **UI hint**: no
@@ -208,7 +208,7 @@ Plans:
 | 9. Notifications | v1.1 | 4/4 | Complete | 2026-04-02 |
 | 10. Customer Accounts | v1.1 | 3/3 | Complete | 2026-04-02 |
 | 11. Partial Refunds | v1.1 | 2/2 | Complete | 2026-04-02 |
-| 12. Multi-Tenant Infrastructure | v2.0 | 2/4 | In Progress|  |
+| 12. Multi-Tenant Infrastructure | v2.0 | 3/4 | In Progress|  |
 | 13. Merchant Self-Serve Signup | v2.0 | 0/? | Not started | — |
 | 14. Store Setup Wizard + Marketing | v2.0 | 0/? | Not started | — |
 | 15. Stripe Billing + Feature Gating | v2.0 | 0/? | Not started | — |
