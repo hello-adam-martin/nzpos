@@ -4,6 +4,9 @@
 import { createClient } from '@supabase/supabase-js'
 import bcryptjs from 'bcryptjs'
 
+// Deterministic store ID so .env.local STORE_ID survives `supabase db reset`
+const DEV_STORE_ID = '00000000-0000-4000-a000-000000000001'
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'http://127.0.0.1:54321',
   process.env.SUPABASE_SERVICE_ROLE_KEY ?? 'your-service-role-key'
@@ -20,13 +23,19 @@ async function seed() {
   })
   if (!owner.user) throw new Error('Failed to create owner')
 
-  // 2. Create store
+  // 2. Create store with deterministic ID
   const { data: store } = await supabase
     .from('stores')
-    .insert({ name: 'Test Supplies Store', owner_auth_id: owner.user.id })
+    .insert({ id: DEV_STORE_ID, name: 'Test Supplies Store', slug: 'demo', owner_auth_id: owner.user.id })
     .select('id')
     .single()
   if (!store) throw new Error('Failed to create store')
+
+  // 2b. Create store_plans row (all features disabled by default)
+  await supabase.from('store_plans').insert({
+    store_id: DEV_STORE_ID,
+  })
+  console.log('Created store_plans row for dev store')
 
   // 3. Create owner staff record
   await supabase.from('staff').insert({
