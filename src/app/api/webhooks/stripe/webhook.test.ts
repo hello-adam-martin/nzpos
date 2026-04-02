@@ -175,7 +175,7 @@ describe('Stripe Webhook Handler', () => {
       p_stripe_session_id: 'cs_test_123',
       p_stripe_payment_intent_id: 'pi_test_456',
       p_customer_email: 'test@example.com',
-      p_items: JSON.stringify(orderItems),
+      p_items: orderItems,
     })
   })
 
