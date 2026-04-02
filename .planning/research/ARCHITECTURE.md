@@ -1,553 +1,510 @@
-# Architecture Patterns
+# Architecture Research
 
-**Domain:** Retail POS with online storefront (NZ compliance)
-**Project:** NZPOS — Next.js App Router + Supabase + Stripe
-**Researched:** 2026-04-01
-**Confidence:** HIGH (well-established stack, patterns verified against official docs in training)
+**Domain:** Multi-tenant SaaS transformation of existing NZ retail POS
+**Researched:** 2026-04-03
+**Confidence:** HIGH (Vercel official docs, Supabase patterns, existing codebase reviewed)
 
 ---
 
-## Recommended Architecture
+## Context: What Already Exists
+
+The v1 app has a clean foundation for multi-tenancy:
+
+- Every table has `store_id UUID NOT NULL REFERENCES public.stores(id)` — tenant isolation at the data layer is done.
+- RLS policies enforce `store_id = (auth.jwt() -> 'app_metadata' ->> 'store_id')::UUID` — no cross-tenant leakage.
+- `custom_access_token_hook` injects `store_id` and `role` into JWT `app_metadata` — the pattern for tenant resolution is already established.
+- `resolveAuth()` reads `store_id` from JWT app_metadata (owner) or staff PIN JWT — all Server Actions are already tenant-scoped.
+- `stores` table exists as the tenant root, with `owner_auth_id` pointing to `auth.users`.
+- Middleware (`src/middleware.ts`) handles auth routing for `/admin`, `/pos`, and `/` — this is where tenant resolution will be added.
+
+**What does NOT exist yet:**
+- No subdomain routing — all routes are path-based under a single domain.
+- No tenant provisioning flow — the founder's store was seeded manually.
+- No Stripe billing — Stripe is used for customer payments, not merchant subscriptions.
+- No feature gating table or entitlements check.
+- No super admin role or panel.
+- No marketing landing page.
+
+---
+
+## Standard Architecture
 
 ### System Overview
 
-Single Next.js application with three route-group UI surfaces sharing one Supabase database,
-one Stripe account, and one set of Server Actions. No separate services, no microservices.
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                      Vercel Edge (Middleware)                         │
+│  Request → hostname extraction → tenant lookup → header injection     │
+│                                                                       │
+│  *.nzpos.app   →  subdomain = tenant slug  →  resolve store_id       │
+│  shop.acme.nz  →  custom domain lookup     →  resolve store_id       │
+│  nzpos.app     →  marketing / signup (no tenant)                     │
+└──────────────────────────────────┬──────────────────────────────────┘
+                                   │ x-tenant-id header
+         ┌─────────────────────────┼────────────────────────────────┐
+         │                         │                                │
+         ▼                         ▼                                ▼
+┌─────────────────┐    ┌─────────────────────┐    ┌───────────────────────┐
+│  Marketing Site │    │  Tenant App Routes  │    │  Super Admin Panel    │
+│  /              │    │  /admin             │    │  /superadmin          │
+│  /pricing       │    │  /pos               │    │  service_role client  │
+│  /signup        │    │  / (storefront)     │    │  cross-tenant queries │
+└─────────────────┘    └──────────┬──────────┘    └───────────────────────┘
+                                  │
+                    ┌─────────────┼─────────────┐
+                    │                           │
+                    ▼                           ▼
+          ┌──────────────────┐      ┌────────────────────┐
+          │  Supabase Auth   │      │  Supabase Postgres │
+          │  (owner logins)  │      │  (RLS by store_id) │
+          └──────────────────┘      └────────────────────┘
+                                              │
+                                    ┌─────────┴──────────┐
+                                    │                    │
+                                    ▼                    ▼
+                          ┌──────────────────┐  ┌──────────────────┐
+                          │  Stripe (billing)│  │  Vercel SDK      │
+                          │  subscriptions   │  │  custom domains  │
+                          └──────────────────┘  └──────────────────┘
+```
+
+### Component Responsibilities
+
+| Component | Responsibility | New vs Modified |
+|-----------|----------------|-----------------|
+| Middleware | Hostname → tenant slug/custom domain → store_id → x-tenant-id header | **MODIFIED** — add hostname resolution before existing auth checks |
+| `stores` table | Tenant root: slug, plan, stripe_customer_id, custom_domain | **MODIFIED** — add new columns |
+| `store_plans` table | Feature entitlements per store | **NEW** |
+| Tenant provisioning | Server Action: create auth user + store + staff + custom_access_token_hook | **NEW** |
+| Setup wizard | Multi-step onboarding UI (logo, categories, products, branding) | **NEW** |
+| Stripe billing | Subscription create/update/cancel via Stripe Checkout + Customer Portal | **NEW** |
+| Webhook handler | `/api/webhooks/stripe` extended for `customer.subscription.*` events | **MODIFIED** |
+| Feature gate helper | `requireFeature(store_id, 'xero')` — throws if not entitled | **NEW** |
+| Super admin | `/superadmin` route with service_role client, cross-tenant queries | **NEW** |
+| Marketing pages | `/` landing, `/pricing`, route group `(marketing)` | **NEW** |
+| Custom domain API | Server Action wrapping `@vercel/sdk` `projectsAddProjectDomain` | **NEW** |
+
+---
+
+## Recommended Project Structure Changes
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     Next.js App (Vercel)                    │
-│                                                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
-│  │  (pos)/      │  │  (store)/    │  │  (admin)/        │  │
-│  │  POS Tablet  │  │  Storefront  │  │  Admin Dashboard │  │
-│  │  iPad UI     │  │  Public      │  │  Owner+Staff     │  │
-│  └──────┬───────┘  └──────┬───────┘  └────────┬─────────┘  │
-│         │                 │                    │            │
-│         └─────────────────┴────────────────────┘            │
-│                           │                                 │
-│              ┌────────────▼────────────┐                    │
-│              │     Server Actions       │                    │
-│              │  (Zod-validated, all    │                    │
-│              │   mutations go here)    │                    │
-│              └────────────┬────────────┘                    │
-│                           │                                 │
-│         ┌─────────────────┼──────────────────┐             │
-│         │                 │                  │             │
-│  ┌──────▼──────┐  ┌───────▼──────┐  ┌───────▼──────┐      │
-│  │  Supabase   │  │    Stripe    │  │    Xero      │      │
-│  │  (Postgres  │  │  (Payments,  │  │  (Accounting │      │
-│  │   + Auth    │  │   Webhooks)  │  │   OAuth)     │      │
-│  │   + RLS)    │  └──────────────┘  └──────────────┘      │
-│  └─────────────┘                                           │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Route Group Structure
-
-```
-app/
-  (pos)/
-    layout.tsx          -- PIN auth gate, tablet viewport lock
-    pos/
-      page.tsx          -- Product grid + cart
-      checkout/
-        page.tsx        -- Payment method, EFTPOS confirmation, receipt
-  (store)/
-    layout.tsx          -- Public layout, no auth
-    page.tsx            -- Storefront home / product grid
-    products/
-      [slug]/
-        page.tsx        -- Product detail
-    cart/
-      page.tsx          -- Cart (client state)
-    checkout/
-      page.tsx          -- Stripe Checkout redirect or embedded
-    orders/
-      [id]/
-        page.tsx        -- Order confirmation / click-and-collect status
-  (admin)/
-    layout.tsx          -- Owner auth gate (email/password session)
-    dashboard/
-      page.tsx          -- Daily summary
-    products/
-      page.tsx          -- Product list
-      new/page.tsx
-      [id]/edit/page.tsx
-    orders/
-      page.tsx          -- All orders (POS + online)
-    reports/
-      page.tsx          -- Daily sales, top products, stock
-    cash-up/
-      page.tsx          -- End-of-day reconciliation
-    xero/
-      page.tsx          -- OAuth connect + sync status
-  api/
-    webhooks/
-      stripe/
-        route.ts        -- Stripe webhook handler (stock decrement, order state)
-      xero/
-        route.ts        -- Xero webhook (optional, for token refresh)
+src/
+├── app/
+│   ├── (marketing)/            # NEW: public landing pages (no tenant context)
+│   │   ├── layout.tsx          # marketing layout (no sidebar/POS chrome)
+│   │   ├── page.tsx            # landing page
+│   │   └── pricing/page.tsx    # pricing page
+│   │
+│   ├── (onboarding)/           # NEW: signup + setup wizard
+│   │   ├── signup/page.tsx     # merchant email signup (replaces stub)
+│   │   └── setup/
+│   │       ├── page.tsx        # wizard entry
+│   │       ├── store/page.tsx  # step 1: store name + slug
+│   │       ├── brand/page.tsx  # step 2: logo + colors
+│   │       └── catalog/page.tsx # step 3: first products
+│   │
+│   ├── (tenant)/               # MODIFIED: wraps existing admin/pos/storefront
+│   │   ├── layout.tsx          # injects tenant context from x-tenant-id header
+│   │   ├── admin/...           # unchanged routes
+│   │   ├── (pos)/...           # unchanged routes
+│   │   └── (store)/...         # unchanged routes
+│   │
+│   ├── superadmin/             # NEW: super admin panel
+│   │   ├── layout.tsx          # service_role auth guard
+│   │   ├── page.tsx            # tenant list + metrics
+│   │   ├── stores/[id]/page.tsx
+│   │   └── billing/page.tsx
+│   │
+│   └── api/
+│       ├── webhooks/
+│       │   └── stripe/         # MODIFIED: handle subscription events
+│       └── domains/            # NEW: Vercel SDK domain provisioning endpoint
+│
+├── lib/
+│   ├── tenant.ts               # NEW: resolveTenantFromHostname(), getTenantContext()
+│   ├── features.ts             # NEW: requireFeature(), hasFeature()
+│   ├── stripe-billing.ts       # NEW: createSubscription(), getBillingPortalUrl()
+│   ├── vercel-domains.ts       # NEW: addCustomDomain(), removeCustomDomain()
+│   └── supabase/               # UNCHANGED
+│
+├── middleware.ts               # MODIFIED: hostname → tenant resolution
+└── types/
+    └── database.ts             # MODIFIED: new stores columns + store_plans table
 ```
 
 ---
 
-## Component Boundaries
+## Architectural Patterns
 
-| Component | Responsibility | Communicates With | Auth |
-|-----------|---------------|-------------------|------|
-| POS Surface `(pos)/` | In-store checkout UI on iPad. Product grid, cart, discounts, EFTPOS confirmation, cash recording | Server Actions → Supabase | Staff PIN (custom JWT claim) |
-| Storefront Surface `(store)/` | Public product browse and purchase. Cart (client), Stripe Checkout, order tracking | Server Actions → Supabase; Stripe Checkout redirect | None (public) |
-| Admin Surface `(admin)/` | Inventory management, order management, reporting, cash-up, Xero sync | Server Actions → Supabase; Xero OAuth | Owner session (Supabase Auth email/password) |
-| Server Actions | All mutations and sensitive reads. Zod validation on every input. RLS via custom JWT claims | Supabase SDK (server), Stripe SDK, Xero API | Inherits from surface calling them |
-| Supabase Database | Postgres with RLS. Single source of truth for products, orders, stock, stores | Server Actions (server SDK); webhooks (service role) | RLS policies keyed on store_id + role claim |
-| Stripe | Payment processing for online storefront. Webhooks drive order state transitions | api/webhooks/stripe/route.ts | Webhook signature verification |
-| Xero OAuth | Accounting sync. Token stored in Supabase. Daily batch push from Server Action | Admin surface triggers sync; cron or manual | Owner OAuth token scoped to store |
-| Inventory Engine | Not a separate service — a set of Server Actions + DB functions that handle atomic stock decrement | Called by POS checkout action AND Stripe webhook | Service role for webhook, staff JWT for POS |
+### Pattern 1: Hostname-First Tenant Resolution in Middleware
 
-### What Does NOT Have Its Own Service
+**What:** Middleware extracts tenant from hostname before any auth check, injects `x-tenant-id` as a request header so all downstream Server Components and Server Actions can read it without hitting the database again.
 
-- No separate inventory microservice — stock is Postgres with `FOR UPDATE` row-level locking
-- No separate auth service — Supabase Auth with custom JWT claims covers all three surfaces
-- No message queue — refresh-on-transaction pattern eliminates need for event streaming
-- No dedicated reporting service — Postgres queries via Server Actions
+**When to use:** Every request to a tenant route.
+
+**Trade-offs:** Adds one DB lookup per request (or Edge Config cache hit) at the middleware layer. Acceptable because middleware runs at Vercel Edge — fast. Eliminates the need to pass tenant through every function call.
+
+**Example:**
+```typescript
+// src/lib/tenant.ts
+export async function resolveTenantFromHostname(
+  hostname: string,
+  supabase: SupabaseClient
+): Promise<string | null> {
+  const appHost = process.env.NEXT_PUBLIC_APP_HOST // 'nzpos.app'
+
+  // Subdomain: tenant.nzpos.app
+  if (hostname.endsWith(`.${appHost}`)) {
+    const slug = hostname.replace(`.${appHost}`, '')
+    const { data } = await supabase
+      .from('stores')
+      .select('id')
+      .eq('slug', slug)
+      .single()
+    return data?.id ?? null
+  }
+
+  // Custom domain: shop.acme.nz
+  const { data } = await supabase
+    .from('stores')
+    .select('id')
+    .eq('custom_domain', hostname)
+    .single()
+  return data?.id ?? null
+}
+
+// src/middleware.ts (addition to existing)
+const tenantId = await resolveTenantFromHostname(hostname, supabase)
+if (tenantId) {
+  response.headers.set('x-tenant-id', tenantId)
+}
+```
+
+### Pattern 2: Atomic Tenant Provisioning via Server Action
+
+**What:** A single database transaction creates the Supabase auth user, `stores` row, and owner `staff` row together. The `custom_access_token_hook` then fires on first login, injecting `store_id` into the JWT — no manual step required.
+
+**When to use:** Merchant signup flow.
+
+**Trade-offs:** All-or-nothing atomicity is correct. If Supabase Auth user creation succeeds but `stores` insert fails, the auth user is orphaned — handle with a cleanup function or use a Postgres function that calls `auth.users` directly via service_role.
+
+**Example:**
+```typescript
+// src/actions/provision-store.ts
+'use server'
+export async function provisionStore(input: ProvisionInput) {
+  const admin = createSupabaseAdminClient() // service_role
+
+  // 1. Create auth user
+  const { data: authUser } = await admin.auth.admin.createUser({
+    email: input.email,
+    password: input.password,
+    email_confirm: true,
+  })
+
+  // 2. Create store + owner staff in a single RPC to ensure atomicity
+  const { data: store } = await admin.rpc('provision_store', {
+    owner_auth_id: authUser.user.id,
+    store_name: input.storeName,
+    slug: input.slug,
+  })
+  // RPC creates: stores row + staff row (role='owner')
+  // custom_access_token_hook fires on next login, injects store_id
+
+  return { storeId: store.id }
+}
+```
+
+### Pattern 3: Stripe Subscription Sync via Webhook
+
+**What:** Stripe webhook events (`customer.subscription.created`, `updated`, `deleted`) update a `store_plans` table. All feature gate checks read from `store_plans` — never from Stripe directly at request time.
+
+**When to use:** Any time subscription status changes.
+
+**Trade-offs:** Database is the source of truth for feature access. Avoids Stripe API latency on every request. Risk: webhook delivery delay means a brief window where Stripe state and DB diverge — acceptable for a SaaS add-on (not a payment blocker).
+
+**Example:**
+```typescript
+// supabase/migrations/014_saas_billing.sql
+CREATE TABLE public.store_plans (
+  store_id    UUID PRIMARY KEY REFERENCES public.stores(id),
+  plan        TEXT NOT NULL DEFAULT 'free', -- 'free' | 'starter' | 'pro'
+  stripe_customer_id    TEXT,
+  stripe_subscription_id TEXT,
+  xero_enabled          BOOLEAN NOT NULL DEFAULT false,
+  email_notifications_enabled BOOLEAN NOT NULL DEFAULT false,
+  custom_domain_enabled BOOLEAN NOT NULL DEFAULT false,
+  current_period_end    TIMESTAMPTZ,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+```
+
+```typescript
+// src/lib/features.ts
+export async function hasFeature(
+  storeId: string,
+  feature: 'xero' | 'email_notifications' | 'custom_domain'
+): Promise<boolean> {
+  const supabase = await createSupabaseServerClient()
+  const col = `${feature}_enabled`
+  const { data } = await supabase
+    .from('store_plans')
+    .select(col)
+    .eq('store_id', storeId)
+    .single()
+  return data?.[col] ?? false
+}
+
+export async function requireFeature(storeId: string, feature: FeatureKey) {
+  const has = await hasFeature(storeId, feature)
+  if (!has) throw new Error(`Feature '${feature}' requires a paid plan.`)
+}
+```
+
+### Pattern 4: Super Admin with Service Role Client
+
+**What:** A dedicated route group `/superadmin` uses a Supabase client initialised with `SUPABASE_SERVICE_ROLE_KEY` (bypasses RLS). Access is gated by a custom `is_super_admin` column in `staff` (or a separate `super_admins` table).
+
+**When to use:** All super admin operations.
+
+**Trade-offs:** Service role bypasses RLS entirely — a bug in super admin routes can expose all tenant data. Mitigate by keeping the service role client confined to `src/lib/supabase/admin.ts` (already exists in v1) and never importing it in tenant-facing code.
+
+**Example:**
+```typescript
+// Super admin middleware guard
+if (pathname.startsWith('/superadmin')) {
+  const { supabase } = await createSupabaseMiddlewareClient(request)
+  const { data: { user } } = await supabase.auth.getUser()
+  const isSuperAdmin = user?.app_metadata?.is_super_admin === true
+  if (!isSuperAdmin) return NextResponse.redirect('/login')
+}
+```
+
+### Pattern 5: Custom Domain Provisioning via Vercel SDK
+
+**What:** When a merchant enables the custom domain add-on, a Server Action calls `@vercel/sdk` to register the domain with the Vercel project, then stores the domain in `stores.custom_domain`. Middleware's custom domain lookup then starts resolving the tenant from that hostname.
+
+**When to use:** Merchant upgrades to custom domain add-on and enters their domain.
+
+**Trade-offs:** Requires `VERCEL_TOKEN` and `VERCEL_TEAM_ID` env vars. Domain verification can take 24-48h for DNS propagation — UX must surface verification status. The Vercel SDK is the authoritative approach (confirmed in official Vercel docs 2026).
+
+**Example:**
+```typescript
+// src/lib/vercel-domains.ts
+import { VercelCore } from '@vercel/sdk/core.js'
+import { projectsAddProjectDomain } from '@vercel/sdk/funcs/projectsAddProjectDomain.js'
+
+const client = new VercelCore({ bearerToken: process.env.VERCEL_TOKEN! })
+
+export async function addCustomDomain(domain: string) {
+  await projectsAddProjectDomain(client, {
+    idOrName: process.env.VERCEL_PROJECT_ID!,
+    teamId: process.env.VERCEL_TEAM_ID,
+    requestBody: { name: domain },
+  })
+}
+```
 
 ---
 
 ## Data Flow
 
-### POS Sale Flow
+### New Merchant Signup Flow
 
 ```
-iPad (POS surface)
-  → User selects products, applies discount
-  → Cart is client state (React useState / useReducer)
-  → Cashier taps "Charge"
-  → Staff selects payment method (EFTPOS or Cash)
-  → If EFTPOS: confirmation screen shown ("Did terminal approve?")
-  → On confirm: Server Action `completePOSSale(cart, paymentMethod)`
-      → Zod validates input
-      → Postgres transaction:
-          BEGIN
-            INSERT INTO orders (store_id, type='pos', status='completed', ...)
-            INSERT INTO order_items (order_id, product_id, qty, unit_price, gst_amount, ...)
-            UPDATE products SET stock_qty = stock_qty - qty WHERE id = product_id
-              AND stock_qty >= qty   -- guard against oversell
-          COMMIT
-      → Returns { orderId, receipt }
-  → UI refreshes product grid (re-fetch, not Realtime)
-  → v1.1: receipt print via ESC/POS
+/signup form submit (email, password, store name, slug)
+    ↓
+Server Action: provisionStore()
+    ├── admin.auth.admin.createUser()
+    ├── rpc('provision_store')          — creates stores + staff rows
+    └── create store_plans row (plan='free')
+    ↓
+Redirect → /setup (onboarding wizard)
+    ↓
+Setup wizard steps (store brand, first products)
+    ↓
+Redirect → tenant.nzpos.app/admin  (first login, JWT claims injected by hook)
 ```
 
-### Online Storefront Sale Flow
+### Tenant Request Resolution Flow
 
 ```
-Customer (Storefront surface)
-  → Browses products (Server Components, fresh reads from Supabase)
-  → Cart in localStorage / client state (no DB cart in v1)
-  → Proceeds to checkout
-  → Server Action `createStripeCheckoutSession(cartItems)`
-      → Validates stock availability (read-check only, not reserved)
-      → Creates Stripe Checkout Session with line items + metadata
-      → Returns { sessionUrl }
-  → Browser redirects to Stripe-hosted checkout
-  → Customer completes payment on Stripe
-  → Stripe redirects to /orders/[id]?session_id=...
-  → Stripe webhook fires → POST /api/webhooks/stripe
-      → Verifies signature
-      → On checkout.session.completed:
-          Postgres transaction:
-            INSERT INTO orders (store_id, type='online', status='pending_pickup', ...)
-            INSERT INTO order_items (...)
-            UPDATE products SET stock_qty = stock_qty - qty WHERE ... AND stock_qty >= qty
-          If stock guard fails → log conflict, notify admin (v1: log only)
-      → Returns 200 to Stripe
-  → Order confirmation page polls order status (simple fetch loop, no Realtime)
+Request: myshop.nzpos.app/admin
+    ↓
+Middleware
+    ├── extract hostname → slug = 'myshop'
+    ├── DB lookup: stores WHERE slug = 'myshop' → store_id
+    ├── set header: x-tenant-id = store_id
+    └── existing auth checks (unchanged)
+    ↓
+Layout: read x-tenant-id from headers()
+    ↓
+Server Components: use store_id from layout context
+    ↓
+RLS: JWT app_metadata.store_id must match store_id (unchanged)
 ```
 
-### Inventory Sync Pattern
+### Stripe Billing Flow
 
 ```
-Source of truth: products.stock_qty in Postgres
-
-POS sale    ──→ Server Action  ──→ Postgres tx (stock decrement)
-Online sale ──→ Stripe webhook ──→ Postgres tx (stock decrement)
-Refund      ──→ Server Action  ──→ Postgres tx (stock increment)
-Admin edit  ──→ Server Action  ──→ Postgres (direct update)
-
-Reads:
-  POS grid     ──→ Server Component → Supabase query (on each page load / manual refresh)
-  Storefront   ──→ Server Component → Supabase query (on each page load, ISR optional)
-  Admin stock  ──→ Server Component → Supabase query
+Merchant clicks "Upgrade to Starter"
+    ↓
+Server Action: createCheckoutSession(storeId, priceId)
+    ├── lookup or create Stripe customer for store
+    └── stripe.checkout.sessions.create({ mode: 'subscription' })
+    ↓
+Redirect → Stripe Checkout (hosted)
+    ↓
+Stripe webhook: customer.subscription.created
+    ↓
+/api/webhooks/stripe: verify signature
+    ↓
+UPDATE store_plans SET xero_enabled=true WHERE stripe_subscription_id=...
+    ↓
+Merchant is now entitled to the feature
 ```
 
-No event streaming. No Supabase Realtime subscription. Freshness comes from page load and post-mutation revalidation (`revalidatePath` in Server Actions).
-
-### Admin / Reporting Flow
+### Feature Gate Check Flow
 
 ```
-Admin dashboard
-  → Server Component fetches aggregated data via Supabase queries
-  → No caching on reports (always fresh)
-  → Cash-up: Server Action reads all POS sales for today, groups by payment method
-  → Xero sync: Server Action reads yesterday's orders, formats journal entries, POSTs to Xero API
-```
-
-### Auth Flow
-
-```
-Owner (admin surface):
-  → Email + password → Supabase Auth → session cookie
-  → Supabase Auth sets custom JWT claim: { role: 'owner', store_id: 'xxx' }
-  → RLS policies check auth.jwt() ->> 'store_id' and auth.jwt() ->> 'role'
-
-Staff (POS surface):
-  → PIN entry → Server Action validates PIN against staff table
-  → Server Action issues short-lived custom JWT: { role: 'staff', store_id: 'xxx', staff_id: 'yyy' }
-  → Stored in sessionStorage on tablet
-  → RLS policies allow staff JWT to read products, insert orders
-
-Public (storefront):
-  → No auth session
-  → Storefront reads via anon Supabase key with RLS allowing SELECT on published products
-  → Order INSERT via service-role in webhook (bypasses RLS after signature verification)
+Server Action or Server Component
+    ↓
+requireFeature(store_id, 'xero')
+    ↓
+SELECT xero_enabled FROM store_plans WHERE store_id = $1
+    ├── true  → proceed
+    └── false → throw / return upgrade prompt
 ```
 
 ---
 
-## Patterns to Follow
+## Integration Points
 
-### Pattern 1: Route Groups for Surface Isolation
+### New vs Modified Integrations
 
-**What:** Use Next.js route groups `(pos)`, `(store)`, `(admin)` to co-locate layouts, auth middleware, and viewport config per surface without affecting URL paths.
+| Integration | Status | What Changes |
+|-------------|--------|--------------|
+| Middleware tenant resolution | **NEW** | Add hostname parsing before existing auth logic |
+| `stores` table | **MODIFIED** | Add: `slug TEXT UNIQUE`, `custom_domain TEXT`, `stripe_customer_id TEXT` |
+| `store_plans` table | **NEW** | Track plan + per-feature flags + Stripe subscription ref |
+| `custom_access_token_hook` | **UNCHANGED** | Already injects `store_id` — no change needed |
+| Stripe webhook handler | **MODIFIED** | Extend `/api/webhooks/stripe` for `customer.subscription.*` events |
+| Stripe (merchant billing) | **NEW** | Second use of Stripe — subscriptions, not customer payments |
+| Vercel SDK (`@vercel/sdk`) | **NEW** | Custom domain add/remove/verify |
+| Supabase admin client | **UNCHANGED** | `src/lib/supabase/admin.ts` already exists — use for provisioning |
+| `resolveAuth()` | **UNCHANGED** | Still reads `store_id` from JWT — middleware just ensures the right tenant loads first |
 
-**When:** Any time a single app serves multiple audiences with different auth/layout requirements.
+### External Services
 
-**Why:** Avoids a single giant layout.tsx trying to conditionally render for three contexts. Each surface has its own `layout.tsx` with its own auth check (middleware can also enforce).
+| Service | Integration Pattern | Notes |
+|---------|---------------------|-------|
+| Stripe (merchant billing) | Checkout Session → webhook sync → `store_plans` table | Separate from existing Stripe customer payments. Same Stripe account, different objects. |
+| Vercel SDK | Server Action calling `projectsAddProjectDomain` | Requires `VERCEL_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID` env vars. Wildcard DNS (`*.nzpos.app`) must use Vercel nameservers. |
+| Supabase Auth | `admin.auth.admin.createUser()` in provisioning | Service role required for admin user creation. |
 
-```typescript
-// app/(pos)/layout.tsx
-export const viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 1,    // prevent accidental zoom on tablet
-}
+### Internal Boundaries
 
-export default async function POSLayout({ children }) {
-  const session = await getPOSSession()  // verifies staff JWT
-  if (!session) redirect('/pos/login')
-  return <POSShell>{children}</POSShell>
-}
-```
-
-### Pattern 2: Server Actions as the Only Mutation Path
-
-**What:** All writes go through Server Actions (`'use server'` functions). No client-side Supabase SDK calls for mutations. No API routes for mutations.
-
-**When:** Always.
-
-**Why:** Centralises Zod validation, RLS bypass decisions, and business logic (GST rounding, stock guards) in one place. Easier to audit. Avoids RLS policy complexity on the client path.
-
-```typescript
-// actions/pos/completeSale.ts
-'use server'
-import { z } from 'zod'
-import { createServerClient } from '@supabase/ssr'
-
-const CompleteSaleSchema = z.object({
-  storeId: z.string().uuid(),
-  items: z.array(z.object({
-    productId: z.string().uuid(),
-    qty: z.number().int().positive(),
-    unitPriceCents: z.number().int().positive(),
-    discountCents: z.number().int().min(0),
-  })),
-  paymentMethod: z.enum(['eftpos', 'cash']),
-})
-
-export async function completePOSSale(input: unknown) {
-  const data = CompleteSaleSchema.parse(input)  // throws ZodError → caught by boundary
-  // ... Postgres transaction
-}
-```
-
-### Pattern 3: Postgres Transactions for Atomic Stock Decrement
-
-**What:** Use a Supabase RPC (Postgres function) or a series of statements inside a Supabase transaction for stock decrement to prevent overselling.
-
-**When:** Any order completion — POS or online.
-
-**Why:** Two concurrent sales of the last unit must not both succeed. Postgres row-level locking (`SELECT ... FOR UPDATE`) inside a transaction handles this correctly.
-
-```sql
--- supabase/migrations/xxx_decrement_stock.sql
-CREATE OR REPLACE FUNCTION decrement_stock(
-  p_product_id uuid,
-  p_qty integer,
-  p_store_id uuid
-) RETURNS void AS $$
-BEGIN
-  UPDATE products
-  SET stock_qty = stock_qty - p_qty
-  WHERE id = p_product_id
-    AND store_id = p_store_id
-    AND stock_qty >= p_qty;
-
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'insufficient_stock' USING ERRCODE = 'P0001';
-  END IF;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-```
-
-### Pattern 4: Custom JWT Claims for RLS (not user table joins)
-
-**What:** Embed `store_id` and `role` directly in the JWT at sign-in time, not looked up via a join in every RLS policy.
-
-**When:** Always — this is a performance and correctness requirement from the Eng review.
-
-**Why:** Supabase's default auth.users lookup in RLS policies adds 2-11x query overhead. Custom claims via a Postgres hook (or Auth hook in Supabase) make RLS policies simple and fast.
-
-```sql
--- RLS policy example using custom claim
-CREATE POLICY "staff can read their store products"
-  ON products FOR SELECT
-  USING (store_id = (auth.jwt() ->> 'store_id')::uuid);
-```
-
-### Pattern 5: Stripe Webhook as the Authoritative Online Order Creator
-
-**What:** Do not create the order record in Supabase when the customer submits the checkout form. Create it only when the `checkout.session.completed` webhook fires.
-
-**When:** Online storefront checkout path always.
-
-**Why:** The redirect back to your site can fail, be blocked, or be spoofed. The webhook is the guaranteed signal that Stripe has captured the money. This is the standard Stripe pattern for order fulfillment.
-
-### Pattern 6: GST Rounding Per Line
-
-**What:** Calculate GST on each line item individually using the discounted line amount, then sum line totals for the order total. Do not calculate GST on the order total.
-
-**When:** All order types — POS and online.
-
-**Why:** IRD compliance. NZ GST is tax-inclusive at 15% (rate = 3/23 of inclusive price). Rounding differences compound when done at order level.
-
-```typescript
-// lib/gst.ts
-export function gstFromInclusivePrice(inclusiveCents: number): number {
-  // GST fraction of a tax-inclusive price: 3/23
-  return Math.round(inclusiveCents * 3 / 23)
-}
-
-export function calcLineItem(unitPriceCents: number, qty: number, discountCents: number) {
-  const lineTotal = unitPriceCents * qty - discountCents
-  const gst = gstFromInclusivePrice(lineTotal)
-  const excl = lineTotal - gst
-  return { lineTotal, gst, excl }
-}
-```
+| Boundary | Communication | Notes |
+|----------|---------------|-------|
+| Middleware → Server Components | `x-tenant-id` request header | Server Components read via `headers()` from `next/headers` |
+| Middleware → existing auth checks | Additive — header set first, then existing auth logic runs | No existing auth code needs to change |
+| Super admin routes → Supabase | Service role client (no RLS) | Confined to `src/lib/supabase/admin.ts` — never in tenant code paths |
+| Feature gate → store_plans | Direct DB read via server Supabase client | Called in Server Actions before executing gated operations |
+| Custom domain API → Vercel SDK | Server Action → Vercel REST API via SDK | Must run server-side only (API token must not leak to client) |
 
 ---
 
-## Anti-Patterns to Avoid
+## Scaling Considerations
 
-### Anti-Pattern 1: Client-Side Supabase Mutations
+| Scale | Architecture Adjustments |
+|-------|--------------------------|
+| 1-50 tenants | Current approach works fine. Supabase free tier sufficient. One middleware DB lookup per request is acceptable. |
+| 50-500 tenants | Add Vercel Edge Config cache for slug→store_id lookups (sub-10ms vs ~50ms DB). Cache TTL 5 min is safe. |
+| 500+ tenants | Consider Upstash Redis for tenant cache layer. Evaluate Supabase Pro for connection pooling under load. |
 
-**What:** Using the Supabase JS client in browser code to INSERT/UPDATE records.
+### Scaling Priorities
 
-**Why bad:** Bypasses Zod validation, business logic (GST, stock guards), and centralised audit trail. RLS alone is not a substitute for server-side business logic validation.
-
-**Instead:** All mutations through Server Actions, even simple ones.
-
-### Anti-Pattern 2: Creating Orders on Checkout Form Submit (not webhook)
-
-**What:** Writing the order to the database when the user clicks "Pay" on your site.
-
-**Why bad:** Payment may not complete. You'll have phantom unpaid orders and incorrect stock decrements. Refund logic becomes complex.
-
-**Instead:** Create a Stripe Checkout Session, redirect customer, create the order only in the webhook handler.
-
-### Anti-Pattern 3: Supabase Realtime for Inventory Sync
-
-**What:** Subscribing to Supabase Realtime channels to push stock updates to the POS.
-
-**Why bad:** WebSocket connection failures are silent on tablets. If the subscription drops, the POS shows stale stock with no indication. Requires reconnection logic, fallback polling, and increases complexity. Already explicitly rejected in Eng review.
-
-**Instead:** Refresh product grid after each completed sale via `revalidatePath` + re-fetch on focus.
-
-### Anti-Pattern 4: Shared Cart State Across Surfaces
-
-**What:** Storing cart state in the database or a shared context accessible to all three surfaces.
-
-**Why bad:** POS cart and storefront cart have completely different lifecycles, data shapes, and auth contexts. Coupling them creates unnecessary complexity.
-
-**Instead:** POS cart is ephemeral React state (cleared after sale). Storefront cart is localStorage. Neither is persisted to the database until order completion.
-
-### Anti-Pattern 5: Single Flat `app/` Route Structure
-
-**What:** Mixing POS, storefront, and admin routes at the same level without route groups.
-
-**Why bad:** Cannot apply different layouts and auth middleware per surface. Leads to conditional logic in layout.tsx that grows unmanageable.
-
-**Instead:** Route groups `(pos)`, `(store)`, `(admin)` from day one. Filesystem layout mirrors product surfaces.
-
-### Anti-Pattern 6: User Table Joins in RLS Policies
-
-**What:** `auth.uid() IN (SELECT id FROM staff WHERE store_id = ...)` inside RLS policies.
-
-**Why bad:** Executes on every query. 2-11x performance penalty. Eng review explicitly flagged this.
-
-**Instead:** Custom JWT claims with `store_id` and `role` embedded at auth time.
+1. **First bottleneck: middleware DB lookup.** Every request hits `stores WHERE slug = ?`. Solved by Edge Config cache keyed on slug with a short TTL. Vercel provides native Edge Config integration.
+2. **Second bottleneck: RLS policy evaluation.** Already mitigated in v1 by JWT claims pattern (no table joins in policies). No change needed.
+3. **Third bottleneck: Stripe webhook throughput.** Not relevant at this scale — webhooks are async and low volume.
 
 ---
 
-## Database Schema Sketch
+## Anti-Patterns
 
-Core tables and their relationships (not exhaustive — migrations will expand).
+### Anti-Pattern 1: Resolving Tenant in Every Server Action
 
-```
-stores
-  id, name, gst_number, timezone, created_at
+**What people do:** Call `SELECT id FROM stores WHERE slug = ?` at the start of every Server Action to validate the tenant.
 
-products
-  id, store_id*, name, slug, description, price_cents, stock_qty,
-  category_id, sku, image_url, is_published, low_stock_threshold, created_at
+**Why it's wrong:** Redundant. RLS already enforces store_id isolation. The JWT claim already carries store_id. A second lookup is wasted latency and code noise.
 
-categories
-  id, store_id*, name, sort_order
+**Do this instead:** Trust the JWT's `store_id` (set by `custom_access_token_hook`). The middleware header is for routing only. Server Actions use `resolveAuth()` which reads from JWT — same as v1.
 
-orders
-  id, store_id*, type (pos|online), status (completed|pending_pickup|ready|collected|refunded),
-  customer_email, subtotal_cents, gst_cents, total_cents,
-  payment_method (eftpos|cash|stripe), stripe_session_id,
-  promo_code_id, created_at
+### Anti-Pattern 2: Two Separate Stripe Accounts
 
-order_items
-  id, order_id*, product_id*, qty, unit_price_cents,
-  discount_cents, line_total_cents, gst_cents
+**What people do:** Create a separate Stripe account for merchant billing, separate from the Stripe account used for customer payments.
 
-staff
-  id, store_id*, name, pin_hash, role (owner|staff), is_active
+**Why it's wrong:** Fragmented billing, double key management, complex reconciliation. NZ merchant payments and SaaS billing can both live in the same Stripe account with different Product/Price objects.
 
-promo_codes
-  id, store_id*, code, discount_type (percent|fixed), discount_value,
-  min_order_cents, max_uses, use_count, expires_at, is_active
+**Do this instead:** Same Stripe account. Distinguish by Stripe metadata: `metadata.type = 'merchant_subscription'` vs `metadata.type = 'customer_order'`. Webhook handler routes by event type.
 
-xero_tokens
-  id, store_id*, access_token (encrypted), refresh_token (encrypted),
-  expires_at, tenant_id
+### Anti-Pattern 3: Storing Subscription Status Only in Stripe
 
-cash_ups
-  id, store_id*, date, expected_cash_cents, actual_cash_cents, notes, created_by
-```
+**What people do:** Check feature access by calling `stripe.subscriptions.retrieve()` at request time.
 
-`*` = has store_id for multi-tenant RLS. Every table includes store_id, enforced via RLS from day one.
+**Why it's wrong:** Latency (Stripe API ~200ms), rate limits, and a Stripe outage blocks your entire app.
 
----
+**Do this instead:** Stripe is the billing source of truth. `store_plans` is the application source of truth. Webhooks keep them in sync. App always reads from `store_plans` — never calls Stripe at request time for access checks.
 
-## Build Order (Dependencies)
+### Anti-Pattern 4: Super Admin Shares the Owner Auth Path
 
-Build order follows dependency chains — each layer must exist before the layers that consume it.
+**What people do:** Give the super admin user `role='owner'` in the existing staff table and share the `/admin` route.
 
-### Layer 0: Foundation (blocks everything)
+**Why it's wrong:** Super admin needs cross-tenant access (all stores). Owner access is RLS-scoped to a single store_id. Mixing them means either breaking RLS or writing special-case bypass logic everywhere.
 
-1. **Supabase project + schema** — products, orders, order_items, staff, stores tables with RLS
-2. **Custom JWT claims** — Auth hook embedding store_id + role
-3. **Next.js project scaffold** — route groups, Tailwind, shared UI primitives
-4. **Zod schemas** — shared validation types used by Server Actions
-5. **GST utility functions** — `lib/gst.ts`, unit tested before used anywhere
+**Do this instead:** Separate route group `/superadmin` with its own middleware guard checking `app_metadata.is_super_admin`. Uses service role client. Completely separate from tenant `/admin`.
 
-*Nothing else can be built reliably until Layer 0 is complete.*
+### Anti-Pattern 5: Subdomain Slug = Store ID (UUID)
 
-### Layer 1: Product Catalog (blocks POS, storefront, reporting)
+**What people do:** Use the store's UUID as the subdomain: `550e8400-e29b-41d4-a716-446655440000.nzpos.app`.
 
-6. **Product CRUD Server Actions** — create, update, delete, set stock
-7. **Admin products UI** — list, create/edit form, image upload
-8. **CSV import** — uses same Server Actions as manual create
+**Why it's wrong:** Ugly URLs, hard for merchants to share, no marketing value.
 
-*Both POS and storefront need products in the database to build against.*
-
-### Layer 2: POS Surface (blocks cash-up, end-of-day reports)
-
-9. **Staff PIN auth** — custom JWT issuance, session storage on tablet
-10. **POS product grid** — read products, category filter
-11. **POS cart** — client state, line items, discount input
-12. **EFTPOS confirmation step** — payment method selector + confirmation modal
-13. **POS checkout Server Action** — `completePOSSale`, atomic stock decrement
-14. **Post-sale refresh** — `revalidatePath` after successful sale
-
-*Cash-up and reporting depend on orders existing, which requires POS to be functional.*
-
-### Layer 3: Online Storefront (blocks Stripe webhook, online orders in reports)
-
-15. **Public product listing** — Server Components, ISR optional
-16. **Product detail pages** — slug routing
-17. **Storefront cart** — localStorage
-18. **Stripe Checkout Session** — Server Action `createCheckoutSession`
-19. **Stripe webhook handler** — `checkout.session.completed` → order + stock decrement
-20. **Order confirmation page** — poll order status
-21. **Click-and-collect status** — PENDING_PICKUP → READY → COLLECTED transitions
-
-*Promo codes depend on storefront checkout existing.*
-
-### Layer 4: Admin Operations (blocks Xero, reporting)
-
-22. **Owner email/password auth** — Supabase Auth session, admin layout gate
-23. **Order management** — list all orders, filter by type/status, mark click-and-collect status
-24. **Refund handling** — Server Action, stock increment, order status update
-25. **Cash-up / end-of-day** — Server Action aggregates today's POS sales by payment method
-26. **Basic reporting** — daily sales, top products, stock levels (Postgres queries)
-27. **Low stock alerts** — query on admin dashboard load
-
-### Layer 5: Integrations (no blockers within core product)
-
-28. **Xero OAuth** — connect flow, token storage
-29. **Xero daily sync** — Server Action reads orders, formats journal entries, pushes to Xero API
-30. **Promo codes** — create/manage in admin, apply in storefront checkout
-
-### Layer 6: Hardening (runs alongside, not blocking)
-
-- Vitest unit tests for GST utilities, stock decrement logic, Zod schemas
-- Playwright E2E for POS checkout, online checkout, admin order management
-- Error boundaries on all three surfaces
-- Sentry or equivalent error tracking
+**Do this instead:** `slug` field in `stores` table (e.g., `myshop`). Short, URL-safe, merchant-chosen. Add `UNIQUE` constraint. Validate on creation (alphanumeric + hyphens, 3-32 chars, no reserved words like `admin`, `api`, `www`).
 
 ---
 
-## Scalability Considerations
+## Build Order Rationale
 
-This is a single-tenant v1 for one store. Multi-tenant is schema-ready (store_id everywhere) but not UI-ready.
+The SaaS features have hard dependencies. Building in this order avoids rework:
 
-| Concern | At 1 store (now) | At 10 stores (v2) | At 100 stores |
-|---------|-----------------|-------------------|---------------|
-| Database | Supabase free tier, single Postgres instance | Supabase Pro, connection pooling via PgBouncer | Possibly read replicas or per-region |
-| Auth | Supabase Auth, single project | Same project, store_id RLS isolation | May need separate auth tenant per region |
-| Stripe | Single Stripe account for one merchant | Per-merchant Stripe account or Stripe Connect | Stripe Connect (platform model) |
-| Xero | One OAuth token per store | Token per store already in schema | Same pattern |
-| Inventory contention | Negligible at 1 store | FOR UPDATE locking handles concurrent sales | May need queue for flash sales |
-
----
-
-## Key Architectural Decisions (from Eng Review)
-
-These are already made — documenting for phase context:
-
-| Decision | Implication for Build |
-|----------|----------------------|
-| Refresh-on-transaction, not Realtime | No WebSocket setup needed. `revalidatePath` after Server Action is sufficient. |
-| Custom JWT claims for RLS | Auth hook must be configured before any RLS policy is written. Layer 0 dependency. |
-| Zod on all Server Actions | Zod schemas become a shared library, not per-action. Write them in Layer 0. |
-| EFTPOS confirmation step | POS checkout is a 2-step UI: "process on terminal" → "did it approve?" → complete sale. |
-| Per-line GST rounding | GST utility must be tested before being used in any order path (POS or online). |
-| Stripe webhook as authoritative order creator | No order DB record until webhook fires. Means the /orders/[id] page must handle "order pending" state gracefully. |
-| Multi-tenant store_id from day 1 | Every migration, every RLS policy, every Server Action must scope to store_id. Not optional to defer. |
+1. **Database schema changes** (`stores` columns + `store_plans` table) — everything else reads from here.
+2. **Tenant resolution middleware** — must exist before any tenant-specific routing works.
+3. **Tenant provisioning + signup** — merchants need accounts before anything else.
+4. **Setup wizard** — requires provisioned store.
+5. **Marketing page** — independent, can be built any time, but logically follows signup.
+6. **Stripe billing + webhook** — requires provisioned stores to attach subscriptions to.
+7. **Feature gating** — requires `store_plans` rows to exist (created by provisioning in step 3 with `plan='free'`).
+8. **Custom domains** — requires Stripe billing (it's a paid add-on); requires Vercel SDK setup.
+9. **Super admin panel** — can read from everything above; logical last step.
 
 ---
 
 ## Sources
 
-- Next.js App Router documentation (route groups, Server Actions, `revalidatePath`) — HIGH confidence
-- Supabase Auth custom JWT claims / Auth hooks — HIGH confidence (official Supabase feature)
-- Stripe Checkout webhook pattern (`checkout.session.completed` as order trigger) — HIGH confidence (Stripe official best practice)
-- Postgres `SELECT FOR UPDATE` for concurrent stock decrement — HIGH confidence (standard Postgres pattern)
-- NZ IRD GST calculation (3/23 of tax-inclusive price) — HIGH confidence (IRD published guidance)
-- Project engineering review decisions (refresh-on-transaction, custom JWT, Zod) — HIGH confidence (documented in PROJECT.md)
+- Vercel multi-tenant domain management (official, 2026): https://vercel.com/docs/multi-tenant/domain-management
+- Vercel Platforms concepts (official): https://vercel.com/platforms/docs/multi-tenant-platforms/concepts
+- Vercel wildcard domains blog: https://vercel.com/blog/wildcard-domains
+- Vercel Platforms Starter Kit: https://vercel.com/templates/next.js/platforms-starter-kit
+- Supabase JWT app_metadata pattern (community consensus, verified in existing codebase): https://github.com/orgs/supabase/discussions/1615
+- Next.js subscription payments reference (Vercel official): https://github.com/vercel/nextjs-subscription-payments
+- Stripe subscriptions guide: https://docs.stripe.com/billing/subscriptions/build-subscriptions
+- Stripe customer portal: https://docs.stripe.com/customer-management/integrate-customer-portal
+- Existing codebase reviewed: `src/middleware.ts`, `supabase/migrations/001_initial_schema.sql`, `supabase/migrations/002_rls_policies.sql`, `supabase/migrations/003_auth_hook.sql`, `src/lib/resolveAuth.ts`
+
+---
+
+*Architecture research for: NZPOS v2.0 SaaS multi-tenant transformation*
+*Researched: 2026-04-03*

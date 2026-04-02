@@ -1,7 +1,7 @@
 # Technology Stack
 
 **Project:** NZPOS — NZ Retail POS System
-**Researched:** 2026-04-01
+**Researched:** 2026-04-01 (v1.0 core stack) + 2026-04-03 (v2.0 SaaS additions)
 **Confidence:** HIGH (core stack verified against live Next.js 16.2.1 official docs)
 
 ---
@@ -105,8 +105,8 @@
 
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
-| Vercel | Free tier | Next.js hosting | Verified adapter — full Next.js feature support including Server Actions, middleware, image optimisation. Zero config for a Next.js project. Free tier sufficient for v1 (100GB bandwidth, serverless functions). |
-| Supabase | Free tier | Managed Postgres + Auth + Storage | Co-located data and auth. Free tier sufficient for single-store v1. |
+| Vercel | Free tier → Pro for wildcard domains | Next.js hosting | Verified adapter — full Next.js feature support including Server Actions, middleware, image optimisation. Wildcard subdomain support requires pointing nameservers to Vercel. Pro plan needed for commercial SaaS at scale but free tier works for early v2.0. |
+| Supabase | Free tier → Pro | Managed Postgres + Auth + Storage | Co-located data and auth. Free tier starts v2.0; upgrade to Pro ($25/mo) when merchant count grows or as Stripe billing revenue allows. |
 | Supabase Storage | included | Product images | Use Supabase Storage buckets for product images. Serves directly via CDN URL. Integrate with `next/image` `remotePatterns` config pointing to `*.supabase.co`. |
 
 **What NOT to use for deployment:** Do not self-host Next.js on a VPS for v1 — Vercel free tier eliminates ops overhead entirely for a solo developer. Do not use AWS S3 for images when Supabase Storage is already in the stack. Do not use Cloudflare or Netlify as deployment target — they are not verified Next.js adapters (as of 2026-03-25), feature support varies.
@@ -161,43 +161,236 @@
 
 ---
 
-## Installation
+## v2.0 SaaS Additions
+
+This section covers the NEW libraries and patterns required for the v2.0 SaaS milestone. The core stack above is unchanged.
+
+---
+
+### Multi-Tenant Subdomain Routing
+
+**What's needed:** Wildcard subdomain routing so each merchant gets `merchant-slug.nzpos.app`. No new library required — this is pure Next.js middleware + Vercel DNS configuration.
+
+**Implementation pattern (HIGH confidence — verified against official Next.js multi-tenant guide and Vercel docs):**
+
+```typescript
+// middleware.ts
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+export function middleware(request: NextRequest) {
+  const hostname = request.headers.get('host') || ''
+  const subdomain = hostname.split('.')[0]
+
+  // app.nzpos.app → main app (skip)
+  // merchant-slug.nzpos.app → rewrite to /[slug] route group
+  if (subdomain !== 'app' && subdomain !== 'www') {
+    const url = request.nextUrl.clone()
+    url.pathname = `/store/${subdomain}${url.pathname}`
+    return NextResponse.rewrite(url)
+  }
+}
+
+export const config = {
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+}
+```
+
+Key points:
+- Middleware runs on Edge Runtime — no database queries allowed. Resolve tenants in the Server Component or page, not the middleware.
+- Middleware rewrites the URL path; the hostname is preserved in request headers for the Server Component to read.
+- For local development, use `merchant.localhost:3000` with a `hosts` file entry, or read a `?tenant=` query param in dev mode.
+- Wildcard SSL on Vercel requires pointing nameservers to `ns1.vercel-dns.com` / `ns2.vercel-dns.com` (not A records).
+
+**Vercel DNS requirement (HIGH confidence — from official Vercel multi-tenant docs):** The domain must use Vercel nameservers for wildcard SSL to work. A records do NOT support wildcard certificate issuance. This is a day-1 infrastructure decision — the nzpos.app domain needs to delegate to Vercel nameservers before any tenants can be provisioned.
+
+---
+
+### Custom Domains for Merchants (Paid Add-on)
+
+**What's needed:** Merchants on a paid plan can bring their own domain (e.g. `shop.theirstore.co.nz`). This requires programmatic domain provisioning via the Vercel SDK.
+
+| Library | Version | Purpose | Why |
+|---------|---------|---------|-----|
+| @vercel/sdk | **^1.x** (latest ~1.19.x as of Apr 2026) | Programmatic Vercel domain management | Official TypeScript SDK for the Vercel REST API. Exposes `projectsAddProjectDomain`, `projectsVerifyProjectDomain`, `projectsRemoveProjectDomain`. Automatically handles SSL certificate issuance. |
+
+**What this does:** When a merchant activates custom domain, a Server Action calls the Vercel API to add their domain to the project, then polls for verification status. DNS propagation takes 24-48h. This requires a `VERCEL_TOKEN` and `VERCEL_TEAM_ID` as environment variables.
+
+**Important constraints (HIGH confidence — verified from Vercel SDK docs):**
+- The `@vercel/sdk` package requires a Vercel API token (bearer token). Store as `VERCEL_TOKEN` in env. Never expose client-side.
+- Domain verification: if the domain is already registered elsewhere on Vercel, the merchant must add a TXT record. Build a verification status polling UI.
+- Wildcard domains (e.g. `*.merchant.co.nz`) are NOT supported for custom merchant domains — apex + www is the pattern.
+- Free tier Vercel project has unlimited custom domains programmatically — no plan gating on domains specifically.
+
+```typescript
+import { VercelCore } from '@vercel/sdk/core.js'
+import { projectsAddProjectDomain } from '@vercel/sdk/funcs/projectsAddProjectDomain.js'
+
+const vercel = new VercelCore({ bearerToken: process.env.VERCEL_TOKEN })
+
+await projectsAddProjectDomain(vercel, {
+  idOrName: process.env.VERCEL_PROJECT_ID,
+  teamId: process.env.VERCEL_TEAM_ID,
+  requestBody: { name: merchantCustomDomain },
+})
+```
+
+**Middleware must resolve custom domains too:** The middleware needs a second lookup branch — if the hostname doesn't match `*.nzpos.app`, look up `custom_domains` table by hostname to find the store slug, then rewrite. Since middleware can't do DB queries, store a pre-resolved mapping in an edge-compatible cache or accept the slight latency of a lightweight Supabase REST query via fetch (not the JS client — fetch works in Edge).
+
+---
+
+### Stripe Subscriptions and Billing
+
+**What's needed:** Merchants can activate paid add-ons (Xero, email notifications, custom domains) via Stripe subscriptions. Each add-on is a separate Stripe Product with a monthly Price.
+
+**No new packages required** — the existing `stripe ^17.x` handles subscriptions. What's new is the data model and webhook events.
+
+**Database columns to add to `stores` table:**
+
+```sql
+stripe_customer_id     TEXT UNIQUE,
+subscription_status    TEXT,   -- active | trialing | past_due | canceled | incomplete
+subscription_id        TEXT,
+subscription_period_end TIMESTAMPTZ,
+active_add_ons         TEXT[]  -- ['xero', 'email_notifications', 'custom_domain']
+```
+
+**Webhook events to handle (HIGH confidence — verified from Stripe docs and 2026 implementation guide):**
+
+| Event | Action |
+|-------|--------|
+| `checkout.session.completed` | Link Stripe customer to store, activate add-on |
+| `invoice.paid` | Extend subscription period, keep add-on active |
+| `invoice.payment_failed` | Mark `past_due`, send warning email, keep access for grace period |
+| `customer.subscription.updated` | Sync status + active add-ons |
+| `customer.subscription.deleted` | Revoke add-on access, update status to `canceled` |
+
+**Stripe Customer Portal (HIGH confidence — verified from Stripe docs):** Use the hosted Stripe Billing Portal for self-serve subscription management (upgrade, cancel, update payment method). A Server Action creates a portal session and redirects the merchant. This eliminates the need to build a custom billing UI.
+
+```typescript
+// Server Action
+'use server'
+import { stripe } from '@/lib/stripe'
+import { redirect } from 'next/navigation'
+
+export async function openBillingPortal(stripeCustomerId: string) {
+  const session = await stripe.billingPortal.sessions.create({
+    customer: stripeCustomerId,
+    return_url: `${process.env.NEXT_PUBLIC_APP_URL}/admin/billing`,
+  })
+  redirect(session.url)
+}
+```
+
+**Multiple add-ons pattern:** Use one Stripe Subscription per merchant with multiple items (one per active add-on), or separate subscriptions per add-on. Recommendation: one subscription, multiple items. Generates a single invoice per billing cycle. Limit of 20 items per subscription is well above the 3 planned add-ons.
+
+**What NOT to add:** Do not add a feature flag service (PostHog, LaunchDarkly, Statsig). Feature gating based on subscription tier is simple enough to implement with a database column check. Feature flag services add cost and complexity for what is essentially `store.active_add_ons.includes('xero')`.
+
+---
+
+### Feature Gating
+
+**What's needed:** Server-side checks that block access to paid features if the merchant's subscription doesn't include them. No new library — implement as utility functions.
+
+**Pattern:**
+
+```typescript
+// lib/feature-gate.ts
+import { createClient } from '@/lib/supabase/server'
+
+export async function requireAddOn(
+  storeId: string,
+  addOn: 'xero' | 'email_notifications' | 'custom_domain'
+): Promise<void> {
+  const supabase = createClient()
+  const { data } = await supabase
+    .from('stores')
+    .select('active_add_ons, subscription_status')
+    .eq('id', storeId)
+    .single()
+
+  const hasAccess =
+    data?.subscription_status === 'active' &&
+    data?.active_add_ons?.includes(addOn)
+
+  if (!hasAccess) {
+    redirect('/admin/billing?upgrade=true')
+  }
+}
+```
+
+Call `requireAddOn()` at the top of Server Components or Server Actions for gated features.
+
+**JWT claims for feature gating (MEDIUM confidence):** The existing Supabase Custom Access Token Hook pattern (already used for `store_id` and `role`) can be extended to include `active_add_ons` in the JWT. This avoids a database query on every gated page load. Downside: JWT staleness (up to JWT TTL, typically 1h) means a cancelled subscription retains access briefly. For add-ons (not security-critical), this is acceptable. For the first pass, use the database check pattern above — it's simpler and correct. Migrate to JWT claims if performance becomes an issue.
+
+---
+
+### Super Admin Panel
+
+**What's needed:** A route group accessible only to platform administrators (the founder), not merchants. This is a role check, not a new library.
+
+**Pattern:** Add a `platform_role` column (or enum) to `auth.users` via `app_metadata`. Check in middleware or layout for the `/superadmin` route group.
+
+```typescript
+// app/(superadmin)/layout.tsx
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+
+export default async function SuperAdminLayout({ children }) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const isPlatformAdmin =
+    user?.app_metadata?.platform_role === 'super_admin'
+
+  if (!isPlatformAdmin) redirect('/')
+
+  return <>{children}</>
+}
+```
+
+Set `platform_role: 'super_admin'` in `app_metadata` for the founder's Supabase user via the Supabase dashboard (or a migration). No new library needed.
+
+**What NOT to build:** Do not add a separate admin auth system. Supabase Auth already handles this — the founder logs in with email/password like any other owner, but their `app_metadata.platform_role` grants elevated access.
+
+---
+
+### Store Setup Wizard
+
+**What's needed:** A multi-step onboarding flow for new merchants. No new library required — React state manages wizard step, Server Actions persist each step.
+
+**Only add this if the native React approach becomes unwieldy:** Consider `react-hook-form ^7.x` (already in the stack) for the wizard steps that have complex validation. For the store logo upload step, the existing Supabase Storage + `next/image` pattern handles image uploads.
+
+---
+
+### Marketing Landing Page
+
+**What's needed:** A public marketing site at `nzpos.app` (or the apex domain). No new library required — Next.js App Router with static rendering is the correct approach.
+
+**Route structure:** The marketing pages live at the apex domain (`nzpos.app`), separate from the app subdomain (`app.nzpos.app`) and merchant subdomains (`merchant.nzpos.app`). Middleware routes the apex domain to the marketing route group.
+
+**SEO (no new libraries needed):** Next.js App Router has built-in `generateMetadata`, `sitemap.ts`, `robots.ts`, and `opengraph-image.tsx` support. Use these — no need for a headless CMS or additional SEO library.
+
+```typescript
+// app/(marketing)/layout.tsx
+export const metadata = {
+  title: 'NZPOS — POS + Online Store for NZ Small Business',
+  description: '...',
+}
+```
+
+**What NOT to add:** Do not add a headless CMS (Contentful, Sanity, Prismic). The marketing page content is static and founder-controlled. A CMS adds a new vendor, cost, and complexity. Edit the marketing page directly in code.
+
+---
+
+## Updated Installation (v2.0 SaaS additions only)
 
 ```bash
-# Core framework
-npx create-next-app@latest nzpos --typescript --eslint --app --tailwind --src-dir --import-alias "@/*"
-
-# Tailwind v4 (create-next-app may scaffold v3 — upgrade if needed)
-npm install tailwindcss@latest @tailwindcss/postcss postcss
-
-# Supabase
-npm install @supabase/supabase-js @supabase/ssr
-
-# Stripe
-npm install stripe @stripe/stripe-js
-
-# Validation
-npm install zod
-
-# JWT (staff PIN sessions)
-npm install jose
-
-# Date utilities
-npm install date-fns
-
-# Forms (add when needed for complex POS forms)
-npm install react-hook-form @hookform/resolvers
-
-# Server-only guard
-npm install server-only
-
-# Dev: testing
-npm install -D vitest @vitejs/plugin-react jsdom @testing-library/react @testing-library/dom vite-tsconfig-paths
-
-# Dev: E2E
-npm install -D @playwright/test
-npx playwright install
+# Vercel SDK (for custom domain provisioning)
+npm install @vercel/sdk
 ```
+
+That's the only new package. Everything else — subdomain routing, feature gating, Stripe subscriptions, super admin, marketing page — uses existing libraries.
 
 ---
 
@@ -243,17 +436,36 @@ auth.jwt()->'app_metadata'->>'store_id' = store_id::text
 ```
 This fires from the JWT, not a table join.
 
+### Vercel Wildcard Domain DNS Setup
+For `*.nzpos.app` subdomain routing:
+1. Point nameservers to `ns1.vercel-dns.com` and `ns2.vercel-dns.com`
+2. Add apex domain `nzpos.app` to Vercel project
+3. Add wildcard domain `*.nzpos.app` to Vercel project
+4. Vercel issues individual SSL certificates per subdomain automatically
+
+For custom merchant domains (paid add-on):
+- Use `@vercel/sdk` `projectsAddProjectDomain` to provision programmatically
+- Merchant must add CNAME record pointing to `cname.vercel-dns.com`
+- Poll `projectsGetProjectDomain` for verification status
+
 ---
 
 ## Sources
 
 - Next.js 16.2.1 official documentation, version confirmed 2026-03-25: https://nextjs.org/docs
+- Next.js multi-tenant guide (official, 2026-03-31): https://nextjs.org/docs/app/guides/multi-tenant
+- Vercel multi-tenant domain management docs: https://vercel.com/docs/multi-tenant/domain-management
+- Vercel Platforms Starter Kit: https://vercel.com/templates/next.js/platforms-starter-kit
+- @vercel/sdk npm package (~1.19.x as of Apr 2026): https://www.npmjs.com/package/@vercel/sdk
+- Stripe subscription lifecycle guide (2026): https://dev.to/thekarlesi/stripe-subscription-lifecycle-in-nextjs-the-complete-developer-guide-2026-4l9d
+- Stripe billing portal integration: https://docs.stripe.com/customer-management/integrate-customer-portal
+- Stripe subscription webhooks: https://docs.stripe.com/billing/subscriptions/webhooks
+- Supabase Custom Access Token Hook: https://supabase.com/docs/guides/auth/auth-hooks/custom-access-token-hook
+- Supabase custom claims and RBAC: https://supabase.com/docs/guides/database/postgres/custom-claims-and-role-based-access-control-rbac
 - Tailwind CSS v4.1/v4.2 blog: https://tailwindcss.com/blog
-- Tailwind CSS v4 + Next.js install guide: https://tailwindcss.com/docs/installation/framework-guides/nextjs
 - Next.js authentication guide (official, 2026-03-25): https://nextjs.org/docs/app/guides/authentication
 - Next.js Vitest guide (official, 2026-03-25): https://nextjs.org/docs/app/guides/testing/vitest
 - Next.js Playwright guide (official, 2026-03-25): https://nextjs.org/docs/app/guides/testing/playwright
 - Next.js deployment guide (official, 2026-03-25): https://nextjs.org/docs/app/getting-started/deploying
 - Next.js `use cache` directive (official, 2026-03-25): https://nextjs.org/docs/app/api-reference/directives/use-cache
-- Next.js caching guide (official, 2026-03-25): https://nextjs.org/docs/app/guides/caching-without-cache-components
 - Next.js blog — v16.2 release: https://nextjs.org/blog (confirmed version 16.2, released 2026-03-18)

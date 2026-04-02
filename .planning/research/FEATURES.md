@@ -1,184 +1,310 @@
 # Feature Landscape
 
-**Domain:** NZ retail POS system (iPad in-store + online storefront + admin)
-**Researched:** 2026-04-01
-**Confidence note:** WebSearch and WebFetch were unavailable. All findings are from training knowledge (cutoff August 2025) covering NZ POS market, IRD GST rules, EFTPOS conventions, Xero API, and competitive analysis of Square NZ, Lightspeed/Vend, POSbiz, and Shopify POS. Confidence levels reflect this. Live verification recommended for NZ compliance specifics before shipping.
+**Domain:** NZ retail POS system — SaaS Platform transformation (v2.0)
+**Researched:** 2026-04-03
+**Confidence:** MEDIUM–HIGH overall (live web research conducted; specifics on NZ POS competitors from training data)
+
+---
+
+## Scope Note
+
+This document covers the **v2.0 SaaS platform layer** added on top of the existing v1.1 single-tenant POS. The v1 features (POS checkout, storefront, admin, Xero, refunds, etc.) are shipped and not re-researched here. All items below are new for v2.
+
+The research question: what are table stakes vs differentiators for multi-tenant onboarding, feature gating/billing, subdomain storefronts, store setup wizards, super admin panels, and marketing landing pages in SaaS POS/retail platforms?
 
 ---
 
 ## Table Stakes
 
-Features users expect. Missing = product feels incomplete or legally non-compliant.
+Features users expect from any modern SaaS platform. Missing these = product feels unfinished, untrustworthy, or dangerous to sign up for.
 
-| Feature | Why Expected | Complexity | NZ-Specific | Notes |
-|---------|--------------|------------|-------------|-------|
-| Product catalog with SKUs | Every POS has this | Low | No | Categories, names, prices, stock count |
-| GST-inclusive pricing display | IRD requirement; NZ prices are always quoted GST-inclusive by convention | Med | YES | 15% GST. Display inc-GST price, show GST amount on receipt. Per-line calculation on discounts. |
-| EFTPOS recording (manual) | ~85% of NZ in-store transactions are EFTPOS/card. Cash is secondary. | Low | YES | Standalone terminal is standard for small retail. Confirmation step ("terminal approved?") prevents phantom sales. |
-| Cash recording with change calculation | Users expect this even if EFTPOS dominates | Low | No | Change due display. Cash drawer open signal is v1.1. |
-| Cart / checkout flow | Core POS loop | Low | No | Add items, adjust qty, remove. Subtotal + GST + total. |
-| Discounts | Stores always offer discounts | Med | YES | Per-line discount affects GST calculation. Need IRD-compliant per-line rounding. |
-| Refunds | Legally required consumer guarantee | Med | No | Full refund minimum. Partial refund is differentiator. Must reverse inventory. |
-| Inventory / stock tracking | Overselling destroys trust | Med | No | Atomic decrement. Shared between POS + online. Low stock alerts. |
-| Online storefront | Expected for any modern retailer | High | No | Product grid, cart, checkout. Stripe for card payments. |
-| Stripe checkout (online) | Standard for NZ e-commerce | Med | No | NZD currency. GST handling in Stripe metadata. |
-| Order management (online orders) | Operators need to see and fulfill orders | Med | No | Status lifecycle. Click-and-collect workflow. |
-| Basic sales reporting | Owner needs to understand business | Med | No | Daily sales, top products. Needed for cash-up. |
-| End-of-day cash reconciliation | Standard NZ retail practice | Med | YES | Float in/out, expected vs actual cash, EFTPOS total. Required for daily banking. |
-| Staff PIN login | Multi-staff stores need role separation | Low | No | Staff PIN with lockout. Prevents unauthorized access without email/password friction. |
-| Tax receipts / invoices | IRD requirement for GST-registered businesses | Med | YES | Must show: GST number, GST amount, per-line prices, total. Required for B2B customers claiming GST. |
-| Promo codes | Expected by online shoppers | Med | No | Percentage or fixed discount. Expiry. Usage limits are differentiator. |
-| Product images | Expected by online storefront users | Low | No | Upload + display. Low effort, high trust signal. |
-| CSV product import | Operators with existing catalogs won't hand-enter 100+ products | Med | No | Validates SKU, price, category. Error reporting on bad rows. |
-| Multi-tenant data isolation | Not visible to users but table stakes for SaaS | Low | No | store_id on all rows. Required before onboarding second customer. |
+### Multi-Tenant Onboarding
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Self-serve signup (email + password) | Every SaaS requires this. No manual provisioning. | LOW | Supabase Auth covers this. store_id provisioning is the new work. |
+| Automatic store creation on signup | Merchant must have a working environment immediately. "Apply and wait" is a 2010 pattern. | MEDIUM | Create store record, seed default config, generate subdomain slug. One transaction. |
+| Email verification before access | Security table stakes. Prevents fake accounts and spam tenants. | LOW | Supabase Auth handles verification flow. Block access until confirmed. |
+| Unique subdomain per store | `[store-slug].nzpos.app` is expected. It's how merchants share their storefront link. | MEDIUM | Wildcard DNS + Next.js middleware tenant resolution. Vercel requires nameserver delegation for wildcard SSL. |
+| Tenant data isolation | Each merchant's data must be invisible to others. A breach here is catastrophic. | LOW | Already built via `store_id` + RLS. New work: RLS for any new v2 tables, admin bypass pattern. |
+| Graceful "store not found" handling | Wrong subdomain, deleted store — must show a clean error, not a 500. | LOW | Middleware check before rendering any tenant page. |
+
+### Feature Gating / Billing
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Free core tier that actually works | Freemium SaaS (Square model) must deliver real value on free. Hobbled free tiers kill conversion. POS + storefront + admin must work free. | LOW | Already exists; gating is additive enforcement. |
+| Clear upgrade prompts at gate | Users hitting a locked feature need to see pricing and a buy button. Opacity kills conversions. | MEDIUM | Inline CTA or modal when gated feature is touched. Link to Stripe Checkout session. |
+| Stripe subscription checkout | Standard for SaaS billing. Users expect card-on-file subscriptions. | MEDIUM | Stripe Checkout session per product/price. Webhook on `checkout.session.completed`. |
+| Stripe Customer Portal link | Merchants must be able to cancel, update payment method, view invoices without contacting support. | LOW | Stripe's hosted portal — one API call to create session, one link in admin. |
+| Subscription status sync via webhooks | Stripe → your DB must stay in sync. Revoked access when subscription lapses. | MEDIUM | Handle: `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`. |
+| Graceful access revocation on lapse | If subscription lapses, the feature gate must activate cleanly — not error, not silently break. | MEDIUM | Check subscription status server-side before rendering/executing gated actions. Show "renew" prompt. |
+
+### Store Setup Wizard
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Progress indicator | Multi-step wizards without progress bars see 30–50% higher drop-off. Users need to know how many steps remain. | LOW | Step counter or visual stepper. 3–5 steps max. |
+| Store name + slug selection | Merchant needs to name their store and confirm their subdomain URL immediately. | LOW | Slug auto-derived from name with manual override. Uniqueness check. |
+| Logo upload | Storefront without branding looks unfinished. First thing any merchant does. | LOW | Supabase Storage upload. Already have image infrastructure. |
+| Skip option on every step | Forcing completion causes abandonment. Time-to-value trumps completeness. | LOW | All steps skippable. "Complete your store" checklist persists in admin. |
+| Post-wizard redirect to admin | After setup, merchant lands in their admin dashboard — not a "thanks!" page with nothing to do. | LOW | Standard redirect. Dashboard shows setup checklist with remaining items. |
+
+### Super Admin Panel
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| List all tenants (paginated) | Operators must be able to see who has signed up. | LOW | Query stores table with pagination. |
+| View tenant details (plan, created, last active) | Support and billing need this for every support ticket. | LOW | Join stores + subscriptions. |
+| Suspend / delete a tenant | GDPR/Privacy Act compliance, abuse handling, churned account cleanup. | MEDIUM | Soft-delete pattern. Revoke access without destroying data for 30-day recovery window. |
+| Search tenants by email or store name | List view without search is unusable past 50 tenants. | LOW | Postgres full-text or ILIKE on stores + auth.users. |
+| Super admin route protection | Admin panel must be completely inaccessible to regular merchants. | MEDIUM | Separate auth check for `is_super_admin` claim. Cannot rely on store_id RLS alone. |
+
+### Marketing Landing Page
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Hero section with value proposition | 3–5 seconds to communicate the product. No hero = no conversions. | LOW | "Free NZ retail POS + online store. Start in minutes." Story-driven, not feature-listed. |
+| Signup CTA above fold | Organic visitors must be able to start immediately without scrolling. | LOW | Single email field or "Start free" button linking to `/signup`. |
+| Pricing section | SaaS without visible pricing is a red flag. Merchants want to know what's free vs paid before investing time. | LOW | Free tier clearly listed. Paid add-ons with prices. |
+| Mobile-optimized | Most discovery is mobile. Desktop-only landing page loses the majority of visitors. | LOW | Tailwind responsive utilities. Test on iOS Safari (target market is iPad users). |
+| Fast page load | Core Web Vitals affect SEO and conversion. Under 1.5s LCP is target. | LOW | Next.js App Router static rendering for marketing page. No auth overhead. |
 
 ---
 
 ## Differentiators
 
-Features that set this product apart from Square/Lightspeed/Vend for the NZ small business market. Not expected by default, but highly valued.
+Features that would set this SaaS POS platform apart from Square/Lightspeed/Shopify in the NZ market. Not baseline expectations, but meaningful competitive advantage.
 
-| Feature | Value Proposition | Complexity | NZ-Specific | Notes |
-|---------|-------------------|------------|-------------|-------|
-| Xero integration (OAuth, daily sync) | 75%+ of NZ small businesses use Xero for accounting. Avoiding double-entry is genuine pain. Competitors charge extra or lack GST-aware sync. | High | YES | Daily sales journal with GST breakdown. OAuth flow. Map POS categories to Xero accounts. This is the biggest NZ differentiator. |
-| Click-and-collect status workflow | Common in NZ retail, especially post-COVID. Most basic POS systems don't model this well. | Med | No | PENDING_PICKUP -> READY -> COLLECTED. Staff marks ready; customer notified (email is v1.1). POS operator marks collected. |
-| Unified inventory (online + in-store) | Most small retailers run separate systems or accept overselling. Atomic shared inventory is genuinely hard and genuinely valuable. | High | No | The core value prop. Refresh-on-transaction keeps it self-healing. |
-| Per-line GST on discounted items | Competitors often round GST on the order total, which can fail IRD audit for GST-registered customers. Correct per-line rounding is a trust signal for accountants. | Med | YES | IRD-compliant. Competitors (especially generic international POS) frequently get this wrong for NZ. |
-| iPad-native checkout UX | Square is the benchmark but locks into Square hardware. A custom iPad POS with same UX and no hardware lock-in is compelling. | High | No | Product grid layout, large touch targets, fast cart ops. Performance matters — slow POS in a queue is user-hostile. |
-| Owner dashboard (admin) | Many POS solutions are terminal-only. A clean web admin for catalog, orders, and reports means no separate tool for common tasks. | Med | No | Next.js admin routes. Owner-only role access. |
-| Custom branding on storefront | Square/Lightspeed online stores look like Square/Lightspeed. Custom domain + full brand control is meaningful for established stores. | Low | No | Theming via design system. Custom domain is v1.1 (DNS config). |
-| Multi-tenant SaaS architecture from day 1 | Most custom POS builds are single-tenant. store_id isolation means the system can be sold to other NZ retailers without a rewrite. | Low | No | Already planned. Low incremental cost in v1. |
+### Multi-Tenant Onboarding
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Working POS + storefront in under 5 minutes | Square takes 10+ min with hardware setup. Lightspeed requires sales conversation. The "instant store" is the demo. | HIGH | Requires wizard + auto-provisioning + sample data (optional starter catalog). Time-to-value is the KPI. |
+| NZ-specific signup defaults | GST pre-enabled at 15%, NZD, EFTPOS as default payment type. No configuration needed to be legally compliant from day 1. | LOW | Defaults written into store seed function. Other platforms require manual GST config. |
+| Starter product catalog option | "Load 20 example products to see what your store looks like" reduces time-to-value. Merchants can see a real storefront before loading their own data. | MEDIUM | Optional step in wizard. Seed from a pre-built template, tagged for easy deletion. |
+
+### Feature Gating / Billing
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Stripe Entitlements API for feature checks | Native Stripe entitlements (not a custom DB column) means billing source-of-truth is Stripe, not your DB. Simpler to audit, harder to exploit. | MEDIUM | Stripe Entitlements is production-ready as of 2025. Attach features to products; query `stripe.entitlements.activeEntitlements.list()` server-side. HIGH confidence. |
+| Per-feature Stripe products (not plan tiers) | Sell add-ons individually (Xero $9/mo, Email $5/mo, Custom Domain $10/mo) rather than S/M/L tiers. Merchants pay for what they use. | MEDIUM | More granular than typical "starter/pro/enterprise". Better fit for this product's discrete add-ons. Prevents tier-upgrade cliff. |
+| Upgrade prompt in context | Prompt appears when merchant touches the locked feature — not in a separate "billing" page. Contextual upsell converts better than navigation-based upsell. | MEDIUM | Server-side entitlement check → client receives `feature_locked: true` → component renders inline upgrade CTA. |
+
+### Store Setup Wizard
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Live storefront preview during setup | Merchant sees their storefront update in real-time as they add logo/name. Makes the wizard feel productive, not bureaucratic. | HIGH | Preview panel next to form. Requires subdomain provisioned before wizard completes. Complex but high-impact. |
+| Persistent setup checklist in admin | After wizard, a completion checklist lives in the admin dashboard. "Add your first product," "Connect Xero," etc. Industry standard (Shopify-style). | LOW | A simple checklist component. Each item links to the relevant admin section. Dismissable once all complete. |
+| Subdomain slug conflict resolution | If chosen slug is taken, suggest alternatives automatically (`[name]-nz`, `[name]-store`). Don't just show an error. | LOW | On blur/submit, check uniqueness and render suggestions. Small detail that prevents frustration at step 1. |
+
+### Super Admin Panel
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Impersonate tenant (act-as) | Support can debug a merchant's issue from their perspective without credentials. Eliminates entire class of support escalations. | HIGH | Sign a short-lived JWT with the target store_id + super_admin flag. Renders a visible impersonation banner. Audit-logged. |
+| Per-tenant usage metrics | See which tenants are active, which are dormant, which add-ons drive the most revenue. Informs product decisions. | MEDIUM | Log transaction count, last_active_at per store. Simple aggregate queries. Not a full analytics suite. |
+| Manual plan override | Grant a tenant a free trial of a paid feature, or comp a merchant for a support issue, without touching Stripe UI. | MEDIUM | Admin writes `feature_overrides` row that bypasses Stripe entitlement check. Time-limited. Audit-logged. |
+
+### Marketing Landing Page
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Live storefront demo link | Let prospects click through a working demo store before signing up. The product is the demo. | MEDIUM | Seed a demo store (e.g., `demo.nzpos.app`). Read-only or restricted to prevent abuse. |
+| NZ-specific social proof | "Built for NZ retailers. GST-compliant out of the box. Xero-ready." NZ buyers are skeptical of generic international tools. | LOW | Copy and imagery. No technical work beyond writing. High conversion leverage. |
+| Transparent free tier explanation | "Free forever" with clear add-on pricing builds trust. Merchants have been burned by bait-and-switch free tiers. | LOW | Pricing table with feature checklist per tier. Link to Terms for upgrade/cancellation terms. |
+
+### Custom Domains (Paid Add-on)
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Bring-your-own domain for storefront | `shop.floralcreations.co.nz` instead of `floralcreations.nzpos.app`. Premium brand signal. | HIGH | Vercel Domains API: programmatic domain add + DNS verification + SSL provisioning. Merchant adds a CNAME, system verifies and activates. |
+| Canonical redirect from subdomain | Once custom domain is active, `[store].nzpos.app` redirects to custom domain. Avoids SEO duplicate content. | LOW | Middleware check: if store has custom domain and request is on subdomain, 301 redirect. |
+| Domain verification flow | Merchant must prove ownership via DNS TXT or CNAME record. Standard pattern — avoids domain hijacking. | MEDIUM | Vercel Domains API handles the crypto. UI needs to show DNS record to add, polling status, and success/failure state. |
 
 ---
 
 ## Anti-Features
 
-Features to explicitly NOT build in v1. Each has a reason and a "what to do instead" note.
+Features that are commonly requested, seem reasonable, but create disproportionate complexity or downstream problems.
 
-| Anti-Feature | Why Avoid | What to Do Instead | Deferral Target |
-|--------------|-----------|-------------------|-----------------|
-| Offline mode | Requires local-first architecture (PouchDB/SQLite sync, conflict resolution). Doubles complexity of every data operation. High failure surface. | Document "internet required" prominently. Use refresh-on-transaction for resilience. | v2 |
-| Integrated EFTPOS terminal (software) | NZ EFTPOS integration requires Verifone/Worldline SDK agreements, certification, and hardware. Months of effort, not weeks. Manual confirmation step is a sound proxy. | EFTPOS confirmation dialog ("Terminal approved? Yes / No"). Prevents phantom sales without integration overhead. | v1.1 |
-| Barcode scanning | html5-qrcode works but camera-based scanning is unreliable under variable retail lighting. Bluetooth scanner requires Web Bluetooth or USB HID driver work. | SKU search / product grid tap. Add barcode field to product for v1.1. | v1.1 |
-| Receipt printing (thermal) | ESC/POS over USB/Bluetooth requires browser-level printer access. Star/Epson SDKs add dependency weight. Non-trivial per-OS testing. | Email receipt (v1.1). Digital receipt via order URL. | v1.1 |
-| Email receipts / notifications | Requires transactional email setup (Resend/Postmark), template design, bounce handling. Not blocking for v1 supplies store. | Print-to-PDF from browser for receipts. Order status visible in storefront. | v1.1 |
-| Loyalty / points program | Complex state machine, expiry logic, redemption edge cases. The supplies store doesn't need it. Adds perceived bloat for simple retail. | Promo codes cover the "reward a customer" use case sufficiently. | v2 |
-| Lay-by management | NZ-specific payment plan feature. Complex order lifecycle (deposits, installments, completion, cancellation). Not needed for supplies store. | Standard sale. If needed, use a separate lay-by notebook convention. | v2 |
-| Delivery / shipping | Carrier integrations (NZ Post, CourierPost) require live rate APIs, label printing, tracking. Click-and-collect covers the online fulfillment use case for this store. | Click-and-collect workflow. | v2 |
-| Advanced analytics / charts | Charting libraries (Recharts, Tremor) add bundle weight. Business intelligence is premature until basic reporting is validated. | Simple tabular reports: daily sales, top products, stock levels. Sufficient for v1. | v2 |
-| Multi-store management UI | store_id is in the schema for future expansion but a store-switching UI requires auth scoping, report aggregation, and staff-store assignment. | Single store in v1. Multi-tenant schema is the foundation; UI is separate work. | v2 |
-| Supplier purchase orders | Inventory replenishment workflow (PO -> receive stock -> update levels). Meaningful for high-SKU operations, premature for v1. | Manual stock adjustments. CSV re-import on restock. | v2 |
-| Staff performance / commission | Sales attribution per staff adds complexity to every transaction. Not needed for small team. | Basic per-day sales report. Staff commissions are a separate business concern. | v2 |
-| Fractional / weight-based quantities | Delis, butchers, and fresh produce need variable-weight items. Complex price calculation, scale integration. Not relevant for supplies store. | Integer quantities only in v1. | If ever |
-| Split payments (card + cash on one sale) | Edge case. Adds significant checkout flow branching. "Exact change" is the practical workaround. | Single payment method per sale. | v2 |
-| Customer account management | CRM-lite: customer profiles, purchase history, saved addresses. Valuable for repeat business but adds data model complexity and privacy obligations under NZ Privacy Act. | Guest checkout. Email receipt (v1.1) is lighter touch. | v2 |
-| Gift cards | Liability tracking, redemption state, expiry rules. Disproportionate complexity for v1. | Promo codes with single-use flag cover the "give someone credit" case approximately. | v2 |
+| Anti-Feature | Why Requested | Why Problematic | Alternative |
+|--------------|---------------|-----------------|-------------|
+| Database-per-tenant isolation | "Maximum isolation, tenant can have their own DB" | Supabase free tier is one database. Schema-per-tenant on free tier hits PG connection limits fast. Row-level isolation via `store_id` + RLS is proven, scales to thousands of tenants, and is already built. | `store_id` + RLS. Already implemented. |
+| Multi-plan tiers (Starter/Pro/Enterprise) | "Standard SaaS packaging" | This product has 3 discrete add-ons (Xero, Email, Custom Domain). Forcing them into tiers creates upgrade cliffs and pays-for-what-they-don't-need frustration. Tier packaging is premature before product-market fit. | Individual Stripe products per add-on. Merchants subscribe to exactly what they need. |
+| Onboarding email drip sequences | "Improve activation with nurture emails" | Email marketing infrastructure (Resend sequences, unsubscribe handling, bounce management) is a project in itself. Premature for initial launch. | Single transactional "welcome" email with setup checklist link. Add drip sequences in v2.1 once activation metrics exist. |
+| Free trial with credit card required | "Reduce churn from low-intent signups" | NZ small business owners are skeptical of card-required trials. Square's no-card-required model built its NZ market share. Card requirement at signup is the single biggest conversion killer for this segment. | Purely freemium (no card required). Upgrade prompt when gated feature is touched. |
+| Real-time tenant usage dashboard in super admin | "See activity live" | WebSocket connection to monitor all tenants adds Supabase Realtime cost and complexity. Not needed until support volume justifies it. | Refresh-on-demand queries. `last_active_at` column updated on transaction. |
+| White-label (hide "Powered by NZPOS") | "Let merchants fully brand the platform" | Premature. NZPOS brand recognition is the goal at launch. White-label is a B2B enterprise sale, not a freemium play. | Attribution footer on storefront. Remove as a paid add-on in v3 if demanded. |
+| Tenant self-service subdomain changes | "Let merchants rename their store slug" | Slug is the primary key of the subdomain routing system. Renaming requires migrating all references, invalidating bookmarks, breaking existing Google links for the storefront. | Slug is set at signup and locked. Name (display) is editable. If slug change is truly needed, super admin handles it manually with migration. |
+| Bulk CSV tenant import (admin) | "Migrate existing customers" | Not needed for launch. The platform has zero existing customers. Manual signup is fine until the first wave. | Manual signup. If migration becomes needed, write a one-off script. |
 
 ---
 
 ## Feature Dependencies
 
 ```
-Online storefront
-  → Stripe checkout (online payments)
-  → Shared inventory (atomic decrement)
-  → Click-and-collect workflow (order fulfillment)
-  → Promo codes (discount application at checkout)
+Subdomain routing
+    └──requires──> Tenant resolution middleware
+    └──requires──> Store slug uniqueness (enforced at signup)
+    └──requires──> Wildcard DNS configured on Vercel
 
-GST handling (correct)
-  → Per-line rounding on discounts
-  → Tax receipt / invoice display
-  → Xero sync (GST breakdown in journal)
-  → Cash reconciliation (EFTPOS + cash totals with GST split)
+Self-serve signup
+    └──requires──> Automatic store provisioning (create store record)
+    └──requires──> Subdomain slug generation
+    └──requires──> Email verification (Supabase Auth)
 
-EFTPOS recording
-  → EFTPOS confirmation step (anti-phantom-sale)
-  → Cash reconciliation (EFTPOS total feeds daily report)
+Feature gating
+    └──requires──> Stripe subscription checkout
+    └──requires──> Webhook handler (subscription.updated, subscription.deleted)
+    └──requires──> Server-side entitlement check on every gated route/action
+    └──requires──> Stripe Customer ID stored per store
 
-Staff PIN login
-  → Role-based access (staff vs owner permissions)
-  → Admin dashboard (owner-only routes)
+Stripe Customer Portal
+    └──requires──> Stripe Customer ID per store
+    └──enhances──> Feature gating (self-serve upgrade/downgrade)
 
-Inventory / stock tracking
-  → Low stock alerts (threshold-based trigger)
-  → Shared inventory between POS + online (requires atomic ops)
-  → CSV product import (bulk load into catalog)
+Store setup wizard
+    └──requires──> Store provisioning (store must exist before wizard runs)
+    └──requires──> Supabase Storage (logo upload)
+    └──enhances──> Marketing (wizard completion = activation event)
 
-Xero integration
-  → Daily sales sync (requires end-of-day report data)
-  → GST breakdown (requires correct per-line GST calculation upstream)
-  → OAuth flow (requires owner account setup)
+Custom domains
+    └──requires──> Vercel Domains API access
+    └──requires──> Subdomain routing (custom domain is an alias for the subdomain)
+    └──requires──> Feature gating (custom domain is a paid add-on)
+    └──enhances──> Subdomain routing (middleware must check both subdomain + custom domain)
 
-Multi-tenant model
-  → All features (store_id on every table, every query)
+Super admin panel
+    └──requires──> is_super_admin JWT claim or DB flag
+    └──requires──> Separate auth guard (not store_id RLS)
+    └──enhances──> Feature gating (manual plan override)
+
+Marketing landing page
+    └──requires──> Signup flow exists (CTA must go somewhere working)
+    └──enhances──> Subdomain routing (demo store shows the product)
+
+Xero integration (existing, paid add-on)
+    └──requires──> Feature gating (must check entitlement before OAuth connect)
+
+Email notifications (existing, paid add-on)
+    └──requires──> Feature gating (must check entitlement before sending)
 ```
 
----
+### Dependency Notes
 
-## MVP Recommendation
-
-For the founder's supplies store as first customer, prioritize in this order:
-
-**Must ship for v1 launch:**
-1. Product catalog (categories, SKUs, images, stock)
-2. POS checkout — cart, EFTPOS/cash recording, EFTPOS confirmation step
-3. GST-inclusive pricing + per-line rounding
-4. Basic tax receipt display (on-screen, printable via browser)
-5. Shared inventory with atomic decrement
-6. Online storefront with Stripe checkout + promo codes
-7. Click-and-collect order workflow
-8. Staff PIN login + owner email auth
-9. End-of-day cash reconciliation report
-10. Refunds (full refund minimum)
-11. Low stock alerts
-12. CSV product import
-13. Basic reporting (daily sales, top products, stock levels)
-14. Xero integration (OAuth + daily sync with GST breakdown)
-15. Multi-tenant store_id throughout
-
-**Explicitly defer (documented above as anti-features or Out of Scope):**
-- Offline mode
-- Integrated EFTPOS terminal
-- Barcode scanning, receipt printing, email receipts
-- Loyalty, lay-by, delivery, advanced analytics, multi-store UI
+- **Subdomain routing must ship before storefront is tenant-aware.** Without it, merchants all hit the same store. This is Phase 1.
+- **Stripe Customer ID must be created at signup or at first upgrade attempt.** Creating at signup avoids a race condition where a user tries to upgrade before a Customer exists. Create on signup, store in `stores.stripe_customer_id`.
+- **Feature gating depends on webhook reliability.** If webhooks are missed, a merchant could retain access after cancellation (bad) or lose access incorrectly (worse). Use Stripe webhook idempotency and retry on failure.
+- **Custom domains conflict with subdomain routing** if middleware doesn't handle both. Middleware must resolve tenant by custom domain first, subdomain second. Ship after subdomain routing is stable.
 
 ---
 
-## NZ-Specific Compliance Notes
+## MVP Definition for v2.0
 
-HIGH confidence (IRD rules are well-established):
+### Launch With (v2.0 — the SaaS platform)
 
-1. **GST rate:** 15%. Has been 15% since 2010. Extremely unlikely to change.
-2. **Tax-inclusive pricing:** NZ consumer law requires GST-inclusive prices to be displayed. Do not display ex-GST to consumers.
-3. **Tax invoice requirements (IRD):** For sales over NZD $50 where the customer is GST-registered, a tax invoice must show: supplier name + GST number, date, description of goods, quantity, unit price, total (inc GST), GST amount. For sales under $50 a simplified invoice is sufficient (total inc GST, GST content statement).
-4. **GST calculation method:** NZ uses the "tax-inclusive" method. GST component = total / 11 (i.e., 15/115). Per-line calculation then sum is IRD-preferred for accuracy.
-5. **EFTPOS in NZ:** EFTPOS (Electronic Funds Transfer at Point of Sale) is the dominant NZ debit network, distinct from international schemes. Operated via Verifone/Ingenico/Worldline terminals on the Paymark/Worldline NZ network. Software integration requires certification. Standalone terminal + manual confirmation is the correct v1 approach.
-6. **NZD currency:** Two decimal places. No currency conversion complexity. Stripe NZD support is production-ready.
-7. **Xero:** Dominant NZ accounting platform (75%+ SMB market share by most estimates). IRD-compatible GST returns. Xero API is mature and well-documented. OAuth 2.0. Daily sales journal ("manual journal" or "invoice batch") is the standard integration pattern for POS sync.
-8. **NZ Privacy Act 2020:** If storing customer data (names, emails for click-and-collect), operator must have a privacy policy and handle data subject requests. Guest checkout minimises this obligation in v1.
+The minimum to call this a multi-tenant SaaS platform and onboard a second merchant.
+
+- [ ] Wildcard subdomain routing + tenant resolution middleware
+- [ ] Self-serve merchant signup with automatic store provisioning
+- [ ] Store setup wizard (name, slug, logo — 3 steps, fully skippable)
+- [ ] Feature gating for Xero, Email Notifications (existing add-ons)
+- [ ] Stripe subscription checkout for each add-on
+- [ ] Stripe webhook handler (subscription state sync)
+- [ ] Stripe Customer Portal link in admin billing section
+- [ ] Super admin panel (tenant list, view, suspend)
+- [ ] Marketing landing page (hero, pricing, signup CTA)
+
+### Add After First External Merchants (v2.1)
+
+Once real merchants are using the platform and support patterns emerge.
+
+- [ ] Custom domains (high complexity, low priority until merchants ask for it)
+- [ ] Impersonate-tenant in super admin (needed when first support ticket arrives that can't be diagnosed remotely)
+- [ ] Per-tenant usage metrics in super admin
+- [ ] Setup checklist persistence in admin (post-wizard completeness nudging)
+- [ ] Welcome email with setup checklist link
+
+### Future Consideration (v3+)
+
+- [ ] Live storefront preview in setup wizard (high value, high complexity)
+- [ ] Starter product catalog option in wizard
+- [ ] White-label / remove "Powered by NZPOS" (enterprise tier)
+- [ ] Email drip onboarding sequences
+- [ ] Advanced super admin analytics
 
 ---
 
-## Competitive Landscape (Training Knowledge, MEDIUM confidence)
+## Feature Prioritization Matrix
 
-| Product | NZ Market Position | Key Strengths | Key Weaknesses vs This Build |
-|---------|-------------------|---------------|------------------------------|
-| Square NZ | Mass market, free tier | Hardware + software bundle, brand recognition, EFTPOS integration | Hardware lock-in, limited Xero sync, US-centric GST handling |
-| Lightspeed / Vend | Mid-market retail | Strong inventory, good NZ customer base (Vend founded in NZ) | Expensive (NZD 100-300/mo), complex for small stores, overkill features |
-| POSbiz | NZ-specific SMB | NZ-built, understands local requirements | Dated UI, limited online storefront capability |
-| Shopify POS | E-commerce-first | Best online storefront | Hardware dependency, Shopify ecosystem lock-in, AU/US GST assumptions |
-| Kounta / Lightspeed Restaurant | Hospitality | Strong for cafes/restaurants | Not retail-focused |
+| Feature | User Value | Implementation Cost | Priority |
+|---------|------------|---------------------|----------|
+| Wildcard subdomain routing | HIGH | MEDIUM | P1 |
+| Self-serve merchant signup | HIGH | MEDIUM | P1 |
+| Store setup wizard (basic) | HIGH | LOW | P1 |
+| Feature gating (Xero + Email) | HIGH | MEDIUM | P1 |
+| Stripe subscription checkout | HIGH | MEDIUM | P1 |
+| Stripe webhook handler | HIGH | MEDIUM | P1 |
+| Marketing landing page | HIGH | LOW | P1 |
+| Super admin panel (basic) | MEDIUM | LOW | P1 |
+| Stripe Customer Portal link | MEDIUM | LOW | P1 |
+| Custom domains | MEDIUM | HIGH | P2 |
+| Impersonate tenant (admin) | MEDIUM | HIGH | P2 |
+| Setup checklist (admin) | MEDIUM | LOW | P2 |
+| Per-tenant usage metrics | LOW | MEDIUM | P2 |
+| Live wizard preview | HIGH | HIGH | P3 |
+| Starter product catalog | MEDIUM | MEDIUM | P3 |
+| Welcome email | LOW | LOW | P3 |
 
-**This build's position:** Cheaper than Lightspeed, NZ-compliant unlike generic international tools, unified inventory unlike POSbiz, no hardware lock-in unlike Square, full code ownership unlike all.
+**Priority key:**
+- P1: Must have for v2.0 launch
+- P2: Should have, add in v2.1 after first external merchants
+- P3: Nice to have, v3+
+
+---
+
+## Competitor Feature Analysis
+
+| Feature | Square | Lightspeed/Vend | Shopify POS | NZPOS v2.0 Plan |
+|---------|--------|-----------------|-------------|-----------------|
+| Self-serve signup | Yes, instant | Sales-assisted onboarding | Yes | Yes (goal: under 5 min) |
+| Free core POS | Yes (card processing fee only) | No (from $89 NZD/mo) | No (from $49 USD/mo) | Yes |
+| Wildcard subdomains | No (uses squareup.com/store URL) | No (custom domain required) | Yes (myshopify.com subdomain) | Yes (nzpos.app subdomain) |
+| Custom domains | Yes (paid) | Yes (standard) | Yes (standard) | Yes (paid add-on, v2.1) |
+| NZ GST pre-configured | Partial (must configure) | Yes | Partial (AU/NZ mode) | Yes (default at signup) |
+| Xero integration | Limited sync | Yes (paid tier) | Via app store (third-party) | Yes (paid add-on, native) |
+| Feature gating model | Tiered plans | Tiered plans | Tiered plans + app store | Per-add-on (granular) |
+| Setup wizard | 3-step quick start | Long (15+ steps) | 14-step guided setup | 3-step (skippable) |
+| Super admin panel | N/A | N/A | N/A | Yes (first-party) |
+
+**NZPOS advantage:** NZ-first defaults, Xero native (not third-party), granular add-on pricing (not forced tiers), full code ownership.
 
 ---
 
 ## Sources
 
-- IRD GST rules: training knowledge (HIGH confidence for 15% rate and tax invoice requirements — rules stable since 2010)
-- NZ EFTPOS/Paymark network: training knowledge (HIGH confidence for standalone terminal pattern; MEDIUM for integration requirements)
-- Xero market share in NZ: training knowledge (MEDIUM — frequently cited 70-75% figure in NZ accounting press as of 2024-2025)
-- Square NZ, Lightspeed, Vend, POSbiz feature sets: training knowledge (MEDIUM — features as of mid-2025; verify competitor pages before sales/marketing claims)
-- NZ Privacy Act 2020: training knowledge (HIGH — legislation is public record)
-- WebSearch / WebFetch: UNAVAILABLE for this research session — all findings from training data only
-- **Verification recommended:** IRD tax invoice thresholds (NZD 50 simplified invoice threshold), current Xero API OAuth 2.0 scopes for journal entry, Paymark/Worldline NZ integration certification process
+- [Vercel for Platforms — multi-tenant docs](https://vercel.com/docs/multi-tenant) — HIGH confidence
+- [Vercel Platforms Starter Kit template](https://vercel.com/templates/next.js/platforms-starter-kit) — HIGH confidence
+- [Stripe Entitlements API docs](https://docs.stripe.com/billing/entitlements) — HIGH confidence
+- [Stripe Customer Portal integration](https://docs.stripe.com/customer-management/integrate-customer-portal) — HIGH confidence
+- [Stripe SaaS integration guide](https://docs.stripe.com/saas) — HIGH confidence
+- [SaaS onboarding best practices (DesignRevision, 2026)](https://designrevision.com/blog/saas-onboarding-best-practices) — MEDIUM confidence
+- [Onboarding wizard patterns (UserGuiding)](https://userguiding.com/blog/what-is-an-onboarding-wizard-with-examples) — MEDIUM confidence
+- [SaaS feature flags guide (DesignRevision, 2026)](https://designrevision.com/blog/saas-feature-flags-guide) — MEDIUM confidence
+- [Feature gating freemium SaaS without duplicating components (DEV community)](https://dev.to/aniefon_umanah_ac5f21311c/feature-gating-how-we-built-a-freemium-saas-without-duplicating-components-1lo6) — MEDIUM confidence
+- [Multi-tenant architecture best practices (Relevant Software)](https://relevant.software/blog/multi-tenant-architecture/) — MEDIUM confidence
+- Square vs Lightspeed/Vend/Shopify feature comparison: training knowledge + web research — MEDIUM confidence
+- [B2B SaaS landing page best practices (GenesysGrowth, 2026)](https://genesysgrowth.com/blog/designing-b2b-saas-landing-pages) — MEDIUM confidence
+
+---
+
+## v1 Feature Reference
+
+The v1 feature landscape (POS, storefront, admin, Xero, NZ compliance, competitive analysis) is preserved in git history at commit before v2.0 milestone start. All v1 features are shipped and not re-researched here.
+
+---
+*Feature research for: NZPOS v2.0 SaaS Platform*
+*Researched: 2026-04-03*

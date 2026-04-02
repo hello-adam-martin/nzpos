@@ -1,426 +1,391 @@
-# Domain Pitfalls: NZ Retail POS
+# Domain Pitfalls: v2.0 SaaS Conversion
 
-**Domain:** Retail POS — Next.js App Router + Supabase + Stripe, NZ market
-**Researched:** 2026-04-01
-**Confidence note:** Web search and WebFetch unavailable in this session. All findings sourced from training data (cutoff August 2025). Confidence levels reflect depth and stability of each topic in that corpus. Topics like GST rounding and Supabase RLS performance are well-documented and stable — MEDIUM confidence. Topics dependent on very recent library changes are flagged LOW.
+**Domain:** Converting single-tenant Next.js + Supabase POS to multi-tenant SaaS — wildcard subdomains, Stripe subscriptions, feature gating, custom domains, super admin panel
+**Researched:** 2026-04-03
+**Confidence:** MEDIUM-HIGH (WebSearch + official documentation verified; see per-section notes)
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause rewrites, data integrity failures, or legal/compliance exposure.
+Mistakes that cause rewrites, data leaks, or security exposure.
 
 ---
 
-### Pitfall 1: GST Rounding Applied at Order Total Instead of Per Line
+### Pitfall 1: Middleware-Only Tenant Isolation — No Defence in Depth
 
 **What goes wrong:**
-The subtotal for each line item is calculated correctly, but GST (15%) is extracted from the order total as a single calculation. When discounts apply to individual lines, the per-line GST base differs from what the total implies. The rounding error accumulates across lines and the GST figure on the receipt does not match an IRD-compliant per-line calculation. For a $19.99 item at 20% discount, the discounted price is $15.992 — rounded to $15.99, GST component is $15.99 / 1.15 = $13.9043... → GST = $1.9957, rounds to $2.00. If instead you take the order total and back-calculate GST you get a different cent figure.
+The middleware resolves the tenant from the subdomain (or custom domain), sets a request header like `x-store-id`, and downstream Server Actions / Route Handlers trust that header to scope queries. If middleware is bypassed — either by a bug, a CVE, or a crafted request — any caller can inject an arbitrary `store_id` and read another tenant's data.
 
 **Why it happens:**
-Developers treat GST as a display concern and compute it once at the end. NZ prices are always tax-inclusive so it feels natural to just divide the total. IRD's standard requires the GST shown on a tax invoice to reconcile with the supply value stated.
+Middleware is the natural place for tenant resolution because it runs before any route handler. It feels authoritative. Developers assume "if it reached my handler, the tenant is correct." CVE-2025-29927 (March 2025) proved that Next.js middleware can be bypassed by sending the internal `x-middleware-subrequest` header, skipping middleware execution entirely. Vercel-hosted apps are patched at the platform layer, but the architectural lesson stands: middleware is not a security boundary.
 
-**Consequences:**
-- GST invoice values don't reconcile with Xero sync (Xero will flag mismatches)
-- IRD audit risk if invoices are systematically off
-- Cash-up reconciliation produces unexplained cent differences
-- Rounding bugs are invisible in testing with round-number prices, only surface with discounts on odd prices
+**How to avoid:**
+Never trust a `x-store-id` (or equivalent) header that originates from middleware as the sole authority for database scoping. The authoritative `store_id` must come from the authenticated JWT claim set at login time, not from a URL-derived header. Middleware resolves the tenant for routing purposes only. The Supabase RLS policy (`(auth.jwt() ->> 'store_id')::uuid = table.store_id`) is the enforcement layer. Every Server Action must derive `store_id` from the validated session, not from any request header.
 
-**Prevention:**
-Store all monetary values as integers (cents). Calculate GST per line item: `gst_cents = Math.round(line_total_cents / 115 * 15)`. Sum the per-line GST amounts to get order GST. Never back-calculate from order total. The PROJECT.md already notes "Per-line GST on discounted amounts" as a key decision — implement this as a pure function with a test suite of known IRD-compliant examples before using it anywhere in the codebase.
+Layered defence:
+1. Middleware: resolve tenant slug → set routing context
+2. Session JWT: `store_id` claim is the authoritative identity
+3. RLS: enforce at the database level regardless of application-layer logic
+4. Application: never accept `store_id` as a client-supplied input to any Server Action
 
+**Warning signs:**
+- Server Actions read `headers().get('x-store-id')` and use it directly in queries
+- Any `store_id` accepted as a form field or query parameter
+- RLS policies disabled "temporarily" to speed up a feature
+- No cross-tenant isolation test in the test suite
+
+**Phase to address:** Phase 1 (Multi-Tenant Infrastructure). Must be solved before any other SaaS feature ships.
+
+---
+
+### Pitfall 2: Stale JWT Claims After Tenant Provisioning or Plan Change
+
+**What goes wrong:**
+A new merchant signs up. The provisioning flow creates the `stores` record, then calls Supabase to set `store_id` in `app_metadata`. But the user's current JWT — issued moments ago during signup — doesn't contain `store_id` yet. The first page load after the signup wizard returns 0 results (RLS sees no `store_id` claim) or throws a permissions error, making the app appear broken for every new user.
+
+Similarly: when a merchant subscribes to a paid plan, the plan tier is written to `app_metadata`. The existing session JWT still shows the old tier. Feature gates reflect the old entitlement for up to 1 hour.
+
+**Why it happens:**
+Supabase JWTs are issued at login and cached for their lifetime (default 1 hour). Custom claims are baked into the token at issuance. Updating `app_metadata` after issuance has no effect on the current token. This is a documented Supabase behaviour, not a bug.
+
+**How to avoid:**
+After any operation that changes JWT-encoded claims (`store_id`, `plan`):
+1. Force a token refresh immediately: call `supabase.auth.refreshSession()` from the client right after provisioning completes.
+2. In the signup wizard, treat the `refreshSession()` call as a required step before advancing to the next screen — gate the redirect behind it.
+3. For plan changes triggered by Stripe webhooks (server-side), set a `plan_updated_at` timestamp in the `stores` table. On next client navigation, compare against local session claim version and force a refresh if stale.
+4. Keep JWT lifetime short (15–30 minutes) for the SaaS context where plan changes happen more often than in a single-store POS. This reduces the stale-claim window.
+
+**Warning signs:**
+- New merchant lands on dashboard and sees empty state or permission errors on first login
+- Plan upgrade takes "a while" to take effect in the UI
+- No `supabase.auth.refreshSession()` call in the signup wizard completion handler
+- No version/timestamp mechanism to detect stale claims
+
+**Phase to address:** Phase 1 (Tenant Provisioning) and Phase 3 (Feature Gating / Billing).
+
+---
+
+### Pitfall 3: Stripe Webhook Routing Confusion — Billing Events Mixed with Payment Events
+
+**What goes wrong:**
+The existing app already has a Stripe webhook endpoint handling `checkout.session.completed` for online storefront sales. Adding subscription billing (merchant pays for a plan) introduces new events: `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_succeeded`, `invoice.payment_failed`. These are sent to the same webhook endpoint. Without explicit event-type routing, a subscription invoice event can accidentally trigger the POS order-creation logic, or a POS sale event can be mistaken for a subscription event.
+
+**Why it happens:**
+Stripe sends all events from a single account to the same webhook endpoint URL by default. The existing handler was written for one event type. Adding a second product category to the same handler without clean routing creates a branching mess that is hard to test and easy to break.
+
+**How to avoid:**
+Create a separate webhook endpoint for billing events: `/api/webhooks/stripe-billing` (distinct from the existing `/api/webhooks/stripe`). Register separate webhook endpoints in the Stripe Dashboard — one for payment events (`checkout.session.completed`, `payment_intent.*`), one for billing events (`customer.subscription.*`, `invoice.*`). Each endpoint has its own signing secret. This keeps the two domains of logic fully independent and testable in isolation.
+
+If consolidating to one endpoint is required, implement a strict event-type dispatch table at the top of the handler before any business logic, and ensure each branch is isolated — no shared mutable state.
+
+**Warning signs:**
+- Single webhook handler with a growing `if (event.type === ...)` chain handling both payment and subscription events
+- No separate signing secret for billing events
+- Billing and POS logic share helper functions with side effects
+
+**Phase to address:** Phase 3 (Stripe Subscriptions). Plan the endpoint split before writing any subscription webhook logic.
+
+---
+
+### Pitfall 4: Wildcard Subdomain SSL Requires Vercel Nameserver Delegation
+
+**What goes wrong:**
+Developer adds a wildcard domain `*.nzpos.co.nz` to Vercel expecting it to work like a regular domain. Wildcard SSL certificates require Vercel to manage DNS challenges. If the apex domain (`nzpos.co.nz`) nameservers are not pointed at Vercel (`ns1.vercel-dns.com`, `ns2.vercel-dns.com`), wildcard SSL provisioning fails silently. Merchant subdomains like `mystore.nzpos.co.nz` return SSL errors.
+
+**Why it happens:**
+Regular (non-wildcard) domain SSL on Vercel works via a CNAME pointing to `cname.vercel-dns.com` without full NS delegation. Wildcards require ACME DNS-01 challenge verification, which requires control of the DNS zone — only possible if Vercel manages the nameservers. This distinction is not obvious to developers who have successfully added non-wildcard domains before.
+
+**How to avoid:**
+Before buying/configuring the SaaS domain:
+1. Point the apex domain's nameservers to `ns1.vercel-dns.com` and `ns2.vercel-dns.com` at the registrar level.
+2. Add the wildcard domain in Vercel project settings.
+3. Verify wildcard SSL is provisioned (Vercel dashboard shows "Valid Configuration").
+4. Test with a real subdomain — `test.nzpos.co.nz` — before building any tenant routing code.
+
+Note: Full NS delegation means Vercel manages all DNS records for the domain (A, MX, TXT). Plan any email (e.g., support@nzpos.co.nz) accordingly by adding MX records via Vercel's DNS management.
+
+**Warning signs:**
+- Domain CNAME points to Vercel but nameservers remain at the registrar
+- Wildcard domain shows as "Invalid" in Vercel dashboard
+- Testing only via direct IP or localhost — never via actual subdomain
+
+**Phase to address:** Phase 1 (Infrastructure Setup). Verify wildcard SSL works end-to-end before building tenant routing middleware.
+
+---
+
+### Pitfall 5: Custom Domain Verification UX — Merchants Get Stuck
+
+**What goes wrong:**
+A merchant adds their custom domain (`shop.example.com`). The app calls Vercel's Domains API to register it. Vercel returns verification instructions (DNS records to add). The merchant adds the CNAME to their DNS provider. DNS propagation takes 0–48 hours. During this window, the merchant's domain returns a Vercel error page. There is no status feedback in the admin UI. Merchant raises a support ticket assuming the integration is broken.
+
+**Why it happens:**
+Custom domain activation is asynchronous and depends on external DNS propagation outside the app's control. Most implementations add the domain and redirect the merchant to a "done" screen, without building the polling/status-check loop that shows current verification state.
+
+**How to avoid:**
+1. After domain submission, poll Vercel's domain config endpoint every 30 seconds and update a `custom_domain_status` column (`pending_verification` → `active` | `failed`).
+2. Show the merchant the exact DNS record they need to add (CNAME target, type, TTL) — copy-paste ready, not described in prose.
+3. Show a live status indicator: "Waiting for DNS propagation (this can take up to 48 hours)."
+4. Send an email when the domain activates (or fails after 72 hours).
+5. Handle the case where the merchant adds the wrong record — surface Vercel's verification error details, not a generic "pending" state.
+
+**Warning signs:**
+- Custom domain UX is "enter domain → success screen" with no verification feedback
+- No `custom_domain_status` field in the `stores` table
+- No background job polling domain verification state
+
+**Phase to address:** Phase 5 (Custom Domains add-on). This is the entire UX of the feature — if verification feedback is absent, the feature is broken from a merchant's perspective.
+
+---
+
+### Pitfall 6: Feature Gating Client-Side Only — Bypassed by Disabling JavaScript
+
+**What goes wrong:**
+Feature gates are implemented as React components: `if (plan !== 'pro') return <UpgradePrompt />`. The underlying data is fetched server-side and the full response is returned to the client. Users with basic plans can open DevTools, inspect the API response, or manipulate client state to see gated data. For Xero integration: the sync UI is hidden but the Xero OAuth endpoint is publicly accessible.
+
+**Why it happens:**
+UI-layer gating is fast and feels "complete." Server-side gating of every route and API call feels repetitive. Developers ship the UI gate and defer the API gate.
+
+**How to avoid:**
+The UI gate is acceptable as a UX improvement only. The enforcement gate must be server-side:
+- Server Components: check plan tier before fetching gated data at all
+- Server Actions: validate entitlement before executing any operation
+- Route Handlers: return 403 if the caller's plan doesn't include the feature
+- Database: RLS policies can enforce read access to feature-specific tables
+
+Centralise the entitlement check into a single function:
 ```typescript
-// CORRECT: per-line, integer cents
-function gstFromInclusivePrice(centsInclGST: number): number {
-  return Math.round(centsInclGST * 15 / 115);
-}
-
-// WRONG: back-calc from order total after summing
-function gstFromTotal(totalCents: number): number {
-  return Math.round(totalCents / 1.15 * 0.15); // rounding error accumulates
+// lib/entitlements.ts
+export async function assertFeature(storeId: string, feature: Feature) {
+  const plan = await getStorePlan(storeId); // reads from stores table
+  if (!PLAN_FEATURES[plan].includes(feature)) {
+    throw new Error('Feature not available on current plan');
+  }
 }
 ```
+Call `assertFeature()` at the top of every Server Action and Route Handler that powers a gated feature. This single call is the enforcement gate; the UI component is cosmetic.
 
-**Detection (warning signs):**
-- Cash-up totals have unexplained 1–2 cent discrepancies
-- Xero sync producing line mismatch errors
-- GST figures look right on whole-dollar items but wrong on odd-cent discounted prices
+**Warning signs:**
+- Feature gates are only in `<FeatureGate>` client components
+- Gated Route Handlers don't validate the caller's plan
+- The Xero OAuth callback (`/api/xero/callback`) has no plan check
+- `if (plan === 'pro')` scattered across component files with no central authority
 
-**Phase:** Foundation / Schema. Define the GST calculation module in Phase 1 before any checkout code is written. Unit-test it with IRD specimen invoice values.
+**Phase to address:** Phase 3 (Feature Gating). Build the server-side entitlement check before shipping any paid feature. The UI gates can come after.
 
 ---
 
-### Pitfall 2: Supabase RLS Multi-Tenant Bypass via Missing store_id Constraint
+### Pitfall 7: RLS Policies Not Updated for New Multi-Store Owner Model
 
 **What goes wrong:**
-The schema has `store_id` on every table and the RLS policy checks `store_id = current_setting('app.store_id')::uuid` (or equivalent JWT claim). But one or two tables are missed — typically junction tables, audit logs, or tables added later. A staff member from Store A can read Store B's data through those unprotected tables, or a Server Action that skips the Supabase client and uses `service_role` key leaks tenant data.
+The existing RLS policies were written for a single-tenant model: one owner per store, JWT claim `store_id` must match. Under SaaS, the same owner may own multiple stores (edge case but valid). A super admin needs to query any store's data. The existing policies block both scenarios: the owner can't see their second store, and the super admin panel returns empty results or requires bypassing RLS with `service_role` (which removes all safety guards).
 
 **Why it happens:**
-RLS policies are set table-by-table. New tables added during development don't automatically inherit policies. Service role connections bypass RLS entirely and are often used for "convenience" in Server Actions without realising the implication. Developers test with a single store and never verify cross-tenant isolation.
+v1 policies hardcode a `store_id = JWT_store_id` equality check. This worked perfectly for single-store. Multi-store ownership and super-admin access are new requirements that the policies don't accommodate. Retrofitting policies onto live data is high-risk.
 
-**Consequences:**
-- Tenant data leakage — a future second-store customer can see first-store inventory, sales, and customer data
-- GDPR/Privacy Act 2020 (NZ) exposure
-- Silent failure: no error thrown, wrong data silently returned
+**How to avoid:**
+Design the v2 RLS policies before any data migration:
 
-**Prevention:**
-1. Every table MUST have `store_id uuid NOT NULL REFERENCES stores(id)`. Add a DB constraint, not just an application convention.
-2. Write a test that creates two stores with separate auth tokens and asserts that queries from Store A return zero rows from Store B's data.
-3. Audit service role usage: `service_role` key should only be used in trusted server-side contexts (webhooks, scheduled jobs) where you explicitly filter by `store_id`. Never expose it to client-side code or pass it into generic helpers.
-4. Create a Postgres function `assert_store_ownership(store_id uuid)` that raises an exception if the JWT's store claim doesn't match. Call it at the top of any PL/pgSQL function that mutates data.
-5. Enable RLS on every table at creation time. Use `ALTER TABLE foo ENABLE ROW LEVEL SECURITY` in every migration. Add a CI check that queries `pg_tables` and fails if any non-system table has `rowsecurity = false`.
+1. **Owner multi-store access:** Store multiple `store_id`s in `app_metadata` as an array, or add a `store_memberships` table and join against it in a security-definer function (not directly in the policy — see Pitfall 4 from the v1 research on join cost). Alternatively, owner resolves store context at login/store-switch and the JWT contains the currently active `store_id`.
 
-**Detection (warning signs):**
-- Tests only use a single user/store
-- Any Server Action imports `supabaseAdmin` (service role) for routine CRUD
-- Tables added in sprint 3+ don't have RLS policies in the migration file
+2. **Super admin access:** Add a `is_super_admin` claim to `app_metadata`. RLS policy becomes:
+   ```sql
+   CREATE POLICY "store_isolation" ON orders
+     USING (
+       (auth.jwt() ->> 'is_super_admin')::boolean = true
+       OR store_id = (auth.jwt() ->> 'store_id')::uuid
+     );
+   ```
+   This allows super admins through without bypassing RLS entirely, keeping the audit trail intact.
 
-**Phase:** Foundation / Schema (Phase 1). The multi-tenant model must be proven before any feature work lands. Write the cross-tenant isolation test in Phase 1 and keep it in CI permanently.
+3. Never use `service_role` in the super admin panel's data queries. Use a super-admin-scoped JWT instead.
+
+**Warning signs:**
+- Super admin panel uses `supabaseAdmin` (service role client) for all queries
+- No `is_super_admin` claim defined in the JWT structure
+- Existing RLS policies haven't been reviewed for multi-store compatibility
+
+**Phase to address:** Phase 1 (Multi-Tenant Infrastructure) — RLS policy update must happen in the same migration as the tenant provisioning schema changes.
 
 ---
 
-### Pitfall 3: Stripe Webhook Duplicate Event Processing Causing Double Inventory Decrement
+### Pitfall 8: Tenant Provisioning Race Condition — Merchant Lands on Empty Store
 
 **What goes wrong:**
-Stripe delivers webhooks at-least-once. Under normal conditions each event arrives once, but on retries (your endpoint returned a 5xx, or timed out) the same `checkout.session.completed` event arrives twice. If the handler is not idempotent, stock is decremented twice, the order is created twice, and the Xero sync sends a duplicate invoice.
+Signup flow: (1) Supabase Auth creates user → (2) Server Action creates `stores` record → (3) Server Action updates `app_metadata` with `store_id` → (4) Server Action calls `refreshSession()` → (5) Merchant redirected to dashboard. If step 2 or 3 fails silently (Supabase insert error swallowed, network timeout), the merchant has an auth account but no store. The dashboard loads with no data and no error message. The merchant is stuck — they can't provision again without support intervention.
 
 **Why it happens:**
-Developers write webhook handlers that perform the full business logic (create order, decrement stock, send confirmation) without checking whether the event was already processed. Tests use mocked events that always arrive exactly once.
+Signup flows are often optimistic: "if we got here, everything worked." The individual steps are not transactional from the application's perspective. Supabase Auth signup and Postgres inserts are independent operations — there is no automatic rollback if the store creation fails.
 
-**Consequences:**
-- Inventory goes negative (or to an incorrect level) without a corresponding sale
-- Duplicate orders visible in admin dashboard
-- Xero receives duplicate line items, causing reconciliation failures
-- Customer may receive double confirmation emails (when email receipts are added in v1.1)
+**How to avoid:**
+1. Wrap the entire provisioning sequence (create store, assign store_id to user) in a single Postgres RPC function (`provision_new_store(user_id, store_name, slug)`) that executes atomically. If the function fails, nothing is created.
+2. Before redirecting to the dashboard, verify the session contains the `store_id` claim. If missing, show a "Setup incomplete — retry" screen with a manual retry button that calls the provision endpoint again.
+3. Make the provision function idempotent: if the user already has a store, return the existing store_id rather than creating a duplicate.
+4. Add a `provision_status` column to `stores` (`pending` | `active` | `failed`) and only redirect to the dashboard when status is `active`.
 
-**Prevention:**
-1. Record every processed Stripe event ID in a `stripe_events` table with a `UNIQUE` constraint on `stripe_event_id`.
-2. At the start of every webhook handler, attempt to insert the event ID. If the insert fails with a unique violation, return 200 immediately — the event was already processed.
-3. Wrap the entire handler in a Postgres transaction: insert event record + decrement stock + create order all commit together or all roll back.
-4. Set a `created_at` on the event record and purge records older than 30 days via a cron job (Supabase pg_cron).
+**Warning signs:**
+- Signup is a multi-step sequential Server Action with no rollback logic
+- No verification that `store_id` is in the session before redirecting to the dashboard
+- No "provisioning failed — retry" screen in the signup flow
 
-```typescript
-// Idempotency guard — first thing in every webhook handler
-const { error } = await supabase
-  .from('stripe_events')
-  .insert({ stripe_event_id: event.id, processed_at: new Date() });
-
-if (error?.code === '23505') {
-  // unique violation — already processed
-  return new Response('OK', { status: 200 });
-}
-```
-
-5. Always return 200 to Stripe after successfully processing OR after detecting a duplicate. Never return 4xx for a duplicate (that causes Stripe to retry indefinitely).
-6. Verify the webhook signature using `stripe.webhooks.constructEvent(body, sig, secret)` — reject unsigned requests before any DB work.
-
-**Detection (warning signs):**
-- Webhook handler has no event deduplication logic
-- Handler uses `upsert` on orders instead of `insert` (masks duplicates instead of preventing them)
-- No `stripe_events` table in schema
-- Stock levels drift from order counts over time
-
-**Phase:** Online Storefront / Stripe integration phase. Build idempotency guard before going live with any payment flow.
+**Phase to address:** Phase 2 (Merchant Self-Serve Signup). This is the most critical flow to get right — a broken signup is the first impression for every merchant.
 
 ---
 
-### Pitfall 4: Supabase RLS Performance Degradation from auth.users Joins in Policies
+## Technical Debt Patterns
 
-**What goes wrong:**
-A common RLS pattern joins `auth.users` or a separate `user_profiles` table inside the policy to check the store a user belongs to: `auth.uid() IN (SELECT user_id FROM store_members WHERE store_id = orders.store_id)`. This subquery executes on every row evaluated by every query against that table. At modest data sizes (1,000+ orders) queries become noticeably slow (200–800ms added latency per query).
+Shortcuts that seem reasonable but create long-term problems.
 
-**Why it happens:**
-It feels natural to look up permissions in the policy. The Supabase docs show simple uid() checks but don't always warn about the cost of table joins inside policies at the scale a POS system reaches quickly.
-
-**Consequences:**
-- POS checkout slows down as the orders table grows — unacceptable in a retail environment
-- Reports that scan large tables (end-of-day, stock levels) become unusably slow
-- Adding indexes helps but doesn't fully mitigate the per-row policy evaluation cost
-
-**Prevention:**
-Use custom JWT claims. At login, embed the user's `store_id` and `role` into the JWT as custom claims. The RLS policy then checks `(auth.jwt() ->> 'store_id')::uuid = orders.store_id` — this is a direct claim lookup with no table join, and Postgres can use it efficiently.
-
-Implementation: Create a Supabase Auth hook (Database Webhook on `auth.users` insert/update, or the newer Auth Hooks feature) that sets custom claims. Store a `users` table in your public schema with `store_id` and call `supabase.auth.admin.updateUserById(uid, { app_metadata: { store_id, role } })` from a trusted server context.
-
-The PROJECT.md already lists "Custom JWT claims for RLS" as a key decision. This must be implemented from the very first migration — retrofitting it later requires updating every RLS policy and re-testing all isolation cases.
-
-**Detection (warning signs):**
-- RLS policies contain `SELECT` subqueries or `JOIN`s
-- Query times increase linearly as orders/products table row count grows
-- Supabase dashboard query analyzer shows "Policy" as a slow node
-
-**Phase:** Foundation / Auth (Phase 1). Non-negotiable. Every RLS policy must use JWT claims from the start.
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Single Stripe webhook endpoint for both payment and billing events | Less infrastructure | Routing bugs when adding billing events; accidental cross-domain side effects | Never — split endpoints from day one |
+| Middleware-only tenant resolution (no JWT claim check) | Less code | Cross-tenant data leak if middleware is bypassed | Never — JWT claim is always the authority |
+| Service role client in super admin panel | Simple queries, bypasses RLS | No audit trail, any bug leaks all tenant data | Only for DDL/migrations in trusted scripts — never in web request handlers |
+| Scatter `if (plan === 'pro')` UI checks without server-side enforcement | Fast to ship | Gating is bypassable; adding server enforcement later touches every gated feature | Acceptable as supplementary UX — never as sole enforcement |
+| Store plan tier in `app_metadata` JWT claim only (no `stores` table column) | Single source of truth | JWT is stale for up to 1hr after plan change; can't query current plan server-side without decoding JWT | Never — store plan in `stores` table as authoritative source, JWT claim as cached fast-path |
+| Use `service_role` in dev for convenience, switch to anon in prod | Faster dev iteration | RLS bugs hidden in dev, discovered in prod | Never — always test with the same auth level as production |
+| Hardcode `store_id` in seed data for testing | Tests run fast | Never tests actual tenant isolation | Acceptable in unit tests; never in integration or E2E tests |
 
 ---
 
-### Pitfall 5: EFTPOS "Phantom Sale" — Terminal Declined but POS Recorded Payment
+## Integration Gotchas
 
-**What goes wrong:**
-Staff taps "Charge EFTPOS" on the POS. The Supabase transaction writes the sale (status: `completed`, payment_method: `eftpos`). The terminal then declines the card (insufficient funds, network timeout, customer cancels). Staff doesn't notice or doesn't know how to handle it. The sale is in the system as paid but no money was collected.
+Common mistakes when connecting to external services.
 
-**Why it happens:**
-For v1, EFTPOS is a manual/standalone terminal. There is no software confirmation from the terminal. The POS has no way to know whether the terminal approved or declined — it only knows what the staff member tells it. A two-step flow (charge terminal → confirm result → then complete sale) is the only safe architecture.
-
-**Consequences:**
-- Inventory decremented for a sale that generated no revenue
-- Cash-up shows EFTPOS total that doesn't match the terminal's end-of-day report
-- Owner has no audit trail of the discrepancy
-- Repeated mistakes can go undetected until end-of-day cash-up
-
-**Prevention:**
-1. The sale must NOT be persisted until staff explicitly confirms "Terminal approved". The cart should transition through states: `in_progress` → `awaiting_eftpos_confirmation` → `completed` (or `cancelled`).
-2. Show a prominent, full-screen confirmation modal: "Did the EFTPOS terminal approve?" with two visually distinct buttons — "Yes, Approved" (green) and "No, Declined / Cancel" (red). No default action. Staff must make a deliberate choice.
-3. The `awaiting_eftpos_confirmation` state should be persisted (not just client-side) so a browser refresh during confirmation doesn't leave orphaned cart state.
-4. Log the confirmation event with staff user ID and timestamp for audit purposes.
-5. End-of-day report should show EFTPOS transaction count and total — staff reconcile this against the physical terminal printout.
-
-The PROJECT.md already lists "EFTPOS confirmation step" as a key decision. The modal must be impossible to dismiss without an explicit choice — no click-outside-to-close, no back button shortcut.
-
-**Detection (warning signs):**
-- EFTPOS payment completes in a single action without a confirmation step
-- Cash-up EFTPOS total doesn't match terminal report
-- Sale records show `eftpos` payment method without a corresponding `eftpos_confirmed_at` timestamp
-
-**Phase:** POS Checkout phase. Before any EFTPOS flow is shipped, the confirmation state machine must be implemented and tested with manual QA (simulate decline path explicitly).
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| Vercel Domains API | Call `addDomain()` and assume it's immediately active | Poll `getDomainConfig()` every 30s; surface verification status to merchant; only mark as `active` when Vercel confirms DNS is valid |
+| Vercel Domains API | Store only the domain string, not the Vercel-assigned verification records | Store the full verification record set (CNAME target, TXT name/value) in `stores.domain_verification` so the UI can re-display them without re-fetching |
+| Stripe Billing | Create a Stripe Customer per subscription checkout session | Create one Stripe Customer per merchant store at provisioning time; store `stripe_customer_id` on `stores` table; reuse it for all subscriptions and Portal sessions |
+| Stripe Billing | Use Stripe Checkout `mode: 'payment'` for subscriptions | Use `mode: 'subscription'`; subscriptions require recurring prices configured in Stripe Dashboard, not ad-hoc amounts |
+| Stripe Customer Portal | Build a custom subscription management UI | Use Stripe Customer Portal (`stripe.billingPortal.sessions.create()`); it handles upgrades, downgrades, cancellations, and invoice history with zero frontend code |
+| Stripe Webhooks (billing) | Trust `subscription.status` from the checkout success redirect | Only trust the `customer.subscription.created` webhook to activate features; the redirect can be replayed or manipulated; never update plan tier on redirect alone |
+| Supabase Auth | Call `updateUserById` with `app_metadata` changes from a Server Action and assume the next client request sees the new claims | Force `supabase.auth.refreshSession()` from the client immediately after any `app_metadata` change; the current JWT is immutable until refreshed |
+| Supabase Auth Hook | Write the custom access token hook without handling the case where the user has no `store_id` yet (during signup) | Hook must handle null `store_id` gracefully — return an empty string or omit the claim during the provisioning window rather than throwing |
 
 ---
 
-## Moderate Pitfalls
+## Performance Traps
 
-Mistakes that cause operational pain or technical debt requiring significant rework.
+Patterns that work at small scale but fail as usage grows.
 
----
-
-### Pitfall 6: Next.js App Router Server Actions Without Zod Validation Accepting Malformed Input
-
-**What goes wrong:**
-A Server Action receives form data and passes it directly to a Supabase insert. A malformed price (e.g., `"$19.99"` string instead of integer cents), a negative quantity, or a crafted `store_id` in the payload bypasses application logic and either crashes the DB insert or — worse — silently writes corrupt data.
-
-**Why it happens:**
-Server Actions feel "safe" because they run server-side, but they accept arbitrary POST bodies. Without explicit validation, any data the client sends is trusted.
-
-**Prevention:**
-Define a Zod schema for every Server Action's input. Validate before any business logic. The PROJECT.md already mandates "Zod validation on all Server Actions" — treat this as a linting rule, not an optional practice. Specifically: monetary amounts must be `z.number().int().nonnegative()` (integer cents only), quantities must be `z.number().int().positive()`, and `store_id` must never come from client input (always derived from the authenticated JWT).
-
-**Detection (warning signs):**
-- Server Actions that destructure `formData` without a Zod parse step
-- Price values stored as floats (NUMERIC/FLOAT column type instead of INTEGER cents)
-- `store_id` accepted as a form field
-
-**Phase:** Foundation. Establish the pattern with the first Server Action written. A linting rule or code review checklist item prevents regression.
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| Resolving tenant from DB on every middleware execution | Acceptable at 10 tenants; 50–200ms latency added per request at 1,000 tenants | Resolve tenant from subdomain slug directly (slug → store_id mapping cached in Vercel Edge Cache or KV); never DB-hit in middleware | 100+ tenants with high traffic |
+| No index on `stores.subdomain_slug` | Middleware or Server Action does `SELECT id FROM stores WHERE subdomain_slug = $1`; full table scan | `CREATE UNIQUE INDEX ON stores(subdomain_slug)` — add in the same migration that creates the `stores` table | 500+ stores |
+| Feature entitlement check reads `stores` table on every gated Server Action call | Works fine with few merchants; adds DB round-trip to every request | Cache plan tier in JWT claim (short-TTL); use the claim as the fast path, DB only on cache miss or claim staleness | 1,000+ concurrent users |
+| No index on `stores.custom_domain` | Custom domain resolution does full table scan | `CREATE UNIQUE INDEX ON stores(custom_domain) WHERE custom_domain IS NOT NULL` | 200+ stores with custom domains |
+| Super admin panel loads all stores with no pagination | Dashboard is instant at 10 stores; 30s timeout at 10,000 | Paginate super admin queries from day one; default page size 50 | 500+ stores |
+| Storing Stripe subscription status in JWT claim | Avoids one DB query | Subscription cancellation doesn't take effect for up to 1hr; merchants keep access after cancellation | Every cancelled subscription |
 
 ---
 
-### Pitfall 7: Floating-Point Currency Arithmetic
+## Security Mistakes
 
-**What goes wrong:**
-`$19.99 * 0.15 = 2.9985000000000004` in JavaScript. When prices and totals are stored as floats (or `NUMERIC` in Postgres treated as float in JavaScript), rounding errors accumulate across a busy trading day. The end-of-day total is off by a few cents from the sum of individual transactions.
+Domain-specific security issues beyond general web security.
 
-**Why it happens:**
-JavaScript's `number` type is IEEE 754 double. `NUMERIC` in Postgres is precise but when serialised to JSON and parsed in JS it becomes a float. Developers don't notice in testing because they test with round numbers.
-
-**Prevention:**
-Store all monetary values as `INTEGER` (cents) in Postgres. Never store dollars. Do all arithmetic in integer cents. Only convert to display format (`(cents / 100).toFixed(2)`) at the render layer. Use Zod to enforce integer-only input at Server Action boundaries.
-
-**Detection (warning signs):**
-- `DECIMAL`, `FLOAT`, or `NUMERIC` column types for price/amount fields
-- Any arithmetic like `price * 0.15` on a `number` type in JS
-- Cash-up totals with unexplained cent differences
-
-**Phase:** Foundation / Schema. Database schema migration must use `INTEGER` for all monetary columns before any feature work.
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| Super admin route accessible to any authenticated user | Any merchant can access all tenant data, billing, and impersonation tools | Protect all `/admin/super-*` routes behind `is_super_admin` JWT claim check in middleware AND in every Route Handler / Server Action — dual enforcement required |
+| Stripe webhook endpoint accepts requests without signature verification | Attacker crafts fake `customer.subscription.updated` events to unlock premium features without paying | Always call `stripe.webhooks.constructEvent(body, rawSignature, secret)` before processing; reject any event that fails verification |
+| `service_role` key exposed in client bundle | Full RLS bypass for any user who extracts the key | `service_role` key must only appear in server-side code; use `server-only` package import guard; never prefix with `NEXT_PUBLIC_`; rotate if ever committed to git |
+| Tenant slug chosen by merchant with no sanitisation | Merchant registers slug `api`, `admin`, `www`, `static` — collides with platform routes | Blocklist reserved slugs at signup validation: `['api', 'admin', 'www', 'app', 'mail', 'support', 'help', 'billing', 'static', 'assets']`; enforce with Zod in the signup Server Action |
+| Custom domain added without ownership verification | Merchant adds `competitor.co.nz` as their custom domain — hijacks competitor's traffic to their store | Use Vercel's domain verification (CNAME or TXT record the merchant must add); only mark domain as `active` once Vercel confirms ownership |
+| Super admin impersonation leaves no audit trail | Admin performs destructive action on a merchant account; no record of who did it | Log every super admin action (user viewed, store modified, feature toggled) to an `admin_audit_log` table with `admin_user_id`, `target_store_id`, `action`, `timestamp` |
+| Free tier allows unlimited store creation per email | Bot creates 10,000 stores for storage/compute abuse | Rate limit store creation to 1 store per verified email; require email verification before provisioning; add CAPTCHA on signup |
+| Billing webhooks not idempotent | `customer.subscription.updated` fires twice (Stripe retry) — plan toggled on/off | Apply same idempotency pattern from v1: `stripe_billing_events` table with unique `stripe_event_id`; check before processing |
 
 ---
 
-### Pitfall 8: Supabase Realtime for Inventory Sync Causing WebSocket Failures Under Load
+## UX Pitfalls
 
-**What goes wrong:**
-Supabase Realtime WebSocket connections drop on mobile networks, Safari on iPad (aggressive background tab management), and under certain Supabase free-tier rate limits. A dropped connection means the POS stops receiving stock updates silently — staff oversell without knowing.
+Common user experience mistakes in this domain.
 
-**Why it happens:**
-Realtime feels like the obvious solution for keeping POS inventory current. The failure mode (silent stale state) is worse than the problem being solved.
-
-**Prevention:**
-The PROJECT.md already made the right call: "Refresh-on-transaction over Supabase Realtime." Every time a sale is completed or a product is viewed in the checkout grid, fire a server-side refetch of current stock. This is slightly less "live" but always correct and self-healing. Reserve Realtime (if used at all) for non-critical notifications (e.g., low stock badge update) where a missed event is cosmetic, not transactional.
-
-**Detection (warning signs):**
-- Any `supabase.channel().on('postgres_changes', ...)` subscription in the POS checkout flow
-- No explicit stock refetch on checkout grid load or sale completion
-
-**Phase:** POS Checkout. Confirm the refresh-on-transaction pattern is implemented before testing iPad-specific behavior.
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| Subdomain availability check only at form submit | Merchant types long store name, submits, finds slug taken, starts over | Debounced real-time slug availability check (`/api/check-slug?slug=...`) as merchant types the store name field |
+| Redirect to empty dashboard immediately after signup | Merchant sees a blank screen while provisioning completes asynchronously | Show a "Setting up your store..." progress screen with explicit steps; redirect only after `stores.provision_status = 'active'` is confirmed |
+| Subscription upgrade shows Stripe Checkout then dumps merchant back on `/dashboard` with no confirmation | Merchant unsure whether the upgrade worked | After Stripe Checkout success redirect, show a "Plan upgraded" confirmation screen; verify the webhook has fired by polling `stores.plan` before showing the screen |
+| Feature lock UI shows only "Upgrade to Pro" with no explanation | Merchant doesn't know what they'll get | Show exactly what the feature does and the price before upselling; link to a plan comparison page |
+| Custom domain instructions given once then buried | Merchant can't find DNS records when they're ready to add them | Custom domain settings page always shows current verification status + the exact DNS records needed, even after activation |
+| Super admin can toggle merchant features with no confirmation | Accidental clicks break live stores | Require explicit confirmation modal for any destructive super admin action ("This will disable Xero sync for [store name]. Confirm?") |
 
 ---
 
-### Pitfall 9: Xero OAuth Token Expiry Causing Silent Sync Failures
+## "Looks Done But Isn't" Checklist
 
-**What goes wrong:**
-Xero OAuth 2.0 access tokens expire after 30 minutes. Refresh tokens expire after 60 days of inactivity. If the daily sync job runs but the refresh token has expired (owner hasn't used the integration in 2+ months), the sync silently fails — no invoices are sent to Xero, owner doesn't notice for weeks, then has a large manual reconciliation job.
+Things that appear complete but are missing critical pieces.
 
-**Why it happens:**
-Token expiry is tested at initial build time when tokens are fresh. 60-day expiry isn't hit during development. Production monitoring of sync jobs is often not set up until there's a problem.
-
-**Prevention:**
-1. Store Xero tokens in a `xero_connections` table with `access_token`, `refresh_token`, `expires_at`, `refresh_token_expires_at`.
-2. Before every sync, check `refresh_token_expires_at`. If within 14 days of expiry, send an email/notification to the owner: "Xero connection needs re-authorisation."
-3. After any sync failure due to auth error, set a `connection_status: 'disconnected'` flag and surface it prominently in the admin dashboard — not just a log entry.
-4. The daily sync job must write a result record (success/failure/rows_synced) that the admin dashboard can display. Owner should see "Last synced: today at 2:14am — 12 invoices" or "Last sync FAILED — re-connect Xero."
-
-**Detection (warning signs):**
-- Xero sync is a fire-and-forget cron job with no result logging
-- No admin UI showing last sync status
-- No proactive notification of impending token expiry
-
-**Phase:** Xero Integration phase. Build the monitoring UI and failure notification before shipping the integration.
+- [ ] **Tenant isolation:** Middleware resolves tenant slug — but verify JWT claim is actually enforced in every Server Action, not just read from the header
+- [ ] **Feature gating:** UI gate hides the feature — but verify the underlying Route Handler / Server Action returns 403 for unpaid plans
+- [ ] **Stripe subscriptions:** Checkout flow completes — but verify `customer.subscription.created` webhook updates `stores.plan` before the merchant accesses the feature
+- [ ] **Custom domains:** Domain added in Vercel — but verify SSL certificate is provisioned (not just "pending"), DNS resolves correctly, and the store loads over HTTPS
+- [ ] **Merchant signup:** Signup form submits successfully — but verify `stores` record was created, `store_id` is in the JWT, and the dashboard loads data (not empty state)
+- [ ] **Super admin panel:** Queries return data — but verify it is using a super-admin-scoped JWT (not service role), and the audit log records every action
+- [ ] **Slug reservation:** Slug blocklist exists in Zod schema — but verify it is also enforced server-side (not just client-side validation)
+- [ ] **Billing idempotency:** Subscription webhooks processed — but verify a duplicate event delivery does not toggle the plan twice
+- [ ] **RLS migration:** New policies deployed — but verify cross-tenant isolation test passes with two separate store sessions
+- [ ] **Store setup wizard:** All steps complete — but verify a partial completion (browser closed mid-wizard) leaves the store in a recoverable state, not a corrupted half-provisioned state
 
 ---
 
-### Pitfall 10: click-and-collect Status Transitions Without Atomic Stock Decrement
+## Recovery Strategies
 
-**What goes wrong:**
-An online order arrives. Stock is not decremented at order creation — it's decremented when the order is marked "ready" or "collected." In the meantime, in-store staff sell the same item on the POS (stock shows as available). The online customer arrives to collect their order and the item is out of stock.
+When pitfalls occur despite prevention, how to recover.
 
-**Why it happens:**
-Developers conflate "reserved" with "sold." The intent is to hold stock at the point of order, but the implementation delays the decrement until a staff action.
-
-**Prevention:**
-Decrement stock atomically at the point of Stripe `checkout.session.completed` (or order creation for cash/EFTPOS). Use a Postgres function with a check constraint: if `stock_quantity - decrement_amount < 0`, raise an exception and roll back. The `PENDING_PICKUP` state means "paid and stock reserved" — not "payment received, stock TBD."
-
-The click-and-collect status model (`PENDING_PICKUP → READY → COLLECTED`) tracks fulfilment state, not inventory state. Keep these concerns separate.
-
-**Detection (warning signs):**
-- Stock decrement occurs in a state transition handler (e.g., when marking "ready") rather than at order creation
-- No DB-level check preventing negative stock
-
-**Phase:** Online Storefront / Order management. The stock decrement must be in the Stripe webhook handler, wrapped in the same transaction as order creation.
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Cross-tenant data leak discovered | HIGH | Rotate Supabase JWT secret (forces all users to re-authenticate); audit query logs for affected rows; notify affected merchants per Privacy Act 2020 (NZ); patch RLS policy; re-run isolation tests |
+| Stripe webhook routing confusion causing wrong plan activations | MEDIUM | Audit `stripe_billing_events` table for mis-routed events; manually correct `stores.plan` for affected merchants; add event-type routing; re-process affected events with corrected handler |
+| Wildcard SSL not provisioning | LOW | Verify NS delegation at registrar; remove and re-add wildcard domain in Vercel; allow 24h for propagation; test with `dig +short test.domain.com` |
+| Merchant stuck with no store_id claim | LOW | Super admin panel: manually trigger provision retry for affected `user_id`; or: Supabase dashboard → Auth → update `app_metadata` directly |
+| Stale JWT plan claim after subscription change | LOW | Merchant logs out and back in; or super admin forces session invalidation; long-term: shorten JWT lifetime |
+| Tenant slug collision with platform route | MEDIUM | Add slug to blocklist; contact affected merchant to choose new slug; migrate subdomain; update any stored URLs in merchant's store data |
+| Service role key accidentally committed to git | CRITICAL | Rotate key immediately in Supabase dashboard (invalidates all existing service role tokens); audit git history for any usage; review server-side code for exposure |
 
 ---
 
-### Pitfall 11: iPad POS UX Failures That Frustrate Retail Staff
+## Pitfall-to-Phase Mapping
 
-**What goes wrong (multiple related sub-issues):**
+How roadmap phases should address these pitfalls.
 
-**a) Touch targets too small for gloved or rushed hands**
-Buttons under 44px × 44px are fine on desktop but unusable at a checkout register where staff are moving fast or wearing gloves. The product grid is the most common offender.
-
-**b) Keyboard pops up on every quantity/price edit**
-iOS Safari shows the software keyboard whenever a numeric input is focused, covering the bottom half of the screen. Staff lose context of the cart while typing a quantity.
-
-**c) No visual feedback on slow operations**
-A sale completion might take 500–800ms (Supabase write + stock decrement). If there's no loading state, staff tap the "Complete Sale" button multiple times, creating duplicate orders.
-
-**d) Accidental navigation away from active cart**
-If the POS is a standard web app, the browser back button or an accidental swipe gesture can navigate away from an in-progress sale. The cart state may or may not survive (depends on whether it's in URL state, React state, or persisted).
-
-**e) Session timeout mid-shift**
-Supabase JWT expires (default 1 hour). Staff are in the middle of a transaction when the session expires. The next Server Action call returns a 401. With no graceful handling, the POS silently fails or shows a JSON error in the UI.
-
-**Prevention:**
-- All interactive elements on the POS checkout screen: minimum 48px × 48px touch targets (Apple HIG recommends 44pt minimum).
-- Use `inputMode="numeric"` + `pattern="[0-9]*"` on quantity inputs to get the numeric keypad instead of full keyboard on iOS.
-- Every async operation (sale completion, product search, stock refetch) must have an explicit loading state that disables the triggering button to prevent double-submission.
-- Persist cart state to Supabase (not just React state) so a refresh/accidental navigation restores the active cart.
-- Implement session auto-refresh: call `supabase.auth.getSession()` on a 45-minute interval in the POS layout component. Redirect to PIN re-entry (not full logout) on expiry.
-- Consider locking the POS view to a single-page layout (no browser chrome) using Progressive Web App (PWA) manifest with `"display": "standalone"`. This eliminates browser back button and address bar.
-
-**Detection (warning signs):**
-- Button heights defined in rem/px without an explicit minimum of 44–48px
-- `<input type="number">` used without `inputMode="numeric"` on iOS-targeted forms
-- "Complete Sale" button not disabled during the async submission
-- Cart state stored only in React `useState` with no persistence
-
-**Phase:** POS Checkout UX phase. Run a manual checkout test on an actual iPad (not Chrome DevTools emulation) early — iPad-specific issues are invisible in browser testing.
-
----
-
-## Minor Pitfalls
-
-Mistakes that create friction but are recoverable without rewrites.
-
----
-
-### Pitfall 12: CSV Product Import Without Duplicate Detection
-
-**What goes wrong:**
-Owner imports a CSV of 200 products. They notice a typo and fix 5 rows, then re-import. Without duplicate detection, all 200 products are duplicated. The POS grid now shows every product twice.
-
-**Prevention:**
-Treat `sku` as the natural key. CSV import logic: if a product with matching `sku` exists → update. If not → insert. Surface a preview diff ("5 products will be updated, 195 unchanged, 0 new") before committing.
-
-**Phase:** Product Catalog phase.
-
----
-
-### Pitfall 13: Missing Compound Indexes for Multi-Tenant Queries
-
-**What goes wrong:**
-Every query filters by `store_id` AND another column (e.g., `WHERE store_id = $1 AND category_id = $2`). Without a compound index, Postgres scans the full table filtered by `store_id` first, then filters by `category_id`. At 10K+ products across all tenants this is perceptibly slow on the POS product grid.
-
-**Prevention:**
-Index every table as `(store_id, [next_most_common_filter_column])`. For `products`: `(store_id, category_id)` and `(store_id, is_active)`. For `orders`: `(store_id, created_at DESC)`. These indexes also support the RLS policy evaluation efficiently.
-
-**Phase:** Foundation / Schema. Add in the initial migration, not after performance issues appear.
-
----
-
-### Pitfall 14: Supabase Free Tier Pause After 1 Week Inactivity
-
-**What goes wrong:**
-Supabase free tier pauses the database after 1 week of inactivity. During development, if the developer takes a week off, the next time they open the app the database is paused and takes 30–60 seconds to resume. This is invisible until it happens, and in production (before upgrading to Pro) it could affect a live store if there's a quiet week.
-
-**Prevention:**
-Upgrade to Supabase Pro ($25/month) before going live with the first real customer. The free tier is suitable for development only. Add a note in the deployment checklist: "Upgrade Supabase to Pro before customer go-live."
-
-**Detection:**
-First sign is a 30–60 second cold start on the first request after inactivity.
-
-**Phase:** Deployment / Go-live checklist.
-
----
-
-### Pitfall 15: Staff PIN Lockout With No Owner Override
-
-**What goes wrong:**
-Staff enters wrong PIN 3 times. Account is locked. Owner is not in-store. There is no way for owner to unlock remotely. The POS becomes unusable mid-shift.
-
-**Prevention:**
-The PIN lockout must be clearable by the owner from the admin dashboard remotely. Implement: `staff_pin_attempts` counter + `pin_locked_until` timestamp. Owner dashboard shows locked accounts with a one-click unlock. Consider: lockout is time-based (e.g., 15 minutes) rather than permanent, to prevent complete lockout if owner is unreachable.
-
-**Phase:** Auth phase. Design the lockout model to include remote unlock from day one.
-
----
-
-## Phase-Specific Warnings
-
-| Phase Topic | Likely Pitfall | Mitigation |
-|-------------|---------------|------------|
-| Schema / Foundation | Missing RLS on new tables; float currency columns | CI check for tables without RLS; INTEGER-only monetary columns |
-| Auth | Per-request user table join in RLS; PIN lockout with no override | JWT custom claims from day 1; remote unlock in owner dashboard |
-| POS Checkout | EFTPOS phantom sale; no loading state on submit; iPad touch targets | Explicit confirmation state machine; disable-on-submit; 48px minimums |
-| Inventory | Stock decrement not atomic; Realtime WebSocket silent failures | DB-level check constraint; refresh-on-transaction pattern |
-| Online Storefront | Stripe duplicate events; click-and-collect stock not reserved at order | Idempotency table; stock decrement in webhook handler |
-| GST / Receipts | Rounding at total instead of per-line | Pure GST function with IRD specimen tests |
-| Xero Integration | Silent sync failures; token expiry not surfaced | Sync result logging; proactive expiry notification |
-| Product Catalog | CSV import duplicates | SKU-based upsert with preview diff |
-| Deployment | Supabase free tier pauses in production | Pro upgrade on go-live checklist |
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| Middleware-only tenant isolation | Phase 1: Multi-Tenant Infrastructure | Cross-tenant isolation E2E test passes with two separate stores; middleware bypass test (send `x-store-id` header directly to API route) returns 403 |
+| Stale JWT claims after provisioning | Phase 1 (provisioning) + Phase 3 (billing) | New merchant can access dashboard immediately after signup; plan change reflected within 1 page reload |
+| Stripe webhook routing confusion | Phase 3: Stripe Subscriptions | Separate webhook endpoints registered; duplicate event delivery test; POS sale does not affect subscription state |
+| Wildcard SSL configuration | Phase 1: Infrastructure Setup | `https://test.nzpos.co.nz` resolves with valid SSL before any tenant routing code is written |
+| Custom domain verification UX | Phase 5: Custom Domains | Merchant can add domain, see DNS instructions, see live verification status, and receive email on activation |
+| Client-only feature gating | Phase 3: Feature Gating | Postman/curl request to gated Route Handler without pro plan returns 403; UI gate is supplementary only |
+| RLS policies not updated for super admin | Phase 1: Multi-Tenant Infrastructure | Super admin can query all stores via RLS-scoped JWT (not service role); non-admin cannot see other stores' data |
+| Tenant provisioning race condition | Phase 2: Merchant Signup | Simulate slow DB insert during signup; verify dashboard shows error-with-retry, not empty state |
+| Reserved slug collision | Phase 2: Merchant Signup | Attempt to register slug `api` and `admin`; verify Zod validation and server-side check both reject |
+| Free tier signup abuse | Phase 2: Merchant Signup | Rate limit test: 5 signups from same IP in 1 minute should be blocked |
 
 ---
 
 ## Sources
 
-All findings based on training data (cutoff August 2025). No live documentation was accessible in this session.
+- Supabase Custom Access Token Hook (official docs): https://supabase.com/docs/guides/auth/auth-hooks/custom-access-token-hook
+- Supabase Custom Claims & RBAC (official docs): https://supabase.com/docs/guides/database/postgres/custom-claims-and-role-based-access-control-rbac
+- Supabase RLS (official docs): https://supabase.com/docs/guides/database/postgres/row-level-security
+- CVE-2025-29927 Next.js Middleware Bypass (Snyk): https://snyk.io/blog/cve-2025-29927-authorization-bypass-in-next-js-middleware/
+- CVE-2025-29927 Technical Analysis (ProjectDiscovery): https://projectdiscovery.io/blog/nextjs-middleware-authorization-bypass
+- Next.js Middleware: Not recommended as sole auth guard (official docs): https://nextjs.org/docs/app/guides/authentication
+- Vercel Domain Management for Multi-Tenant (official docs): https://vercel.com/docs/multi-tenant/domain-management
+- Vercel Wildcard Domain Configuration: https://vercel.com/platforms/docs/multi-tenant-platforms/configuring-domains
+- Building Custom Domain Management with Vercel API: https://dev.to/toumi_abderrahmane_f07d5b/building-custom-domain-management-with-vercel-api-the-good-the-bad-and-the-dns-propagation-3fp7
+- Stripe Webhook Best Practices (official docs): https://docs.stripe.com/billing/subscriptions/webhooks
+- Stripe Customer Portal Integration (official docs): https://docs.stripe.com/customer-management/integrate-customer-portal
+- Multi-Tenant Leakage: When Row-Level Security Fails (Medium): https://medium.com/@instatunnel/multi-tenant-leakage-when-row-level-security-fails-in-saas-da25f40c788c
+- Feature Gating in SaaS Without Duplicating Components (DEV Community): https://dev.to/aniefon_umanah_ac5f21311c/feature-gating-how-we-built-a-freemium-saas-without-duplicating-components-1lo6
+- Feature gating patterns in a multi-tenant Next.js SaaS (Hacker News discussion): https://news.ycombinator.com/item?id=47262864
+- Subdomain-Based Routing in Next.js (Medium): https://medium.com/@sheharyarishfaq/subdomain-based-routing-in-next-js-a-complete-guide-for-multi-tenant-applications-1576244e799a
+- Multi-tenant leakage: Architectural failure modes (InstaTunnel): https://instatunnel.my/blog/multi-tenant-leakage-when-row-level-security-fails-in-saas
+- Stripe Subscriptions: Things to avoid (Medium): https://medium.com/@harisbakhabarpk/things-you-should-avoid-while-integrating-stripe-subscriptions-28c9d1974308
+- How to Secure Supabase Service Role Key (Chat2DB): https://chat2db.ai/resources/blog/secure-supabase-role-key
+- Supabase Multi-Tenant + Next.js subdomain discussion (GitHub): https://github.com/vercel/next.js/discussions/84461
 
-**Topics with HIGH training confidence (stable, well-documented):**
-- Stripe webhook idempotency patterns — canonical Stripe documentation, unchanged for years
-- Supabase RLS JWT claims performance — documented in Supabase blog posts and GitHub issues, pre-cutoff
-- NZ GST IRD rules — IRD.govt.nz published guidance, 15% rate unchanged since 2010
-- iOS touch target minimums — Apple Human Interface Guidelines, stable
-- Floating-point currency arithmetic — fundamental IEEE 754, not version-dependent
-
-**Topics with MEDIUM training confidence (correct at cutoff, verify before implementation):**
-- Supabase Auth Hooks for custom JWT claims — feature was in beta/GA transition around cutoff; verify current implementation syntax at supabase.com/docs
-- Xero OAuth 2.0 token lifetime (60-day refresh token) — verify at developer.xero.com as Xero occasionally adjusts this
-- Supabase free tier inactivity pause policy — verify current threshold at supabase.com/pricing (was 7 days at cutoff)
-
-**Topics to verify against current docs before implementation:**
-- `supabase.com/docs/guides/auth/custom-claims-and-role-based-access-control` — JWT custom claims implementation
-- `stripe.com/docs/webhooks/best-practices` — Idempotency and signature verification
-- `developer.xero.com/documentation/oauth2/overview` — Token lifetime and refresh flow
+---
+*Pitfalls research for: v2.0 SaaS conversion of NZPOS (single-tenant Next.js + Supabase → multi-tenant SaaS)*
+*Researched: 2026-04-03*
