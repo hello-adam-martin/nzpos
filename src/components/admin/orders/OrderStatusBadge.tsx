@@ -4,6 +4,7 @@ type OrderStatus =
   | 'pending'
   | 'completed'
   | 'refunded'
+  | 'partially_refunded'
   | 'expired'
   | 'pending_pickup'
   | 'ready'
@@ -16,6 +17,7 @@ interface OrderStatusBadgeProps {
 const STATUS_STYLES: Record<OrderStatus, string> = {
   completed: 'bg-[var(--color-success)]/15 text-[var(--color-success)]',
   refunded: 'bg-[var(--color-error)]/15 text-[var(--color-error)]',
+  partially_refunded: 'bg-[var(--color-warning)]/15 text-[var(--color-warning)]',
   pending_pickup: 'bg-[var(--color-warning)]/15 text-[var(--color-warning)]',
   ready: 'bg-[var(--color-info)]/15 text-[var(--color-info)]',
   collected: 'bg-[var(--color-success)]/10 text-[var(--color-success)]',
@@ -27,6 +29,7 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   pending: 'Pending',
   completed: 'Completed',
   refunded: 'Refunded',
+  partially_refunded: 'Partially Refunded',
   expired: 'Expired',
   pending_pickup: 'Pending Pickup',
   ready: 'Ready',

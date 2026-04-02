@@ -6,6 +6,7 @@ const STATUS_OPTIONS = [
   { value: '', label: 'All Statuses' },
   { value: 'completed', label: 'Completed' },
   { value: 'refunded', label: 'Refunded' },
+  { value: 'partially_refunded', label: 'Partially Refunded' },
   { value: 'pending_pickup', label: 'Pending Pickup' },
   { value: 'ready', label: 'Ready' },
   { value: 'collected', label: 'Collected' },

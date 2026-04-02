@@ -3,10 +3,11 @@ import { useEffect, useState } from 'react'
 import { formatNZD } from '@/lib/money'
 import { OrderStatusBadge } from './OrderStatusBadge'
 import { updateOrderStatus } from '@/actions/orders/updateOrderStatus'
-import { RefundConfirmationStep } from './RefundConfirmationStep'
+import { PartialRefundFlow } from './PartialRefundFlow'
 import type { OrderWithStaff } from './OrderDataTable'
 import { ReceiptScreen } from '@/components/pos/ReceiptScreen'
 import type { ReceiptData } from '@/lib/receipt'
+import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
 const NZ_DATE_FORMAT = new Intl.DateTimeFormat('en-NZ', {
   dateStyle: 'long',
@@ -15,6 +16,7 @@ const NZ_DATE_FORMAT = new Intl.DateTimeFormat('en-NZ', {
 
 const REFUNDABLE_STATUSES = new Set([
   'completed',
+  'partially_refunded',
   'pending_pickup',
   'ready',
   'collected',
@@ -38,6 +40,9 @@ export function OrderDetailDrawer({ order, onClose, onRefundClick, onRefundCompl
   const [transitionError, setTransitionError] = useState<string | null>(null)
   const [showRefundStep, setShowRefundStep] = useState(false)
   const [showReceipt, setShowReceipt] = useState(false)
+  const [existingRefunds, setExistingRefunds] = useState<Array<{
+    refund_items: Array<{ order_item_id: string; quantity_refunded: number }>
+  }>>([])
 
   // Escape key handler (only if not in refund step — refund step requires explicit cancel)
   useEffect(() => {
@@ -58,6 +63,24 @@ export function OrderDetailDrawer({ order, onClose, onRefundClick, onRefundCompl
     setShowRefundStep(false)
     setShowReceipt(false)
   }, [order?.id])
+
+  // Fetch existing refunds when drawer opens on a refundable order
+  useEffect(() => {
+    if (!order || !REFUNDABLE_STATUSES.has(order.status)) {
+      setExistingRefunds([])
+      return
+    }
+    const supabase = createSupabaseBrowserClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabaseAny = supabase as any
+    supabaseAny
+      .from('refunds')
+      .select('id, refund_items(order_item_id, quantity_refunded)')
+      .eq('order_id', order.id)
+      .then(({ data }: { data: Array<{ id: string; refund_items: Array<{ order_item_id: string; quantity_refunded: number }> }> | null }) =>
+        setExistingRefunds(data ?? [])
+      )
+  }, [order?.id, order?.status])
 
   async function handleStatusTransition(newStatus: string) {
     if (!order) return
@@ -102,9 +125,15 @@ export function OrderDetailDrawer({ order, onClose, onRefundClick, onRefundCompl
         aria-label="Order detail"
       >
         {order && showRefundStep && (
-          <RefundConfirmationStep
-            orderId={order.id}
-            totalCents={order.total_cents}
+          <PartialRefundFlow
+            order={{
+              id: order.id,
+              order_items: order.order_items,
+              payment_method: order.payment_method,
+              channel: order.channel,
+              total_cents: order.total_cents,
+            }}
+            existingRefunds={existingRefunds}
             onBack={() => setShowRefundStep(false)}
             onRefundComplete={() => {
               setShowRefundStep(false)
@@ -306,7 +335,7 @@ export function OrderDetailDrawer({ order, onClose, onRefundClick, onRefundCompl
                   onClick={() => setShowRefundStep(true)}
                   className="bg-navy text-white w-full py-3 rounded-[var(--radius-lg)] font-bold font-sans text-sm hover:bg-navy-dark transition-colors"
                 >
-                  Refund Order
+                  {order.status === 'partially_refunded' ? 'Refund More Items' : 'Refund Order'}
                 </button>
               </div>
             )}
