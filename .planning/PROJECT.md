@@ -6,31 +6,28 @@ A custom retail POS system for NZ small businesses. Runs on an iPad tablet for i
 
 ## Current State
 
-**Shipped:** v1.0 MVP (2026-04-02)
+**Shipped:** v1.0 MVP (2026-04-02), v1.1 feature waves (2026-04-02)
 
-The complete v1 is built and tested: 191 source files, 17,423 LOC TypeScript, 502 tests passing. All 6 phases shipped across 33 plans. The system handles in-store POS checkout (iPad), online Stripe checkout, shared inventory with atomic stock decrement, admin reporting with cash-up, and Xero accounting integration.
+The complete v1 is built and tested: 191 source files, 17,423 LOC TypeScript, 502 tests passing. All 6 phases shipped across 33 plans. v1.1 added barcode scanning, screen receipts, email notifications, customer accounts, and partial refunds (Phases 8-11 complete). Phase 7 (production deploy) partially complete — DEPLOY-02/03/04 still pending real infrastructure.
 
-**Phase 9 complete (2026-04-02):** Notification system — Resend email infrastructure with 4 React Email templates, transactional triggers (online receipt, POS receipt, pickup-ready), daily summary cron, and POS order arrival sound alerts with mute toggle. 68 new tests. 5 items pending human UAT (real Resend credentials + iPad audio).
+**Known gaps:** Xero integration requires live OAuth credentials for final UAT. Customer accounts require live Supabase for UAT. Production deploy (Supabase, Stripe live keys, catalog import) not yet completed. All automated tests pass.
 
-**Phase 10 complete (2026-04-02):** Customer accounts — Supabase Auth customer signup/signin on storefront, order history with card list and full detail view, profile page with preferences (email receipts + marketing opt-in), auth hook extended for customer role, middleware blocks customers from POS/admin, post-purchase account prompt for guests, email verification + password reset via Supabase native flows. 6 items pending human UAT (live Supabase + browser interaction).
+## Current Milestone: v2.0 SaaS Platform
 
-**Known gaps:** Xero integration requires live OAuth credentials for final UAT (4 of 5 tests pending). Customer accounts require live Supabase for UAT (6 items pending). All automated tests pass.
-
-## Current Milestone: v1.1 Production Launch + Feature Waves
-
-**Goal:** Get the store running on real products, real payments, and real customers, then iteratively add checkout speed, notifications, customer accounts, and partial refunds.
+**Goal:** Transform NZPOS from a single-store app into a multi-tenant SaaS platform where any NZ small business can sign up for free and optionally pay for premium add-ons.
 
 **Target features:**
-- Production deployment (Vercel + Supabase + real Stripe/Xero)
-- Barcode scanning (iPad camera, EAN-13/UPC-A via html5-qrcode)
-- Screen receipt display (physical printer deferred until hardware purchased)
-- Email receipts + pickup notifications (Resend)
-- Daily summary email + low stock email alerts
-- Order sound notification on iPad (polling + localStorage)
-- Customer accounts (sign-up, login, order history, profile)
-- Partial refunds (line-item selection, Stripe partial, Xero credit notes)
+- Multi-tenant infrastructure (tenant provisioning, store isolation, wildcard subdomain routing, tenant resolution middleware)
+- Merchant self-serve signup (sign up, create store, get a working POS + storefront immediately)
+- Store setup wizard (logo, categories, initial products, storefront branding)
+- Feature gating + Stripe subscriptions (free core POS/storefront/admin, paid add-ons)
+- Custom domains (paid add-on, merchants bring their own domain)
+- Marketing landing page (public site explaining the product, signup CTA)
+- Super admin panel (manage all tenants, monitor usage, handle support)
 
-**Approach:** Iterative staged (5 waves). Deploy first, add features in waves based on real usage.
+**Pricing model:** Free core (POS checkout, storefront, basic admin/reports, customer accounts, partial refunds). Paid add-ons via Stripe subscriptions: Xero integration, email notifications, custom domains.
+
+**Approach:** SaaS transformation. Multi-tenant first, then self-serve onboarding, then billing/gating, then public launch.
 
 ## Core Value
 
@@ -58,7 +55,7 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 
 ### Active
 
-See `.planning/REQUIREMENTS.md` for v1.1 requirements with REQ-IDs.
+See `.planning/REQUIREMENTS.md` for v2.0 requirements with REQ-IDs.
 
 ### Out of Scope
 
@@ -129,4 +126,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-02 after Phase 9 completion*
+*Last updated: 2026-04-03 after v2.0 milestone start*
