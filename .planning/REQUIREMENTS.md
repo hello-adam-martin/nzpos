@@ -9,7 +9,7 @@ Requirements for the v1.1 milestone. Each maps to roadmap phases.
 
 ### Production & Deployment
 
-- [ ] **DEPLOY-01**: Store is deployed to Vercel production with all env vars configured
+- [x] **DEPLOY-01**: Store is deployed to Vercel production with all env vars configured
 - [ ] **DEPLOY-02**: Supabase production instance has migrated schema and seeded reference data
 - [ ] **DEPLOY-03**: Stripe live keys configured and webhook endpoint verified in production
 - [ ] **DEPLOY-04**: Product catalog imported (200+ SKUs with barcodes, categories, stock levels, images)
@@ -84,7 +84,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DEPLOY-01 | Phase 7 | Pending |
+| DEPLOY-01 | Phase 7 | Complete |
 | DEPLOY-02 | Phase 7 | Pending |
 | DEPLOY-03 | Phase 7 | Pending |
 | DEPLOY-04 | Phase 7 | Pending |
