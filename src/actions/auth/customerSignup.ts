@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 import { redirect } from 'next/navigation'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 const SignupSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -38,9 +39,12 @@ export async function customerSignup(formData: FormData) {
 
   // Insert customers row using admin client (bypasses RLS)
   // store_id from env -- same pattern as createCheckoutSession.ts
+  // Note: customers table and link_customer_orders RPC are added in migration 012_customer_accounts.sql
+  // Types are cast via untyped client until supabase gen types is re-run post-migration
   const admin = createSupabaseAdminClient()
+  const untypedAdmin = admin as unknown as SupabaseClient
   const storeId = process.env.STORE_ID!
-  const { error: insertError } = await admin.from('customers').insert({
+  const { error: insertError } = await untypedAdmin.from('customers').insert({
     auth_user_id: data.user.id,
     store_id: storeId,
     email: parsed.data.email,
@@ -53,7 +57,7 @@ export async function customerSignup(formData: FormData) {
   }
 
   // Link past orders where customer_email matches (D-11)
-  await admin.rpc('link_customer_orders', {
+  await untypedAdmin.rpc('link_customer_orders', {
     p_auth_user_id: data.user.id,
     p_email: parsed.data.email,
   })
