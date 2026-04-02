@@ -1,7 +1,9 @@
 import { notFound } from 'next/navigation'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { formatNZD } from '@/lib/money'
 import CartClearer from './CartClearer'
+import { PostPurchaseAccountPrompt } from '@/components/store/PostPurchaseAccountPrompt'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -33,8 +35,8 @@ export default async function OrderConfirmationPage({ params, searchParams: sear
     notFound()
   }
 
-  const supabase = createSupabaseAdminClient()
-  const { data: order, error } = await (supabase as any)
+  const adminSupabase = createSupabaseAdminClient()
+  const { data: order, error } = await (adminSupabase as any)
     .from('orders')
     .select('*, order_items(*)')
     .eq('id', orderId)
@@ -44,6 +46,11 @@ export default async function OrderConfirmationPage({ params, searchParams: sear
   if (error || !order) {
     notFound()
   }
+
+  // Check if viewer is a logged-in customer or a guest
+  const serverSupabase = await createSupabaseServerClient()
+  const { data: { user } } = await serverSupabase.auth.getUser()
+  const isGuest = !user || user.app_metadata?.role !== 'customer'
 
   type OrderItem = {
     id: string
@@ -239,6 +246,16 @@ export default async function OrderConfirmationPage({ params, searchParams: sear
             {statusMessage}
           </p>
         </div>
+
+        {/* Post-purchase account prompt for guests */}
+        {isGuest && order.customer_email && (
+          <PostPurchaseAccountPrompt
+            email={order.customer_email as string}
+            orderId={orderId}
+            token={token}
+            isGuest={isGuest}
+          />
+        )}
 
         {/* Link to order status page */}
         <div className="text-center">
