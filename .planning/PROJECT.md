@@ -12,7 +12,9 @@ The complete v1 is built and tested: 191 source files, 17,423 LOC TypeScript, 50
 
 **Phase 9 complete (2026-04-02):** Notification system — Resend email infrastructure with 4 React Email templates, transactional triggers (online receipt, POS receipt, pickup-ready), daily summary cron, and POS order arrival sound alerts with mute toggle. 68 new tests. 5 items pending human UAT (real Resend credentials + iPad audio).
 
-**Known gaps:** Xero integration requires live OAuth credentials for final UAT (4 of 5 tests pending). All automated tests pass.
+**Phase 10 complete (2026-04-02):** Customer accounts — Supabase Auth customer signup/signin on storefront, order history with card list and full detail view, profile page with preferences (email receipts + marketing opt-in), auth hook extended for customer role, middleware blocks customers from POS/admin, post-purchase account prompt for guests, email verification + password reset via Supabase native flows. 6 items pending human UAT (live Supabase + browser interaction).
+
+**Known gaps:** Xero integration requires live OAuth credentials for final UAT (4 of 5 tests pending). Customer accounts require live Supabase for UAT (6 items pending). All automated tests pass.
 
 ## Current Milestone: v1.1 Production Launch + Feature Waves
 
