@@ -10,6 +10,8 @@ A custom retail POS system for NZ small businesses. Runs on an iPad tablet for i
 
 The complete v1 is built and tested: 191 source files, 17,423 LOC TypeScript, 502 tests passing. All 6 phases shipped across 33 plans. The system handles in-store POS checkout (iPad), online Stripe checkout, shared inventory with atomic stock decrement, admin reporting with cash-up, and Xero accounting integration.
 
+**Phase 9 complete (2026-04-02):** Notification system — Resend email infrastructure with 4 React Email templates, transactional triggers (online receipt, POS receipt, pickup-ready), daily summary cron, and POS order arrival sound alerts with mute toggle. 68 new tests. 5 items pending human UAT (real Resend credentials + iPad audio).
+
 **Known gaps:** Xero integration requires live OAuth credentials for final UAT (4 of 5 tests pending). All automated tests pass.
 
 ## Current Milestone: v1.1 Production Launch + Feature Waves
@@ -125,4 +127,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-02 after v1.1 milestone start*
+*Last updated: 2026-04-02 after Phase 9 completion*
