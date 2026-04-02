@@ -52,14 +52,17 @@ Source: DESIGN.md spacing scale + existing StorefrontHeader.tsx `h-10 w-10` cart
 
 ## Typography
 
+Phase 10 declares 4 sizes and 2 weights. The Display role (Satoshi 20px) is inherited from the pre-existing StorefrontHeader and is not new to this phase — it is not redeclared here.
+
 | Role | Font | Size | Weight | Line Height | Notes |
 |------|------|------|--------|-------------|-------|
-| Body | DM Sans (`--font-sans`) | 16px | 400 | 1.5 | Paragraph text, form descriptions |
-| Label | DM Sans (`--font-sans`) | 14px | 600 | 1.4 | Form labels, nav items, metadata |
 | Heading | DM Sans (`--font-sans`) | 24px | 600 | 1.2 | Page titles (My Orders, My Profile, Sign in) |
-| Display | Satoshi (`--font-display`) | 20px | 700 | 1.2 | Store name in header only |
+| Body | DM Sans (`--font-sans`) | 16px | 400 | 1.5 | Paragraph text, form descriptions |
 | Data | Geist Mono (`--font-mono`) | 16px | 400 | 1.0 | Order numbers (#ABC12345) |
+| Label | DM Sans (`--font-sans`) | 14px | 600 | 1.4 | Form labels, nav items, metadata |
 | Small | DM Sans (`--font-sans`) | 12px | 400 | 1.5 | Timestamps, status metadata, muted annotations |
+
+Weights: 400 (regular) and 600 (semibold) only. No weight 700 in Phase 10 components — all bold/semibold text uses 600. This matches the existing login page pattern (`font-semibold` = 600).
 
 Source: DESIGN.md typography scale + existing login page (`text-2xl font-semibold` heading, `text-sm` labels) + confirmation page (`font-mono text-lg` for order numbers).
 
@@ -83,7 +86,7 @@ Accent (`#E67E22`) reserved for:
 
 Secondary interactive color (navy `#1E293B`) used for:
 - "Sign in" submit button
-- "Save changes" profile update button
+- "Save profile" profile update button
 - Account dropdown trigger icon (hover: `bg-navy/5`)
 - "Resend verification" text link
 
@@ -119,15 +122,15 @@ Source: DESIGN.md color system + 10-CONTEXT.md (D-01, D-02) + existing globals.c
 
 ## Page Route Map
 
-| Route | Title | Layout |
-|-------|-------|--------|
-| `/account/signin` | Sign in | Centered auth card, no StorefrontHeader nav |
-| `/account/signup` | Create account | Centered auth card, no StorefrontHeader nav |
-| `/account/verify-email` | Check your email | Centered info card, no StorefrontHeader nav |
-| `/account/reset-password` | Reset password | Centered auth card, no StorefrontHeader nav |
-| `/account/orders` | My Orders | Store layout (max-w-[800px], single column) |
-| `/account/orders/[id]` | Order detail | Store layout (max-w-[600px], matches existing order pages) |
-| `/account/profile` | My Profile | Store layout (max-w-[600px], single column) |
+| Route | Title | Layout | Focal Point |
+|-------|-------|--------|-------------|
+| `/account/signin` | Sign in | Centered auth card, no StorefrontHeader nav | Auth card — email/password fields + "Sign in" button |
+| `/account/signup` | Create account | Centered auth card, no StorefrontHeader nav | Auth card — email/password fields + amber "Create account" button |
+| `/account/verify-email` | Check your email | Centered info card, no StorefrontHeader nav | Info card — instruction copy + resend link |
+| `/account/reset-password` | Reset password | Centered auth card, no StorefrontHeader nav | Auth card — email field + submit button |
+| `/account/orders` | My Orders | Store layout (max-w-[800px], single column) | Order history card list — most recent order first, full-width cards stacked vertically |
+| `/account/orders/[id]` | Order detail | Store layout (max-w-[600px], matches existing order pages) | Order summary card — line items + totals + status history |
+| `/account/profile` | My Profile | Store layout (max-w-[600px], single column) | Profile form card — name/email fields at top, preference toggles below, "Save profile" button at bottom |
 
 Auth pages (`/account/signin`, `/account/signup`, `/account/verify-email`, `/account/reset-password`) use the isolated centered layout — no StorefrontHeader, just the auth card on `bg-bg`. This matches the existing `/login` pattern exactly.
 
@@ -175,7 +178,7 @@ Auth pages (`/account/signin`, `/account/signup`, `/account/verify-email`, `/acc
 |---------|------|
 | Primary CTA (new customer) | "Create account" |
 | Primary CTA (returning) | "Sign in" |
-| Profile save CTA | "Save changes" |
+| Profile save CTA | "Save profile" |
 | Empty state heading (order history) | "No orders yet" |
 | Empty state body (order history) | "Orders you place will appear here." |
 | Verification banner | "Please verify your email address. [Resend email]" |
@@ -190,7 +193,7 @@ Auth pages (`/account/signin`, `/account/signup`, `/account/verify-email`, `/acc
 | Auth error: wrong credentials | "Incorrect email or password." |
 | Auth error: email already exists | "An account with this email already exists. [Sign in instead]" |
 | Auth error: weak password | "Password must be at least 8 characters." |
-| Profile save error: generic | "Something went wrong. Please try again." |
+| Profile save error: generic | "Your changes couldn't be saved. Check your connection and try again, or contact support if this keeps happening." |
 | Profile save success | "Changes saved" |
 | Email change note | "A verification email will be sent to your new address." |
 | Order detail: back link | "Back to orders" |
