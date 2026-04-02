@@ -54,16 +54,17 @@ async function handleCheckoutComplete(
     return
   }
 
-  // Idempotency via stripe_events table (D-21, STORE-06):
-  // Insert Stripe event ID as PK. If it already exists, unique violation (code 23505) = already processed.
-  const { error: dedupError } = await supabase
+  // Idempotency check: has this event already been fully processed?
+  // Check FIRST, insert AFTER success — prevents dedup from blocking retries on failure.
+  const { data: existingEvent } = await supabase
     .from('stripe_events')
-    .insert({ id: eventId, store_id: storeId, type: 'checkout.session.completed' })
+    .select('id')
+    .eq('id', eventId)
+    .maybeSingle()
 
-  if (dedupError) {
-    // PostgreSQL unique_violation = code 23505 — event already processed, silently ignore
-    if (dedupError.code === '23505') return
-    throw dedupError
+  if (existingEvent) {
+    // Already processed successfully — skip
+    return
   }
 
   // Fetch order_items to pass to RPC (CRITICAL — without this, stock decrement has no items)
@@ -81,12 +82,22 @@ async function handleCheckoutComplete(
     p_store_id: storeId,
     p_order_id: orderId,
     p_stripe_session_id: session.id,
-    p_stripe_payment_intent_id: (session.payment_intent as string) ?? null,
+    p_stripe_payment_intent_id: (session.payment_intent as string) ?? undefined,
     p_customer_email: session.customer_details?.email ?? undefined,
     p_items: JSON.stringify(orderItems ?? []),
   })
 
   if (rpcError) throw rpcError
+
+  // Mark event as processed AFTER successful RPC — retries will work if RPC fails
+  const { error: dedupError } = await supabase
+    .from('stripe_events')
+    .insert({ id: eventId, store_id: storeId, type: 'checkout.session.completed' })
+
+  if (dedupError && dedupError.code !== '23505') {
+    // Non-dedup error — log but don't fail (order is already completed)
+    console.error('[stripe-webhook] Failed to record event dedup:', dedupError.message)
+  }
 
   // Increment promo usage atomically (only after successful payment)
   const { data: orderRow } = await (supabase as any)

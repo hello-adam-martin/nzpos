@@ -40,6 +40,7 @@ function createChain(resolvedValue: any) {
   const chain: any = {
     select: () => chain,
     single: () => Promise.resolve(resolvedValue),
+    maybeSingle: () => Promise.resolve(resolvedValue),
     eq: () => chain,
     insert: () => Promise.resolve(resolvedValue),
     then: (resolve: any) => Promise.resolve(resolvedValue).then(resolve),
@@ -102,10 +103,9 @@ describe('Stripe Webhook Handler', () => {
   test('processes checkout.session.completed event', async () => {
     mockConstructEvent.mockReturnValue(mockEvent)
 
-    // stripe_events insert (idempotency check) — succeeds
     mockFrom.mockImplementation((table: string) => {
       if (table === 'stripe_events') {
-        return { insert: () => Promise.resolve({ error: null }) }
+        return createChain({ data: null, error: null })
       }
       if (table === 'order_items') {
         return createChain({
@@ -131,10 +131,10 @@ describe('Stripe Webhook Handler', () => {
   test('silently ignores duplicate events (idempotency)', async () => {
     mockConstructEvent.mockReturnValue(mockEvent)
 
-    // stripe_events insert — fails with unique violation (23505)
+    // stripe_events select returns existing event — already processed
     mockFrom.mockImplementation((table: string) => {
       if (table === 'stripe_events') {
-        return { insert: () => Promise.resolve({ error: { code: '23505' } }) }
+        return createChain({ data: { id: 'evt_test_789' }, error: null })
       }
       return createChain({ data: null, error: null })
     })
@@ -155,7 +155,7 @@ describe('Stripe Webhook Handler', () => {
 
     mockFrom.mockImplementation((table: string) => {
       if (table === 'stripe_events') {
-        return { insert: () => Promise.resolve({ error: null }) }
+        return createChain({ data: null, error: null })
       }
       if (table === 'order_items') {
         return createChain({ data: orderItems, error: null })
@@ -184,7 +184,7 @@ describe('Stripe Webhook Handler', () => {
 
     mockFrom.mockImplementation((table: string) => {
       if (table === 'stripe_events') {
-        return { insert: () => Promise.resolve({ error: null }) }
+        return createChain({ data: null, error: null })
       }
       if (table === 'order_items') {
         return createChain({ data: [{ product_id: 'prod-1', quantity: 1 }], error: null })
