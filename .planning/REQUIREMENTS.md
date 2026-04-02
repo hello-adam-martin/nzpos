@@ -33,8 +33,8 @@ Requirements for the v1.1 milestone. Each maps to roadmap phases.
 ### Customer Accounts
 
 - [x] **CUST-01**: Customer can create account with email/password (scoped to store)
-- [ ] **CUST-02**: Customer can log in and view their order history
-- [ ] **CUST-03**: Customer can update their profile (name, email, preferences)
+- [x] **CUST-02**: Customer can log in and view their order history
+- [x] **CUST-03**: Customer can update their profile (name, email, preferences)
 - [x] **CUST-04**: Auth hook extended to inject customer role and store_id into JWT
 - [x] **CUST-05**: Customer login/signup blocked on POS routes
 - [x] **CUST-06**: Customer can verify email and reset password
@@ -99,8 +99,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NOTIF-05 | Phase 9 | Complete |
 | NOTIF-06 | Phase 9 | Complete |
 | CUST-01 | Phase 10 | Complete |
-| CUST-02 | Phase 10 | Pending |
-| CUST-03 | Phase 10 | Pending |
+| CUST-02 | Phase 10 | Complete |
+| CUST-03 | Phase 10 | Complete |
 | CUST-04 | Phase 10 | Complete |
 | CUST-05 | Phase 10 | Complete |
 | CUST-06 | Phase 10 | Complete |

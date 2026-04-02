@@ -24,7 +24,7 @@
 - [ ] **Phase 7: Production Launch** — Store is live on real infrastructure with real products
 - [x] **Phase 8: Checkout Speed** — Barcode scanning and screen receipts at point of sale (completed 2026-04-02)
 - [x] **Phase 9: Notifications** — Automated emails and sound alert for new online orders (completed 2026-04-02)
-- [ ] **Phase 10: Customer Accounts** — Customers can create accounts and view order history
+- [x] **Phase 10: Customer Accounts** — Customers can create accounts and view order history (completed 2026-04-02)
 - [ ] **Phase 11: Partial Refunds** — Staff can issue partial refunds with full audit trail
 
 ## Phase Details
@@ -93,7 +93,7 @@ Plans:
 Plans:
 - [x] 10-01-PLAN.md — Database migration (customers table, auth hook, RLS policies, order-linking RPC) + middleware customer blocking
 - [x] 10-02-PLAN.md — Customer auth Server Actions (signup, signin, signout, verify, reset) + auth pages
-- [ ] 10-03-PLAN.md — StorefrontHeader integration, account pages (orders, profile), post-purchase prompt
+- [x] 10-03-PLAN.md — StorefrontHeader integration, account pages (orders, profile), post-purchase prompt
 **UI hint**: yes
 
 ### Phase 11: Partial Refunds
@@ -121,5 +121,5 @@ Plans:
 | 7. Production Launch | v1.1 | 1/3 | In Progress|  |
 | 8. Checkout Speed | v1.1 | 3/3 | Complete   | 2026-04-02 |
 | 9. Notifications | v1.1 | 4/4 | Complete   | 2026-04-02 |
-| 10. Customer Accounts | v1.1 | 2/3 | In Progress|  |
+| 10. Customer Accounts | v1.1 | 3/3 | Complete   | 2026-04-02 |
 | 11. Partial Refunds | v1.1 | 0/? | Not started | — |
