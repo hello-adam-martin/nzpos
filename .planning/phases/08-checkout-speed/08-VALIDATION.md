@@ -38,11 +38,13 @@ created: 2026-04-02
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 08-01-01 | 01 | 1 | SCAN-01 | unit | `npm test -- src/actions/products/lookupBarcode.test.ts` | ❌ W0 | ⬜ pending |
-| 08-01-02 | 01 | 1 | SCAN-01 | component | `npm test -- src/components/pos/BarcodeScannerSheet.test.tsx` | ❌ W0 | ⬜ pending |
-| 08-01-03 | 01 | 1 | SCAN-02 | unit | `npm test -- src/actions/products/lookupBarcode.test.ts` | ❌ W0 | ⬜ pending |
-| 08-02-01 | 02 | 1 | RCPT-01 | unit | `npm test -- src/lib/receipt.test.ts` | ❌ W0 | ⬜ pending |
-| 08-02-02 | 02 | 1 | RCPT-02 | unit | `npm test -- src/lib/receipt.test.ts` | ❌ W0 | ⬜ pending |
+| 08-01-01 | 01 | 1 | RCPT-02 | unit | `npm test -- src/lib/receipt.test.ts` | ❌ W0 | ⬜ pending |
+| 08-01-02 | 01 | 1 | RCPT-02 | type-check | `npx tsc --noEmit` | N/A | ⬜ pending |
+| 08-02-01 | 02 | 2 | SCAN-01 | unit | `npm test -- src/actions/products/lookupBarcode.test.ts` | ❌ W0 | ⬜ pending |
+| 08-02-02 | 02 | 2 | SCAN-01 | component | `npm test -- src/components/pos/BarcodeScannerSheet.test.tsx` | ❌ W0 | ⬜ pending |
+| 08-02-03 | 02 | 2 | SCAN-02 | type-check | `npx tsc --noEmit` | N/A | ⬜ pending |
+| 08-03-01 | 03 | 3 | RCPT-01 | type-check | `npx tsc --noEmit` | N/A | ⬜ pending |
+| 08-03-02 | 03 | 3 | RCPT-01 | type-check | `npx tsc --noEmit` | N/A | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -50,8 +52,8 @@ created: 2026-04-02
 
 ## Wave 0 Requirements
 
-- [ ] `src/actions/products/lookupBarcode.test.ts` — stubs for SCAN-01, SCAN-02
-- [ ] `src/lib/receipt.test.ts` — stubs for RCPT-01, RCPT-02
+- [ ] `src/lib/receipt.test.ts` — stubs for RCPT-02 (Plan 01, Task 1 TDD)
+- [ ] `src/actions/products/lookupBarcode.test.ts` — stubs for SCAN-01, SCAN-02 (Plan 02, Task 1 TDD)
 - [ ] `src/components/pos/BarcodeScannerSheet.test.tsx` — covers SCAN-01 rendering (mock Quagga2)
 
 *Existing infrastructure (Vitest + jsdom) covers framework needs.*
