@@ -23,6 +23,7 @@ export const CreateOrderSchema = z.object({
   staff_id: z.string().uuid().optional(),
   customer_email: z.string().email().optional(),
   notes: z.string().max(500).optional(),
+  receipt_data: z.record(z.string(), z.unknown()).optional(),
 })
 
 export const CreatePromoCodeSchema = z.object({

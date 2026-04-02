@@ -215,6 +215,7 @@ export type Database = {
           notes: string | null
           payment_method: string | null
           promo_id: string | null
+          receipt_data: Record<string, unknown> | null
           staff_id: string | null
           status: string
           store_id: string
@@ -237,6 +238,7 @@ export type Database = {
           notes?: string | null
           payment_method?: string | null
           promo_id?: string | null
+          receipt_data?: Record<string, unknown> | null
           staff_id?: string | null
           status: string
           store_id: string
@@ -259,6 +261,7 @@ export type Database = {
           notes?: string | null
           payment_method?: string | null
           promo_id?: string | null
+          receipt_data?: Record<string, unknown> | null
           staff_id?: string | null
           status?: string
           store_id?: string
@@ -482,24 +485,33 @@ export type Database = {
       }
       stores: {
         Row: {
+          address: string | null
           created_at: string
+          gst_number: string | null
           id: string
           name: string
           owner_auth_id: string
+          phone: string | null
           updated_at: string
         }
         Insert: {
+          address?: string | null
           created_at?: string
+          gst_number?: string | null
           id?: string
           name: string
           owner_auth_id: string
+          phone?: string | null
           updated_at?: string
         }
         Update: {
+          address?: string | null
           created_at?: string
+          gst_number?: string | null
           id?: string
           name?: string
           owner_auth_id?: string
+          phone?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -665,11 +677,13 @@ export type Database = {
       complete_pos_sale: {
         Args: {
           p_cash_tendered_cents?: number
+          p_customer_email?: string
           p_discount_cents: number
           p_gst_cents: number
           p_items?: Json
           p_notes?: string
           p_payment_method: string
+          p_receipt_data?: Record<string, unknown>
           p_staff_id: string
           p_store_id: string
           p_subtotal_cents: number
