@@ -134,7 +134,12 @@ Plans:
   3. A super admin JWT claim (`is_super_admin`) grants cross-tenant read access without bypassing field-level RLS
   4. An E2E test suite asserts cross-tenant isolation: attempting tenant A's operations with tenant B's session returns 403 or empty results
   5. The `store_plans` table and `stores.stripe_customer_id` column exist and are ready for billing data
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 12-01-PLAN.md — Schema migration (stores.slug, store_plans, branding, super_admins) + seed update + middleware admin client
+- [ ] 12-02-PLAN.md — Middleware rewrite for subdomain tenant resolution with in-memory TTL cache
+- [ ] 12-03-PLAN.md — RLS policy full rewrite (unified pattern) + super admin auth hook extension
+- [ ] 12-04-PLAN.md — Cross-tenant isolation test suite (Vitest 4 attack vectors + Playwright E2E) + type regeneration
 **UI hint**: no
 
 ### Phase 13: Merchant Self-Serve Signup
@@ -203,7 +208,7 @@ Plans:
 | 9. Notifications | v1.1 | 4/4 | Complete | 2026-04-02 |
 | 10. Customer Accounts | v1.1 | 3/3 | Complete | 2026-04-02 |
 | 11. Partial Refunds | v1.1 | 2/2 | Complete | 2026-04-02 |
-| 12. Multi-Tenant Infrastructure | v2.0 | 0/? | Not started | — |
+| 12. Multi-Tenant Infrastructure | v2.0 | 0/4 | Planned | — |
 | 13. Merchant Self-Serve Signup | v2.0 | 0/? | Not started | — |
 | 14. Store Setup Wizard + Marketing | v2.0 | 0/? | Not started | — |
 | 15. Stripe Billing + Feature Gating | v2.0 | 0/? | Not started | — |
