@@ -1,7 +1,8 @@
 'use client'
 
-import { useReducer, useState, useEffect } from 'react'
+import { useReducer, useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import { cartReducer, initialCartState, calcCartTotals, calcChangeDue } from '@/lib/cart'
 import { formatNZD } from '@/lib/money'
 import { completeSale } from '@/actions/orders/completeSale'
@@ -15,6 +16,12 @@ import { EftposConfirmScreen } from './EftposConfirmScreen'
 import { CashEntryScreen } from './CashEntryScreen'
 import { OutOfStockDialog } from './OutOfStockDialog'
 import { SaleSummaryScreen } from './SaleSummaryScreen'
+
+// Dynamically import BarcodeScannerSheet to prevent SSR issues (Quagga2 requires browser APIs)
+const BarcodeScannerSheet = dynamic(
+  () => import('./BarcodeScannerSheet').then((m) => ({ default: m.BarcodeScannerSheet })),
+  { ssr: false }
+)
 
 type ProductRow = Database['public']['Tables']['products']['Row']
 type CategoryRow = Database['public']['Tables']['categories']['Row']
@@ -44,6 +51,11 @@ export function POSClientShell({
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+
+  // Barcode scanner state
+  const [scannerOpen, setScannerOpen] = useState(false)
+  const scannerAudioCtxRef = useRef<AudioContext | null>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Discount sheet state
   const [discountTarget, setDiscountTarget] = useState<string | null>(null)
@@ -107,6 +119,26 @@ export function POSClientShell({
       (product.sku?.toLowerCase().includes(lowerSearch) ?? false)
     return matchesCategory && matchesSearch
   })
+
+  // ---------------------------------------------------------------------------
+  // Scanner open handler (creates AudioContext on user gesture for iOS beep)
+  // ---------------------------------------------------------------------------
+
+  function handleScanOpen() {
+    // Create AudioContext on user gesture so iOS allows beep playback
+    if (!scannerAudioCtxRef.current) {
+      try {
+        scannerAudioCtxRef.current = new (window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
+      } catch {
+        // AudioContext unavailable — scanner still works, just no beep
+      }
+    }
+    setScannerOpen(true)
+  }
+
+  // Scanner is only available during idle phase (not during payment flows)
+  const scannerAvailable = cart.phase === 'idle'
 
   // ---------------------------------------------------------------------------
   // Product add with out-of-stock check (D-12)
@@ -269,6 +301,8 @@ export function POSClientShell({
           storeName={storeName}
           staffName={staffName}
           onLogout={handleLogout}
+          onScanOpen={handleScanOpen}
+          scanDisabled={!scannerAvailable}
         />
         <CategoryFilterBar
           categories={categories}
@@ -283,6 +317,7 @@ export function POSClientShell({
             staffRole={staffRole}
             search={search}
             onSearchChange={setSearch}
+            searchInputRef={searchInputRef}
           />
         </div>
       </div>
@@ -296,6 +331,24 @@ export function POSClientShell({
       />
 
       {/* ── Overlays ──────────────────────────────────────────────── */}
+
+      {/* Barcode scanner overlay */}
+      {scannerOpen && (
+        <BarcodeScannerSheet
+          audioContext={scannerAudioCtxRef.current}
+          onProductFound={(product) => {
+            handleAddToCart(product)
+            // Scanner stays open — batch mode per D-02
+          }}
+          onClose={(hadError) => {
+            setScannerOpen(false)
+            if (hadError) {
+              // Focus search bar for manual lookup per D-07
+              setTimeout(() => searchInputRef.current?.focus(), 100)
+            }
+          }}
+        />
+      )}
 
       {/* Sale error banner (shown briefly after void) */}
       {saleError && cart.phase === 'sale_void' && (

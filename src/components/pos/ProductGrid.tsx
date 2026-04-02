@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { ProductCard } from './ProductCard'
 import type { CartState } from '@/lib/cart'
 import type { Database } from '@/types/database'
@@ -11,6 +12,7 @@ type ProductGridProps = {
   staffRole: 'owner' | 'staff'
   search: string
   onSearchChange: (value: string) => void
+  searchInputRef?: React.RefObject<HTMLInputElement | null>
 }
 
 export function ProductGrid({
@@ -20,7 +22,11 @@ export function ProductGrid({
   staffRole,
   search,
   onSearchChange,
+  searchInputRef,
 }: ProductGridProps) {
+  // Use the forwarded ref if provided, otherwise create a local one (unused)
+  const localRef = useRef<HTMLInputElement>(null)
+  const resolvedSearchRef = searchInputRef ?? localRef
   function handleSkuKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
       const skuInput = e.currentTarget.value.trim()
@@ -40,6 +46,7 @@ export function ProductGrid({
       {/* Search + SKU quick-entry */}
       <div className="flex gap-2 px-4 pt-3 pb-2 shrink-0">
         <input
+          ref={resolvedSearchRef}
           type="search"
           inputMode="search"
           value={search}

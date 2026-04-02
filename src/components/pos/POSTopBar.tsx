@@ -5,15 +5,18 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { CashSessionBanner } from '@/components/admin/cash-up/CashSessionBanner'
 import { CashUpModal } from '@/components/admin/cash-up/CashUpModal'
+import { BarcodeScannerButton } from './BarcodeScannerButton'
 
 type POSTopBarProps = {
   storeName: string
   staffName: string
   onLogout: () => void
   activeSession?: { id: string; opened_at: string; opening_float_cents: number } | null
+  onScanOpen?: () => void
+  scanDisabled?: boolean
 }
 
-export function POSTopBar({ storeName, staffName, onLogout, activeSession }: POSTopBarProps) {
+export function POSTopBar({ storeName, staffName, onLogout, activeSession, onScanOpen, scanDisabled = false }: POSTopBarProps) {
   const pathname = usePathname()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -37,6 +40,9 @@ export function POSTopBar({ storeName, staffName, onLogout, activeSession }: POS
               Pickups
             </Link>
           </nav>
+          {onScanOpen && (
+            <BarcodeScannerButton onScanOpen={onScanOpen} disabled={scanDisabled} />
+          )}
         </div>
 
         {/* Cash session controls */}
