@@ -23,11 +23,11 @@ Requirements for the v1.1 milestone. Each maps to roadmap phases.
 
 ### Notifications
 
-- [ ] **NOTIF-01**: Online customer receives email receipt within 60s of Stripe payment
-- [ ] **NOTIF-02**: POS customer receives email receipt if email provided at checkout
-- [ ] **NOTIF-03**: Customer receives pickup-ready email when order status changes to "ready"
-- [ ] **NOTIF-04**: Founder receives daily summary email (sales count, revenue split, top products, stock warnings)
-- [ ] **NOTIF-05**: Founder receives low stock email when product drops below reorder_threshold (batched daily)
+- [x] **NOTIF-01**: Online customer receives email receipt within 60s of Stripe payment
+- [x] **NOTIF-02**: POS customer receives email receipt if email provided at checkout
+- [x] **NOTIF-03**: Customer receives pickup-ready email when order status changes to "ready"
+- [x] **NOTIF-04**: Founder receives daily summary email (sales count, revenue split, top products, stock warnings)
+- [x] **NOTIF-05**: Founder receives low stock email when product drops below reorder_threshold (batched daily)
 - [ ] **NOTIF-06**: iPad plays sound when new online order arrives (within 30s)
 
 ### Customer Accounts
@@ -92,11 +92,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCAN-02 | Phase 8 | Complete |
 | RCPT-01 | Phase 8 | Complete |
 | RCPT-02 | Phase 8 | Complete |
-| NOTIF-01 | Phase 9 | Pending |
-| NOTIF-02 | Phase 9 | Pending |
-| NOTIF-03 | Phase 9 | Pending |
-| NOTIF-04 | Phase 9 | Pending |
-| NOTIF-05 | Phase 9 | Pending |
+| NOTIF-01 | Phase 9 | Complete |
+| NOTIF-02 | Phase 9 | Complete |
+| NOTIF-03 | Phase 9 | Complete |
+| NOTIF-04 | Phase 9 | Complete |
+| NOTIF-05 | Phase 9 | Complete |
 | NOTIF-06 | Phase 9 | Pending |
 | CUST-01 | Phase 10 | Pending |
 | CUST-02 | Phase 10 | Pending |
