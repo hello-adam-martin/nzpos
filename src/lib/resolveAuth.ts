@@ -1,5 +1,5 @@
 import 'server-only'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { jwtVerify } from 'jose'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 
@@ -12,7 +12,14 @@ export async function resolveAuth(): Promise<{ store_id: string; staff_id: strin
     data: { user },
   } = await supabase.auth.getUser()
   if (user?.app_metadata?.store_id) {
-    return { store_id: user.app_metadata.store_id, staff_id: user.id }
+    // Use middleware-injected x-store-id if available (tenant context from subdomain),
+    // falling back to JWT store_id for backward compatibility
+    const headerStore = await headers()
+    const middlewareStoreId = headerStore.get('x-store-id')
+    return {
+      store_id: middlewareStoreId ?? user.app_metadata.store_id,
+      staff_id: user.id,
+    }
   }
   // Fall back to staff PIN JWT
   return resolveStaffAuth()
@@ -26,7 +33,14 @@ export async function resolveStaffAuth(): Promise<{ store_id: string; staff_id: 
   try {
     const { payload } = await jwtVerify(token, secret)
     const p = payload as { store_id: string; staff_id: string; role: string }
-    return { store_id: p.store_id, staff_id: p.staff_id, role: p.role }
+    // Use middleware-injected x-store-id if available, falling back to JWT store_id
+    const headerStore = await headers()
+    const middlewareStoreId = headerStore.get('x-store-id')
+    return {
+      store_id: middlewareStoreId ?? p.store_id,
+      staff_id: p.staff_id,
+      role: p.role,
+    }
   } catch {
     return null
   }
