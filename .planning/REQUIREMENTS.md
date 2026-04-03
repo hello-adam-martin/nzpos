@@ -17,9 +17,9 @@ Requirements for the v2.0 SaaS Platform milestone. Each maps to roadmap phases.
 
 ### Merchant Signup
 
-- [ ] **SIGNUP-01**: Merchant can sign up with email and password and get a provisioned store automatically
+- [x] **SIGNUP-01**: Merchant can sign up with email and password and get a provisioned store automatically
 - [x] **SIGNUP-02**: Store provisioning is atomic (auth user + store + staff + store_plans in one transaction)
-- [ ] **SIGNUP-03**: Merchant must verify email before accessing the dashboard
+- [x] **SIGNUP-03**: Merchant must verify email before accessing the dashboard
 - [x] **SIGNUP-04**: Reserved slugs (admin, www, api, app, etc.) are blocked during signup
 - [x] **SIGNUP-05**: Signup is rate-limited (1 store per verified email, throttled requests)
 
@@ -108,9 +108,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TENANT-03 | Phase 12 | Complete |
 | TENANT-04 | Phase 12 | Complete |
 | TENANT-05 | Phase 12 | Complete |
-| SIGNUP-01 | Phase 13 | Pending |
+| SIGNUP-01 | Phase 13 | Complete |
 | SIGNUP-02 | Phase 13 | Complete |
-| SIGNUP-03 | Phase 13 | Pending |
+| SIGNUP-03 | Phase 13 | Complete |
 | SIGNUP-04 | Phase 13 | Complete |
 | SIGNUP-05 | Phase 13 | Complete |
 | SETUP-01 | Phase 14 | Pending |

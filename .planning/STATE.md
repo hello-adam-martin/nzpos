@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production Launch + Feature Waves
 status: executing
-stopped_at: Completed 13-01-PLAN.md
-last_updated: "2026-04-03T00:51:10.877Z"
+stopped_at: Completed 13-02-PLAN.md
+last_updated: "2026-04-03T00:58:32.999Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 10
   completed_phases: 6
   total_plans: 22
-  completed_plans: 20
+  completed_plans: 21
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 13 (merchant-self-serve-signup) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-03
 
@@ -62,6 +62,9 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 12-multi-tenant-infrastructure]: Store B product created as is_active=false in RLS tests to bypass products_public_read and test tenant_access RLS isolation
 - [Phase 13-merchant-self-serve-signup]: provision_store REVOKE from authenticated/anon/public — service_role only to prevent client-side invocation
 - [Phase 13-merchant-self-serve-signup]: enable_confirmations = true in supabase/config.toml — local dev must use Inbucket for email verification
+- [Phase 13]: ownerSignup does not call redirect() — client page handles navigation after success (keeps Server Action testable)
+- [Phase 13]: vi.hoisted() required for mock functions in vi.mock() factories — avoids TDZ ReferenceError in Vitest
+- [Phase 13]: Auth callback /api/auth/callback on root domain redirects to {slug}.{domain}/admin/dashboard after PKCE exchange
 
 ### Blockers/Concerns
 
@@ -71,6 +74,6 @@ Progress: [░░░░░░░░░░] 0%
 
 ## Session Continuity
 
-Last session: 2026-04-03T00:51:10.874Z
-Stopped at: Completed 13-01-PLAN.md
+Last session: 2026-04-03T00:58:32.997Z
+Stopped at: Completed 13-02-PLAN.md
 Resume file: None
