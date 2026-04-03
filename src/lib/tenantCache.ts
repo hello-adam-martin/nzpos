@@ -22,3 +22,7 @@ export function getCachedStoreId(slug: string): string | null {
 export function setCachedStoreId(slug: string, store_id: string): void {
   cache.set(slug, { store_id, expires: Date.now() + TTL_MS })
 }
+
+export function invalidateCachedStoreId(slug: string): void {
+  cache.delete(slug)
+}
