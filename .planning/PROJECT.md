@@ -2,34 +2,17 @@
 
 ## What This Is
 
-A custom retail POS system for NZ small businesses. Runs on an iPad tablet for in-store checkout, has a public online storefront for customers, and an admin dashboard for the owner. Built specifically for the NZ market (GST, EFTPOS, NZD). The founder's supplies store is the first customer.
+A multi-tenant SaaS POS + online store platform for NZ small businesses. Any merchant can sign up, get a working POS and storefront on a subdomain, and optionally subscribe to paid add-ons (Xero, email notifications). Runs on iPad for in-store checkout, public storefront for customers, admin dashboard for owners, and a super admin panel for platform operations. Built for the NZ market (GST, EFTPOS, NZD).
 
 ## Current State
 
-**Shipped:** v1.0 MVP (2026-04-02), v1.1 feature waves (2026-04-02), v2.0 Phases 12-15 (2026-04-03)
+**Shipped:** v1.0 MVP (2026-04-02), v2.0 SaaS Platform (2026-04-03)
 
-The complete v1 is built and tested: 191 source files, 17,423 LOC TypeScript, 502 tests passing. All 6 phases shipped across 33 plans. v1.1 added barcode scanning, screen receipts, email notifications, customer accounts, and partial refunds (Phases 8-11 complete). Phase 7 (production deploy) partially complete — DEPLOY-02/03/04 still pending real infrastructure.
+336 source files, 36,329 LOC TypeScript, 365+ tests passing. 16 phases shipped across 66 plans (33 v1.0, 33 v2.0).
 
-Phase 12 complete — multi-tenant infrastructure in place: wildcard subdomain routing via middleware, tenant cache, unified RLS policies for 14 tables, super admin auth hook, and comprehensive isolation test suite. Phase 13 complete — merchant self-serve signup with email verification and store provisioning. Phase 14 complete — store setup wizard and marketing landing page. Phase 15 complete — Stripe billing with per-add-on subscriptions (Xero, email, custom domain), feature gating via JWT claims + DB fallback, billing webhook, and admin billing page. Phase 16 complete — super admin panel with tenant list, tenant detail, suspend/unsuspend, manual add-on overrides, audit trail, middleware routing for super admin routes, and branded suspension page.
+**v2.0 delivered:** Multi-tenant infrastructure with wildcard subdomain routing and RLS isolation. Self-serve merchant signup with email verification. Store setup wizard and marketing landing page. Stripe billing with per-add-on subscriptions and feature gating. Super admin panel with tenant management, suspension enforcement, and audit trail. Barcode scanning, screen receipts, email notifications, customer accounts, and partial refunds.
 
-**Known gaps:** Xero integration requires live OAuth credentials for final UAT. Customer accounts require live Supabase for UAT. Production deploy (Supabase, Stripe live keys, catalog import) not yet completed. All automated tests pass.
-
-## Current Milestone: v2.0 SaaS Platform
-
-**Goal:** Transform NZPOS from a single-store app into a multi-tenant SaaS platform where any NZ small business can sign up for free and optionally pay for premium add-ons.
-
-**Target features:**
-- Multi-tenant infrastructure (tenant provisioning, store isolation, wildcard subdomain routing, tenant resolution middleware)
-- Merchant self-serve signup (sign up, create store, get a working POS + storefront immediately)
-- Store setup wizard (logo, categories, initial products, storefront branding)
-- Feature gating + Stripe subscriptions (free core POS/storefront/admin, paid add-ons)
-- Custom domains (paid add-on, merchants bring their own domain)
-- Marketing landing page (public site explaining the product, signup CTA)
-- Super admin panel (manage all tenants, monitor usage, handle support)
-
-**Pricing model:** Free core (POS checkout, storefront, basic admin/reports, customer accounts, partial refunds). Paid add-ons via Stripe subscriptions: Xero integration, email notifications, custom domains.
-
-**Approach:** SaaS transformation. Multi-tenant first, then self-serve onboarding, then billing/gating, then public launch.
+**Known gaps:** Production deploy (Supabase prod, Stripe live keys, catalog import) not yet completed — DEPLOY-02/03/04 pending. Xero/customer accounts require live Supabase for final UAT. MKTG-01/02 built but not formally checked off. Human UAT pending for phases 11 and 16.
 
 ## Core Value
 
@@ -39,47 +22,64 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 
 ### Validated
 
-- [x] GST handling (15%, tax-inclusive display, per-line rounding on discounted items) — v1.0
-- [x] User auth (owner email/password, staff PIN login with lockout) — v1.0
-- [x] Multi-tenant data model (store_id on all tables for future expansion) — v1.0
-- [x] Product catalog with categories, SKUs, images, and stock tracking — v1.0
-- [x] POS checkout on iPad (product grid, cart, discounts, EFTPOS/cash recording) — v1.0
-- [x] Online storefront with Stripe checkout and promo codes — v1.0
-- [x] Shared inventory with atomic stock decrement (no overselling) — v1.0
-- [x] End-of-day cash-up / reconciliation report — v1.0
-- [x] Xero integration (OAuth, daily sales sync with GST breakdown) — v1.0
-- [x] CSV product import — v1.0
-- [x] Refund handling (full refund, mark order as refunded) — v1.0
-- [x] Low stock alerts — v1.0
-- [x] Click-and-collect order workflow (pending_pickup → ready → collected) — v1.0
-- [x] Basic reporting (daily sales, top products, stock levels) — v1.0
-- [x] EFTPOS confirmation step (terminal approved? yes/no before completing sale) — v1.0
+- ✓ GST handling (15%, tax-inclusive display, per-line rounding on discounted items) — v1.0
+- ✓ User auth (owner email/password, staff PIN login with lockout) — v1.0
+- ✓ Multi-tenant data model (store_id on all tables for future expansion) — v1.0
+- ✓ Product catalog with categories, SKUs, images, and stock tracking — v1.0
+- ✓ POS checkout on iPad (product grid, cart, discounts, EFTPOS/cash recording) — v1.0
+- ✓ Online storefront with Stripe checkout and promo codes — v1.0
+- ✓ Shared inventory with atomic stock decrement (no overselling) — v1.0
+- ✓ End-of-day cash-up / reconciliation report — v1.0
+- ✓ Xero integration (OAuth, daily sales sync with GST breakdown) — v1.0
+- ✓ CSV product import — v1.0
+- ✓ Refund handling (full refund, mark order as refunded) — v1.0
+- ✓ Low stock alerts — v1.0
+- ✓ Click-and-collect order workflow (pending_pickup → ready → collected) — v1.0
+- ✓ Basic reporting (daily sales, top products, stock levels) — v1.0
+- ✓ EFTPOS confirmation step (terminal approved? yes/no before completing sale) — v1.0
+- ✓ Barcode scanning (EAN-13/UPC-A, camera overlay) — v2.0
+- ✓ Screen receipts (store info, line items, GST breakdown) — v2.0
+- ✓ Email notifications (order receipt, pickup-ready, daily summary, new order alert) — v2.0
+- ✓ Customer accounts (signup, login, order history, profile) — v2.0
+- ✓ Partial refunds (per-item, stock restore, Stripe partial refund, Xero credit note) — v2.0
+- ✓ Multi-tenant infrastructure (wildcard subdomains, tenant cache, RLS isolation) — v2.0
+- ✓ Merchant self-serve signup (email verification, atomic store provisioning) — v2.0
+- ✓ Store setup wizard (3-step onboarding, logo upload, checklist) — v2.0
+- ✓ Stripe billing (per-add-on subscriptions, feature gating, billing portal) — v2.0
+- ✓ Super admin panel (tenant list, detail, suspend/unsuspend, add-on overrides, audit trail) — v2.0
 
 ### Active
 
-See `.planning/REQUIREMENTS.md` for v2.0 requirements with REQ-IDs.
+(No active requirements — next milestone not yet defined)
 
 ### Out of Scope
 
-- Offline mode — significant complexity, requires local-first architecture (v2)
-- Multi-store management UI — store_id in schema but no UI for store switching (v2)
-- Delivery/shipping — click-and-collect only for v1
+- Offline mode — requires local-first architecture rewrite (v3)
+- Multi-store per merchant — one store per signup for now, multi-store is v3
+- Delivery/shipping — click-and-collect only
 - Loyalty program — not needed for supplies store
 - Lay-by management — not needed for supplies store
 - Staff rostering — separate concern, use existing tools
-- Advanced analytics / charts — basic reporting is sufficient for v1
-- Integrated EFTPOS terminal — standalone terminal with manual entry, Windcave integration deferred (TODOS.md)
-- Physical receipt printer integration — screen receipt in v1.1, printer when hardware purchased
-- Repeat order button — deferred until customer accounts have real usage data
-- Supabase Realtime — polling sufficient for single terminal
+- Advanced analytics / charts — basic reporting sufficient
+- Integrated EFTPOS terminal — standalone terminal with manual entry, Windcave integration deferred
+- Physical receipt printer integration — screen receipt shipped, printer when hardware purchased
+- Custom domains — deferred to v2.1, infrastructure ready but UI/DNS verification not built
+- White-label / remove branding — no demand signal
+- Multi-plan tiers (Starter/Pro/Enterprise) — per-add-on billing is simpler
+- Supabase Realtime — polling sufficient for single terminal per store
+- Database-per-tenant — RLS row-level isolation scales to thousands of tenants
 
 ## Context
 
 - Founder runs a short-term property management company and is launching a supplies store
 - Walk-in retail is the primary business, property management supply is secondary
-- NZ POS market has established players (Square, Lightspeed/Vend, POSbiz) but founder chose custom build for full ownership and potential SaaS expansion
+- NZ POS market has established players (Square, Lightspeed/Vend, POSbiz) but founder chose custom build for full ownership and SaaS expansion
 - Design system shipped: deep navy (#1E293B) + amber (#E67E22), Satoshi + DM Sans typography (see DESIGN.md)
-- v1.0 shipped 2026-04-02 with 502 tests passing, 211 commits, 17,423 LOC TypeScript
+- v1.0 shipped 2026-04-02 with 502 tests, 211 commits, 17,423 LOC TypeScript
+- v2.0 shipped 2026-04-03 with 365+ tests, 336 source files, 36,329 LOC TypeScript
+- Platform is now multi-tenant SaaS — any NZ business can sign up at the root domain
+- Pricing: free core POS/storefront/admin, paid add-ons via Stripe (Xero, email notifications)
+- Super admin panel operational for platform management
 
 ## Constraints
 
@@ -109,6 +109,12 @@ See `.planning/REQUIREMENTS.md` for v2.0 requirements with REQ-IDs.
 | Staff PIN via jose JWTs (not Supabase Auth) | Independent from owner auth. 8h sessions. Fast shift changes. | ✓ Good — clean separation |
 | Xero tokens in Supabase Vault | SECURITY DEFINER RPCs, not plain columns. service_role only access. | ✓ Good — tokens never in application memory |
 | Tailwind v4 CSS-native config | No tailwind.config.js. @theme block in globals.css. | ⚠️ Revisit — spacing tokens caused v4 bugs |
+| Per-add-on billing (not plan tiers) | Avoids upgrade cliffs, NZ market expects no-card signup | ✓ Good — clean Stripe integration |
+| Row-level tenant isolation via store_id + RLS | Scales to thousands of tenants, no schema-per-tenant complexity | ✓ Good — zero isolation failures in testing |
+| Custom domains deferred to v2.1 | Too complex for initial SaaS launch, lowest demand | ✓ Good — reduced scope without blocking launch |
+| provision_store as SECURITY DEFINER RPC | Atomic tenant creation, service_role only, no client-side invocation | ✓ Good — clean separation |
+| requireFeature() JWT/DB dual-path | JWT fast path for reads, DB fallback for critical mutations | ✓ Good — low latency with correctness guarantee |
+| Super admin manual override booleans | has_xero_manual_override distinguishes admin comp from Stripe-paid | ✓ Good — clean billing separation |
 
 ## Evolution
 
@@ -128,4 +134,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-03 after Phase 16 super-admin-panel complete*
+*Last updated: 2026-04-03 after v2.0 milestone complete*

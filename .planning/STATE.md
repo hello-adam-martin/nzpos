@@ -1,10 +1,10 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Production Launch + Feature Waves
-status: executing
-stopped_at: Completed 16-super-admin-panel 16-03-PLAN.md
-last_updated: "2026-04-03T07:29:25.978Z"
+milestone: v2.0
+milestone_name: SaaS Platform
+status: milestone_complete
+stopped_at: v2.0 milestone archived
+last_updated: "2026-04-03T08:30:01.958Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 10
@@ -21,13 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 16 — super-admin-panel
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 16
-Plan: Not started
-Status: Ready to execute
+Milestone: v2.0 complete
+Status: Between milestones
 Last activity: 2026-04-03
 
 Progress: [██████████] 100%
