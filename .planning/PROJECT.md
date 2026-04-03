@@ -6,11 +6,11 @@ A custom retail POS system for NZ small businesses. Runs on an iPad tablet for i
 
 ## Current State
 
-**Shipped:** v1.0 MVP (2026-04-02), v1.1 feature waves (2026-04-02), v2.0 Phase 12 multi-tenant infrastructure (2026-04-03)
+**Shipped:** v1.0 MVP (2026-04-02), v1.1 feature waves (2026-04-02), v2.0 Phases 12-15 (2026-04-03)
 
 The complete v1 is built and tested: 191 source files, 17,423 LOC TypeScript, 502 tests passing. All 6 phases shipped across 33 plans. v1.1 added barcode scanning, screen receipts, email notifications, customer accounts, and partial refunds (Phases 8-11 complete). Phase 7 (production deploy) partially complete — DEPLOY-02/03/04 still pending real infrastructure.
 
-Phase 12 complete — multi-tenant infrastructure in place: wildcard subdomain routing via middleware, tenant cache, unified RLS policies for 14 tables, super admin auth hook, and comprehensive isolation test suite (10 Vitest + 7 Playwright E2E tests covering all 4 D-16 attack vectors).
+Phase 12 complete — multi-tenant infrastructure in place: wildcard subdomain routing via middleware, tenant cache, unified RLS policies for 14 tables, super admin auth hook, and comprehensive isolation test suite. Phase 13 complete — merchant self-serve signup with email verification and store provisioning. Phase 14 complete — store setup wizard and marketing landing page. Phase 15 complete — Stripe billing with per-add-on subscriptions (Xero, email, custom domain), feature gating via JWT claims + DB fallback, billing webhook, and admin billing page.
 
 **Known gaps:** Xero integration requires live OAuth credentials for final UAT. Customer accounts require live Supabase for UAT. Production deploy (Supabase, Stripe live keys, catalog import) not yet completed. All automated tests pass.
 
@@ -128,4 +128,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-03 after Phase 12 multi-tenant infrastructure complete*
+*Last updated: 2026-04-03 after Phase 15 stripe-billing-feature-gating complete*
