@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production Launch + Feature Waves
-status: verifying
-stopped_at: Phase 16 UI-SPEC approved
-last_updated: "2026-04-03T06:32:51.063Z"
+status: executing
+stopped_at: Completed 16-super-admin-panel 16-01-PLAN.md
+last_updated: "2026-04-03T07:02:10.361Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 10
   completed_phases: 9
-  total_plans: 29
-  completed_plans: 29
+  total_plans: 33
+  completed_plans: 30
   percent: 100
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 15 — stripe-billing-feature-gating
+**Current focus:** Phase 16 — super-admin-panel
 
 ## Current Position
 
-Phase: 16
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 16 (super-admin-panel) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
 Last activity: 2026-04-03
 
 Progress: [██████████] 100%
@@ -83,6 +83,9 @@ Progress: [██████████] 100%
 - [Phase 15]: integrations page uses JWT fast path for hasXero — no DB round-trip for read-only page
 - [Phase 15]: Admin sidebar gains Settings link alongside Billing — Settings was absent from navLinks
 - [Phase 15-stripe-billing-feature-gating]: Human verification approved for billing page UI — add-on cards, billing portal section, and sidebar navigation confirmed correct
+- [Phase 16-super-admin-panel]: Zod v4 UUID validation requires RFC 4122-compliant UUIDs in tests — version bits 1-8, variant bits 89ab; zeroed fake UUIDs rejected
+- [Phase 16-super-admin-panel]: server-only mock vi.mock('server-only', () => ({})) required in all Server Action Vitest tests — established pattern from Phase 15 billing tests
+- [Phase 16-super-admin-panel]: Super admin manual override pattern: has_xero_manual_override boolean distinguishes admin comp (true) from Stripe-paid (false); deactivation blocks on Stripe-managed add-ons
 
 ### Blockers/Concerns
 
@@ -92,6 +95,6 @@ Progress: [██████████] 100%
 
 ## Session Continuity
 
-Last session: 2026-04-03T06:32:51.060Z
-Stopped at: Phase 16 UI-SPEC approved
-Resume file: .planning/phases/16-super-admin-panel/16-UI-SPEC.md
+Last session: 2026-04-03T07:02:10.358Z
+Stopped at: Completed 16-super-admin-panel 16-01-PLAN.md
+Resume file: None

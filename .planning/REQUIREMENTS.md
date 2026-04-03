@@ -45,10 +45,10 @@ Requirements for the v2.0 SaaS Platform milestone. Each maps to roadmap phases.
 
 ### Super Admin
 
-- [ ] **SADMIN-01**: Super admin can view a paginated, searchable list of all tenants
+- [x] **SADMIN-01**: Super admin can view a paginated, searchable list of all tenants
 - [ ] **SADMIN-02**: Super admin can view tenant detail (plan, subscription status, created date, last active)
-- [ ] **SADMIN-03**: Super admin can suspend and unsuspend a tenant with 30-day recovery window
-- [ ] **SADMIN-04**: Super admin can manually override a tenant's plan (comp free add-ons)
+- [x] **SADMIN-03**: Super admin can suspend and unsuspend a tenant with 30-day recovery window
+- [x] **SADMIN-04**: Super admin can manually override a tenant's plan (comp free add-ons)
 
 ## Future Requirements
 
@@ -124,10 +124,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BILL-04 | Phase 15 | Complete |
 | BILL-05 | Phase 15 | Complete |
 | BILL-06 | Phase 15 | Complete |
-| SADMIN-01 | Phase 16 | Pending |
+| SADMIN-01 | Phase 16 | Complete |
 | SADMIN-02 | Phase 16 | Pending |
-| SADMIN-03 | Phase 16 | Pending |
-| SADMIN-04 | Phase 16 | Pending |
+| SADMIN-03 | Phase 16 | Complete |
+| SADMIN-04 | Phase 16 | Complete |
 
 **Coverage:**
 - v2.0 requirements: 25 total

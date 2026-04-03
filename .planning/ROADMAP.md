@@ -206,7 +206,7 @@ Plans:
   5. A super admin can manually activate a paid add-on for a tenant without requiring a Stripe payment
 **Plans**: 4 plans
 Plans:
-- [ ] 16-01-PLAN.md — Migration + Server Actions (suspend, unsuspend, activate, deactivate add-on)
+- [x] 16-01-PLAN.md — Migration + Server Actions (suspend, unsuspend, activate, deactivate add-on)
 - [ ] 16-02-PLAN.md — Middleware extension for super admin routes + suspension page routing
 - [ ] 16-03-PLAN.md — Super admin layout, sidebar, tenant list, and tenant detail UI
 - [ ] 16-04-PLAN.md — Human verification of complete super admin panel
@@ -231,4 +231,4 @@ Plans:
 | 13. Merchant Self-Serve Signup | v2.0 | 3/3 | Complete    | 2026-04-03 |
 | 14. Store Setup Wizard + Marketing | v2.0 | 3/3 | Complete   | 2026-04-03 |
 | 15. Stripe Billing + Feature Gating | v2.0 | 4/4 | Complete    | 2026-04-03 |
-| 16. Super Admin Panel | v2.0 | 0/4 | Not started | — |
+| 16. Super Admin Panel | v2.0 | 1/4 | In Progress|  |
