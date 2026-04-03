@@ -26,7 +26,14 @@ async function seed() {
   // 2. Create store with deterministic ID
   const { data: store } = await supabase
     .from('stores')
-    .insert({ id: DEV_STORE_ID, name: 'Test Supplies Store', slug: 'demo', owner_auth_id: owner.user.id })
+    .insert({
+      id: DEV_STORE_ID,
+      name: 'Test Supplies Store',
+      slug: 'demo',
+      owner_auth_id: owner.user.id,
+      setup_wizard_dismissed: true,
+      setup_completed_steps: 7,
+    })
     .select('id')
     .single()
   if (!store) throw new Error('Failed to create store')
