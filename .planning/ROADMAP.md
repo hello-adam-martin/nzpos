@@ -37,7 +37,7 @@
 - [x] **Phase 13: Merchant Self-Serve Signup** — Any NZ business can sign up and get a working POS + storefront immediately (completed 2026-04-03)
 - [x] **Phase 14: Store Setup Wizard + Marketing** — Merchants onboard in under 5 minutes and a public landing page drives signups (completed 2026-04-03)
 - [x] **Phase 15: Stripe Billing + Feature Gating** — Paid add-ons are purchasable, enforced server-side, and self-manageable (completed 2026-04-03)
-- [ ] **Phase 16: Super Admin Panel** — Platform operator can view, manage, and support all tenants
+- [x] **Phase 16: Super Admin Panel** — Platform operator can view, manage, and support all tenants (completed 2026-04-03)
 
 ## Phase Details
 
@@ -231,4 +231,4 @@ Plans:
 | 13. Merchant Self-Serve Signup | v2.0 | 3/3 | Complete    | 2026-04-03 |
 | 14. Store Setup Wizard + Marketing | v2.0 | 3/3 | Complete   | 2026-04-03 |
 | 15. Stripe Billing + Feature Gating | v2.0 | 4/4 | Complete    | 2026-04-03 |
-| 16. Super Admin Panel | v2.0 | 3/4 | In Progress|  |
+| 16. Super Admin Panel | v2.0 | 3/4 | Complete    | 2026-04-03 |
