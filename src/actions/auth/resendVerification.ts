@@ -15,7 +15,7 @@ export async function resendVerification(formData: FormData) {
     type: 'signup',
     email: parsed.data.email,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/account/callback`,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback`,
     },
   })
 
