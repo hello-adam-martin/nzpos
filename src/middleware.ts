@@ -19,6 +19,25 @@ export async function middleware(request: NextRequest) {
   const rootDomain = process.env.ROOT_DOMAIN ?? 'lvh.me:3000'
   const isRoot = host === rootDomain || host === `www.${rootDomain}` || host.startsWith('localhost') || host.startsWith('127.0.0.1')
 
+  // 2.5. Super admin routes on root domain — auth check + pass through (per D-01, D-02)
+  if (isRoot && pathname.startsWith('/super-admin')) {
+    const { supabase, response } = await createSupabaseMiddlewareClient(request)
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      const loginUrl = new URL('/login', request.url)
+      loginUrl.searchParams.set('redirect', pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+
+    const isSuperAdmin = user.app_metadata?.is_super_admin === true
+    if (!isSuperAdmin) {
+      return NextResponse.redirect(new URL('/unauthorized', request.url))
+    }
+
+    return response
+  }
+
   // 3. Root domain — marketing site (per D-05). Pass through with session refresh.
   if (isRoot) {
     const { response } = await createSupabaseMiddlewareClient(request)
@@ -32,18 +51,31 @@ export async function middleware(request: NextRequest) {
 
   if (cached) {
     storeId = cached
+    // Verify store is still active even when cached (suspension enforcement)
+    const adminClient = createMiddlewareAdminClient()
+    const { data: activeCheck } = await adminClient
+      .from('stores')
+      .select('is_active')
+      .eq('id', storeId)
+      .single()
+    if (activeCheck && !activeCheck.is_active) {
+      return NextResponse.rewrite(new URL('/suspended', request.url))
+    }
   } else {
     const admin = createMiddlewareAdminClient()
     const { data } = await admin
       .from('stores')
-      .select('id')
+      .select('id, is_active')
       .eq('slug', slug)
-      .eq('is_active', true)
       .single()
 
     if (!data) {
-      // Unknown or inactive subdomain — 404 (per D-03)
+      // Unknown subdomain — 404 (per D-03)
       return NextResponse.rewrite(new URL('/not-found', request.url))
+    }
+    if (!data.is_active) {
+      // Suspended store — show branded suspension page (per D-09)
+      return NextResponse.rewrite(new URL('/suspended', request.url))
     }
     storeId = data.id
     setCachedStoreId(slug, storeId)
