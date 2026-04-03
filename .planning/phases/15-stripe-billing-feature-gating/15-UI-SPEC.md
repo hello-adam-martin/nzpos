@@ -55,9 +55,11 @@ Source: DESIGN.md spacing scale + confirmed in globals.css `:root` custom proper
 | Role | Size | Weight | Line Height | Font | Usage |
 |------|------|--------|-------------|------|-------|
 | Body | 16px (base) | 400 (regular) | 1.5 | DM Sans | Card descriptions, feature benefit text |
-| Label | 14px (sm) | 500 (medium) | 1.4 | DM Sans | Badge text, form labels, add-on price display |
+| Label | 14px (sm) | 600 (semibold) | 1.4 | DM Sans | Badge text, form labels, add-on price display |
 | Heading (section) | 18px (lg) | 600 (semibold) | 1.3 | DM Sans | Card section headings (matches `sectionHeadingClass` pattern) |
-| Heading (page) | 24px (2xl) | 700 (bold) | 1.2 | Satoshi | Page title "Billing" (matches `font-display font-bold text-2xl`) |
+| Heading (page) | 24px (2xl) | 600 (semibold) | 1.2 | Satoshi | Page title "Billing" (`font-display font-semibold text-2xl`) |
+
+Two weights only: 400 (regular) for body/muted text, 600 (semibold) for all headings and labels.
 
 Source: DESIGN.md typography scale + confirmed in integrations/page.tsx and settings/page.tsx heading patterns.
 
@@ -69,11 +71,11 @@ Source: DESIGN.md typography scale + confirmed in integrations/page.tsx and sett
 |------|-------|-------|
 | Dominant (60%) | `#FAFAF9` (`--color-bg`) | Page background, layout canvas |
 | Secondary (30%) | `#FFFFFF` / `#F5F5F4` (`--color-card` / `--color-surface`) | Billing page cards, add-on cards, sidebar nav |
-| Accent (10%) | `#E67E22` (`--color-amber`) | "Subscribe" CTA button, "Start free trial" CTA button only |
+| Accent (10%) | `#E67E22` (`--color-amber`) | "Subscribe to {Add-on Name}" CTA button, "Start free trial" CTA button only |
 | Destructive | `#DC2626` (`--color-error`) | Not used in this phase (cancellation handled by Stripe Portal, not custom UI) |
 
 Accent reserved for:
-1. "Subscribe" button on inactive add-on cards
+1. "Subscribe to {Add-on Name}" button on inactive add-on cards
 2. "Start free trial" button on inactive add-on cards
 3. NOT used for "Manage" / "Open Billing Portal" links (those use navy/primary style)
 
@@ -96,7 +98,7 @@ Layout: `<div className="space-y-[var(--space-xl)] max-w-3xl">` — matches inte
 
 Page heading block:
 ```
-<h1 className="font-display font-bold text-2xl text-[var(--color-text)]">Billing</h1>
+<h1 className="font-display font-semibold text-2xl text-[var(--color-text)]">Billing</h1>
 <p className="mt-1 text-base font-sans text-[var(--color-text-muted)]">
   Manage your add-ons and billing settings.
 </p>
@@ -108,7 +110,7 @@ Card shell: `bg-card border border-[var(--color-border)] rounded-[var(--radius-l
 
 Structure:
 - Row: add-on icon (24px, navy) + add-on name (18px semibold DM Sans) + Active badge (right-aligned)
-- Active badge: `bg-[#ECFDF5] text-[#059669] text-xs font-medium px-2 py-0.5 rounded-full`
+- Active badge: `bg-[#ECFDF5] text-[#059669] text-xs font-semibold px-2 py-0.5 rounded-full`
 - Benefit line: 14px DM Sans muted text
 - Footer row: "Active since {date}" (14px muted) + "Manage billing" link (14px navy, underline on hover)
 
@@ -121,13 +123,13 @@ Structure:
 - No badge
 - Benefit line: 14px DM Sans muted text — lead with what the merchant gains
 - Price line: 14px semibold DM Sans — "{price}/month" or "14-day free trial, then {price}/month"
-- CTA: Full-width amber button "Start free trial" or "Subscribe" at card bottom
+- CTA: Full-width amber button "Start free trial" or "Subscribe to {Add-on Name}" at card bottom
 
 ### Add-on Card — Free Trial Active State
 
 Same card shell as active.
 
-- Trial badge: `bg-[#FFFBEB] text-[#D97706] text-xs font-medium px-2 py-0.5 rounded-full` — "Trial — {N} days left"
+- Trial badge: `bg-[#FFFBEB] text-[#D97706] text-xs font-semibold px-2 py-0.5 rounded-full` — "Trial — {N} days left"
 - Benefit line + feature access same as active
 - Footer: "Trial ends {date}" (14px muted) + "Manage billing" link
 
@@ -149,7 +151,7 @@ Source: CONTEXT.md D-10.
 
 Style: navy primary button (NOT amber) — billing management is not a purchase action.
 
-`bg-[var(--color-navy)] text-white text-sm font-medium px-4 py-2 rounded-[var(--radius-md)] hover:bg-[var(--color-navy-light)]`
+`bg-[var(--color-navy)] text-white text-sm font-semibold px-4 py-2 rounded-[var(--radius-md)] hover:bg-[var(--color-navy-light)]`
 
 Label: "Open billing portal" — opens in same tab (Stripe Portal has its own return URL).
 
@@ -160,7 +162,7 @@ Label: "Open billing portal" — opens in same tab (Stripe Portal has its own re
 | Element | Copy |
 |---------|------|
 | Primary CTA (inactive add-on with trial) | "Start free trial" |
-| Primary CTA (inactive add-on no trial) | "Subscribe" |
+| Primary CTA (inactive add-on no trial) | "Subscribe to {Add-on Name}" (e.g. "Subscribe to Xero Accounting") |
 | Primary CTA (manage billing) | "Open billing portal" |
 | Page heading | "Billing" |
 | Page subheading | "Manage your add-ons and billing settings." |
@@ -191,7 +193,7 @@ Source: CONTEXT.md D-10, D-11. Add-on names and copy are Claude's discretion per
 
 ### Checkout Flow (Subscribe / Start trial)
 
-1. Merchant clicks "Start free trial" or "Subscribe" on an add-on card.
+1. Merchant clicks "Start free trial" or "Subscribe to {Add-on Name}" on an add-on card.
 2. Button shows loading state: spinner replaces text, button disabled. 150ms transition.
 3. Server Action `createSubscriptionCheckoutSession(feature)` fires.
 4. On success: `router.push(checkoutUrl)` — redirects to Stripe Checkout (hosted page).
