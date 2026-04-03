@@ -8,10 +8,16 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 export async function POST(req: NextRequest) {
   const supabase = await createSupabaseServerClient()
 
-  // Verify auth
+  // Verify auth — require owner or staff role (F-2.3: customers must not upload product images)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const role = user.app_metadata?.role as string | undefined
+  const storeId = user.app_metadata?.store_id as string | undefined
+  if (!storeId || !['owner', 'staff'].includes(role ?? '')) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   const formData = await req.formData()
@@ -44,8 +50,8 @@ export async function POST(req: NextRequest) {
     .webp({ quality: 85 })
     .toBuffer()
 
-  // Upload to Supabase Storage
-  const filename = `${crypto.randomUUID()}.webp`
+  // Upload to Supabase Storage — use store_id prefix for tenant isolation (F-2.1)
+  const filename = `${storeId}/${crypto.randomUUID()}.webp`
   const { error: uploadError } = await supabase.storage
     .from('product-images')
     .upload(filename, resized, {
