@@ -77,7 +77,16 @@ export async function ownerSignup(
     return { error: { _form: ['Something went wrong. Please try again.'] } }
   }
 
-  // 5. Refresh session so the auth hook fires and injects store_id + role claims
+  // 5. Set app_metadata with role and store_id directly via admin API.
+  // The custom_access_token_hook should do this via JWT claims, but setting it
+  // explicitly ensures the metadata is persisted to the user record so the
+  // Supabase SDK always returns it (not just in the JWT).
+  const storeId = typeof rpcData === 'object' && rpcData !== null ? (rpcData as Record<string, string>).store_id : undefined
+  await admin.auth.admin.updateUserById(authData.user.id, {
+    app_metadata: { role: 'owner', store_id: storeId },
+  })
+
+  // Refresh session to pick up the updated app_metadata
   await supabase.auth.refreshSession()
 
   return { success: true, slug }

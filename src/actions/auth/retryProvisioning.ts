@@ -67,7 +67,13 @@ export async function retryProvisioning(
     return { error: 'Provisioning failed. Please try again.' }
   }
 
-  // 5. Refresh session to inject store_id + role claims
+  // 5. Set app_metadata with role and store_id via admin API
+  const storeId = typeof rpcData === 'object' && rpcData !== null ? (rpcData as Record<string, string>).store_id : undefined
+  await admin.auth.admin.updateUserById(user.id, {
+    app_metadata: { role: 'owner', store_id: storeId },
+  })
+
+  // Refresh session to pick up the updated app_metadata
   await supabase.auth.refreshSession()
 
   return { success: true, slug }

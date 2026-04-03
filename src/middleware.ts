@@ -78,10 +78,22 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(verifyUrl)
     }
 
-    const {
+    let {
       data: { session },
     } = await supabase.auth.getSession()
-    const role = session?.user?.app_metadata?.role
+    let role = session?.user?.app_metadata?.role
+
+    // If role is missing from JWT, force a token refresh to pick up app_metadata
+    // set by ownerSignup (role + store_id). This handles the first admin visit
+    // after signup where the initial JWT predates the provisioning step.
+    if (!role && session) {
+      const { data: refreshed } = await supabase.auth.refreshSession()
+      if (refreshed.session) {
+        session = refreshed.session
+        role = session.user?.app_metadata?.role
+      }
+    }
+
     // D-10: Block customer role from admin routes — silent redirect to storefront
     if (role === 'customer') {
       return NextResponse.redirect(new URL('/', request.url))

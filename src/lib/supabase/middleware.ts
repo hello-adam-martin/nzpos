@@ -16,8 +16,10 @@ export async function createSupabaseMiddlewareClient(request: NextRequest) {
             request.cookies.set(name, value)
           )
           supabaseResponse = NextResponse.next({ request })
+          const rootDomain = process.env.ROOT_DOMAIN ?? 'lvh.me:3004'
+          const domain = '.' + rootDomain.split(':')[0] // .lvh.me or .nzpos.co.nz
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, { ...options, domain })
           )
         },
       },

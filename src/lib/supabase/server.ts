@@ -13,8 +13,10 @@ export async function createSupabaseServerClient() {
         getAll: () => cookieStore.getAll(),
         setAll: (all) => {
           try {
+            const rootDomain = process.env.ROOT_DOMAIN ?? 'lvh.me:3004'
+            const domain = '.' + rootDomain.split(':')[0] // .lvh.me or .nzpos.co.nz
             all.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
+              cookieStore.set(name, value, { ...options, domain })
             )
           } catch {
             // setAll fails in Server Components (read-only context)

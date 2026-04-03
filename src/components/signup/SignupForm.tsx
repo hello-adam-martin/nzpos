@@ -38,12 +38,10 @@ export default function SignupForm() {
     }
   }, [state, router])
 
-  function handleStoreNameBlur(e: React.FocusEvent<HTMLInputElement>) {
+  function handleStoreNameChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (!slugManuallyEdited || slug === '') {
       const generated = slugify(e.target.value)
-      if (generated) {
-        setSlug(generated)
-      }
+      setSlug(generated)
     }
   }
 
@@ -119,7 +117,7 @@ export default function SignupForm() {
           required
           className={inputClass}
           placeholder="My Supply Store"
-          onBlur={handleStoreNameBlur}
+          onChange={handleStoreNameChange}
           aria-describedby={state?.error?.storeName ? 'storeName-error' : undefined}
         />
         {state?.error?.storeName && (
