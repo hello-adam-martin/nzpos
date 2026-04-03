@@ -66,12 +66,21 @@ function makeSupabaseMock(user: object | null) {
   }
 }
 
+function makeAdminMock(isActive = true) {
+  const single = vi.fn().mockResolvedValue({ data: { is_active: isActive }, error: null })
+  const eq = vi.fn().mockReturnValue({ single })
+  const select = vi.fn().mockReturnValue({ eq })
+  const from = vi.fn().mockReturnValue({ select })
+  return { from }
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
   process.env.ROOT_DOMAIN = ROOT_DOMAIN
 
-  // Default: store found in cache
+  // Default: store found in cache + active (suspension check on cached path)
   mockGetCachedStoreId.mockReturnValue(STORE_ID)
+  mockCreateMiddlewareAdminClient.mockReturnValue(makeAdminMock(true))
 
   // Default: verified owner
   const verifiedOwner = {
