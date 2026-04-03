@@ -22,7 +22,9 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 
 **Shipped:** v1.0 MVP (2026-04-02), v2.0 SaaS Platform (2026-04-03)
 
-336 source files, 36,329 LOC TypeScript, 365+ tests passing. 16 phases shipped across 66 plans (33 v1.0, 33 v2.0).
+336 source files, 36,329 LOC TypeScript, 365+ tests passing. 17 phases shipped across 71 plans (33 v1.0, 33 v2.0, 5 v2.1).
+
+**Phase 17 complete:** Full security audit — RLS verified on all tables, all 48 Server Actions have Zod validation + server-only guards, CSP headers on all routes, Stripe webhook signature verification confirmed, no secrets in source, staff PIN rate limiting added, IDOR in orders table closed.
 
 **v2.0 delivered:** Multi-tenant infrastructure with wildcard subdomain routing and RLS isolation. Self-serve merchant signup with email verification. Store setup wizard and marketing landing page. Stripe billing with per-add-on subscriptions and feature gating. Super admin panel with tenant management, suspension enforcement, and audit trail. Barcode scanning, screen receipts, email notifications, customer accounts, and partial refunds.
 
@@ -62,9 +64,11 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - ✓ Stripe billing (per-add-on subscriptions, feature gating, billing portal) — v2.0
 - ✓ Super admin panel (tenant list, detail, suspend/unsuspend, add-on overrides, audit trail) — v2.0
 
+- ✓ Security audit (RLS, auth, webhooks, input validation, CSP, secrets, rate limiting, audit trail) — v2.1
+
 ### Active
 
-(Milestone v2.1 — requirements being defined)
+(Milestone v2.1 — remaining phases in progress)
 
 ### Out of Scope
 
@@ -148,4 +152,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-04 after v2.1 milestone started*
+*Last updated: 2026-04-04 after Phase 17 Security Audit complete*
