@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Hardening & Documentation
-status: ready_to_plan
-stopped_at: Roadmap created — Phase 17 ready to plan
-last_updated: "2026-04-04"
-last_activity: 2026-04-04
+status: planning
+stopped_at: Phase 17 context gathered
+last_updated: "2026-04-03T19:13:11.920Z"
+last_activity: 2026-04-04 — v2.1 roadmap created, Phase 17 ready to plan
 progress:
   total_phases: 4
   completed_phases: 0
@@ -66,6 +66,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04
-Stopped at: Roadmap created for v2.1 — 4 phases (17-20), 34 requirements mapped
-Resume file: None
+Last session: 2026-04-03T19:13:11.918Z
+Stopped at: Phase 17 context gathered
+Resume file: .planning/phases/17-security-audit/17-CONTEXT.md
