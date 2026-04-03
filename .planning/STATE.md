@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production Launch + Feature Waves
-status: executing
-stopped_at: Completed 13-02-PLAN.md
-last_updated: "2026-04-03T00:58:32.999Z"
+status: verifying
+stopped_at: Completed 13-03-PLAN.md
+last_updated: "2026-04-03T01:10:13.320Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 10
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 22
-  completed_plans: 21
+  completed_plans: 22
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 
 Phase: 13 (merchant-self-serve-signup) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-03
 
 Progress: [░░░░░░░░░░] 0%
@@ -65,6 +65,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 13]: ownerSignup does not call redirect() — client page handles navigation after success (keeps Server Action testable)
 - [Phase 13]: vi.hoisted() required for mock functions in vi.mock() factories — avoids TDZ ReferenceError in Vitest
 - [Phase 13]: Auth callback /api/auth/callback on root domain redirects to {slug}.{domain}/admin/dashboard after PKCE exchange
+- [Phase 13]: ProvisioningScreen animates through steps as UX affordance — actual provisioning already completed in ownerSignup Server Action before redirect
+- [Phase 13]: Subdomain redirect uses NEXT_PUBLIC_ROOT_DOMAIN env var with lvh.me fallback for local dev; protocol auto-detected based on domain
 
 ### Blockers/Concerns
 
@@ -74,6 +76,6 @@ Progress: [░░░░░░░░░░] 0%
 
 ## Session Continuity
 
-Last session: 2026-04-03T00:58:32.997Z
-Stopped at: Completed 13-02-PLAN.md
+Last session: 2026-04-03T01:10:13.317Z
+Stopped at: Completed 13-03-PLAN.md
 Resume file: None
