@@ -67,6 +67,17 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl)
     }
 
+    // D-07: Email verification gate — unverified owners cannot access admin
+    const emailVerified = user.email_confirmed_at != null
+    if (!emailVerified) {
+      const rootDomain = process.env.ROOT_DOMAIN ?? 'lvh.me:3000'
+      const protocol =
+        rootDomain.includes('localhost') || rootDomain.includes('lvh.me') ? 'http' : 'https'
+      const verifyUrl = new URL(`${protocol}://${rootDomain}/signup/verify-email`)
+      verifyUrl.searchParams.set('email', user.email ?? '')
+      return NextResponse.redirect(verifyUrl)
+    }
+
     const {
       data: { session },
     } = await supabase.auth.getSession()
