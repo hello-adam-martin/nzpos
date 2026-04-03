@@ -41,7 +41,7 @@ Requirements for the v2.0 SaaS Platform milestone. Each maps to roadmap phases.
 - [x] **BILL-03**: Feature gating is enforced server-side (requireFeature() on all Xero + email Server Actions)
 - [x] **BILL-04**: Gated features show contextual upgrade prompts in the UI
 - [x] **BILL-05**: Merchant can manage billing via Stripe Customer Portal (cancel, payment method, invoices)
-- [ ] **BILL-06**: Admin billing page shows current plan, active add-ons, and portal link
+- [x] **BILL-06**: Admin billing page shows current plan, active add-ons, and portal link
 
 ### Super Admin
 
@@ -123,7 +123,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BILL-03 | Phase 15 | Complete |
 | BILL-04 | Phase 15 | Complete |
 | BILL-05 | Phase 15 | Complete |
-| BILL-06 | Phase 15 | Pending |
+| BILL-06 | Phase 15 | Complete |
 | SADMIN-01 | Phase 16 | Pending |
 | SADMIN-02 | Phase 16 | Pending |
 | SADMIN-03 | Phase 16 | Pending |

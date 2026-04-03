@@ -25,7 +25,7 @@ decisions:
 metrics:
   duration_seconds: 127
   completed_date: "2026-04-03"
-  tasks_completed: 2
+  tasks_completed: 3
   tasks_total: 3
   files_changed: 4
 ---
@@ -68,7 +68,9 @@ Added two nav links to `AdminSidebar.tsx`:
 - `{ href: '/admin/settings', label: 'Settings' }` — was missing from sidebar
 - `{ href: '/admin/billing', label: 'Billing' }` — per plan requirement, after Settings
 
-**Task 3 — Human verification (PENDING — checkpoint reached)**
+**Task 3 — Human verification (APPROVED)**
+
+User verified billing page visual correctness. Billing page at /admin/billing renders with heading, three add-on cards in inactive state, billing portal section, and admin sidebar Billing link. All acceptance criteria confirmed.
 
 ## Deviations from Plan
 
