@@ -6,12 +6,37 @@ import { jwtVerify } from 'jose'
 
 const staffSecret = new TextEncoder().encode(process.env.STAFF_JWT_SECRET!)
 
+// Security headers — Phase 17 SEC-12
+// CSP is Report-Only first (D-06). Switch to enforcing after validation in production.
+function addSecurityHeaders(response: NextResponse): NextResponse {
+  const cspDirectives = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' https://js.stripe.com",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https://*.supabase.co",
+    "connect-src 'self' https://*.supabase.co https://api.stripe.com wss://*.supabase.co",
+    "frame-src https://js.stripe.com https://hooks.stripe.com",
+    "font-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ')
+
+  response.headers.set('Content-Security-Policy-Report-Only', cspDirectives)
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  // Note: Strict-Transport-Security is handled by Vercel at the edge
+  return response
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // 1. Webhook routes — no auth, no tenant resolution
+  // Webhooks receive raw bodies and must not be modified; security headers still applied.
   if (pathname.startsWith('/api/webhooks')) {
-    return NextResponse.next()
+    return addSecurityHeaders(NextResponse.next())
   }
 
   // 2. Determine if this is the root domain or a store subdomain
@@ -27,21 +52,21 @@ export async function middleware(request: NextRequest) {
     if (!user) {
       const loginUrl = new URL('/login', request.url)
       loginUrl.searchParams.set('redirect', pathname)
-      return NextResponse.redirect(loginUrl)
+      return addSecurityHeaders(NextResponse.redirect(loginUrl))
     }
 
     const isSuperAdmin = user.app_metadata?.is_super_admin === true
     if (!isSuperAdmin) {
-      return NextResponse.redirect(new URL('/unauthorized', request.url))
+      return addSecurityHeaders(NextResponse.redirect(new URL('/unauthorized', request.url)))
     }
 
-    return response
+    return addSecurityHeaders(response)
   }
 
   // 3. Root domain — marketing site (per D-05). Pass through with session refresh.
   if (isRoot) {
     const { response } = await createSupabaseMiddlewareClient(request)
-    return response
+    return addSecurityHeaders(response)
   }
 
   // 4. Subdomain — extract slug and resolve store_id (per D-01)
@@ -59,7 +84,7 @@ export async function middleware(request: NextRequest) {
       .eq('id', storeId)
       .single()
     if (activeCheck && !activeCheck.is_active) {
-      return NextResponse.rewrite(new URL('/suspended', request.url))
+      return addSecurityHeaders(NextResponse.rewrite(new URL('/suspended', request.url)))
     }
   } else {
     const admin = createMiddlewareAdminClient()
@@ -71,11 +96,11 @@ export async function middleware(request: NextRequest) {
 
     if (!data) {
       // Unknown subdomain — 404 (per D-03)
-      return NextResponse.rewrite(new URL('/not-found', request.url))
+      return addSecurityHeaders(NextResponse.rewrite(new URL('/not-found', request.url)))
     }
     if (!data.is_active) {
       // Suspended store — show branded suspension page (per D-09)
-      return NextResponse.rewrite(new URL('/suspended', request.url))
+      return addSecurityHeaders(NextResponse.rewrite(new URL('/suspended', request.url)))
     }
     storeId = data.id
     setCachedStoreId(slug, storeId)
@@ -96,7 +121,7 @@ export async function middleware(request: NextRequest) {
     if (!user) {
       const loginUrl = new URL('/login', request.url)
       loginUrl.searchParams.set('redirect', pathname)
-      return NextResponse.redirect(loginUrl)
+      return addSecurityHeaders(NextResponse.redirect(loginUrl))
     }
 
     // D-07: Email verification gate — unverified owners cannot access admin
@@ -107,7 +132,7 @@ export async function middleware(request: NextRequest) {
         rootDomain.includes('localhost') || rootDomain.includes('lvh.me') ? 'http' : 'https'
       const verifyUrl = new URL(`${protocol}://${rootDomain}/signup/verify-email`)
       verifyUrl.searchParams.set('email', user.email ?? '')
-      return NextResponse.redirect(verifyUrl)
+      return addSecurityHeaders(NextResponse.redirect(verifyUrl))
     }
 
     let {
@@ -128,10 +153,10 @@ export async function middleware(request: NextRequest) {
 
     // D-10: Block customer role from admin routes — silent redirect to storefront
     if (role === 'customer') {
-      return NextResponse.redirect(new URL('/', request.url))
+      return addSecurityHeaders(NextResponse.redirect(new URL('/', request.url)))
     }
     if (role !== 'owner') {
-      return NextResponse.redirect(new URL('/unauthorized', request.url))
+      return addSecurityHeaders(NextResponse.redirect(new URL('/unauthorized', request.url)))
     }
 
     // D-01: Setup wizard redirect — first admin visit goes to /admin/setup
@@ -145,21 +170,21 @@ export async function middleware(request: NextRequest) {
         .single()
 
       if (storeCheck && !storeCheck.setup_wizard_dismissed) {
-        return NextResponse.redirect(new URL('/admin/setup', request.url))
+        return addSecurityHeaders(NextResponse.redirect(new URL('/admin/setup', request.url)))
       }
     }
 
     // Inject tenant headers into the response for downstream Server Components
     response.headers.set('x-store-id', storeId)
     response.headers.set('x-store-slug', slug)
-    return response
+    return addSecurityHeaders(response)
   }
 
   // 7. POS login — pass through with tenant headers (PRESERVED)
   if (pathname === '/pos/login') {
-    return NextResponse.next({
+    return addSecurityHeaders(NextResponse.next({
       request: { headers: requestHeaders },
-    })
+    }))
   }
 
   // 8. POS routes — staff or owner (PRESERVED)
@@ -170,7 +195,7 @@ export async function middleware(request: NextRequest) {
       data: { user: posUser },
     } = await posSupabase.auth.getUser()
     if (posUser?.app_metadata?.role === 'customer') {
-      return NextResponse.redirect(new URL('/', request.url))
+      return addSecurityHeaders(NextResponse.redirect(new URL('/', request.url)))
     }
 
     const staffToken = request.cookies.get('staff_session')?.value
@@ -178,9 +203,9 @@ export async function middleware(request: NextRequest) {
       try {
         const { payload } = await jwtVerify(staffToken, staffSecret)
         if (payload.role === 'staff' || payload.role === 'owner') {
-          return NextResponse.next({
+          return addSecurityHeaders(NextResponse.next({
             request: { headers: requestHeaders },
-          })
+          }))
         }
       } catch {
         // Token expired/invalid — fall through
@@ -199,11 +224,11 @@ export async function middleware(request: NextRequest) {
       if (session?.user?.app_metadata?.role === 'owner') {
         response.headers.set('x-store-id', storeId)
         response.headers.set('x-store-slug', slug)
-        return response
+        return addSecurityHeaders(response)
       }
     }
 
-    return NextResponse.redirect(new URL('/pos/login', request.url))
+    return addSecurityHeaders(NextResponse.redirect(new URL('/pos/login', request.url)))
   }
 
   // 9. Storefront routes — public, refresh session if present (PRESERVED)
@@ -211,7 +236,7 @@ export async function middleware(request: NextRequest) {
   const { response } = await createSupabaseMiddlewareClient(request)
   response.headers.set('x-store-id', storeId)
   response.headers.set('x-store-slug', slug)
-  return response
+  return addSecurityHeaders(response)
 }
 
 export const config = {
