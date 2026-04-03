@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production Launch + Feature Waves
-status: completed
-stopped_at: Phase 15 context gathered
-last_updated: "2026-04-03T04:51:26.689Z"
+status: executing
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-04-03T05:35:57.602Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 10
   completed_phases: 8
-  total_plans: 25
-  completed_plans: 25
+  total_plans: 29
+  completed_plans: 26
   percent: 100
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 14 — store-setup-wizard-marketing
+**Current focus:** Phase 15 — stripe-billing-feature-gating
 
 ## Current Position
 
-Phase: 14 (store-setup-wizard-marketing) — COMPLETE
-Plan: 3 of 3
-Status: All plans complete
+Phase: 15 (stripe-billing-feature-gating) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
 Last activity: 2026-04-03
 
 Progress: [██████████] 100%
@@ -74,6 +74,9 @@ Progress: [██████████] 100%
 - [14-03]: Landing page hero illustration is CSS-only iPad mockup (no external images) — keeps page lightweight and static
 - [Phase 14]: SetupWizard extracted as separate client component from setup/page.tsx — Server Component page passes initialStep/storeData/categories as props
 - [Phase 14]: BrandingForm extracted to settings/BrandingForm.tsx — keeps settings/page.tsx as Server Component while form is interactive
+- [Phase 15-stripe-billing-feature-gating]: requireFeature never throws — returns structured { authorized, feature, upgradeUrl } for redirect-friendly caller pattern
+- [Phase 15-stripe-billing-feature-gating]: JWT fast path default in requireFeature, requireDbCheck: true for critical mutations only
+- [Phase 15-stripe-billing-feature-gating]: Price IDs loaded from env vars in addons.ts — never hardcoded per D-02
 
 ### Blockers/Concerns
 
@@ -83,6 +86,6 @@ Progress: [██████████] 100%
 
 ## Session Continuity
 
-Last session: 2026-04-03T04:51:26.685Z
-Stopped at: Phase 15 context gathered
-Resume file: .planning/phases/15-stripe-billing-feature-gating/15-CONTEXT.md
+Last session: 2026-04-03T05:35:57.599Z
+Stopped at: Completed 15-01-PLAN.md
+Resume file: None

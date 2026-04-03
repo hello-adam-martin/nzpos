@@ -188,7 +188,7 @@ Plans:
   5. The admin billing page shows the current plan, which add-ons are active, and a direct link to the Stripe Customer Portal
 **Plans**: 4 plans
 Plans:
-- [ ] 15-01-PLAN.md — Migration + requireFeature utility + add-on config
+- [x] 15-01-PLAN.md — Migration + requireFeature utility + add-on config
 - [ ] 15-02-PLAN.md — Billing webhook + subscription checkout + portal Server Actions
 - [ ] 15-03-PLAN.md — Feature gating on Xero/email actions + UpgradePrompt component
 - [ ] 15-04-PLAN.md — Billing page UI + admin sidebar + human verification
@@ -225,5 +225,5 @@ Plans:
 | 12. Multi-Tenant Infrastructure | v2.0 | 4/4 | Complete    | 2026-04-02 |
 | 13. Merchant Self-Serve Signup | v2.0 | 3/3 | Complete    | 2026-04-03 |
 | 14. Store Setup Wizard + Marketing | v2.0 | 3/3 | Complete   | 2026-04-03 |
-| 15. Stripe Billing + Feature Gating | v2.0 | 0/4 | Planning complete | — |
+| 15. Stripe Billing + Feature Gating | v2.0 | 1/4 | In Progress|  |
 | 16. Super Admin Panel | v2.0 | 0/? | Not started | — |
