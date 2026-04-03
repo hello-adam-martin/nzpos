@@ -55,16 +55,14 @@ Source: DESIGN.md spacing scale + POS touch target rule.
 
 | Role | Font | Size | Weight | Line Height | Usage |
 |------|------|------|--------|-------------|-------|
-| Body | DM Sans | 16px | 400 | 1.5 | Wizard help text, landing page body copy, checklist descriptions |
-| Label | DM Sans | 14px | 600 | 1.4 | Form labels, step indicators, checklist item text, button text |
-| Heading | DM Sans | 20px | 700 | 1.3 | Wizard step titles, checklist banner heading, landing page section headings |
-| Display | Satoshi | 36px | 700 | 1.2 | Landing page hero headline (desktop). Scale to 28px on mobile. |
-| Display XL | Satoshi | 48px | 900 | 1.1 | Landing page hero only — absolute maximum, desktop only |
-| Caption | DM Sans | 12px | 400 | 1.4 | Slug preview label, file upload constraints, placeholder hints |
+| Body | DM Sans | 16px | 400 | 1.5 | Wizard help text, landing page body copy, checklist descriptions, sub-headlines |
+| Label | DM Sans | 14px | 400 | 1.4 | Form labels, step indicators, button text, slug preview label, file upload constraints, placeholder hints, below-CTA notes, footer links |
+| Heading | DM Sans | 20px | 700 | 1.3 | Wizard step titles, checklist banner heading, landing page section headings, final CTA heading |
+| Display | Satoshi | 48px | 700 | 1.1 | Landing page hero headline (desktop). Scale to 28px on mobile via responsive modifier. |
 
-Note: 4 sizes in active use (12, 14/16, 20, 36/48). Satoshi reserved for landing page hero and wizard step number badges only. All other text uses DM Sans.
+Note: 4 declared sizes. Label (14px) covers all small utility text including captions and help notes. Display (48px) is used for the hero headline only; all other prominent headings use the Heading role (20px). The final CTA heading ("Ready to run a better shop?") uses Heading role at 20px — the navy section background provides visual prominence without requiring a larger size. Satoshi is reserved for the landing page hero headline only. All other text uses DM Sans.
 
-Source: DESIGN.md typography scale + existing component inspection (SignupForm.tsx, AdminSidebar.tsx).
+Source: DESIGN.md typography scale + existing component inspection (SignupForm.tsx, AdminSidebar.tsx). Revised by checker: collapsed 6 sizes to 4, reduced 4 weights to 2.
 
 ---
 
@@ -203,17 +201,17 @@ Sections in order:
 **Hero section:**
 - Full-bleed navy background (`var(--color-navy-dark)`).
 - Vertical padding: 64px top, 64px bottom (desktop). 48px top/bottom mobile.
-- Headline: Satoshi 48px / 700 / lh 1.1, white. Mobile: 28px.
+- Headline: Display role — Satoshi 48px / 700 / lh 1.1, white. Mobile: 28px via responsive modifier.
   Copy: "The POS built for Kiwi retailers."
-- Sub-headline: DM Sans 18px / 400 / lh 1.5, `rgba(255,255,255,0.7)`.
+- Sub-headline: DM Sans 16px / 400 / lh 1.5, `rgba(255,255,255,0.7)`.
   Copy: "Ring up sales in-store, take orders online, and get GST handled correctly — all from one dashboard."
-- CTA button: "Get started free" — amber (`var(--color-amber)`), padding `sm` `xl` (8px 32px), rounded-md, 20px DM Sans 600. On click: navigate to `/signup`.
+- CTA button: "Get started free" — amber (`var(--color-amber)`), padding `sm` `xl` (8px 32px), rounded-md, DM Sans 14px 700. On click: navigate to `/signup`.
 - Below button: "No credit card required. NZD pricing." — 14px, `rgba(255,255,255,0.5)`.
 - Hero illustration/image: Right-aligned on desktop (50% width). Use a stylised iPad mockup showing the POS interface, or a clean screenshot. On mobile: hidden (content-only hero).
 
 **Features section:**
 - Background: `var(--color-bg)` (warm stone).
-- Heading: "Everything a Kiwi shop needs" — DM Sans 28px / 700, `var(--color-text)`, centered.
+- Heading: "Everything a Kiwi shop needs" — DM Sans 20px / 700, `var(--color-text)`, centered.
 - 3-column grid (desktop), 1-column (mobile). Each feature card: white bg, border, shadow-sm, rounded-lg, padding 24px.
 - 4 feature cards:
   1. Icon + "POS on iPad" — "Tap to sell. Scan barcodes. EFTPOS confirmed manually."
@@ -224,10 +222,10 @@ Sections in order:
 
 **Pricing section:**
 - Background: `var(--color-surface)`.
-- Heading: "Transparent pricing" — DM Sans 28px / 700, centered.
+- Heading: "Transparent pricing" — DM Sans 20px / 700, centered.
 - Sub-heading: "Free to start. Pay only for what you use." — 16px, muted, centered.
 - Layout: 1 primary card (Free core) + 2 add-on pills side by side.
-- Free core card: white bg, border-2 `var(--color-navy)`, rounded-lg, padding 32px. Prominent "Free" label in Satoshi 36px / 700.
+- Free core card: white bg, border-2 `var(--color-navy)`, rounded-lg, padding 32px. Prominent "Free" label in Satoshi Display role — 48px / 700, responsive to 28px mobile.
   Includes: POS checkout, online storefront, inventory management, GST-compliant receipts.
 - Add-on pills: `var(--color-card)`, border, rounded-lg, padding 24px.
   - Xero Integration: "$9/month NZD"
@@ -237,7 +235,7 @@ Sections in order:
 
 **Final CTA section:**
 - Background: `var(--color-navy)`.
-- Heading: "Ready to run a better shop?" — Satoshi 36px / 700, white.
+- Heading: "Ready to run a better shop?" — DM Sans 20px / 700, white. Visual prominence from the dark navy section background.
 - CTA button: "Get started free" — amber button (same as hero).
 - Sub-text: "Set up in under 5 minutes." — 14px, `rgba(255,255,255,0.6)`.
 
