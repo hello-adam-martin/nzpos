@@ -9,20 +9,20 @@ Requirements for the Hardening & Documentation milestone. Each maps to roadmap p
 
 ### Security Audit
 
-- [ ] **SEC-01**: All database tables have RLS policies with correct store_id filtering for SELECT/INSERT/UPDATE/DELETE
-- [ ] **SEC-02**: Storage bucket policies prevent cross-tenant file access
-- [ ] **SEC-03**: SECURITY DEFINER RPCs (provision_store, vault RPCs) validate caller identity and inputs
-- [ ] **SEC-04**: Owner auth flow verifies JWT expiry enforcement and session cookie handling
-- [ ] **SEC-05**: Staff PIN auth verifies lockout after failed attempts and 8h session expiry
-- [ ] **SEC-06**: Super admin routes are inaccessible to regular merchants and staff
-- [ ] **SEC-07**: Customer auth cannot access POS or admin Server Actions
-- [ ] **SEC-08**: All 67 Server Actions use Zod validation before database access
-- [ ] **SEC-09**: No secrets exist in source code and .env.example is complete and accurate
-- [ ] **SEC-10**: service_role key imports are guarded by server-only in all files
-- [ ] **SEC-11**: Stripe webhook handlers verify signatures via constructEvent()
-- [ ] **SEC-12**: Content Security Policy headers configured for all routes
-- [ ] **SEC-13**: Rate limiting verified on signup and extended to PIN login attempts
-- [ ] **SEC-14**: All sensitive mutations are logged in audit trail and logs are immutable
+- [x] **SEC-01**: All database tables have RLS policies with correct store_id filtering for SELECT/INSERT/UPDATE/DELETE
+- [x] **SEC-02**: Storage bucket policies prevent cross-tenant file access
+- [x] **SEC-03**: SECURITY DEFINER RPCs (provision_store, vault RPCs) validate caller identity and inputs
+- [x] **SEC-04**: Owner auth flow verifies JWT expiry enforcement and session cookie handling
+- [x] **SEC-05**: Staff PIN auth verifies lockout after failed attempts and 8h session expiry
+- [x] **SEC-06**: Super admin routes are inaccessible to regular merchants and staff
+- [x] **SEC-07**: Customer auth cannot access POS or admin Server Actions
+- [x] **SEC-08**: All 67 Server Actions use Zod validation before database access
+- [x] **SEC-09**: No secrets exist in source code and .env.example is complete and accurate
+- [x] **SEC-10**: service_role key imports are guarded by server-only in all files
+- [x] **SEC-11**: Stripe webhook handlers verify signatures via constructEvent()
+- [x] **SEC-12**: Content Security Policy headers configured for all routes
+- [x] **SEC-13**: Rate limiting verified on signup and extended to PIN login attempts
+- [x] **SEC-14**: All sensitive mutations are logged in audit trail and logs are immutable
 
 ### Code Quality
 
@@ -101,20 +101,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEC-01 | Phase 17 | Pending |
-| SEC-02 | Phase 17 | Pending |
-| SEC-03 | Phase 17 | Pending |
-| SEC-04 | Phase 17 | Pending |
-| SEC-05 | Phase 17 | Pending |
-| SEC-06 | Phase 17 | Pending |
-| SEC-07 | Phase 17 | Pending |
-| SEC-08 | Phase 17 | Pending |
-| SEC-09 | Phase 17 | Pending |
-| SEC-10 | Phase 17 | Pending |
-| SEC-11 | Phase 17 | Pending |
-| SEC-12 | Phase 17 | Pending |
-| SEC-13 | Phase 17 | Pending |
-| SEC-14 | Phase 17 | Pending |
+| SEC-01 | Phase 17 | Complete |
+| SEC-02 | Phase 17 | Complete |
+| SEC-03 | Phase 17 | Complete |
+| SEC-04 | Phase 17 | Complete |
+| SEC-05 | Phase 17 | Complete |
+| SEC-06 | Phase 17 | Complete |
+| SEC-07 | Phase 17 | Complete |
+| SEC-08 | Phase 17 | Complete |
+| SEC-09 | Phase 17 | Complete |
+| SEC-10 | Phase 17 | Complete |
+| SEC-11 | Phase 17 | Complete |
+| SEC-12 | Phase 17 | Complete |
+| SEC-13 | Phase 17 | Complete |
+| SEC-14 | Phase 17 | Complete |
 | QUAL-01 | Phase 18 | Pending |
 | QUAL-02 | Phase 18 | Pending |
 | QUAL-03 | Phase 18 | Pending |

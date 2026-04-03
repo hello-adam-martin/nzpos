@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Hardening & Documentation
-status: planning
-stopped_at: Phase 17 context gathered
-last_updated: "2026-04-03T19:13:11.920Z"
-last_activity: 2026-04-04 — v2.1 roadmap created, Phase 17 ready to plan
+status: executing
+stopped_at: Completed 17-01-PLAN.md (security audit)
+last_updated: "2026-04-03T19:50:18.772Z"
+last_activity: 2026-04-03
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 4
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 17 — Security Audit
+**Current focus:** Phase 17 — security-audit
 
 ## Current Position
 
-Phase: 17 of 20 (Security Audit)
-Plan: — of TBD
-Status: Ready to plan
-Last activity: 2026-04-04 — v2.1 roadmap created, Phase 17 ready to plan
+Phase: 17 (security-audit) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-04-03
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,9 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 15]: Billing webhook uses STRIPE_BILLING_WEBHOOK_SECRET (not STRIPE_WEBHOOK_SECRET) — separate endpoint, separate signing secret
 - [Phase 16]: Cached-path suspension check adds one indexed DB lookup per request — accepted for correctness across serverless instances
 - [Phase 16]: super admin check runs before staff/customer in auth hook (cross-tenant, no store_id required)
+- [Phase 17-01]: orders_public_read RLS policy is IDOR — any anon user can enumerate all online orders; Critical fix required
+- [Phase 17-01]: 13 env vars missing from .env.example including all Stripe price IDs, Xero OAuth vars, Resend keys — Critical deployment blocker
+- [Phase 17-01]: increment_promo_uses and restore_stock SECURITY DEFINER RPCs have no GRANT/REVOKE — any authenticated user can call them
 
 ### Pending Todos
 
@@ -66,6 +69,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-03T19:13:11.918Z
-Stopped at: Phase 17 context gathered
-Resume file: .planning/phases/17-security-audit/17-CONTEXT.md
+Last session: 2026-04-03T19:50:18.769Z
+Stopped at: Completed 17-01-PLAN.md (security audit)
+Resume file: None
