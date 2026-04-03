@@ -1,9 +1,9 @@
 'use client'
 
-import { useActionState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import { ownerSignup } from '@/actions/auth/ownerSignup'
+import { useState } from 'react'
+import { createSupabaseBrowserClient } from '@/lib/supabase/client'
+import { provisionStore } from '@/actions/auth/provisionStore'
 import { slugify } from '@/lib/slugValidation'
 import SlugInput from './SlugInput'
 
@@ -15,28 +15,100 @@ type SignupState = {
 
 /**
  * 4-field signup form with slug auto-generation from store name.
- * Calls ownerSignup Server Action and navigates to /signup/provisioning on success.
+ *
+ * Flow:
+ * 1. Client-side signUp() — creates auth user + sends verification email
+ * 2. provisionStore Server Action — creates store, staff, sets app_metadata
+ * 3. Redirect to "check your email" screen
+ * 4. User clicks verification link → Supabase confirms email → callback creates session
+ *
  * Per UI-SPEC Screen 1.
  */
 export default function SignupForm() {
   const router = useRouter()
   const [slug, setSlug] = useState('')
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false)
+  const [state, setState] = useState<SignupState>(null)
+  const [pending, setPending] = useState(false)
 
-  const [state, formAction, pending] = useActionState(
-    async (_prev: SignupState, formData: FormData): Promise<SignupState> => {
-      const result = await ownerSignup(formData)
-      return result
-    },
-    null
-  )
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setPending(true)
+    setState(null)
 
-  // Navigate to provisioning page on success
-  useEffect(() => {
-    if (state?.success && state.slug) {
-      router.push(`/signup/provisioning?slug=${encodeURIComponent(state.slug)}`)
+    const form = e.currentTarget
+    const formData = new FormData(form)
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+    const storeName = formData.get('storeName') as string
+    const slugValue = formData.get('slug') as string
+
+    // Basic validation
+    if (!email || !password || !storeName || !slugValue) {
+      setState({ error: { _form: ['Please fill in all fields.'] } })
+      setPending(false)
+      return
     }
-  }, [state, router])
+    if (password.length < 8) {
+      setState({ error: { password: ['Minimum 8 characters'] } })
+      setPending(false)
+      return
+    }
+
+    // 1. Client-side signUp — creates auth user + sends verification email.
+    // emailRedirectTo tells Supabase where the verification link should redirect.
+    // We point it to the subdomain's callback so session creation happens there.
+    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'lvh.me:3000'
+    const protocol = rootDomain.includes('lvh.me') || rootDomain.includes('localhost') ? 'http' : 'https'
+    const callbackUrl = `${protocol}://${slugValue}.${rootDomain}/api/auth/callback`
+
+    const supabase = createSupabaseBrowserClient()
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: callbackUrl,
+      },
+    })
+
+    if (authError) {
+      const msg = authError.message
+      if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
+        setState({ error: { email: ['An account already exists for this email.'] } })
+      } else {
+        setState({ error: { email: [msg] } })
+      }
+      setPending(false)
+      return
+    }
+
+    if (!authData.user) {
+      setState({ error: { _form: ['Signup failed. Please try again.'] } })
+      setPending(false)
+      return
+    }
+
+    // 2. Server-side provisioning (store creation, app_metadata)
+    const provisionData = new FormData()
+    provisionData.set('userId', authData.user.id)
+    provisionData.set('email', email)
+    provisionData.set('storeName', storeName)
+    provisionData.set('slug', slugValue)
+
+    const result = await provisionStore(provisionData)
+
+    if (result.error) {
+      setState({ error: result.error })
+      setPending(false)
+      return
+    }
+
+    // 3. Redirect to "check your email" screen
+    setPending(false)
+    router.push(
+      `/signup/verify-email?email=${encodeURIComponent(email)}&slug=${encodeURIComponent(slugValue)}&storeName=${encodeURIComponent(storeName)}`
+    )
+  }
 
   function handleStoreNameChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (!slugManuallyEdited || slug === '') {
@@ -55,7 +127,7 @@ export default function SignupForm() {
   const labelClass = 'block font-sans text-sm font-semibold text-[var(--color-text)] mb-1'
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {/* Email */}
       <div>
         <label htmlFor="email" className={labelClass}>

@@ -18,7 +18,7 @@ export default async function SetupPage() {
 
   const storeId = user?.app_metadata?.store_id as string | undefined
   if (!storeId) {
-    redirect('/admin/login')
+    redirect('/login')
   }
 
   const { data: store } = await supabase
@@ -28,7 +28,7 @@ export default async function SetupPage() {
     .single()
 
   if (!store) {
-    redirect('/admin/login')
+    redirect('/login')
   }
 
   // If wizard already dismissed, go to dashboard

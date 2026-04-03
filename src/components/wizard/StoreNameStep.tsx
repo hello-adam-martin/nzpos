@@ -72,7 +72,7 @@ export function StoreNameStep({ storeName, slug, onSave, onSkip }: Props) {
           Your store URL (set during signup, cannot be changed)
         </label>
         <p className="font-mono text-sm text-[var(--color-text-muted)] bg-[var(--color-surface)] rounded-md px-3 py-2 border border-[var(--color-border)]">
-          {rootDomain}/{slug}
+          {slug}.{rootDomain}
         </p>
       </div>
 

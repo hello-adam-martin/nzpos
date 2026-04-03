@@ -62,13 +62,14 @@ export default function ProvisioningScreen({ slug, storeName, status }: Provisio
       setCurrentStep(4)
       setShowRedirecting(true)
     }, 1500)
-    // Redirect
+    // Redirect to subdomain admin dashboard
+    // User is already signed in (auto-confirmed + signInWithPassword in SignupForm)
     setTimeout(() => {
       const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'lvh.me:3000'
       const protocol =
         rootDomain.includes('lvh.me') || rootDomain.includes('localhost') ? 'http' : 'https'
-      router.push(`${protocol}://${targetSlug}.${rootDomain}/admin/dashboard`)
-    }, 1750)
+      window.location.href = `${protocol}://${targetSlug}.${rootDomain}/admin/dashboard`
+    }, 2000)
   }
 
   // On mount with a valid slug, start the animation

@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
   // 2. Determine if this is the root domain or a store subdomain
   const host = request.headers.get('host') ?? ''
   const rootDomain = process.env.ROOT_DOMAIN ?? 'lvh.me:3000'
-  const isRoot = host === rootDomain || host === `www.${rootDomain}` || host.startsWith('localhost')
+  const isRoot = host === rootDomain || host === `www.${rootDomain}` || host.startsWith('localhost') || host.startsWith('127.0.0.1')
 
   // 3. Root domain — marketing site (per D-05). Pass through with session refresh.
   if (isRoot) {

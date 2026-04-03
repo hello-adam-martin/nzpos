@@ -36,12 +36,15 @@ export async function ownerSignup(
   const { email, password, storeName, slug } = parsed.data
 
   // 3. Create auth user — signUp returns "User already registered" if duplicate
+  // Use request origin for emailRedirectTo so the PKCE code verifier cookie
+  // (stored on the signup domain) is available when the callback fires.
+  const origin = headersList.get('origin') ?? process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
   const supabase = await createSupabaseServerClient()
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback`,
+      emailRedirectTo: `${origin}/api/auth/callback`,
     },
   })
 

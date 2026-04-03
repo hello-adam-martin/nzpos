@@ -17,7 +17,7 @@ export default async function SettingsPage() {
 
   const storeId = user?.app_metadata?.store_id as string | undefined
   if (!storeId) {
-    redirect('/admin/login')
+    redirect('/login')
   }
 
   const { data: store } = await supabase
@@ -27,7 +27,7 @@ export default async function SettingsPage() {
     .single()
 
   if (!store) {
-    redirect('/admin/login')
+    redirect('/login')
   }
 
   return (
