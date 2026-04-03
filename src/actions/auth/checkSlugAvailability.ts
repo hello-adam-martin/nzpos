@@ -8,9 +8,7 @@ import { validateSlug } from '@/lib/slugValidation'
 // for consistency with the project convention.
 // ---------------------------------------------------------------------------
 
-const SlugSchema = z.object({
-  slug: z.string().min(1).max(63).regex(/^[a-z0-9-]+$/),
-})
+const SlugSchema = z.string().min(1).max(63).regex(/^[a-z0-9-]+$/)
 
 /**
  * Check whether a slug is available for use as a store URL.
@@ -21,13 +19,13 @@ export async function checkSlugAvailability(
   slug: unknown
 ): Promise<{ available: boolean; reason?: string }> {
   // 1. Zod shape + format validation (consistent with project convention)
-  const parsedSlug = SlugSchema.safeParse({ slug })
+  const parsedSlug = SlugSchema.safeParse(slug)
   if (!parsedSlug.success) {
     return { available: false, reason: 'Invalid slug format. Use only lowercase letters, numbers, and hyphens.' }
   }
 
   // 2. Format + reserved-word validation via the canonical validator
-  const validation = validateSlug(parsedSlug.data.slug)
+  const validation = validateSlug(parsedSlug.data)
   if (!validation.valid) {
     return { available: false, reason: validation.reason }
   }
@@ -37,7 +35,7 @@ export async function checkSlugAvailability(
   const { data, error } = await admin
     .from('stores')
     .select('id')
-    .eq('slug', parsedSlug.data.slug)
+    .eq('slug', parsedSlug.data)
     .maybeSingle()
 
   if (error) {
