@@ -16,7 +16,7 @@ Requirements for the Hardening & Documentation milestone. Each maps to roadmap p
 - [x] **SEC-05**: Staff PIN auth verifies lockout after failed attempts and 8h session expiry
 - [x] **SEC-06**: Super admin routes are inaccessible to regular merchants and staff
 - [x] **SEC-07**: Customer auth cannot access POS or admin Server Actions
-- [x] **SEC-08**: All 67 Server Actions use Zod validation before database access
+- [x] **SEC-08**: All 48 Server Actions use Zod validation before database access
 - [x] **SEC-09**: No secrets exist in source code and .env.example is complete and accurate
 - [x] **SEC-10**: service_role key imports are guarded by server-only in all files
 - [x] **SEC-11**: Stripe webhook handlers verify signatures via constructEvent()
