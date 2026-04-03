@@ -40,6 +40,8 @@ const {
   }
 })
 
+vi.mock('server-only', () => ({}))
+
 vi.mock('@/lib/supabase/server', () => ({
   createSupabaseServerClient: mockCreateSupabaseServerClient,
 }))
@@ -66,8 +68,8 @@ function makeFormData(data: Record<string, string>): FormData {
   return fd
 }
 
-const VALID_STORE_ID = 'a0000000-0000-0000-0000-000000000001'
-const SUPER_ADMIN_USER_ID = 'b0000000-0000-0000-0000-000000000002'
+const VALID_STORE_ID = '72ebb8ff-adde-4f6c-b4b0-1fa4d4d23c53'
+const SUPER_ADMIN_USER_ID = '9472df8b-185a-4285-9790-ebf7fc7247de'
 const STORE_SLUG = 'test-store'
 
 beforeEach(() => {
