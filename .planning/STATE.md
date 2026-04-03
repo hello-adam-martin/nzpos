@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Hardening & Documentation
 status: executing
-stopped_at: Completed 17-03-PLAN.md (CSP headers, env.example, server-only guards)
-last_updated: "2026-04-03T19:55:11.887Z"
+stopped_at: Completed 17-02-PLAN.md (security fixes)
+last_updated: "2026-04-03T19:58:46.307Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 ## Current Position
 
 Phase: 17 (security-audit) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-04-03
 
@@ -58,6 +58,9 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 17-03]: CSP set as Report-Only — allows violation monitoring before switching to enforcing in production
 - [Phase 17-03]: addSecurityHeaders() helper pattern in middleware — single function wraps all return points, DRY and maintainable
 - [Phase 17-03]: server-only placed after 'use server' in Server Actions — 'use server' must be first statement per Next.js spec
+- [Phase 17]: orders_public_read policy changed to require lookup_token IS NOT NULL as DB-layer defense in depth (application layer enforces token via .eq() filter)
+- [Phase 17]: SECURITY DEFINER RPCs (increment_promo_uses, restore_stock, check_rate_limit, complete_pos_sale, complete_online_sale) restricted to service_role via REVOKE/GRANT in migration 021
+- [Phase 17]: All 9 modified Server Actions now log real errors server-side with console.error before returning generic client messages — no PostgreSQL error details exposed to clients
 
 ### Pending Todos
 
@@ -72,6 +75,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-03T19:55:11.884Z
-Stopped at: Completed 17-03-PLAN.md (CSP headers, env.example, server-only guards)
+Last session: 2026-04-03T19:58:46.304Z
+Stopped at: Completed 17-02-PLAN.md (security fixes)
 Resume file: None
