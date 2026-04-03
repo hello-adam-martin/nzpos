@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production Launch + Feature Waves
 status: executing
-stopped_at: Completed 16-super-admin-panel 16-01-PLAN.md
-last_updated: "2026-04-03T07:02:10.361Z"
+stopped_at: Completed 16-super-admin-panel 16-02-PLAN.md
+last_updated: "2026-04-03T07:06:25.615Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 10
   completed_phases: 9
   total_plans: 33
-  completed_plans: 30
+  completed_plans: 31
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 16 (super-admin-panel) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-04-03
 
@@ -86,6 +86,8 @@ Progress: [██████████] 100%
 - [Phase 16-super-admin-panel]: Zod v4 UUID validation requires RFC 4122-compliant UUIDs in tests — version bits 1-8, variant bits 89ab; zeroed fake UUIDs rejected
 - [Phase 16-super-admin-panel]: server-only mock vi.mock('server-only', () => ({})) required in all Server Action Vitest tests — established pattern from Phase 15 billing tests
 - [Phase 16-super-admin-panel]: Super admin manual override pattern: has_xero_manual_override boolean distinguishes admin comp (true) from Stripe-paid (false); deactivation blocks on Stripe-managed add-ons
+- [Phase 16-super-admin-panel]: Cached-path suspension check adds one indexed DB lookup per request — accepted for correctness across serverless instances
+- [Phase 16-super-admin-panel]: ownerSignin redirects super admins to /super-admin/tenants (tenants list is effective super admin home page)
 
 ### Blockers/Concerns
 
@@ -95,6 +97,6 @@ Progress: [██████████] 100%
 
 ## Session Continuity
 
-Last session: 2026-04-03T07:02:10.358Z
-Stopped at: Completed 16-super-admin-panel 16-01-PLAN.md
+Last session: 2026-04-03T07:06:25.612Z
+Stopped at: Completed 16-super-admin-panel 16-02-PLAN.md
 Resume file: None
