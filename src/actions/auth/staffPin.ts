@@ -1,9 +1,10 @@
 'use server'
+import 'server-only'
 import { StaffPinLoginSchema } from '@/schemas/staff'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import bcryptjs from 'bcryptjs'
 import { SignJWT } from 'jose'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 
 const secret = new TextEncoder().encode(process.env.STAFF_JWT_SECRET!)
 const LOCKOUT_ATTEMPTS = 10
@@ -15,6 +16,23 @@ export async function verifyStaffPin(input: unknown) {
   const { storeId, staffId, pin } = parsed.data
 
   const supabase = createSupabaseAdminClient()
+
+  // IP-level rate limiting (SEC-13)
+  // 20 attempts per IP per 5 minutes — higher than per-account limit (10) to allow
+  // multiple staff on the same iPad during shift changes.
+  const headersList = await headers()
+  const clientIp = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+
+  const { data: ipAllowed, error: rateLimitError } = await supabase
+    .rpc('check_rate_limit', {
+      p_ip: `pin_login:${clientIp}`,
+      p_max: 20,
+      p_window_seconds: 300,
+    })
+
+  if (rateLimitError || !ipAllowed) {
+    return { error: 'Too many login attempts. Please try again later.' }
+  }
 
   // Fetch staff record — include 'name' for the success response
   const { data: staff, error } = await supabase
