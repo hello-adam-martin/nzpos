@@ -1,7 +1,7 @@
 # Technology Stack
 
 **Project:** NZPOS — NZ Retail POS System
-**Researched:** 2026-04-01 (v1.0 core stack) + 2026-04-03 (v2.0 SaaS additions)
+**Researched:** 2026-04-01 (v1.0 core stack) + 2026-04-03 (v2.0 SaaS additions) + 2026-04-04 (v2.1 hardening tooling)
 **Confidence:** HIGH (core stack verified against live Next.js 16.2.1 official docs)
 
 ---
@@ -394,6 +394,361 @@ That's the only new package. Everything else — subdomain routing, feature gati
 
 ---
 
+## v2.1 Hardening & Documentation Tooling
+
+This section covers tooling added specifically for the v2.1 milestone: security auditing, code quality hardening, test coverage analysis, and documentation generation. The core stack is unchanged.
+
+**Principle for this milestone:** Minimal new dependencies. Every tool added must directly serve security, quality, coverage, or documentation goals. Do not add tools speculatively.
+
+---
+
+### 1. Security Scanning
+
+#### Dependency vulnerability scanning
+
+**Use `npm audit` (built-in) — no new package.**
+
+`npm audit` is already available and scans the dependency tree against the npm advisory database. Run `npm audit --audit-level=moderate` to fail on moderate+ CVEs.
+
+```bash
+npm audit --audit-level=moderate
+```
+
+Add to CI as a required step. No additional SCA tool needed for a project of this size.
+
+**Do NOT add:** Snyk CLI, Dependabot CLI, or other paid SCA tools. `npm audit` covers the dependency surface area completely for a solo developer. Snyk's free tier is useful but adds another auth dependency and rate limits.
+
+#### Static application security testing (SAST)
+
+**Use `eslint-plugin-no-unsanitized ^4.1.5` (HIGH confidence — actively maintained by Mozilla, current as of 2026-04-04).**
+
+This plugin catches `innerHTML`, `outerHTML`, `insertAdjacentHTML`, and `setHTMLUnsafe` assignments — the XSS attack surface in React/Next.js codebases. Despite the project using React (which escapes by default), `dangerouslySetInnerHTML` usages and template literals injected into DOM APIs are genuine risk surfaces.
+
+```bash
+npm install -D eslint-plugin-no-unsanitized
+```
+
+**Do NOT add `eslint-plugin-security ^4.0.0`** — this package is effectively unmaintained (only 13 rules, no meaningful updates since 2020). It generates false positives on regex patterns and lacks coverage of modern vulnerability categories (JWT attacks, SQL injection via template literals). Its reputation exceeds its current utility. The `eslint-plugin-no-unsanitized` + `typescript-eslint strict-type-checked` combination covers the meaningful surface area better.
+
+**Do NOT add Semgrep.** Semgrep is an excellent enterprise SAST tool with Next.js-specific rules, but it requires a separate installation (Python), separate config management, and CI integration overhead that is disproportionate for a solo developer. Its primary value is detecting patterns that ESLint misses — primarily SQL injection via string concatenation and authentication bypass patterns. Both of these are already prevented architecturally: the project uses the Supabase JS client (parameterized queries only) and Zod validation on all Server Actions. The risk surface Semgrep would catch is already closed.
+
+#### RLS policy audit (manual + Supabase built-in tooling)
+
+**Use Supabase Dashboard Security Advisor — no new package.**
+
+The Supabase Dashboard includes a built-in Security Advisor that detects tables without RLS enabled, policies that expose data across tenant boundaries, and common RLS misconfigurations. Access via Dashboard > Security. This is the correct first-pass RLS audit tool.
+
+For a manual audit, the checklist is:
+1. Every table has RLS enabled (`SELECT relname, relrowsecurity FROM pg_class WHERE relkind = 'r'`)
+2. Every SELECT policy filters on `store_id` matching JWT claim
+3. INSERT/UPDATE/DELETE policies require matching `store_id`
+4. `SECURITY DEFINER` functions (`provision_store`, Xero token RPCs) use `service_role` only
+5. No anon key access to sensitive tables (orders, customers, staff)
+
+No external tool improves on this manual checklist for a codebase of this size.
+
+---
+
+### 2. Code Quality & Linting
+
+#### TypeScript strict linting
+
+**Upgrade the existing ESLint config to use `typescript-eslint ^8.58.0` with `strict-type-checked`.**
+
+The project already has ESLint 10 + `eslint-config-next` in flat config format. The gap is that `eslint-config-next/typescript` (which the current `eslint.config.mjs` uses) is a lighter ruleset — it does not enable the full `strict-type-checked` rules from `typescript-eslint`.
+
+Add `@typescript-eslint/eslint-plugin ^8.58.0` and `@typescript-eslint/parser ^8.58.0` to enable typed linting rules. The `strict-type-checked` preset catches: unsafe `any` assignments, unchecked array access, unsafe member access on `any`, floating promises (critical for Server Actions), and unnecessary type assertions.
+
+```bash
+npm install -D @typescript-eslint/eslint-plugin @typescript-eslint/parser
+```
+
+Updated `eslint.config.mjs`:
+```javascript
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+import tseslint from "typescript-eslint";
+import noUnsanitized from "eslint-plugin-no-unsanitized";
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  ...tseslint.configs.strictTypeChecked,
+  {
+    plugins: { "no-unsanitized": noUnsanitized },
+    rules: {
+      ...noUnsanitized.configs.DOM.rules,
+      // Relax rules that conflict with Next.js patterns:
+      "@typescript-eslint/no-misused-promises": [
+        "error",
+        { checksVoidReturn: { attributes: false } },
+      ],
+    },
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
+]);
+
+export default eslintConfig;
+```
+
+**Why `strict-type-checked` over `strict`:** The type-aware rules are the ones that catch real bugs in this codebase. `@typescript-eslint/no-floating-promises` catches unawaited Server Actions. `@typescript-eslint/no-unsafe-assignment` catches responses from Supabase that TypeScript widens to `any`. These require type information and cannot be expressed without `parserOptions.projectService`.
+
+**Version compatibility (HIGH confidence — verified npm 2026-04-04):**
+- `typescript-eslint` 8.58.0 is the current monorepo package
+- `@typescript-eslint/eslint-plugin` and `@typescript-eslint/parser` are both 8.58.0
+- Compatible with ESLint ^10 and TypeScript ^5
+
+#### Dead code detection
+
+**Use `knip ^6.3.0` (HIGH confidence — actively maintained, Next.js plugin built-in as of 2026).**
+
+Knip finds unused files, exports, and dependencies. It ships with a Next.js plugin that understands App Router entry points (`page.tsx`, `layout.tsx`, `route.ts`, `middleware.ts`) so it does not false-positive on framework-required files.
+
+After 16 phases and 336 source files, this codebase will have dead code. Run Knip once as a one-time audit during v2.1 and remove what it finds. Do not add it to the pre-commit hook — it is too slow for that use case. CI-only or on-demand.
+
+```bash
+npm install -D knip
+```
+
+`knip.json`:
+```json
+{
+  "entry": ["src/app/**/{page,layout,route,middleware,template,error,loading,not-found}.{ts,tsx}"],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": ["src/test/**", "tests/**"]
+}
+```
+
+Run: `npx knip`
+
+**Do NOT add:** `ts-prune` (unmaintained), `unimported` (superseded by Knip). Knip is the current standard and covers more surface area.
+
+#### Code formatting
+
+**Use `prettier ^3.8.1` + `eslint-config-prettier ^10.1.8` (HIGH confidence — current stable versions as of 2026-04-04).**
+
+Prettier is not currently in the project. Adding it for v2.1 enforces consistent formatting as a pre-requisite to documentation and code review work. `eslint-config-prettier` disables ESLint rules that conflict with Prettier's output.
+
+```bash
+npm install -D prettier eslint-config-prettier
+```
+
+Add `eslint-config-prettier` as the last item in the ESLint config array (so it wins over any formatting rules). Add a `.prettierrc` at the project root.
+
+`.prettierrc`:
+```json
+{
+  "semi": false,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "es5",
+  "printWidth": 100
+}
+```
+
+#### Pre-commit hooks
+
+**Use `husky ^9.1.7` + `lint-staged ^16.4.0` (HIGH confidence — current stable versions as of 2026-04-04).**
+
+These enforce that ESLint and Prettier run on staged files before every commit. For v2.1, this prevents regressions introduced during the code review and cleanup phases.
+
+```bash
+npm install -D husky lint-staged
+npx husky init
+```
+
+`package.json` addition:
+```json
+{
+  "lint-staged": {
+    "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
+    "*.{json,md,css}": ["prettier --write"]
+  }
+}
+```
+
+`.husky/pre-commit`:
+```sh
+npx lint-staged
+```
+
+**Do NOT add:** commitlint or commitizen. Commit message enforcement is overhead for a solo developer. The value is negative for this project size.
+
+---
+
+### 3. Test Coverage Reporting
+
+#### Coverage provider
+
+**Use `@vitest/coverage-v8 ^4.1.2` (HIGH confidence — current stable, verified npm 2026-04-04).**
+
+The project runs Vitest 4.1.2 but has no coverage configuration. V8 is the correct provider for this project because:
+- V8 coverage requires no code transformation — it works with Next.js's SWC compilation pipeline without conflict.
+- Istanbul requires pre-instrumentation and does not work with SWC + Server Actions.
+- As of Vitest 3.2.0+, V8 uses AST-based remapping that produces accuracy equivalent to Istanbul for the patterns in this codebase.
+
+```bash
+npm install -D @vitest/coverage-v8
+```
+
+Updated `vitest.config.mts`:
+```typescript
+import { defineConfig } from 'vitest/config'
+import react from '@vitejs/plugin-react'
+import tsconfigPaths from 'vite-tsconfig-paths'
+
+export default defineConfig({
+  plugins: [tsconfigPaths(), react()],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/test/setup.ts'],
+    exclude: ['**/node_modules/**', '**/.claude/**', '**/dist/**'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov'],
+      reportsDirectory: './coverage',
+      exclude: [
+        'node_modules/**',
+        'src/test/**',
+        '**/*.config.*',
+        '**/types/**',
+        'src/app/**/page.tsx',      // Next.js page shells — tested via E2E
+        'src/app/**/layout.tsx',    // Next.js layout shells
+        'src/app/**/loading.tsx',
+        'src/app/**/error.tsx',
+        'src/app/**/not-found.tsx',
+      ],
+      thresholds: {
+        lines: 70,
+        functions: 70,
+        branches: 60,
+        statements: 70,
+      },
+    },
+  },
+})
+```
+
+Run coverage: `npx vitest run --coverage`
+
+**Coverage thresholds rationale:** 70% line/function coverage is realistic for a 336-file codebase where Next.js page/layout shells and Server Components with database calls are not unit-testable. The 60% branch threshold accounts for error handling branches that require integration-level setup. These thresholds exist to catch regressions, not to enforce 100% coverage.
+
+#### E2E coverage merging (optional, deferred)
+
+`nextcov ^1.2.1` can collect V8 coverage during Playwright runs and merge it with Vitest coverage into a unified report. This is valuable but complex to configure correctly (requires Next.js instrumentation hooks).
+
+**Decision: Do not add `nextcov` in v2.1.** The gap analysis for v2.1 is identifying which code paths lack unit tests, not producing a combined E2E+unit coverage number. Add `nextcov` in a future hardening pass if combined coverage metrics become a requirement.
+
+---
+
+### 4. Documentation Generation
+
+#### API and inline documentation
+
+**Use `typedoc ^0.28.18` (HIGH confidence — current stable, verified npm 2026-04-04).**
+
+TypeDoc generates HTML documentation from TSDoc comments in TypeScript source files. For v2.1, this serves two audiences:
+1. The founder-as-developer reviewing complex business logic (GST, Xero sync, tenant provisioning)
+2. Future contributors understanding the Server Action API surface
+
+TypeDoc understands the existing TypeScript exports and does not require additional code transformation. It runs on Next.js TypeScript projects without friction because it reads the compiled type information, not Next.js-specific constructs.
+
+```bash
+npm install -D typedoc
+```
+
+`typedoc.json`:
+```json
+{
+  "entryPoints": ["src/lib", "src/actions"],
+  "entryPointStrategy": "expand",
+  "out": "docs/api",
+  "name": "NZPOS API Documentation",
+  "readme": "none",
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "skipErrorChecking": false,
+  "tsconfig": "./tsconfig.json"
+}
+```
+
+Run: `npx typedoc`
+
+**What TypeDoc covers:** `src/lib/` (utility functions, GST calculations, Supabase client factories, feature gate utilities) and `src/actions/` (Server Actions API surface). These are the highest-value targets for inline documentation.
+
+**What TypeDoc does NOT cover:** React components, Next.js pages, and layout files. These are better documented via README files and architecture docs, not auto-generated API docs. Do not run TypeDoc over the entire `src/` — the output becomes noise.
+
+**TSDoc comment standard:** TypeDoc uses TSDoc syntax (`@param`, `@returns`, `@throws`, `@example`). Do not use JSDoc (`@type`, `@typedef`) in `.ts`/`.tsx` files — TypeScript's type system makes these redundant and they conflict with TypeDoc output.
+
+#### Developer and user documentation
+
+**No documentation generation tool.** Developer docs (setup guide, architecture overview, deployment runbook) and user-facing docs (merchant onboarding guide, admin manual) are markdown files written by hand. Tools like Docusaurus or GitBook add build complexity for what is static content that a solo developer will author directly.
+
+Write docs as markdown files in a `docs/` directory:
+- `docs/setup.md` — local development setup
+- `docs/architecture.md` — system architecture, data flow
+- `docs/deployment.md` — production deployment runbook
+- `docs/merchant-guide.md` — merchant onboarding
+- `docs/admin-manual.md` — admin panel reference
+- `docs/env-vars.md` — all environment variables with descriptions
+
+No tool needed. Markdown in the repo is sufficient and maintainable by a solo developer.
+
+---
+
+### v2.1 Tooling Summary
+
+| Tool | Version | Purpose | Install |
+|------|---------|---------|---------|
+| `@typescript-eslint/eslint-plugin` | `^8.58.0` | Strict typed linting (catches floating promises, unsafe `any`) | dev |
+| `@typescript-eslint/parser` | `^8.58.0` | TypeScript parser for ESLint type-aware rules | dev |
+| `eslint-plugin-no-unsanitized` | `^4.1.5` | XSS-risk detection for DOM injection patterns | dev |
+| `eslint-config-prettier` | `^10.1.8` | Disables ESLint rules that conflict with Prettier | dev |
+| `prettier` | `^3.8.1` | Code formatting enforcement | dev |
+| `husky` | `^9.1.7` | Git pre-commit hook runner | dev |
+| `lint-staged` | `^16.4.0` | Run linters only on staged files | dev |
+| `knip` | `^6.3.0` | Dead code and unused dependency detection | dev |
+| `@vitest/coverage-v8` | `^4.1.2` | V8-native test coverage for Vitest | dev |
+| `typedoc` | `^0.28.18` | API documentation from TSDoc comments | dev |
+
+**Total new packages: 10 dev dependencies.** All existing packages remain unchanged.
+
+```bash
+npm install -D \
+  @typescript-eslint/eslint-plugin \
+  @typescript-eslint/parser \
+  eslint-plugin-no-unsanitized \
+  eslint-config-prettier \
+  prettier \
+  husky \
+  lint-staged \
+  knip \
+  @vitest/coverage-v8 \
+  typedoc
+```
+
+### What NOT to Add in v2.1
+
+| Tool | Why Not |
+|------|---------|
+| `eslint-plugin-security` | Unmaintained (13 rules, no updates since 2020). High false-positive rate on regex patterns. The `typescript-eslint strict-type-checked` + `no-unsanitized` combination covers meaningful security surface better. |
+| Semgrep | Python-based SAST with separate config and CI setup. The risk surface it catches (SQL injection via string concatenation) is already closed by the Supabase JS client architecture. Overhead is disproportionate for solo developer. |
+| Snyk CLI | Paid SCA with rate limits on free tier. `npm audit` covers the same vulnerability database for this project size. |
+| `nextcov` | E2E coverage merging adds configuration complexity. Not needed for v2.1's gap analysis goal. Revisit post-v2.1. |
+| Docusaurus / GitBook | Documentation site generators. Overkill for a solo developer writing static markdown. Adds a build pipeline for no gain. |
+| `@vitest/coverage-istanbul` | Istanbul does not work with SWC + Server Actions in Next.js App Router. V8 is the correct choice. |
+| SonarQube / SonarCloud | Enterprise code quality platform. Valuable at team scale but heavy overhead for a solo project. The ESLint + TypeScript strict combination delivers equivalent signal. |
+
+---
+
 ## Key Configuration Notes
 
 ### Tailwind v4 with Next.js
@@ -469,3 +824,17 @@ For custom merchant domains (paid add-on):
 - Next.js deployment guide (official, 2026-03-25): https://nextjs.org/docs/app/getting-started/deploying
 - Next.js `use cache` directive (official, 2026-03-25): https://nextjs.org/docs/app/api-reference/directives/use-cache
 - Next.js blog — v16.2 release: https://nextjs.org/blog (confirmed version 16.2, released 2026-03-18)
+- Next.js ESLint configuration (official, 2026-04-02): https://nextjs.org/docs/app/api-reference/config/eslint
+- typescript-eslint v8 announcement and shared configs: https://typescript-eslint.io/blog/announcing-typescript-eslint-v8/
+- typescript-eslint shared configs reference: https://typescript-eslint.io/users/configs/
+- eslint-plugin-no-unsanitized (Mozilla): https://github.com/mozilla/eslint-plugin-no-unsanitized
+- eslint-plugin-security maintenance status (2026): https://dev.to/ofri-peretz/eslint-plugin-security-is-unmaintained-heres-what-nobody-tells-you-96h
+- Vitest coverage guide (official): https://vitest.dev/guide/coverage.html
+- Why Istanbul coverage does not work with Next.js App Router: https://dev.to/stevez/why-istanbul-coverage-doesnt-work-with-nextjs-app-router-9ip
+- V8 vs Istanbul coverage accuracy (2026): https://dev.to/stevez/v8-coverage-vs-istanbul-performance-and-accuracy-3ei8
+- nextcov — Next.js Playwright E2E coverage: https://github.com/stevez/nextcov
+- TypeDoc documentation generator: https://typedoc.org/
+- Knip dead code detector: https://knip.dev
+- Semgrep JavaScript/TypeScript SAST: https://semgrep.dev/docs/languages/javascript
+- Semgrep vs ESLint (2026): https://dev.to/rahulxsingh/semgrep-vs-eslint-security-focused-sast-vs-javascript-linter-2026-hef
+- npm package versions verified 2026-04-04: typescript-eslint@8.58.0, knip@6.3.0, @vitest/coverage-v8@4.1.2, typedoc@0.28.18, prettier@3.8.1, husky@9.1.7, lint-staged@16.4.0, eslint-plugin-no-unsanitized@4.1.5, eslint-config-prettier@10.1.8

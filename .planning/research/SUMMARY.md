@@ -1,197 +1,262 @@
 # Project Research Summary
 
-**Project:** NZPOS v2.0 — SaaS Platform Transformation
-**Domain:** Multi-tenant SaaS POS platform (single-tenant NZ retail POS to multi-merchant SaaS)
-**Researched:** 2026-04-03
-**Confidence:** HIGH (core stack + architecture verified against official docs; features via live web research)
+**Project:** NZPOS — v2.1 Hardening & Documentation
+**Domain:** Multi-tenant SaaS POS + Online Store — security hardening, code quality review, and documentation pass
+**Researched:** 2026-04-04
+**Confidence:** HIGH
 
 ## Executive Summary
 
-NZPOS is converting a working single-tenant NZ retail POS into a multi-tenant SaaS platform where any NZ small business can self-serve sign up, get a subdomain storefront, and optionally pay for add-ons (Xero, email notifications, custom domain). The existing v1 codebase has the right foundation: every table has `store_id`, RLS is enforced via JWT claims, and the `custom_access_token_hook` already injects tenant identity into every session. The v2.0 work is additive infrastructure — subdomain routing, tenant provisioning, Stripe subscriptions, feature gating, super admin, and a marketing page — layered on top of the existing POS that must keep working throughout.
+NZPOS v2.1 is a hardening and documentation milestone, not a feature milestone. The platform is complete: 336 source files, 36,329 LOC, 365+ tests, 20 database migrations, a shipped SaaS billing system, and a working Xero integration. This milestone bridges "code that works for the founder" to "code that can onboard external merchants safely." The research is grounded in direct codebase inspection rather than greenfield exploration — every finding maps to a specific file, migration, or pattern already in production.
 
-The recommended approach is to build in strict dependency order: schema changes first, then middleware tenant resolution, then signup/provisioning, then billing/gating, then admin tooling. The most dangerous pitfalls are security-architectural: middleware must NEVER be the sole authority for tenant identity (JWT claims + RLS are the enforcement layers), and feature gates must be enforced server-side rather than UI-only. The single biggest UX risk is a broken or race-conditioned signup flow — if a merchant's first experience is an empty dashboard or a permissions error, they churn immediately. The entire provisioning sequence must be atomic (Postgres RPC) with explicit session refresh and provision-status verification before any dashboard redirect.
+The recommended approach is risk-ordered and sequential, not parallel. Security audit must precede documentation because documenting incorrect behaviour is waste. Code quality review must precede inline documentation because documenting dead code is waste. Deployment runbook must precede user-facing documentation because screenshots require a live environment. This ordering is non-negotiable: the dependency chain from ARCHITECTURE.md and FEATURES.md agree on it independently.
 
-The competitive angle is strong: NZ-first defaults (GST 15%, NZD, EFTPOS), native Xero integration (not third-party), per-add-on billing instead of forced tier upgrades, and a 3-step skippable setup wizard targeting under-5-minute time-to-value. Square, Lightspeed/Vend, and Shopify all have weaknesses in the NZ market that NZPOS directly addresses. The tech stack needs no changes — Next.js 16 + Supabase + Stripe + Tailwind CSS is the right choice, with one new package (`@vercel/sdk`) for custom domain provisioning.
+The key risks are concentrated in three areas. First, the multi-tenant isolation model (RLS + custom JWT claims + SECURITY DEFINER RPCs) is architecturally correct but has specific, identified gaps that need confirmation rather than assumption: storage bucket policies, suspension enforcement at the Server Action layer, and JWT claims sourced from `user_metadata` vs `app_metadata`. Second, the Xero token rotation logic has a non-atomic failure mode that silently breaks merchant accounting sync with no recovery path. Third, documentation written in a burst without a "docs must be updated" gate in the Definition of Done will be stale within one shipping cycle — the structure of docs matters as much as their content.
+
+---
 
 ## Key Findings
 
 ### Recommended Stack
 
-The existing stack is correct and validated. No framework or database changes are needed for v2.0. The only new dependency is `@vercel/sdk ^1.x` for programmatic Vercel domain provisioning (custom domain add-on). Everything else — subdomain routing, feature gating, Stripe subscriptions, super admin, marketing page — is implemented with existing libraries.
+The stack is locked and validated. NZPOS runs Next.js 16.2 (App Router) + Supabase + Stripe + Tailwind CSS v4. No changes recommended. For v2.1, two tooling additions are relevant: the `vitest --coverage` flag to generate the coverage report, and the Stripe CLI for local webhook testing with live signing secrets. The existing stack is the right foundation for the hardening work.
 
-Critical version notes: Next.js is **16.2.1** (verify scaffold version); Tailwind is **v4.2** with CSS-first config (no `tailwind.config.js`); use `@supabase/ssr` not the deprecated `auth-helpers-nextjs`; Stripe node is `^17.x`.
-
-**Core technologies:**
-- **Next.js 16.2 + React 19:** Full-stack framework — App Router, Server Actions, Server Components, middleware. Wildcard subdomain tenant routing via pure middleware with no new libraries.
-- **Supabase (supabase-js ^2.x + @supabase/ssr):** Postgres + Auth + RLS + Storage. The `custom_access_token_hook` pattern (already live) handles all JWT claim injection for tenant isolation. Service role admin client already exists for provisioning.
-- **Stripe (^17.x node + ^4.x JS):** Two distinct uses — existing customer payments (POS/storefront) and new merchant billing (subscriptions). Must use separate webhook endpoints with separate signing secrets.
-- **Tailwind CSS 4.2:** CSS-first config (`@theme` in globals.css). Deep navy + amber design system maps directly to Tailwind utilities.
-- **Zod ^3.x:** Every Server Action validates inputs before any DB operation. Required for signup slug validation including reserved-word blocklist.
-- **jose ^5.x:** Staff PIN JWT sessions (already in use). No change needed.
-- **@vercel/sdk ^1.x (NEW):** The only new package. Used only for custom domain add-on. Programmatically calls Vercel REST API to add/verify/remove merchant custom domains.
-
-**What not to add:** Prisma, NextAuth/Clerk, Supabase Realtime for inventory, Stripe Terminal SDK, feature flag services (PostHog/LaunchDarkly), headless CMS for marketing page, multi-plan tier packaging.
+**Core technologies for v2.1 work:**
+- Next.js 16.2 / Supabase / Stripe: unchanged — the hardening review operates on existing code
+- Vitest + Playwright: existing test suite — extend with coverage reporting and cross-tenant E2E tests
+- Supabase CLI: needed for `db diff` migration validation and local `storage.policies` inspection
+- Stripe CLI: needed for live-mode webhook testing with correct signing secrets
 
 ### Expected Features
 
-**Must have for v2.0 launch (P1 table stakes):**
-- Wildcard subdomain routing — `[slug].nzpos.app` per merchant, middleware tenant resolution
-- Self-serve merchant signup with automatic store provisioning (atomic, idempotent Postgres RPC)
-- Email verification before dashboard access
-- Store setup wizard — 3 steps, fully skippable (name/slug, logo, first product)
-- Feature gating for existing add-ons (Xero, Email Notifications) — server-side enforcement mandatory
-- Stripe subscription checkout per add-on + webhook handler for subscription state sync
-- Stripe Customer Portal link in admin billing section (self-serve cancel/upgrade)
-- Super admin panel — tenant list, view details, suspend
-- Marketing landing page — hero, pricing, signup CTA, mobile-optimised, static rendering
+The feature scope for v2.1 is entirely hardening, review, and documentation. No user-visible features ship. The research establishes a clear P0/P1/P2/P3 priority stack.
 
-**Should have after first external merchants (P2 differentiators):**
-- Custom domains — bring-your-own domain as paid add-on with Vercel SDK provisioning and DNS verification UX
-- Impersonate-tenant in super admin (act-as for support debugging)
-- Setup completion checklist persistent in admin dashboard
-- Per-tenant usage metrics in super admin
+**Must complete before first external merchant (P0):**
+- RLS policy audit across all tables including v2.0 additions (add_ons, subscriptions, audit_logs, store_wizard_state) — active security liability
+- Auth flow verification: PIN lockout, JWT expiry, super admin guard — security liability
+- Stripe webhook signature verification confirmed on both webhook handlers — billing integrity
+- Server Action Zod validation audit across all 67 action files — input safety
+- Environment variable audit with .env.example updated — deployment blocker
+- Production deployment runbook: Supabase, Stripe live keys, Vercel wildcard DNS — launch blocker
+- Local dev setup guide — solo developer returning after time away blocker
 
-**Defer to v3+ (premature complexity or anti-features):**
-- Live storefront preview during setup wizard (high complexity)
-- Email drip onboarding sequences
-- White-label / removing "Powered by NZPOS"
-- Multi-plan tiers (Starter/Pro/Enterprise) — keep per-add-on billing model
-- Tenant self-service subdomain slug changes (slug is immutable; display name is editable)
-- Database-per-tenant isolation (row-level isolation via `store_id` + RLS scales to thousands of tenants)
-- Free trial with credit card required (NZ segment is skeptical; Square's no-card model built their NZ share)
+**High value, ship early in milestone (P1):**
+- Test coverage report to identify gaps before production
+- RLS integration tests for v2.0 tables
+- Webhook handler test coverage for Stripe subscription events
+- Inline documentation for GST calculation, `requireFeature.ts`, `tenantCache.ts`, Xero sync, `provision_store` RPC
+- Architecture overview document covering auth systems, tenant isolation, and feature gating
+- Server Action inventory (67 actions catalogued)
+- Merchant onboarding guide (first sale walkthrough)
+- Smoke test checklist post-deploy
+
+**Meaningful but deferrable (P2):**
+- Dead code removal, error handling consistency, TypeScript strict mode check
+- Content Security Policy headers, structured logging, admin dashboard reference
+- Rate limiting audit extended to PIN login, audit log completeness
+
+**Nice to have (P3):**
+- GST IRD specimen test suite, merchant video walkthrough, automated migration CI, decision log expansion, structured RLS pen test
+
+**Confirmed anti-features for this milestone:**
+- SOC 2 audit (premature at single-store launch)
+- Full GDPR compliance (NZ Privacy Act 2020 is the applicable law, not GDPR)
+- OpenAPI/Swagger documentation (this app uses Server Actions, not a public REST API)
+- 100% test coverage enforcement (coverage gaming; 80%+ on critical paths is the target)
 
 ### Architecture Approach
 
-The architecture is additive — existing v1 routes, RLS policies, JWT hook, and Supabase client patterns remain unchanged. New work adds a route group layer (`(marketing)`, `(onboarding)`, `(tenant)`, `superadmin`) and a library layer (`lib/tenant.ts`, `lib/features.ts`, `lib/stripe-billing.ts`, `lib/vercel-domains.ts`). Middleware gains hostname-based tenant resolution, injecting `x-tenant-id` for routing purposes only — JWT claims remain the security authority. The `store_plans` table is the application source of truth for feature entitlements; Stripe webhooks write to it, Server Actions read from it; Stripe is never called at request time for access checks.
+The architecture is fully built and in production. v2.1 makes no new routes, components, or major structural changes. The review applies to an existing system with well-defined component boundaries. The review order is risk-based: middleware and RLS first, financial logic second, general code quality third, then documentation.
 
-**Major components:**
-1. **Middleware (modified)** — hostname to tenant slug/custom domain lookup, `x-tenant-id` header injection, additive before existing auth checks
-2. **Tenant provisioning (new)** — atomic Postgres RPC `provision_store()` creating auth user + stores row + staff row + store_plans row in one transaction; idempotent
-3. **`store_plans` table (new)** — per-store feature flags (`xero_enabled`, `email_notifications_enabled`, `custom_domain_enabled`), Stripe subscription refs, plan tier; webhooks write to it synchronously
-4. **Feature gate helpers `hasFeature()` / `requireFeature()` (new)** — single server-side entitlement check at top of every gated Server Action and Server Component; UI gates are cosmetic only
-5. **Stripe billing (new)** — separate webhook endpoint `/api/webhooks/stripe-billing` distinct from existing `/api/webhooks/stripe`; handles `customer.subscription.*` and `invoice.*` events
-6. **Super admin `/superadmin` route group (new)** — `is_super_admin` JWT claim guard in middleware AND layout; service role client confined to DDL/admin ops
-7. **Vercel SDK domain provisioning (new)** — Server Action wrapping `projectsAddProjectDomain`, polls verification, stores DNS record set for re-display in UI
+**Major components and their review priority:**
+1. `src/middleware.ts` (221 LOC, Edge Runtime) — ALL tenant routing flows through here; CRITICAL review target
+2. `supabase/migrations/015_rls_policy_rewrite.sql` + migrations 016–020 — primary tenant isolation mechanism; CRITICAL
+3. `src/lib/resolveAuth.ts` + `src/lib/requireFeature.ts` — auth context resolution for all Server Actions; HIGH
+4. `src/app/api/webhooks/stripe/` (two handlers) — payment completion and billing; HIGH
+5. `src/actions/auth/` (14 files) — both Supabase Auth and jose JWT staff PIN flows; HIGH
+6. `src/lib/gst.ts` + `src/lib/money.ts` — financial calculation utilities; HIGH (IRD compliance)
+7. `src/lib/xero/` — token rotation, Vault access, sync error handling; HIGH (silent failure risk)
+8. `docs/` directory — to be created; developer and merchant documentation
+
+**Key patterns confirmed in codebase:**
+- SECURITY DEFINER RPCs for all atomic multi-table mutations (provision_store, complete_pos_sale, complete_online_sale)
+- Dual-path feature gating: JWT fast path for most checks, DB fallback (`requireDbCheck: true`) for billing-critical mutations
+- Tenant header propagation: middleware injects `x-store-id`, Server Actions read via `resolveAuth()` which cross-checks against JWT `store_id`
+- In-memory tenant cache with per-request `is_active` verification (suspension is immediate even for cached stores)
+- Idempotent webhook processing via `stripe_events` dedup table with insert-after-success ordering
 
 ### Critical Pitfalls
 
-1. **Middleware-only tenant isolation (CVE-2025-29927)** — Next.js middleware can be bypassed by crafted headers. The `x-tenant-id` header is for routing only. The authoritative `store_id` always comes from the authenticated JWT claim. RLS enforces isolation at the DB layer regardless. Never accept `store_id` as a client-supplied input to any Server Action. Verify in Phase 1 with a cross-tenant isolation E2E test.
+1. **RLS audit missing storage buckets** — `storage.objects` policies are separate from table RLS and not covered by standard migration review. A public product image bucket may allow cross-tenant writes. Audit step: run `SELECT * FROM storage.policies` explicitly; verify INSERT/DELETE policies restrict to owning store via path segment check.
 
-2. **Stale JWT claims after provisioning or plan change** — Supabase JWTs cache claims for up to 1 hour. After provisioning, immediately call `supabase.auth.refreshSession()` client-side and gate the wizard redirect behind it. For plan changes triggered by webhooks, store a `plan_updated_at` timestamp and force refresh on next navigation if stale. Keep JWT lifetime to 15-30 minutes in SaaS context.
+2. **JWT claims sourced from `user_metadata` instead of `app_metadata`** — `user_metadata` is user-writable via `supabase.auth.updateUser()`. If any RLS-critical claim (especially `store_id` or `is_super_admin`) sources from `user_metadata` in the access token hook, any user can forge their own store_id and read another tenant's data. This is a complete RLS bypass. Verify every claim in `003_auth_hook.sql` sources from `raw_app_meta_data`.
 
-3. **Tenant provisioning race condition** — Auth user creation and store row creation are not a single atomic operation at the application layer. Use a Postgres RPC function to wrap the full provisioning sequence atomically. Make it idempotent. Verify `store_id` is in the JWT before any dashboard redirect. Show a "provisioning failed — retry" screen, not a blank dashboard.
+3. **Suspension enforcement stops at middleware** — Middleware gates page loads. Long-lived POS sessions (iPad open for a full trading day) bypass middleware after initial load. A suspended merchant's Server Actions may continue processing sales. Suspension must be enforced at the data layer (RLS policy referencing `is_suspended`, or `requireActiveStore()` check in POS Server Actions).
 
-4. **Stripe webhook routing confusion** — The existing webhook at `/api/webhooks/stripe` handles POS payment events. Subscription billing events must go to a separate endpoint `/api/webhooks/stripe-billing` with its own signing secret. Mixing them causes cross-domain side effects that are difficult to debug and test.
+4. **Xero token rotation is non-atomic** — Token refresh fetches new tokens from Xero, then writes to Supabase Vault. If the Vault write fails, the old (now-invalidated) refresh token is gone and the connection is permanently broken with no merchant notification. Audit: verify Vault write failure triggers reconnect email and sets `xero_connection_status = 'token_error'` on the store record.
 
-5. **Client-only feature gating** — React component gates can be bypassed by disabling JavaScript or inspecting the API response. Every gated Server Action and Route Handler must call `requireFeature(storeId, feature)` server-side before executing. The UI gate is cosmetic; the server-side check is the enforcer.
+5. **IDOR in financial data routes** — OWASP automated scanners confirm authentication (logged in) but miss authorisation (do you own this resource?). Any Server Action or Route Handler accepting an object ID that uses the admin Supabase client without ownership verification is vulnerable. Manual test protocol: logged in as Store A, attempt to read Store B's order ID — expect 403 or empty result.
 
-6. **Wildcard SSL requires Vercel nameserver delegation** — Wildcard certificate provisioning requires ACME DNS-01 challenges which require full NS delegation (`ns1.vercel-dns.com`, `ns2.vercel-dns.com`). A CNAME record alone does not work for wildcards. Must be configured before writing any tenant routing code.
+6. **Dead code removal breaks runtime behaviour** — TypeScript static analysis cannot see dynamic references (string-keyed dispatch tables, `dynamic()` imports). In a 336-file codebase, dynamic patterns are certain to exist. Never bulk-delete flagged exports. Delete in batches of 10-20 with a full test run (including E2E) between each batch.
+
+---
 
 ## Implications for Roadmap
 
-Based on research, the architecture has hard dependencies that dictate build order. Each phase depends on the previous — the routing will not work without schema, provisioning will not work without routing, billing will not work without provisioned stores.
+Based on the dependency chain identified across all four research files, the milestone maps cleanly to four sequential phases. The ordering is driven by risk, not convenience.
 
-### Phase 1: Multi-Tenant Infrastructure
-**Rationale:** Everything else depends on this. Schema changes, RLS policy updates, and wildcard DNS must be in place before any tenant-aware feature can be built or tested.
-**Delivers:** Schema ready for multi-tenancy (`stores.slug`, `stores.custom_domain`, `stores.stripe_customer_id`; `store_plans` table); updated RLS policies with `is_super_admin` bypass; working wildcard subdomain routing middleware; wildcard SSL verified end-to-end with a real test subdomain; `lib/tenant.ts` resolving tenant from hostname.
-**Addresses:** Subdomain routing (table stakes), tenant data isolation (table stakes)
-**Avoids:** Middleware-only isolation pitfall (CVE-2025-29927), RLS-not-updated-for-super-admin pitfall, wildcard SSL misconfiguration pitfall
+### Phase 1: Security Audit
 
-### Phase 2: Merchant Self-Serve Signup
-**Rationale:** Without a working signup there are no tenants to operate on. Must ship before the setup wizard (which requires a provisioned store) and before billing (which requires a Stripe Customer per store).
-**Delivers:** Signup page, `provision_store()` Postgres RPC (atomic + idempotent), Stripe Customer created at provisioning time, session refresh after provisioning, `provision_status` verification before dashboard redirect, reserved slug blocklist (Zod + server-side), rate limiting on signup.
-**Addresses:** Self-serve signup (table stakes), automatic store creation (table stakes), email verification (table stakes)
-**Avoids:** Tenant provisioning race condition pitfall, stale JWT after provisioning pitfall, free tier signup abuse (rate limit 1 store per verified email)
+**Rationale:** Security issues found here require code changes. Documenting incorrect code before fixing it creates immediate documentation debt. No other phase can be considered reliable until the security foundation is verified. This is the mandatory first gate.
 
-### Phase 3: Store Setup Wizard + Marketing Landing Page
-**Rationale:** Wizard requires a provisioned store (Phase 2 dependency) but is logically separate from billing. Marketing page has no dependencies but pairs naturally here as the entry point into signup.
-**Delivers:** 3-step skippable setup wizard (store name/slug confirmation, logo upload, optional first product); post-wizard redirect to admin dashboard; marketing landing page (hero, pricing, signup CTA, mobile-optimised, static rendering for fast LCP); NZ-specific social proof copy.
-**Addresses:** Store setup wizard (table stakes), marketing landing page (table stakes), progress indicator (table stakes), skip option on every step (table stakes)
-**Avoids:** Empty dashboard on wizard completion, redirect-before-provision-complete UX pitfall
+**Delivers:** Confirmed tenant isolation, verified auth flows, validated webhook handling, and runtime evidence of security posture (not just policy screenshots). Any security fixes shipped as surgical code changes.
 
-### Phase 4: Stripe Billing + Feature Gating
-**Rationale:** Billing requires provisioned stores with `stripe_customer_id` (Phase 2). Feature gating requires `store_plans` rows to exist (created at provisioning). This is the monetisation phase — must ship before the v2.0 SaaS label is justified.
-**Delivers:** Separate `/api/webhooks/stripe-billing` endpoint with its own signing secret; subscription checkout per add-on (Xero, Email Notifications); `store_plans` table written by webhooks; `requireFeature()` / `hasFeature()` server-side entitlement helpers enforced in all existing Xero and email Server Actions; Stripe Customer Portal link in admin billing section; billing idempotency (`stripe_billing_events` table); contextual upgrade prompts at gated features.
-**Addresses:** Feature gating (table stakes), Stripe subscription checkout (table stakes), webhook state sync (table stakes), graceful access revocation (table stakes), contextual upgrade prompts (differentiator)
-**Avoids:** Client-only feature gating pitfall, Stripe webhook routing confusion pitfall, stale JWT after plan change pitfall, Stripe Customer race condition at first checkout
+**Addresses:** All P0 features except deployment runbook. RLS audit, auth flow verification, Stripe webhook verification, Server Action Zod audit, environment variable audit, super admin guard.
 
-### Phase 5: Super Admin Panel
-**Rationale:** Can read from all previous phases. Logical last step before external merchants — needs stores, subscriptions, and plan data to be meaningful. Required before onboarding real merchants (for support debugging).
-**Delivers:** `/superadmin` route group with `is_super_admin` middleware + layout guard; tenant list with pagination and search; tenant detail view (plan, created, last active, subscription status); suspend/soft-delete with 30-day recovery window; admin audit log (`admin_audit_log` table); manual plan override for comping merchants.
-**Addresses:** Super admin route protection (table stakes), tenant list/search/suspend (table stakes), manual plan override (differentiator)
-**Avoids:** Super admin sharing owner auth path anti-pattern, service role client leaking into tenant query paths, destructive actions without confirmation
+**Avoids:** Pitfalls 1-4, 8 (storage RLS gap, JWT metadata source, suspension enforcement, IDOR).
 
-### Phase 6: Custom Domains (Paid Add-on)
-**Rationale:** Requires billing/gating (Phase 4) because custom domain is a paid add-on. Requires stable subdomain routing (Phase 1) because custom domain is an alias. Most complex feature; lowest priority until merchants request it.
-**Delivers:** `@vercel/sdk` integration for `projectsAddProjectDomain`; DNS verification UX (copy-paste DNS records, live polling status, activation email); `custom_domain_status` column (`pending_verification` | `active` | `failed`); middleware custom domain lookup branch; 301 redirect from subdomain to custom domain once active; domain ownership verification enforced before activation.
-**Addresses:** Custom domain bring-your-own (differentiator), canonical redirect (differentiator), domain verification flow (differentiator)
-**Avoids:** Custom domain verification UX black hole pitfall, custom domain hijacking security mistake, CNAME vs NS delegation confusion
+**Specific review targets (in order):**
+- `supabase/migrations/015_rls_policy_rewrite.sql` + migrations 016–020 + `storage.objects` policies
+- `src/middleware.ts` (all auth gates, webhook bypass correctness)
+- `src/lib/resolveAuth.ts` (x-store-id trust, role check gap for customer sessions)
+- Both Stripe webhook handlers (raw body handling, idempotency, separate signing secrets per environment)
+- `src/actions/auth/` — all 14 files (PIN lockout server-side state, JWT expiry, orphaned user cleanup)
+- `src/actions/super-admin/` — all 4 files (independent re-verification of `is_super_admin`)
+- `003_auth_hook.sql` (claims from `raw_app_meta_data` not `user_metadata`)
+- `src/lib/signupRateLimit.ts` (in-memory vs DB-backed — critical for multi-instance Vercel)
+
+**Research flags:** Standard patterns. ARCHITECTURE.md and PITFALLS.md together provide a complete audit checklist. No additional research sprint needed.
+
+---
+
+### Phase 2: Code Quality and Financial Logic Review
+
+**Rationale:** Code quality fixes follow security fixes because a security fix may touch code about to be refactored. Financial logic review is grouped here because it requires the same precision discipline, and GST/money utilities are correctness-critical (IRD compliance).
+
+**Delivers:** GST calculation edge case coverage, fixed code quality issues identified in Phase 1 (GST utility deduplication in webhook handler, rate limiting migration if needed), safe dead code removal (small batches with E2E between each), consistent error handling in Server Actions.
+
+**Addresses:** P1 features — test coverage report, RLS integration tests for v2.0 tables, webhook handler test coverage, GST edge case tests.
+
+**Avoids:** Pitfalls 5, 6, 9 (dead code removal risks, GST edge cases undocumented, Xero token rotation failure).
+
+**Specific targets:**
+- `src/lib/gst.ts` + `src/lib/money.ts`: formula documentation, edge cases (zero, half-cent, negative quantity)
+- `src/actions/orders/completeSale.ts`, `processPartialRefund.ts`, `processRefund.ts`
+- `supabase/migrations/005_pos_rpc.sql` + `006_online_store.sql` (PL/pgSQL financial RPCs)
+- `src/lib/xero/`: token rotation atomicity, failure recovery, Vault write error handling
+- Dead code scan: knip + manual dynamic reference check, small batches with E2E between
+- `src/app/api/webhooks/stripe/route.ts`: GST utility deduplication (one-line import fix)
+
+**Research flags:** Standard patterns. Xero token rotation atomicity is documented in Xero OAuth official docs.
+
+---
+
+### Phase 3: Developer Documentation
+
+**Rationale:** Documentation can only be written accurately after the code it documents is correct (Phases 1-2 complete). Developer docs come before user docs because user docs for a merchant-facing product require a live production environment (screenshots, live URLs).
+
+**Delivers:** Complete developer-facing documentation suite: `docs/setup.md`, `docs/architecture.md`, `docs/security.md`, `docs/api-reference.md` (Server Action catalogue), inline JSDoc on complex business logic, environment variable reference, contribution guide.
+
+**Addresses:** P1 features — architecture overview, Server Action inventory (67 actions), inline docs for `gst.ts`, `requireFeature.ts`, `tenantCache.ts`, `xero/sync.ts`, `provision_store` RPC.
+
+**Avoids:** Pitfall 7 (documentation staleness) — design docs to be updateable: living files in the repo, `Last verified:` dates on infrastructure docs, "update docs" in Definition of Done, inline JSDoc as primary reference not external docs.
+
+**Documentation build order:** `docs/security.md` first (documents the now-correct auth model), then `docs/architecture.md` (system overview, Mermaid data flow diagrams), then `docs/api-reference.md` (Server Action catalogue), then `docs/setup.md` (local dev), then contribution guide.
+
+**Research flags:** Standard patterns. No additional research needed.
+
+---
+
+### Phase 4: Deployment Runbook and User Documentation
+
+**Rationale:** Must come last because: (1) the deployment runbook can only be finalised after all production security configuration decisions are known, and (2) merchant-facing documentation with screenshots requires a live production environment.
+
+**Delivers:** Production deployment runbook (`docs/deployment.md`), merchant onboarding guide (first sale walkthrough), admin dashboard reference, smoke test checklist (post-deploy), GST and compliance explanation for merchants.
+
+**Addresses:** Remaining P0 — the production deployment runbook. P1 — merchant onboarding guide, smoke test checklist.
+
+**Avoids:** Pitfall 7 for user-facing content — prefer step descriptions over screenshots, or annotated screenshots with explicit "last verified" dates.
+
+**Deployment runbook must cover:**
+- Production Supabase: org creation, migration application in order, seed data (super admin user, default plans), auth config, storage buckets, email templates
+- Stripe live keys: webhook endpoint registration, live vs test secret separation (separate `STRIPE_WEBHOOK_SECRET` per environment), webhook replay verification
+- Vercel: `*.nzpos.app` wildcard DNS, env vars (production vs preview vs development), tenant routing E2E test
+- Database migration strategy: naming convention, application order, schema verification, rollback approach
+- Monitoring baseline: Vercel error logs, Supabase logs, Stripe dashboard for failed webhook deliveries
+
+**Research flags:** Standard patterns. Vercel wildcard DNS and Supabase production migration workflow are well-documented.
+
+---
 
 ### Phase Ordering Rationale
 
-- Schema and DNS must precede all tenant-aware code — no tenant routing is possible without both.
-- Signup must precede billing — Stripe Customer is created at provisioning; billing depends on this foreign key.
-- Feature gating must run before external merchants are onboarded — ungated Xero access is a revenue leak.
-- Super admin pairs with Phase 4 completion because it needs real subscription data to be useful; building it last avoids maintaining it against changing schemas.
-- Custom domains are deliberately last — they are the most complex feature, depend on stable billing, and have the narrowest immediate demand.
+- **Security before everything:** Code changes from security findings invalidate any documentation written before them. No exceptions.
+- **Financial logic with code quality:** The same precision discipline applies to both. GST edge cases are also a security/compliance concern.
+- **Developer docs before user docs:** Developer docs can be written against the codebase alone. User docs require a live environment.
+- **Deployment runbook last:** Cannot be finalized until all security configuration decisions (env vars, Stripe live key setup, Supabase production org) are known.
+- **Dead code removal after test coverage:** Adding tests then removing dead code is correct. Removing code then adding tests to replace coverage is backwards.
 
 ### Research Flags
 
-Phases likely needing `/gsd:research-phase` during planning:
-- **Phase 4 (Stripe Billing):** The Stripe Entitlements API (`stripe.entitlements.activeEntitlements.list()`) is a verified differentiator that could replace the custom `store_plans` boolean columns approach. Determine whether it simplifies entitlement sync or adds indirection before committing to either model.
-- **Phase 6 (Custom Domains):** Vercel SDK domain verification polling patterns, DNS propagation UX edge cases (wrong record added, domain already on another Vercel project), and the merchant-facing DNS instruction UI warrant a targeted research pass.
+All four phases follow well-documented patterns. No phase requires an additional `/gsd:research-phase` sprint.
 
-Phases with well-documented standard patterns (skip research phase):
-- **Phase 1 (Infrastructure):** Vercel wildcard DNS, Next.js middleware subdomain routing, Supabase RLS with `is_super_admin` — all verified in official docs.
-- **Phase 2 (Signup):** Supabase admin client provisioning, Postgres RPC atomicity — established patterns with codebase precedent.
-- **Phase 3 (Wizard + Marketing):** Next.js static rendering, Supabase Storage uploads, multi-step form with React state — straightforward.
-- **Phase 5 (Super Admin):** Route group with middleware guard, service role client scoping — well-documented patterns.
+- **Phase 1:** Security audit checklist is fully specified in ARCHITECTURE.md and PITFALLS.md. Audit targets, failure modes, and verification steps are all mapped.
+- **Phase 2:** Financial logic review targets are identified. GST formula is documented. Dead code removal process is specified.
+- **Phase 3:** Documentation structure is specified in ARCHITECTURE.md with target files and content per file.
+- **Phase 4:** Deployment runbook structure is specified in FEATURES.md with step-level detail.
+
+---
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Core stack verified against Next.js 16.2.1 official docs (2026-03-25); @vercel/sdk confirmed from npm + Vercel official docs (2026-03-31); Stripe ^17.x from official docs |
-| Features | MEDIUM-HIGH | Table stakes verified via live web research + competitor analysis; differentiators from Stripe and Vercel official docs; competitor feature data is MEDIUM (training knowledge + web research) |
-| Architecture | HIGH | Patterns verified against official Vercel multi-tenant docs, Next.js subscription payments reference, and existing codebase review (`src/middleware.ts`, RLS migrations, `resolveAuth.ts`) |
-| Pitfalls | MEDIUM-HIGH | CVE-2025-29927 verified from Snyk + ProjectDiscovery; Supabase JWT staleness from official docs; Stripe webhook patterns from official docs; UX pitfalls from web research (MEDIUM) |
+| Stack | HIGH | Core stack locked. Validated against live Next.js 16.2.1 official docs. v2.1 adds no new dependencies. |
+| Features | HIGH | Well-established engineering practice (OWASP, Next.js, Supabase official docs). Codebase analysis confirmed 67 action files, 336 source files, 365+ tests. |
+| Architecture | HIGH | Based on direct codebase inspection: middleware.ts, 20 migrations, all action files, webhook routes. Not inference — actual file reads. |
+| Pitfalls | HIGH (RLS/Stripe/Next.js), MEDIUM (documentation staleness, code-review sequencing) | RLS/Stripe pitfalls backed by official docs and CVE evidence. Doc staleness based on practitioner consensus. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Stripe Entitlements API vs custom `store_plans` columns:** Research confirms Entitlements is production-ready as of 2025, but the tradeoff between Stripe-as-source-of-truth vs DB-as-source-of-truth needs a final call before Phase 4 implementation. Recommendation: use `store_plans` boolean columns for initial implementation (simpler, always available offline from Stripe), research Entitlements API during Phase 4 planning and migrate if it simplifies the sync model.
-- **Supabase free tier limits under multi-tenant load:** Pricing page was blocked during research; free tier limits (500MB DB, 1GB storage, 50K MAU) are from training data. Validate current limits before onboarding more than ~20 merchants to plan the Supabase Pro upgrade timing.
-- **NZ domain registrar nameserver delegation:** Wildcard SSL requires Vercel nameserver delegation. If the domain is registered at a NZ registrar (Domains.co.nz, 1st Domains, etc.), confirm they support custom nameserver delegation before Phase 1 is scheduled.
-- **Transactional email provider for signup verification:** The Email Notifications add-on is gated behind billing, but a transactional email provider is needed for email verification at signup (Phase 2). Resend is the standard Next.js choice. Not covered in the research files — add to Phase 2 planning.
+- **Rate limiting implementation:** `signupRateLimit.ts` may still use an in-memory `Map` rather than the DB-backed `check_rate_limit` RPC added in migration 009. In-memory rate limiting does not survive Vercel instance restarts. Must be verified as the first item in Phase 1.
+
+- **Storage bucket policy existence:** No evidence in migrations that `storage.objects` policies exist. Buckets may have been configured via Supabase dashboard UI (outside the migration workflow). The Phase 1 audit must explicitly run `SELECT * FROM storage.policies` to determine current state.
+
+- **`orders_public_read` data exposure scope:** The policy intentionally has no `store_id` filter (required for guest checkout order confirmation). The audit must confirm no sensitive merchant data is on the `orders` row that could be harvested via enumeration.
+
+- **Xero connection health signaling:** Whether a `xero_connection_status` field or equivalent error signaling mechanism exists on the `stores` table is unknown from research alone. Phase 2 must audit the Xero sync failure path specifically.
+
+---
 
 ## Sources
 
 ### Primary (HIGH confidence)
+
+- Direct codebase inspection: `src/middleware.ts` (221 LOC), `src/lib/resolveAuth.ts`, `src/lib/requireFeature.ts`, `src/lib/tenantCache.ts`, `src/lib/gst.ts`, `supabase/migrations/002–020`, `src/actions/auth/ownerSignup.ts`, `src/actions/orders/completeSale.ts`, `src/actions/super-admin/suspendTenant.ts`, both Stripe webhook handlers
 - Next.js 16.2.1 official documentation (2026-03-25): https://nextjs.org/docs
-- Next.js multi-tenant guide (official, 2026-03-31): https://nextjs.org/docs/app/guides/multi-tenant
-- Vercel multi-tenant domain management (official): https://vercel.com/docs/multi-tenant/domain-management
-- Vercel Platforms Starter Kit: https://vercel.com/templates/next.js/platforms-starter-kit
-- @vercel/sdk npm package (~1.19.x, Apr 2026): https://www.npmjs.com/package/@vercel/sdk
-- Supabase Custom Access Token Hook (official): https://supabase.com/docs/guides/auth/auth-hooks/custom-access-token-hook
-- Supabase RLS (official): https://supabase.com/docs/guides/database/postgres/row-level-security
-- Stripe Entitlements API (official): https://docs.stripe.com/billing/entitlements
-- Stripe Customer Portal (official): https://docs.stripe.com/customer-management/integrate-customer-portal
-- Stripe Subscription Webhooks (official): https://docs.stripe.com/billing/subscriptions/webhooks
-- CVE-2025-29927 Next.js Middleware Bypass (Snyk): https://snyk.io/blog/cve-2025-29927-authorization-bypass-in-next-js-middleware/
-- CVE-2025-29927 Technical Analysis (ProjectDiscovery): https://projectdiscovery.io/blog/nextjs-middleware-authorization-bypass
-- Existing codebase: `src/middleware.ts`, `supabase/migrations/001-003`, `src/lib/resolveAuth.ts`
+- Next.js authentication guide (official): https://nextjs.org/docs/app/guides/authentication
+- Supabase RLS documentation: https://supabase.com/docs/guides/database/row-level-security
+- Supabase Vault documentation: https://supabase.com/docs/guides/database/vault
+- Supabase Custom Claims & app_metadata vs user_metadata: https://supabase.com/docs/guides/database/postgres/custom-claims-and-role-based-access-control-rbac
+- Stripe webhook signature verification: https://docs.stripe.com/webhooks/signature-verification
+- OWASP Top 10 (2021): https://owasp.org/Top10/
+- IRD GST rounding rules: https://www.ird.govt.nz/gst/filing-and-paying-gst-and-refunds/calculating-gst
 
 ### Secondary (MEDIUM confidence)
-- SaaS onboarding best practices (DesignRevision, 2026)
-- Feature gating in freemium SaaS (DEV community)
-- Multi-tenant architecture best practices (Relevant Software)
-- B2B SaaS landing page best practices (GenesysGrowth, 2026)
-- Stripe subscription lifecycle in Next.js (DEV, 2026)
-- Square / Lightspeed / Shopify feature comparison (training knowledge + web research)
-- Subdomain-based routing in Next.js (Medium)
-- Multi-tenant leakage: when RLS fails (InstaTunnel)
+
+- CVE-2025-48757: Supabase missing RLS on 170+ apps — https://byteiota.com/supabase-security-flaw-170-apps-exposed-by-missing-rls/
+- CVE-2025-29927: Next.js Middleware Authorization Bypass — https://projectdiscovery.io/blog/nextjs-middleware-authorization-bypass
+- Stripe webhook raw body in Next.js App Router — https://kitson-broadhurst.medium.com/next-js-app-router-stripe-webhook-signature-verification-ea9d59f3593f
+- BOLA/IDOR as #1 SaaS vulnerability — https://dzone.com/articles/secure-multi-tenancy-saas-developer-checklist
+- Xero OAuth 2.0 token expiry and rotation — https://developer.xero.com/documentation/guides/oauth2/token-types
+
+### Tertiary (LOW confidence)
+
+- Multi-tenant SaaS suspension handling pattern — https://sollybombe.medium.com/handling-tenant-suspension-and-reactivation-gracefully-in-multi-tenant-saas-0af58945545a
+- Supabase Storage Access Control — https://supabase.com/docs/guides/storage/security/access-control
 
 ---
-*Research completed: 2026-04-03*
+*Research completed: 2026-04-04*
 *Ready for roadmap: yes*
