@@ -25,9 +25,9 @@ Requirements for the v2.0 SaaS Platform milestone. Each maps to roadmap phases.
 
 ### Store Setup & Onboarding
 
-- [ ] **SETUP-01**: Merchant completes a 3-step setup wizard (store name/slug, logo, first product)
-- [ ] **SETUP-02**: Every wizard step is skippable
-- [ ] **SETUP-03**: Admin dashboard shows a persistent setup completion checklist
+- [x] **SETUP-01**: Merchant completes a 3-step setup wizard (store name/slug, logo, first product)
+- [x] **SETUP-02**: Every wizard step is skippable
+- [x] **SETUP-03**: Admin dashboard shows a persistent setup completion checklist
 
 ### Marketing
 
@@ -113,9 +113,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SIGNUP-03 | Phase 13 | Complete |
 | SIGNUP-04 | Phase 13 | Complete |
 | SIGNUP-05 | Phase 13 | Complete |
-| SETUP-01 | Phase 14 | Pending |
-| SETUP-02 | Phase 14 | Pending |
-| SETUP-03 | Phase 14 | Pending |
+| SETUP-01 | Phase 14 | Complete |
+| SETUP-02 | Phase 14 | Complete |
+| SETUP-03 | Phase 14 | Complete |
 | MKTG-01 | Phase 14 | Pending |
 | MKTG-02 | Phase 14 | Pending |
 | BILL-01 | Phase 15 | Pending |

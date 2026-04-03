@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production Launch + Feature Waves
-status: verifying
-stopped_at: Phase 14 context gathered
-last_updated: "2026-04-03T01:58:57.529Z"
+status: executing
+stopped_at: Completed 14-03-PLAN.md
+last_updated: "2026-04-03T02:47:08.696Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 10
   completed_phases: 7
-  total_plans: 22
-  completed_plans: 22
-  percent: 0
+  total_plans: 25
+  completed_plans: 25
+  percent: 100
 ---
 
 # Project State
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 13 — merchant-self-serve-signup
+**Current focus:** Phase 14 — store-setup-wizard-marketing
 
 ## Current Position
 
-Phase: 14
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 14 (store-setup-wizard-marketing) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
 Last activity: 2026-04-03
 
 Progress: [░░░░░░░░░░] 0%
@@ -67,6 +67,9 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 13]: Auth callback /api/auth/callback on root domain redirects to {slug}.{domain}/admin/dashboard after PKCE exchange
 - [Phase 13]: ProvisioningScreen animates through steps as UX affordance — actual provisioning already completed in ownerSignup Server Action before redirect
 - [Phase 13]: Subdomain redirect uses NEXT_PUBLIC_ROOT_DOMAIN env var with lvh.me fallback for local dev; protocol auto-detected based on domain
+- [Phase 14-store-setup-wizard-marketing]: Zod v4 installed despite ^3.x spec — uses .issues[] not .errors[] on ZodError
+- [Phase 14-store-setup-wizard-marketing]: saveLogoStep accepts null for both logo and color (skip case still marks step complete via bit 1)
+- [Phase 14-store-setup-wizard-marketing]: Middleware admin client used for setup_wizard_dismissed check to bypass RLS (consistent with tenant resolution pattern)
 
 ### Blockers/Concerns
 
@@ -76,6 +79,6 @@ Progress: [░░░░░░░░░░] 0%
 
 ## Session Continuity
 
-Last session: 2026-04-03T01:58:57.526Z
-Stopped at: Phase 14 context gathered
-Resume file: .planning/phases/14-store-setup-wizard-marketing/14-CONTEXT.md
+Last session: 2026-04-03T02:47:08.694Z
+Stopped at: Completed 14-01-PLAN.md
+Resume file: None
