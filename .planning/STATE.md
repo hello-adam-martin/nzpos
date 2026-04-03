@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Hardening & Documentation
-status: executing
-stopped_at: Completed 17-02-PLAN.md (security fixes)
-last_updated: "2026-04-03T19:58:46.307Z"
+status: verifying
+stopped_at: Completed 17-04-PLAN.md (all 14 SEC requirements addressed)
+last_updated: "2026-04-03T20:03:15.618Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 
 Phase: 17 (security-audit) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-03
 
 Progress: [░░░░░░░░░░] 0%
@@ -61,6 +61,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 17]: orders_public_read policy changed to require lookup_token IS NOT NULL as DB-layer defense in depth (application layer enforces token via .eq() filter)
 - [Phase 17]: SECURITY DEFINER RPCs (increment_promo_uses, restore_stock, check_rate_limit, complete_pos_sale, complete_online_sale) restricted to service_role via REVOKE/GRANT in migration 021
 - [Phase 17]: All 9 modified Server Actions now log real errors server-side with console.error before returning generic client messages — no PostgreSQL error details exposed to clients
+- [Phase 17-04]: IP rate limit threshold for PIN login set at 20/5min (not 10) — allows multiple staff shift-changes on shared iPad; check_rate_limit RPC used (not in-memory) for cold-start survival
+- [Phase 17-04]: All Server Action files (46 total) have direct server-only import — defense-in-depth against accidental client bundling
 
 ### Pending Todos
 
@@ -75,6 +77,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-03T19:58:46.304Z
-Stopped at: Completed 17-02-PLAN.md (security fixes)
+Last session: 2026-04-03T20:03:15.614Z
+Stopped at: Completed 17-04-PLAN.md (all 14 SEC requirements addressed)
 Resume file: None

@@ -40,7 +40,7 @@
 
 **Milestone Goal:** Comprehensive security audit, code quality review, test coverage gap-filling, and full documentation suite to prepare the platform for external merchant onboarding and production deployment.
 
-- [ ] **Phase 17: Security Audit** — Verify tenant isolation, auth flows, webhook integrity, and input validation across the entire codebase
+- [x] **Phase 17: Security Audit** — Verify tenant isolation, auth flows, webhook integrity, and input validation across the entire codebase (completed 2026-04-03)
 - [ ] **Phase 18: Code Quality + Test Coverage** — Remove dead code, enforce consistent error handling, fill test coverage gaps on critical paths
 - [ ] **Phase 19: Developer Documentation** — Write setup guide, architecture overview, env var reference, and Server Action inventory
 - [ ] **Phase 20: Deployment + User Documentation** — Production runbook, merchant onboarding guide, and GST compliance explanation
@@ -57,12 +57,12 @@
   3. All 67 Server Actions accept Zod-validated input before touching the database, and no stack traces or secrets are exposed in error responses
   4. Stripe webhook handlers verify signatures via constructEvent() and both webhook secrets are environment-specific; all sensitive mutations are recorded in the immutable audit trail
   5. No secrets exist in source code, .env.example is complete and accurate, all service_role imports are guarded by server-only, and Content Security Policy headers are configured
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 Plans:
 - [x] 17-01-PLAN.md — Systematic security audit producing SECURITY-AUDIT.md findings report
 - [x] 17-02-PLAN.md — Fix Critical/High RLS, storage, Zod validation, and error leak findings
 - [x] 17-03-PLAN.md — Fix Critical/High CSP headers, .env.example, and server-only guards
-- [ ] 17-04-PLAN.md — Fix Low severity findings: defense-in-depth server-only, PIN rate limiting, audit trail
+- [x] 17-04-PLAN.md — Fix Low severity findings: defense-in-depth server-only, PIN rate limiting, audit trail
 
 ### Phase 18: Code Quality + Test Coverage
 **Goal**: The codebase is clean, consistent, and validated — dead code removed, error handling uniform, TypeScript strict mode passing, and critical paths have 80%+ test coverage
@@ -120,7 +120,7 @@ Plans:
 | 14. Store Setup Wizard + Marketing | v2.0 | 3/3 | Complete | 2026-04-03 |
 | 15. Stripe Billing + Feature Gating | v2.0 | 4/4 | Complete | 2026-04-03 |
 | 16. Super Admin Panel | v2.0 | 4/4 | Complete | 2026-04-03 |
-| 17. Security Audit | v2.1 | 3/4 | In Progress|  |
+| 17. Security Audit | v2.1 | 4/4 | Complete   | 2026-04-03 |
 | 18. Code Quality + Test Coverage | v2.1 | 0/TBD | Not started | - |
 | 19. Developer Documentation | v2.1 | 0/TBD | Not started | - |
 | 20. Deployment + User Documentation | v2.1 | 0/TBD | Not started | - |
