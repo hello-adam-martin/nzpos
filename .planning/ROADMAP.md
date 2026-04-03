@@ -54,15 +54,16 @@
 **Success Criteria** (what must be TRUE):
   1. Every database table with store_id has confirmed RLS policies for all four operations (SELECT/INSERT/UPDATE/DELETE), and storage bucket policies prevent cross-tenant file access
   2. Auth flows are verified: owner JWT expiry is enforced, staff PIN lockout fires after failed attempts, super admin routes reject regular merchant and staff sessions, and customer auth cannot invoke POS or admin Server Actions
-  3. All 67 Server Actions accept Zod-validated input before touching the database, and no stack traces or secrets are exposed in error responses
+  3. All 48 Server Actions accept Zod-validated input before touching the database, and no stack traces or secrets are exposed in error responses
   4. Stripe webhook handlers verify signatures via constructEvent() and both webhook secrets are environment-specific; all sensitive mutations are recorded in the immutable audit trail
   5. No secrets exist in source code, .env.example is complete and accurate, all service_role imports are guarded by server-only, and Content Security Policy headers are configured
-**Plans:** 4/4 plans complete
+**Plans:** 5 plans (4 complete, 1 gap closure)
 Plans:
 - [x] 17-01-PLAN.md — Systematic security audit producing SECURITY-AUDIT.md findings report
 - [x] 17-02-PLAN.md — Fix Critical/High RLS, storage, Zod validation, and error leak findings
 - [x] 17-03-PLAN.md — Fix Critical/High CSP headers, .env.example, and server-only guards
 - [x] 17-04-PLAN.md — Fix Low severity findings: defense-in-depth server-only, PIN rate limiting, audit trail
+- [ ] 17-05-PLAN.md — Gap closure: server-only imports, drop anon orders policy, fix action count
 
 ### Phase 18: Code Quality + Test Coverage
 **Goal**: The codebase is clean, consistent, and validated — dead code removed, error handling uniform, TypeScript strict mode passing, and critical paths have 80%+ test coverage
@@ -84,7 +85,7 @@ Plans:
   1. A local development setup guide exists and a new developer can follow it from clone to running app in under 20 minutes with no undocumented steps
   2. An environment variable reference table exists listing every variable with its name, purpose, source, and required/optional status — no env var is undocumented
   3. An architecture overview document exists covering the three auth systems (owner, staff PIN, customer), tenant isolation model (RLS + custom JWT claims + SECURITY DEFINER RPCs), feature gating dual-path, and key data flows
-  4. A Server Action inventory exists cataloguing all actions with name, input schema, auth requirement, and description — the full 67-action surface area is documented
+  4. A Server Action inventory exists cataloguing all actions with name, input schema, auth requirement, and description — the full 48-action surface area is documented
 **Plans**: TBD
 **UI hint**: no
 
