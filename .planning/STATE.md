@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 
 ## Current Position
 
-Phase: 14 (store-setup-wizard-marketing) — EXECUTING
-Plan: 2 of 3
-Status: Ready to execute
+Phase: 14 (store-setup-wizard-marketing) — COMPLETE
+Plan: 3 of 3
+Status: All plans complete
 Last activity: 2026-04-03
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -70,6 +70,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 14-store-setup-wizard-marketing]: Zod v4 installed despite ^3.x spec — uses .issues[] not .errors[] on ZodError
 - [Phase 14-store-setup-wizard-marketing]: saveLogoStep accepts null for both logo and color (skip case still marks step complete via bit 1)
 - [Phase 14-store-setup-wizard-marketing]: Middleware admin client used for setup_wizard_dismissed check to bypass RLS (consistent with tenant resolution pattern)
+- [14-03]: Mobile hamburger nav uses HTML details/summary pattern — no JavaScript, page remains fully static
+- [14-03]: Landing page hero illustration is CSS-only iPad mockup (no external images) — keeps page lightweight and static
 
 ### Blockers/Concerns
 
@@ -80,5 +82,5 @@ Progress: [░░░░░░░░░░] 0%
 ## Session Continuity
 
 Last session: 2026-04-03T02:47:08.694Z
-Stopped at: Completed 14-01-PLAN.md
+Stopped at: Completed 14-03-PLAN.md
 Resume file: None
