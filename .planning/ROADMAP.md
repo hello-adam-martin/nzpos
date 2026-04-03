@@ -57,13 +57,13 @@
   3. All 48 Server Actions accept Zod-validated input before touching the database, and no stack traces or secrets are exposed in error responses
   4. Stripe webhook handlers verify signatures via constructEvent() and both webhook secrets are environment-specific; all sensitive mutations are recorded in the immutable audit trail
   5. No secrets exist in source code, .env.example is complete and accurate, all service_role imports are guarded by server-only, and Content Security Policy headers are configured
-**Plans:** 5 plans (4 complete, 1 gap closure)
+**Plans:** 5/5 plans complete
 Plans:
 - [x] 17-01-PLAN.md — Systematic security audit producing SECURITY-AUDIT.md findings report
 - [x] 17-02-PLAN.md — Fix Critical/High RLS, storage, Zod validation, and error leak findings
 - [x] 17-03-PLAN.md — Fix Critical/High CSP headers, .env.example, and server-only guards
 - [x] 17-04-PLAN.md — Fix Low severity findings: defense-in-depth server-only, PIN rate limiting, audit trail
-- [ ] 17-05-PLAN.md — Gap closure: server-only imports, drop anon orders policy, fix action count
+- [x] 17-05-PLAN.md — Gap closure: server-only imports, drop anon orders policy, fix action count
 
 ### Phase 18: Code Quality + Test Coverage
 **Goal**: The codebase is clean, consistent, and validated — dead code removed, error handling uniform, TypeScript strict mode passing, and critical paths have 80%+ test coverage
@@ -121,7 +121,7 @@ Plans:
 | 14. Store Setup Wizard + Marketing | v2.0 | 3/3 | Complete | 2026-04-03 |
 | 15. Stripe Billing + Feature Gating | v2.0 | 4/4 | Complete | 2026-04-03 |
 | 16. Super Admin Panel | v2.0 | 4/4 | Complete | 2026-04-03 |
-| 17. Security Audit | v2.1 | 4/4 | Complete   | 2026-04-03 |
+| 17. Security Audit | v2.1 | 5/5 | Complete   | 2026-04-03 |
 | 18. Code Quality + Test Coverage | v2.1 | 0/TBD | Not started | - |
 | 19. Developer Documentation | v2.1 | 0/TBD | Not started | - |
 | 20. Deployment + User Documentation | v2.1 | 0/TBD | Not started | - |

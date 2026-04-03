@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Hardening & Documentation
-status: verifying
-stopped_at: Completed 17-04-PLAN.md (all 14 SEC requirements addressed)
-last_updated: "2026-04-03T20:03:15.618Z"
+status: executing
+stopped_at: "Completed 17-05-PLAN.md (gap closure: server-only, IDOR policy drop, doc count correction)"
+last_updated: "2026-04-03T20:21:11.053Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 5
+  completed_plans: 5
   percent: 0
 ---
 
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 ## Current Position
 
 Phase: 17 (security-audit) — EXECUTING
-Plan: 4 of 4
-Status: Phase complete — ready for verification
+Plan: 2 of 5
+Status: Ready to execute
 Last activity: 2026-04-03
 
 Progress: [░░░░░░░░░░] 0%
@@ -63,6 +63,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 17]: All 9 modified Server Actions now log real errors server-side with console.error before returning generic client messages — no PostgreSQL error details exposed to clients
 - [Phase 17-04]: IP rate limit threshold for PIN login set at 20/5min (not 10) — allows multiple staff shift-changes on shared iPad; check_rate_limit RPC used (not in-memory) for cold-start survival
 - [Phase 17-04]: All Server Action files (46 total) have direct server-only import — defense-in-depth against accidental client bundling
+- [Phase 17-05]: Drop orders_public_read_by_token RLS policy — admin client bypasses RLS, anon policy was enumeration vector with no legitimate use
+- [Phase 17-05]: ROADMAP.md Server Action count was already 48 — only REQUIREMENTS.md SEC-08 needed correction
 
 ### Pending Todos
 
@@ -77,6 +79,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-03T20:03:15.614Z
-Stopped at: Completed 17-04-PLAN.md (all 14 SEC requirements addressed)
+Last session: 2026-04-03T20:21:11.051Z
+Stopped at: Completed 17-05-PLAN.md (gap closure: server-only, IDOR policy drop, doc count correction)
 Resume file: None
