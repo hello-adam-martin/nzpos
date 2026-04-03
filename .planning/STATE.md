@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production Launch + Feature Waves
 status: executing
-stopped_at: Completed 15-01-PLAN.md
-last_updated: "2026-04-03T05:35:57.602Z"
+stopped_at: Completed 15-02-PLAN.md
+last_updated: "2026-04-03T05:40:38.392Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 10
   completed_phases: 8
   total_plans: 29
-  completed_plans: 26
+  completed_plans: 27
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 15 (stripe-billing-feature-gating) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-04-03
 
@@ -77,6 +77,8 @@ Progress: [██████████] 100%
 - [Phase 15-stripe-billing-feature-gating]: requireFeature never throws — returns structured { authorized, feature, upgradeUrl } for redirect-friendly caller pattern
 - [Phase 15-stripe-billing-feature-gating]: JWT fast path default in requireFeature, requireDbCheck: true for critical mutations only
 - [Phase 15-stripe-billing-feature-gating]: Price IDs loaded from env vars in addons.ts — never hardcoded per D-02
+- [Phase 15]: Billing webhook uses STRIPE_BILLING_WEBHOOK_SECRET (not STRIPE_WEBHOOK_SECRET) — separate endpoint, separate signing secret
+- [Phase 15]: No server-only import in billing Route Handler — API routes already server-side, import causes build issues in Next.js 16
 
 ### Blockers/Concerns
 
@@ -86,6 +88,6 @@ Progress: [██████████] 100%
 
 ## Session Continuity
 
-Last session: 2026-04-03T05:35:57.599Z
-Stopped at: Completed 15-01-PLAN.md
+Last session: 2026-04-03T05:40:38.389Z
+Stopped at: Completed 15-02-PLAN.md
 Resume file: None
