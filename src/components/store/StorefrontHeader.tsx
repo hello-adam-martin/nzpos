@@ -12,11 +12,30 @@ type CustomerInfo = {
   emailVerified: boolean
 }
 
-type Props = {
-  customer?: CustomerInfo | null
+type BrandingInfo = {
+  storeName: string | null
+  logoUrl: string | null
+  primaryColor: string | null
 }
 
-export function StorefrontHeader({ customer }: Props) {
+type Props = {
+  customer?: CustomerInfo | null
+  branding?: BrandingInfo | null
+}
+
+/**
+ * Compute relative luminance from hex color to decide text color.
+ * Returns true if the background is dark (use white text).
+ */
+function isDarkColor(hex: string): boolean {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance < 0.5
+}
+
+export function StorefrontHeader({ customer, branding }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { itemCount, dispatch } = useCart()
@@ -45,25 +64,53 @@ export function StorefrontHeader({ customer }: Props) {
     dispatch({ type: 'OPEN_DRAWER' })
   }, [dispatch])
 
+  // Branding-derived values
+  const primaryColor = branding?.primaryColor ?? null
+  const logoUrl = branding?.logoUrl ?? null
+  const storeName = branding?.storeName ?? null
+  const useDarkBg = primaryColor ? isDarkColor(primaryColor) : false
+
+  const headerBg = primaryColor ?? 'var(--color-surface)'
+  const textColorClass = useDarkBg ? 'text-white' : 'text-navy'
+  const iconColorClass = useDarkBg ? 'text-white' : 'text-navy'
+  const searchBorderClass = useDarkBg
+    ? 'border-white/20 focus:border-white/40 focus:ring-white/20'
+    : 'border-border focus:border-navy/40 focus:ring-navy/20'
+
   return (
-    <header className="h-16 sticky top-0 z-50 bg-surface border-b border-border">
+    <header
+      className="h-16 sticky top-0 z-50 border-b border-border"
+      style={{ backgroundColor: headerBg }}
+    >
       <div className="mx-auto max-w-[1200px] h-full px-6 lg:px-8 flex items-center gap-4">
-        {/* Store name — Display role: Satoshi, xl, semibold */}
+        {/* Store identity — logo if available, else store name, else fallback */}
         <Link
           href="/"
-          className="font-display text-xl font-semibold text-navy shrink-0 hover:opacity-80 transition-opacity duration-150"
+          className={`shrink-0 hover:opacity-80 transition-opacity duration-150 ${textColorClass}`}
+          aria-label={storeName ?? 'Store home'}
         >
-          NZPOS
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              alt={storeName ?? 'Store logo'}
+              className="h-8 object-contain"
+            />
+          ) : (
+            <span className="font-display text-xl font-semibold">
+              {storeName ?? 'NZPOS'}
+            </span>
+          )}
         </Link>
 
-        {/* Search input — center/right, full-width on mobile, max-w-md on desktop */}
+        {/* Search input */}
         <div className="flex-1 flex justify-center">
           <input
             type="search"
             placeholder="Search products..."
             defaultValue={searchParams.get('q') ?? ''}
             onChange={handleSearchChange}
-            className="w-full max-w-md h-9 px-3 rounded-md border border-border bg-card text-sm text-text placeholder:text-text-light focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40 transition-colors duration-150"
+            className={`w-full max-w-md h-9 px-3 rounded-md border bg-card text-sm text-text placeholder:text-text-light focus:outline-none focus:ring-2 transition-colors duration-150 ${searchBorderClass}`}
             aria-label="Search products"
           />
         </div>
@@ -72,7 +119,7 @@ export function StorefrontHeader({ customer }: Props) {
         <button
           onClick={handleCartClick}
           aria-label={`Cart, ${itemCount} items`}
-          className="relative shrink-0 h-10 w-10 flex items-center justify-center rounded-md text-navy hover:bg-navy/5 transition-colors duration-150"
+          className={`relative shrink-0 h-10 w-10 flex items-center justify-center rounded-md transition-colors duration-150 ${iconColorClass} hover:bg-current/5`}
           type="button"
         >
           {/* Shopping bag SVG */}
@@ -92,7 +139,7 @@ export function StorefrontHeader({ customer }: Props) {
             />
           </svg>
 
-          {/* Badge — amber circle with white count; hidden when 0 */}
+          {/* Badge */}
           {itemCount > 0 && (
             <span
               className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-amber text-white text-xs font-semibold leading-none tabular-nums"

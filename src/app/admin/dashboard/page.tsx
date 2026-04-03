@@ -3,6 +3,8 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { formatNZD } from '@/lib/money'
 import { DashboardHeroCard } from '@/components/admin/dashboard/DashboardHeroCard'
 import { LowStockAlertList } from '@/components/admin/dashboard/LowStockAlertList'
+import { getChecklistState } from '@/lib/setupChecklist'
+import { SetupChecklist } from '@/components/admin/SetupChecklist'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,8 +43,31 @@ export default async function DashboardPage() {
     p => p.stock_quantity <= p.reorder_threshold
   )
 
+  // Checklist data
+  const { data: storeData } = await supabase
+    .from('stores')
+    .select('name, slug, logo_url, setup_wizard_dismissed')
+    .eq('id', storeId)
+    .single()
+
+  const { data: channelOrders } = await supabase
+    .from('orders')
+    .select('channel')
+    .eq('store_id', storeId)
+    .in('status', ['completed', 'pending_pickup', 'ready', 'collected'])
+    .limit(100)
+
+  const orderChannels = [...new Set((channelOrders ?? []).map(o => o.channel))]
+  const productCount = (products ?? []).length
+  const checklistState = getChecklistState(
+    storeData ?? { name: null, slug: '', logo_url: null, setup_wizard_dismissed: false },
+    productCount,
+    orderChannels
+  )
+
   return (
     <div className="space-y-[var(--space-xl)]">
+      <SetupChecklist state={checklistState} />
       <h1 className="font-display font-bold text-2xl text-[var(--color-text)]">Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-lg)]">

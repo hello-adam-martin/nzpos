@@ -1,3 +1,4 @@
+import { headers } from 'next/headers'
 import { CartProvider } from '@/contexts/CartContext'
 import { StorefrontHeader } from '@/components/store/StorefrontHeader'
 import { CartDrawer } from '@/components/store/CartDrawer'
@@ -21,11 +22,33 @@ export default async function StoreLayout({ children }: { children: React.ReactN
     emailVerified: !!user.email_confirmed_at,
   } : null
 
+  // Fetch merchant branding via x-store-id header (injected by middleware for tenant routes)
+  const headersList = await headers()
+  const storeId = headersList.get('x-store-id')
+
+  let branding: { storeName: string | null; logoUrl: string | null; primaryColor: string | null } | null = null
+
+  if (storeId) {
+    const { data: store } = await supabase
+      .from('stores')
+      .select('name, logo_url, primary_color')
+      .eq('id', storeId)
+      .single()
+
+    if (store) {
+      branding = {
+        storeName: store.name,
+        logoUrl: store.logo_url,
+        primaryColor: store.primary_color,
+      }
+    }
+  }
+
   return (
     <CartProvider>
       <div className="min-h-screen bg-bg">
         <StripeTestModeBanner />
-        <StorefrontHeader customer={customer} />
+        <StorefrontHeader customer={customer} branding={branding} />
         {customer && !customer.emailVerified && (
           <VerificationBanner email={customer.email} />
         )}
