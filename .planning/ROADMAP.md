@@ -36,7 +36,7 @@
 - [x] **Phase 12: Multi-Tenant Infrastructure** — Wildcard subdomain routing, schema upgrades, and tenant-isolated RLS in place (completed 2026-04-02)
 - [x] **Phase 13: Merchant Self-Serve Signup** — Any NZ business can sign up and get a working POS + storefront immediately (completed 2026-04-03)
 - [x] **Phase 14: Store Setup Wizard + Marketing** — Merchants onboard in under 5 minutes and a public landing page drives signups (completed 2026-04-03)
-- [ ] **Phase 15: Stripe Billing + Feature Gating** — Paid add-ons are purchasable, enforced server-side, and self-manageable
+- [x] **Phase 15: Stripe Billing + Feature Gating** — Paid add-ons are purchasable, enforced server-side, and self-manageable (completed 2026-04-03)
 - [ ] **Phase 16: Super Admin Panel** — Platform operator can view, manage, and support all tenants
 
 ## Phase Details
@@ -191,7 +191,7 @@ Plans:
 - [x] 15-01-PLAN.md — Migration + requireFeature utility + add-on config
 - [x] 15-02-PLAN.md — Billing webhook + subscription checkout + portal Server Actions
 - [x] 15-03-PLAN.md — Feature gating on Xero/email actions + UpgradePrompt component
-- [ ] 15-04-PLAN.md — Billing page UI + admin sidebar + human verification
+- [x] 15-04-PLAN.md — Billing page UI + admin sidebar + human verification
 **UI hint**: yes
 
 ### Phase 16: Super Admin Panel
@@ -225,5 +225,5 @@ Plans:
 | 12. Multi-Tenant Infrastructure | v2.0 | 4/4 | Complete    | 2026-04-02 |
 | 13. Merchant Self-Serve Signup | v2.0 | 3/3 | Complete    | 2026-04-03 |
 | 14. Store Setup Wizard + Marketing | v2.0 | 3/3 | Complete   | 2026-04-03 |
-| 15. Stripe Billing + Feature Gating | v2.0 | 3/4 | In Progress|  |
+| 15. Stripe Billing + Feature Gating | v2.0 | 4/4 | Complete   | 2026-04-03 |
 | 16. Super Admin Panel | v2.0 | 0/? | Not started | — |
