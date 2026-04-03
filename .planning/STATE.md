@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Hardening & Documentation
 status: executing
-stopped_at: Completed 17-01-PLAN.md (security audit)
-last_updated: "2026-04-03T19:50:18.772Z"
+stopped_at: Completed 17-03-PLAN.md (CSP headers, env.example, server-only guards)
+last_updated: "2026-04-03T19:55:11.887Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 ## Current Position
 
 Phase: 17 (security-audit) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-04-03
 
@@ -55,6 +55,9 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 17-01]: orders_public_read RLS policy is IDOR — any anon user can enumerate all online orders; Critical fix required
 - [Phase 17-01]: 13 env vars missing from .env.example including all Stripe price IDs, Xero OAuth vars, Resend keys — Critical deployment blocker
 - [Phase 17-01]: increment_promo_uses and restore_stock SECURITY DEFINER RPCs have no GRANT/REVOKE — any authenticated user can call them
+- [Phase 17-03]: CSP set as Report-Only — allows violation monitoring before switching to enforcing in production
+- [Phase 17-03]: addSecurityHeaders() helper pattern in middleware — single function wraps all return points, DRY and maintainable
+- [Phase 17-03]: server-only placed after 'use server' in Server Actions — 'use server' must be first statement per Next.js spec
 
 ### Pending Todos
 
@@ -69,6 +72,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-03T19:50:18.769Z
-Stopped at: Completed 17-01-PLAN.md (security audit)
+Last session: 2026-04-03T19:55:11.884Z
+Stopped at: Completed 17-03-PLAN.md (CSP headers, env.example, server-only guards)
 Resume file: None
