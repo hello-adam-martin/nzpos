@@ -5,8 +5,15 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { getAuthenticatedXeroClient } from '@/lib/xero/client'
 import { deleteXeroTokens } from '@/lib/xero/vault'
+import { requireFeature } from '@/lib/requireFeature'
 
 export async function disconnectXero(): Promise<{ success: boolean; error?: string }> {
+  // Gate: Xero subscription required (DB check for mutation)
+  const gate = await requireFeature('xero', { requireDbCheck: true })
+  if (!gate.authorized) {
+    return { success: false, error: 'Xero subscription required' }
+  }
+
   // 1. Verify owner auth
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()

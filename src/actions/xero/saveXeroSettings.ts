@@ -4,10 +4,17 @@ import { revalidatePath } from 'next/cache'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { XeroAccountCodesSchema } from '@/schemas/xero'
+import { requireFeature } from '@/lib/requireFeature'
 
 export async function saveXeroSettings(
   input: unknown
 ): Promise<{ success: boolean; error?: string }> {
+  // Gate: Xero subscription required (DB check for mutation)
+  const gate = await requireFeature('xero', { requireDbCheck: true })
+  if (!gate.authorized) {
+    return { success: false, error: 'Xero subscription required' }
+  }
+
   // 1. Validate input with Zod
   const parsed = XeroAccountCodesSchema.safeParse(input)
   if (!parsed.success) {
