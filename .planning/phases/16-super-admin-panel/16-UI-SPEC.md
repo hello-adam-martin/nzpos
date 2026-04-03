@@ -22,8 +22,8 @@ created: 2026-04-03
 | Preset | not applicable | Manual design system via globals.css @theme |
 | Component library | none (custom components) | Existing codebase pattern |
 | Icon library | Inline SVG (hand-rolled, per AdminSidebar.tsx) | CONTEXT.md D-03 + codebase |
-| Font (display) | Satoshi, weight 700 | DESIGN.md |
-| Font (body/UI) | DM Sans, weight 400–600 | DESIGN.md |
+| Font (display) | Satoshi, weight 600 | DESIGN.md |
+| Font (body/UI) | DM Sans, weight 400 | DESIGN.md |
 | Font (mono/data) | Geist Mono | DESIGN.md |
 
 Registry safety gate: not applicable (no shadcn, no third-party component registries).
@@ -56,17 +56,25 @@ Exceptions:
 
 ## Typography
 
+Exactly 4 sizes, exactly 2 weights. All other sizes collapsed into these four.
+
 | Role | Size | Weight | Line Height | Font | Source |
 |------|------|--------|-------------|------|--------|
-| Body | 16px (base) | 400 (regular) | 1.5 | DM Sans | DESIGN.md |
-| Label / Table cell | 14px (sm) | 500 (medium) | 1.4 | DM Sans | DESIGN.md |
-| Heading (page title) | 24px (2xl) | 600 (semibold) | 1.2 | Satoshi | Existing billing/page.tsx pattern |
-| Section heading | 18px (lg) | 600 (semibold) | 1.2 | Satoshi | DESIGN.md |
+| Body / table cell / muted text | 16px (base) | 400 (regular) | 1.5 | DM Sans | DESIGN.md |
+| Label / badge / mono data | 14px (sm) | 400 (regular) for mono; 600 (semibold) for labels/badges | 1.4 | DM Sans / Geist Mono | DESIGN.md |
+| Section heading / modal title | 20px | 600 (semibold) | 1.2 | Satoshi | Checker revision |
+| Page title / suspension heading | 24px (2xl) | 600 (semibold) | 1.2 | Satoshi | Existing billing/page.tsx pattern |
 
-Additional:
-- Store slugs, IDs, order numbers: Geist Mono, 14px, weight 400 — enables at-a-glance scanning in tenant table
-- Muted secondary text (timestamps, descriptions): DM Sans 14px weight 400, color `var(--color-text-muted)` (#78716C)
-- Badge text: DM Sans 12px (xs) weight 600
+Notes on collapsed sizes:
+- 10px (sidebar context label) → replaced with 14px DM Sans weight 400, `white/40`, `uppercase tracking-wider`
+- 12px (badge text, audit log timestamps, sidebar footer) → collapsed to 14px
+- 18px (section headings) → collapsed to 20px
+- 28px (suspension page heading) → collapsed to 24px
+- Weight 500 (medium) usages → replaced with 600 (semibold)
+- Weight 700 (suspension page logo) → replaced with 600 (semibold)
+
+Store slugs, IDs, order numbers: Geist Mono 14px weight 400 — enables at-a-glance scanning in tenant table.
+Muted secondary text (timestamps, descriptions): DM Sans 16px weight 400, color `var(--color-text-muted)` (#78716C).
 
 ---
 
@@ -76,7 +84,7 @@ Additional:
 |------|-------|-------|--------|
 | Dominant (60%) | #FAFAF9 (`--color-bg`) | Page background, main content area | globals.css |
 | Secondary (30%) | #1E293B (`--color-navy`) | SuperAdminSidebar background, nav items | DESIGN.md / AdminSidebar.tsx |
-| Accent (10%) | #E67E22 (`--color-amber`) | Active nav indicator (left border), primary CTA buttons, "Activate" add-on action | DESIGN.md D-03 |
+| Accent (10%) | #E67E22 (`--color-amber`) | Active nav indicator (left border), primary CTA buttons, "Activate Add-on" action | DESIGN.md D-03 |
 | Surface | #F5F5F4 (`--color-surface`) | Cards, table row hover, detail panels | globals.css |
 | Card | #FFFFFF (`--color-card`) | Tenant detail cards, modals | globals.css |
 | Destructive | #DC2626 (`--color-error`) | Suspend button, suspension confirmation modal | DESIGN.md semantic |
@@ -110,9 +118,9 @@ Source: CONTEXT.md D-03, D-08; existing admin layout pattern.
   1. "Tenants" — `/super-admin/tenants` (primary view)
   2. "Actions Log" — `/super-admin/actions` (audit trail list, if a dedicated page is added — Claude's discretion)
 - Active state: `bg-white/10 text-white border-l-4 border-amber pl-2` (exact match to AdminSidebar.tsx)
-- Logo area: "NZPOS Super Admin" — Satoshi semibold 16px
-- Footer: super admin email + sign out link — DM Sans 12px white/50
-- Context label: Small "SUPER ADMIN" badge or subtitle below logo to visually distinguish from tenant admin panel — DM Sans 10px uppercase tracking-wider white/40
+- Logo area: "NZPOS Super Admin" — Satoshi semibold 20px
+- Footer: super admin email + sign out link — DM Sans 14px white/50
+- Context label: Small "SUPER ADMIN" subtitle below logo to visually distinguish from tenant admin panel — DM Sans 14px uppercase tracking-wider white/40
 
 ### Super Admin Layout
 
@@ -124,10 +132,13 @@ Source: CONTEXT.md D-03, D-08; existing admin layout pattern.
 
 ### Tenant List Page (`/super-admin/tenants`)
 
+Primary visual anchor: The tenant table is the focal point of the page. The page title "Tenants" and the search/filter controls form a clear visual hierarchy above it. The table occupies the full available width with no competing elements, making it the unambiguous landing zone for the operator's attention.
+
 - Page title: "Tenants" — Satoshi semibold 24px
 - Subtitle: "All provisioned stores on the platform." — DM Sans 16px `--color-text-muted`
 - Controls row: `flex items-center gap-4 mb-6`
   - Search input: left-aligned, 280px wide, placeholder "Search name or slug…"
+  - Clear button (×): inside search input, visible when query is non-empty; `aria-label="Clear search"`; icon-only, no visible text
   - Status filter: `<select>` dropdown, options: All / Active / Suspended
   - Results count: right-aligned, DM Sans 14px muted — "42 stores"
 - Table: full-width, no card wrapper, thin top/bottom borders only
@@ -148,34 +159,34 @@ Layout: Two-column on desktop (`grid grid-cols-3 gap-6`), left column 2/3 width 
 
 **Left column — Store Info card:**
 - Card: white bg, `--shadow-sm`, `--radius-md`, `p-6`
-- Section heading: "Store Information" — Satoshi 18px semibold
+- Section heading: "Store Information" — Satoshi 20px semibold
 - Fields (label + value pairs, `space-y-4`):
   - Store Name — DM Sans 16px text
   - Slug — Geist Mono 14px
-  - Created — DM Sans 14px muted, formatted as "3 Apr 2026"
-  - Last Order — DM Sans 14px muted (uses latest order created_at, labelled "Last order" per RESEARCH.md recommendation)
+  - Created — DM Sans 16px muted, formatted as "3 Apr 2026"
+  - Last Order — DM Sans 16px muted (uses latest order created_at, labelled "Last order" per RESEARCH.md recommendation)
   - Status badge — Active/Suspended pill
 
 **Left column — Add-ons card (below store info):**
-- Section heading: "Add-ons"
+- Section heading: "Add-ons" — Satoshi 20px semibold
 - One row per add-on (Xero, Email Notifications, Custom Domain)
 - Row: `flex items-center justify-between py-3 border-b border-border-light`
-- Add-on name: DM Sans 14px weight 500
+- Add-on name: DM Sans 16px weight 400
 - Status badge (see Color section above)
-- Action: "Activate" button (amber, only if inactive) or "Deactivate" button (ghost/destructive, only if Active (Manual))
+- Action: "Activate Add-on" button (amber, only if inactive) or "Deactivate" button (ghost/destructive, only if Active (Manual))
 - No action button shown for "Active (Stripe)" — read-only, cannot deactivate Stripe-paid add-ons
 
 **Left column — Audit Log card (below add-ons):**
-- Section heading: "Recent Actions"
+- Section heading: "Recent Actions" — Satoshi 20px semibold
 - Max 10 entries, scrollable if more
 - Each entry: `flex items-start gap-3 py-2`
   - Icon circle: 32px, semantic color per action type
-  - Action description: DM Sans 14px — e.g., "Suspended — billing dispute"
-  - Timestamp: DM Sans 12px muted, relative then absolute on hover — "2 hours ago"
+  - Action description: DM Sans 16px — e.g., "Suspended — billing dispute"
+  - Timestamp: DM Sans 14px muted, relative then absolute on hover — "2 hours ago"
 
 **Right column — Actions card:**
 - Card: white bg, `--shadow-sm`, `--radius-md`, `p-6`
-- Section heading: "Actions" — Satoshi 18px semibold
+- Section heading: "Actions" — Satoshi 20px semibold
 - Suspend button: full-width, destructive style (`bg-error text-white`), only shown when store is Active
 - Unsuspend button: full-width, primary style (`bg-navy text-white`), only shown when store is Suspended
 - Back to list link: DM Sans 14px, `--color-text-muted`, arrow left icon
@@ -204,6 +215,8 @@ Layout: Two-column on desktop (`grid grid-cols-3 gap-6`), left column 2/3 width 
 - Debounce: 300ms before URL param update (router.push with searchParams)
 - Mechanism: server-side (URL search param `?q=`), not client-side filter
 - Clear: show "×" icon button inside input when query is non-empty
+  - Accessibility: `aria-label="Clear search"` — no visible text label; icon only
+  - Interaction: clicking clears the input value and resets `?q=` param
 
 ### Status Filter (Tenant List)
 - `<select>` element, not a custom dropdown
@@ -218,7 +231,7 @@ Layout: Two-column on desktop (`grid grid-cols-3 gap-6`), left column 2/3 width 
 - Page number buttons: up to 5 visible, ellipsis (`…`) for gaps
 
 ### Suspend Flow (D-12 two-step modal)
-1. Super admin clicks "Suspend" button on tenant detail page
+1. Super admin clicks "Suspend Store" button on tenant detail page
 2. Modal opens (250ms ease-out): `fixed inset-0 bg-black/50 z-50` overlay + centered card
 3. Modal card: white bg, `--radius-lg`, `--shadow-lg`, `p-6`, max-w-md
 4. Modal title: "Suspend [Store Name]?" — Satoshi 20px semibold
@@ -229,11 +242,11 @@ Layout: Two-column on desktop (`grid grid-cols-3 gap-6`), left column 2/3 width 
 9. On error: inline error below form — "Suspension failed. Please try again." DM Sans 14px `--color-error`
 
 ### Add-on Activate Flow (D-13 direct toggle)
-1. Super admin clicks "Activate" on an inactive add-on row
+1. Super admin clicks "Activate Add-on" on an inactive add-on row
 2. No modal — immediate Server Action call with optimistic UI (button disabled + spinner)
 3. On success: badge updates to "Active (Manual)" via revalidatePath — no toast, inline feedback only
-4. On error: inline error below the add-on row — "Failed to activate. Please try again."
-5. Guard: if add-on is already "Active (Stripe)", "Activate" button is not shown — read-only state
+4. On error: inline error below the add-on row — "Failed to activate add-on. Please try again."
+5. Guard: if add-on is already "Active (Stripe)", "Activate Add-on" button is not shown — read-only state
 
 ### Add-on Deactivate Flow (D-15 symmetric)
 1. Super admin clicks "Deactivate" on an "Active (Manual)" add-on row
@@ -246,8 +259,8 @@ Layout: Two-column on desktop (`grid grid-cols-3 gap-6`), left column 2/3 width 
 - Layout: centered, single column, no sidebar
 - Background: `--color-bg` (#FAFAF9)
 - Content card: white bg, `--radius-lg`, `--shadow-md`, `p-8`, max-w-md, centered vertically
-- Logo: "NZPOS" — Satoshi 700 navy, 24px
-- Heading: "Store Suspended" — Satoshi 700 navy, 28px
+- Logo: "NZPOS" — Satoshi semibold 24px navy
+- Heading: "Store Suspended" — Satoshi semibold 24px navy
 - Body: "This store has been temporarily suspended. If you believe this is an error, please contact support." — DM Sans 16px `--color-text-muted`
 - Support contact: `support@nzpos.co.nz` — DM Sans 16px amber, mailto link
 - No navigation, no sign-in form
@@ -263,7 +276,7 @@ Layout: Two-column on desktop (`grid grid-cols-3 gap-6`), left column 2/3 width 
 | Search placeholder | "Search name or slug…" | Specifies both search fields |
 | Empty state — no tenants | "No stores yet." / "No stores match your search. Try a different name or slug." | Context-dependent |
 | Empty state body | "Stores will appear here once merchants sign up." | Only on zero-result all-stores view |
-| Primary CTA — Activate add-on | "Activate" | Verb only — target (add-on name) is adjacent |
+| Primary CTA — Activate add-on | "Activate Add-on" | Verb + noun — no ambiguity about target type; aria label in context: "Activate [Add-on Name]" |
 | Primary CTA — Suspend | "Suspend Store" | Verb + noun, full clarity |
 | Primary CTA — Unsuspend | "Unsuspend Store" | Symmetric with suspend |
 | Suspension modal title | "Suspend [Store Name]?" | Dynamic — includes store name for confirmation |
@@ -288,6 +301,7 @@ Layout: Two-column on desktop (`grid grid-cols-3 gap-6`), left column 2/3 width 
 | Last order label | "Last order" | Not "Last active" — accurate to what's being shown |
 | Pagination info | "Showing 1–20 of [N] stores" | Standard pagination copy |
 | Context label in sidebar | "SUPER ADMIN" | Uppercase, tracking-wider, white/40 — distinguishes from tenant admin |
+| Clear search button | aria-label="Clear search" | Icon-only × button; no visible text; aria-label is the accessible name |
 
 ---
 
@@ -342,6 +356,10 @@ No component registries declared or used in this phase. All components are hand-
 | Inline confirm for deactivate (not modal) | Claude's discretion — modals reserved for destructive suspend only |
 | SuperAdminSidebar nav items (Tenants, Actions Log) | Claude's discretion |
 | Suspension page support email placeholder | Claude's discretion |
+| Typography collapsed to 4 sizes / 2 weights | Checker revision — BLOCK fix |
+| "Activate Add-on" CTA (not "Activate") | Checker revision — FLAG fix |
+| aria-label="Clear search" on × button | Checker revision — FLAG fix |
+| Tenant table declared as primary visual anchor | Checker revision — FLAG fix |
 
 ---
 
