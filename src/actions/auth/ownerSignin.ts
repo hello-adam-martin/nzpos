@@ -22,5 +22,12 @@ export async function ownerSignin(formData: FormData) {
   })
   if (error) return { error: 'Invalid email or password' }
 
+  // Check if this is a super admin logging in on the root domain
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user?.app_metadata?.is_super_admin === true) {
+    // Super admin on root domain should go to super admin panel (per D-02)
+    redirect('/super-admin/tenants')
+  }
+
   redirect('/admin/dashboard')
 }
