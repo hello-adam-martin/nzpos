@@ -1,41 +1,42 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: SaaS Platform
-status: milestone_complete
-stopped_at: v2.0 milestone archived
-last_updated: "2026-04-03T08:30:01.958Z"
-last_activity: 2026-04-03
+milestone: v2.1
+milestone_name: Hardening & Documentation
+status: defining_requirements
+stopped_at: Milestone v2.1 started — defining requirements
+last_updated: "2026-04-04"
+last_activity: 2026-04-04
 progress:
-  total_phases: 10
-  completed_phases: 10
-  total_plans: 33
-  completed_plans: 33
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-03)
+See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Planning next milestone
+**Current focus:** Defining requirements for v2.1 Hardening & Documentation
 
 ## Current Position
 
-Milestone: v2.0 complete
-Status: Between milestones
-Last activity: 2026-04-03
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-04 — Milestone v2.1 started
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0 (v2.0)
+- Total plans completed: 0 (v2.1)
 - Average duration: — min
 - Total execution time: — hours
 
@@ -98,6 +99,6 @@ Progress: [██████████] 100%
 
 ## Session Continuity
 
-Last session: 2026-04-03T07:09:20.226Z
-Stopped at: Completed 16-super-admin-panel 16-03-PLAN.md
+Last session: 2026-04-04
+Stopped at: Milestone v2.1 started — defining requirements
 Resume file: None

@@ -4,6 +4,20 @@
 
 A multi-tenant SaaS POS + online store platform for NZ small businesses. Any merchant can sign up, get a working POS and storefront on a subdomain, and optionally subscribe to paid add-ons (Xero, email notifications). Runs on iPad for in-store checkout, public storefront for customers, admin dashboard for owners, and a super admin panel for platform operations. Built for the NZ market (GST, EFTPOS, NZD).
 
+## Current Milestone: v2.1 Hardening & Documentation
+
+**Goal:** Comprehensive code review, security audit, and full documentation coverage to prepare for production deployment, merchant onboarding, and future developer contributions.
+
+**Target features:**
+- Security audit (OWASP top 10, RLS policy review, auth flow verification, input validation)
+- Code quality review (dead code removal, consistency, error handling, performance)
+- Test coverage gap analysis and filling
+- API & architecture documentation (Server Actions, Route Handlers, data flow)
+- Developer documentation (setup guide, architecture overview, env vars, contribution guide)
+- User-facing documentation (merchant onboarding guide, admin manual)
+- Deployment runbook (production Supabase, Stripe live, Vercel config, monitoring)
+- Inline documentation for complex business logic (GST, Xero sync, tenant provisioning)
+
 ## Current State
 
 **Shipped:** v1.0 MVP (2026-04-02), v2.0 SaaS Platform (2026-04-03)
@@ -50,7 +64,7 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 
 ### Active
 
-(No active requirements — next milestone not yet defined)
+(Milestone v2.1 — requirements being defined)
 
 ### Out of Scope
 
@@ -134,4 +148,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-03 after v2.0 milestone complete*
+*Last updated: 2026-04-04 after v2.1 milestone started*
