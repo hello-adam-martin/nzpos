@@ -4,6 +4,7 @@
 
 - ✅ **v1.0 MVP** — Phases 1-6 (shipped 2026-04-02). [Archive](milestones/v1.0-ROADMAP.md)
 - ✅ **v2.0 SaaS Platform** — Phases 7-16 (shipped 2026-04-03). [Archive](milestones/v2.0-ROADMAP.md)
+- 🚧 **v2.1 Hardening & Documentation** — Phases 17-20 (in progress)
 
 ## Phases
 
@@ -35,6 +36,65 @@
 
 </details>
 
+### 🚧 v2.1 Hardening & Documentation (In Progress)
+
+**Milestone Goal:** Comprehensive security audit, code quality review, test coverage gap-filling, and full documentation suite to prepare the platform for external merchant onboarding and production deployment.
+
+- [ ] **Phase 17: Security Audit** — Verify tenant isolation, auth flows, webhook integrity, and input validation across the entire codebase
+- [ ] **Phase 18: Code Quality + Test Coverage** — Remove dead code, enforce consistent error handling, fill test coverage gaps on critical paths
+- [ ] **Phase 19: Developer Documentation** — Write setup guide, architecture overview, env var reference, and Server Action inventory
+- [ ] **Phase 20: Deployment + User Documentation** — Production runbook, merchant onboarding guide, and GST compliance explanation
+
+## Phase Details
+
+### Phase 17: Security Audit
+**Goal**: Every security boundary in the platform is verified correct — tenant isolation holds, auth flows enforce all constraints, webhooks are signature-verified, and no secrets exist in source code
+**Depends on**: Phase 16
+**Requirements**: SEC-01, SEC-02, SEC-03, SEC-04, SEC-05, SEC-06, SEC-07, SEC-08, SEC-09, SEC-10, SEC-11, SEC-12, SEC-13, SEC-14
+**Success Criteria** (what must be TRUE):
+  1. Every database table with store_id has confirmed RLS policies for all four operations (SELECT/INSERT/UPDATE/DELETE), and storage bucket policies prevent cross-tenant file access
+  2. Auth flows are verified: owner JWT expiry is enforced, staff PIN lockout fires after failed attempts, super admin routes reject regular merchant and staff sessions, and customer auth cannot invoke POS or admin Server Actions
+  3. All 67 Server Actions accept Zod-validated input before touching the database, and no stack traces or secrets are exposed in error responses
+  4. Stripe webhook handlers verify signatures via constructEvent() and both webhook secrets are environment-specific; all sensitive mutations are recorded in the immutable audit trail
+  5. No secrets exist in source code, .env.example is complete and accurate, all service_role imports are guarded by server-only, and Content Security Policy headers are configured
+**Plans**: TBD
+
+### Phase 18: Code Quality + Test Coverage
+**Goal**: The codebase is clean, consistent, and validated — dead code removed, error handling uniform, TypeScript strict mode passing, and critical paths have 80%+ test coverage
+**Depends on**: Phase 17
+**Requirements**: QUAL-01, QUAL-02, QUAL-03, QUAL-04, QUAL-05, TEST-01, TEST-02, TEST-03, TEST-04, TEST-05
+**Success Criteria** (what must be TRUE):
+  1. A vitest --coverage report exists showing per-file coverage; GST, money, auth, and RLS paths are at 80%+ line coverage
+  2. RLS integration tests cover all v2.0 tables (add_ons, subscriptions, audit_logs, store_plans) and Stripe webhook handlers have tests for all subscription lifecycle events
+  3. GST calculations are validated against IRD-published specimen examples and all test assertions pass
+  4. Dead code is removed across all source files, Server Actions and Route Handlers have consistent error handling with no stack trace leaks, and TypeScript strict mode passes with zero errors or documented suppressions
+  5. Complex business logic (gst.ts, requireFeature.ts, tenantCache.ts, xero/sync.ts, provision_store) has inline JSDoc documentation and performance-critical paths have confirmed database indexes
+**Plans**: TBD
+
+### Phase 19: Developer Documentation
+**Goal**: Any developer (including the founder returning after months away) can clone the repo, configure environment variables, and have the app running locally within 20 minutes, with complete reference for the architecture and all Server Actions
+**Depends on**: Phase 18
+**Requirements**: DOC-01, DOC-02, DOC-03, DOC-04
+**Success Criteria** (what must be TRUE):
+  1. A local development setup guide exists and a new developer can follow it from clone to running app in under 20 minutes with no undocumented steps
+  2. An environment variable reference table exists listing every variable with its name, purpose, source, and required/optional status — no env var is undocumented
+  3. An architecture overview document exists covering the three auth systems (owner, staff PIN, customer), tenant isolation model (RLS + custom JWT claims + SECURITY DEFINER RPCs), feature gating dual-path, and key data flows
+  4. A Server Action inventory exists cataloguing all actions with name, input schema, auth requirement, and description — the full 67-action surface area is documented
+**Plans**: TBD
+**UI hint**: no
+
+### Phase 20: Deployment + User Documentation
+**Goal**: The platform can be deployed to production following a verified runbook, and a new merchant can complete their first sale end-to-end using the onboarding guide
+**Depends on**: Phase 19
+**Requirements**: DEPLOY-01, DEPLOY-02, DEPLOY-03, DEPLOY-04, USER-01, USER-02
+**Success Criteria** (what must be TRUE):
+  1. A production Supabase setup guide exists covering project creation, migration application in order, seed data (super admin user, default plans), auth config, storage buckets, and email templates
+  2. A Stripe live key configuration checklist exists covering webhook endpoint registration, live vs test secret separation, and webhook replay verification; a Vercel production config guide covers wildcard DNS, env vars, and tenant routing verification
+  3. A post-deploy smoke test checklist exists and a deployer can verify signup, product creation, POS sale, online order, Stripe payment, and Xero sync are all functioning
+  4. A merchant onboarding guide exists walking through signup through first product through first sale through first online order — a new merchant can complete setup without support
+  5. A GST compliance explanation exists that a non-technical merchant can read to understand how NZPOS handles 15% tax-inclusive pricing and IRD compliance
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -55,3 +115,7 @@
 | 14. Store Setup Wizard + Marketing | v2.0 | 3/3 | Complete | 2026-04-03 |
 | 15. Stripe Billing + Feature Gating | v2.0 | 4/4 | Complete | 2026-04-03 |
 | 16. Super Admin Panel | v2.0 | 4/4 | Complete | 2026-04-03 |
+| 17. Security Audit | v2.1 | 0/TBD | Not started | - |
+| 18. Code Quality + Test Coverage | v2.1 | 0/TBD | Not started | - |
+| 19. Developer Documentation | v2.1 | 0/TBD | Not started | - |
+| 20. Deployment + User Documentation | v2.1 | 0/TBD | Not started | - |

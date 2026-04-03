@@ -101,46 +101,46 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEC-01 | — | Pending |
-| SEC-02 | — | Pending |
-| SEC-03 | — | Pending |
-| SEC-04 | — | Pending |
-| SEC-05 | — | Pending |
-| SEC-06 | — | Pending |
-| SEC-07 | — | Pending |
-| SEC-08 | — | Pending |
-| SEC-09 | — | Pending |
-| SEC-10 | — | Pending |
-| SEC-11 | — | Pending |
-| SEC-12 | — | Pending |
-| SEC-13 | — | Pending |
-| SEC-14 | — | Pending |
-| QUAL-01 | — | Pending |
-| QUAL-02 | — | Pending |
-| QUAL-03 | — | Pending |
-| QUAL-04 | — | Pending |
-| QUAL-05 | — | Pending |
-| TEST-01 | — | Pending |
-| TEST-02 | — | Pending |
-| TEST-03 | — | Pending |
-| TEST-04 | — | Pending |
-| TEST-05 | — | Pending |
-| DOC-01 | — | Pending |
-| DOC-02 | — | Pending |
-| DOC-03 | — | Pending |
-| DOC-04 | — | Pending |
-| DEPLOY-01 | — | Pending |
-| DEPLOY-02 | — | Pending |
-| DEPLOY-03 | — | Pending |
-| DEPLOY-04 | — | Pending |
-| USER-01 | — | Pending |
-| USER-02 | — | Pending |
+| SEC-01 | Phase 17 | Pending |
+| SEC-02 | Phase 17 | Pending |
+| SEC-03 | Phase 17 | Pending |
+| SEC-04 | Phase 17 | Pending |
+| SEC-05 | Phase 17 | Pending |
+| SEC-06 | Phase 17 | Pending |
+| SEC-07 | Phase 17 | Pending |
+| SEC-08 | Phase 17 | Pending |
+| SEC-09 | Phase 17 | Pending |
+| SEC-10 | Phase 17 | Pending |
+| SEC-11 | Phase 17 | Pending |
+| SEC-12 | Phase 17 | Pending |
+| SEC-13 | Phase 17 | Pending |
+| SEC-14 | Phase 17 | Pending |
+| QUAL-01 | Phase 18 | Pending |
+| QUAL-02 | Phase 18 | Pending |
+| QUAL-03 | Phase 18 | Pending |
+| QUAL-04 | Phase 18 | Pending |
+| QUAL-05 | Phase 18 | Pending |
+| TEST-01 | Phase 18 | Pending |
+| TEST-02 | Phase 18 | Pending |
+| TEST-03 | Phase 18 | Pending |
+| TEST-04 | Phase 18 | Pending |
+| TEST-05 | Phase 18 | Pending |
+| DOC-01 | Phase 19 | Pending |
+| DOC-02 | Phase 19 | Pending |
+| DOC-03 | Phase 19 | Pending |
+| DOC-04 | Phase 19 | Pending |
+| DEPLOY-01 | Phase 20 | Pending |
+| DEPLOY-02 | Phase 20 | Pending |
+| DEPLOY-03 | Phase 20 | Pending |
+| DEPLOY-04 | Phase 20 | Pending |
+| USER-01 | Phase 20 | Pending |
+| USER-02 | Phase 20 | Pending |
 
 **Coverage:**
 - v2.1 requirements: 34 total
-- Mapped to phases: 0
-- Unmapped: 34 ⚠️
+- Mapped to phases: 34
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-04*
-*Last updated: 2026-04-04 after initial definition*
+*Last updated: 2026-04-04 — traceability populated after roadmap creation*

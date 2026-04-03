@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Hardening & Documentation
-status: defining_requirements
-stopped_at: Milestone v2.1 started — defining requirements
+status: ready_to_plan
+stopped_at: Roadmap created — Phase 17 ready to plan
 last_updated: "2026-04-04"
 last_activity: 2026-04-04
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Defining requirements for v2.1 Hardening & Documentation
+**Current focus:** Phase 17 — Security Audit
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-04-04 — Milestone v2.1 started
+Phase: 17 of 20 (Security Audit)
+Plan: — of TBD
+Status: Ready to plan
+Last activity: 2026-04-04 — v2.1 roadmap created, Phase 17 ready to plan
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -46,59 +46,26 @@ Progress: [░░░░░░░░░░] 0%
 
 ### Decisions
 
-- [v2.0]: Custom domains deferred to v2.1 — too complex, lowest immediate demand
 - [v2.0]: Per-add-on billing model (not plan tiers) — avoids upgrade cliffs, NZ market expects no-card signup
-- [v2.0]: store_plans boolean columns (not Stripe Entitlements API) — simpler, always available offline from Stripe; revisit in Phase 15 planning
-- [v1.1]: Phase 7 (production deploy) partially complete — DEPLOY-02/03/04 still pending real infrastructure
-- [Phase 12]: slug DEFAULT 'demo' trick allows migration on existing rows before default is dropped — ensures new stores must explicitly provide slug
-- [Phase 12]: middlewareAdmin.ts omits server-only and Database type generic to remain compatible with Edge Runtime
-- [Phase 12-multi-tenant-infrastructure]: orders_public_read policy preserved from 006 (guest checkout confirmation requires anon read of online orders)
-- [Phase 12-multi-tenant-infrastructure]: store_plans owner-read only (not staff) — billing info is owner-sensitive
-- [Phase 12-multi-tenant-infrastructure]: super admin check runs before staff/customer in auth hook (D-12: cross-tenant, no store_id required)
-- [Phase 12]: storeId TypeScript narrowing: explicit string variable with if/else branch avoids null type error when assigning from cache vs DB lookup
-- [Phase 12]: x-store-id middleware header takes priority over JWT store_id in resolveAuth — subdomain is authoritative tenant context
-- [Phase 12]: allowedDevOrigins added to next.config.ts for *.lvh.me subdomain dev compatibility
-- [Phase 12-multi-tenant-infrastructure]: app_metadata set via admin.auth.admin.updateUserById before sign-in in RLS tests — auth hook not firing in Vitest jsdom test environment; mirrors established seed.ts pattern
-- [Phase 12-multi-tenant-infrastructure]: Store B product created as is_active=false in RLS tests to bypass products_public_read and test tenant_access RLS isolation
-- [Phase 13-merchant-self-serve-signup]: provision_store REVOKE from authenticated/anon/public — service_role only to prevent client-side invocation
-- [Phase 13-merchant-self-serve-signup]: enable_confirmations = true in supabase/config.toml — local dev must use Inbucket for email verification
-- [Phase 13]: ownerSignup does not call redirect() — client page handles navigation after success (keeps Server Action testable)
-- [Phase 13]: vi.hoisted() required for mock functions in vi.mock() factories — avoids TDZ ReferenceError in Vitest
-- [Phase 13]: Auth callback /api/auth/callback on root domain redirects to {slug}.{domain}/admin/dashboard after PKCE exchange
-- [Phase 13]: ProvisioningScreen animates through steps as UX affordance — actual provisioning already completed in ownerSignup Server Action before redirect
-- [Phase 13]: Subdomain redirect uses NEXT_PUBLIC_ROOT_DOMAIN env var with lvh.me fallback for local dev; protocol auto-detected based on domain
-- [Phase 14-store-setup-wizard-marketing]: Zod v4 installed despite ^3.x spec — uses .issues[] not .errors[] on ZodError
-- [Phase 14-store-setup-wizard-marketing]: saveLogoStep accepts null for both logo and color (skip case still marks step complete via bit 1)
-- [Phase 14-store-setup-wizard-marketing]: Middleware admin client used for setup_wizard_dismissed check to bypass RLS (consistent with tenant resolution pattern)
-- [14-03]: Mobile hamburger nav uses HTML details/summary pattern — no JavaScript, page remains fully static
-- [14-03]: Landing page hero illustration is CSS-only iPad mockup (no external images) — keeps page lightweight and static
-- [Phase 14]: SetupWizard extracted as separate client component from setup/page.tsx — Server Component page passes initialStep/storeData/categories as props
-- [Phase 14]: BrandingForm extracted to settings/BrandingForm.tsx — keeps settings/page.tsx as Server Component while form is interactive
-- [Phase 15-stripe-billing-feature-gating]: requireFeature never throws — returns structured { authorized, feature, upgradeUrl } for redirect-friendly caller pattern
-- [Phase 15-stripe-billing-feature-gating]: JWT fast path default in requireFeature, requireDbCheck: true for critical mutations only
-- [Phase 15-stripe-billing-feature-gating]: Price IDs loaded from env vars in addons.ts — never hardcoded per D-02
+- [v2.0]: Custom domains deferred to v2.1 — too complex, lowest immediate demand
+- [Phase 15]: requireFeature never throws — returns structured { authorized, feature, upgradeUrl } for redirect-friendly caller pattern
 - [Phase 15]: Billing webhook uses STRIPE_BILLING_WEBHOOK_SECRET (not STRIPE_WEBHOOK_SECRET) — separate endpoint, separate signing secret
-- [Phase 15]: No server-only import in billing Route Handler — API routes already server-side, import causes build issues in Next.js 16
-- [Phase 15]: requireFeature guard placed as first operation in gated Server Actions — before auth check, before business logic
-- [Phase 15]: integrations page uses JWT fast path for hasXero — no DB round-trip for read-only page
-- [Phase 15]: Admin sidebar gains Settings link alongside Billing — Settings was absent from navLinks
-- [Phase 15-stripe-billing-feature-gating]: Human verification approved for billing page UI — add-on cards, billing portal section, and sidebar navigation confirmed correct
-- [Phase 16-super-admin-panel]: Zod v4 UUID validation requires RFC 4122-compliant UUIDs in tests — version bits 1-8, variant bits 89ab; zeroed fake UUIDs rejected
-- [Phase 16-super-admin-panel]: server-only mock vi.mock('server-only', () => ({})) required in all Server Action Vitest tests — established pattern from Phase 15 billing tests
-- [Phase 16-super-admin-panel]: Super admin manual override pattern: has_xero_manual_override boolean distinguishes admin comp (true) from Stripe-paid (false); deactivation blocks on Stripe-managed add-ons
-- [Phase 16-super-admin-panel]: Cached-path suspension check adds one indexed DB lookup per request — accepted for correctness across serverless instances
-- [Phase 16-super-admin-panel]: ownerSignin redirects super admins to /super-admin/tenants (tenants list is effective super admin home page)
-- [Phase 16-super-admin-panel]: TenantDetailActions extracted as client wrapper to keep detail page a Server Component
-- [Phase 16-super-admin-panel]: unsuspendTenant wrapped in async void arrow for React form action type compatibility
+- [Phase 16]: Cached-path suspension check adds one indexed DB lookup per request — accepted for correctness across serverless instances
+- [Phase 16]: super admin check runs before staff/customer in auth hook (cross-tenant, no store_id required)
+
+### Pending Todos
+
+None.
 
 ### Blockers/Concerns
 
-- Wildcard SSL requires Vercel nameserver delegation (NS delegation, not CNAME) — must be configured before Phase 12 middleware code
-- Transactional email provider needed for signup verification in Phase 13 — Resend is the standard choice but not yet provisioned
+- Wildcard SSL requires Vercel nameserver delegation (NS delegation, not CNAME) — must be resolved before production deploy (Phase 20)
 - Supabase free tier limits (500MB DB, 50K MAU) — validate before onboarding >20 merchants; plan Pro upgrade timing
+- Phase 17 priority: verify JWT claims source from raw_app_meta_data not user_metadata — potential complete RLS bypass if incorrect
+- Phase 17 priority: storage.objects policies may not exist in migrations (configured via dashboard) — must run SELECT * FROM storage.policies explicitly
 
 ## Session Continuity
 
 Last session: 2026-04-04
-Stopped at: Milestone v2.1 started — defining requirements
+Stopped at: Roadmap created for v2.1 — 4 phases (17-20), 34 requirements mapped
 Resume file: None
