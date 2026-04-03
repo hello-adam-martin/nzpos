@@ -154,7 +154,7 @@ Plans:
   5. Attempting to create a second store from the same verified email is blocked with a clear message
 **Plans**: 3 plans
 Plans:
-- [ ] 13-01-PLAN.md — Provisioning RPC migration, slug validation, rate limiter, Wave 0 tests
+- [x] 13-01-PLAN.md — Provisioning RPC migration, slug validation, rate limiter, Wave 0 tests
 - [ ] 13-02-PLAN.md — Server Actions (ownerSignup, checkSlug, retry, resend) + middleware email gate + auth callback
 - [ ] 13-03-PLAN.md — Signup form UI, provisioning screen, email verification screen
 **UI hint**: yes
@@ -214,7 +214,7 @@ Plans:
 | 10. Customer Accounts | v1.1 | 3/3 | Complete | 2026-04-02 |
 | 11. Partial Refunds | v1.1 | 2/2 | Complete | 2026-04-02 |
 | 12. Multi-Tenant Infrastructure | v2.0 | 4/4 | Complete    | 2026-04-02 |
-| 13. Merchant Self-Serve Signup | v2.0 | 0/3 | Planned | — |
+| 13. Merchant Self-Serve Signup | v2.0 | 1/3 | In Progress|  |
 | 14. Store Setup Wizard + Marketing | v2.0 | 0/? | Not started | — |
 | 15. Stripe Billing + Feature Gating | v2.0 | 0/? | Not started | — |
 | 16. Super Admin Panel | v2.0 | 0/? | Not started | — |

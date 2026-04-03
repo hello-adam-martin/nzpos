@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production Launch + Feature Waves
-status: verifying
-stopped_at: Phase 13 context gathered
-last_updated: "2026-04-02T20:16:51.244Z"
-last_activity: 2026-04-02
+status: executing
+stopped_at: Completed 13-01-PLAN.md
+last_updated: "2026-04-03T00:51:10.877Z"
+last_activity: 2026-04-03
 progress:
   total_phases: 10
   completed_phases: 6
-  total_plans: 19
-  completed_plans: 19
+  total_plans: 22
+  completed_plans: 20
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 12 — multi-tenant-infrastructure
+**Current focus:** Phase 13 — merchant-self-serve-signup
 
 ## Current Position
 
-Phase: 13
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-02
+Phase: 13 (merchant-self-serve-signup) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-04-03
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -60,6 +60,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 12]: allowedDevOrigins added to next.config.ts for *.lvh.me subdomain dev compatibility
 - [Phase 12-multi-tenant-infrastructure]: app_metadata set via admin.auth.admin.updateUserById before sign-in in RLS tests — auth hook not firing in Vitest jsdom test environment; mirrors established seed.ts pattern
 - [Phase 12-multi-tenant-infrastructure]: Store B product created as is_active=false in RLS tests to bypass products_public_read and test tenant_access RLS isolation
+- [Phase 13-merchant-self-serve-signup]: provision_store REVOKE from authenticated/anon/public — service_role only to prevent client-side invocation
+- [Phase 13-merchant-self-serve-signup]: enable_confirmations = true in supabase/config.toml — local dev must use Inbucket for email verification
 
 ### Blockers/Concerns
 
@@ -69,6 +71,6 @@ Progress: [░░░░░░░░░░] 0%
 
 ## Session Continuity
 
-Last session: 2026-04-02T20:16:51.241Z
-Stopped at: Phase 13 context gathered
-Resume file: .planning/phases/13-merchant-self-serve-signup/13-CONTEXT.md
+Last session: 2026-04-03T00:51:10.874Z
+Stopped at: Completed 13-01-PLAN.md
+Resume file: None
