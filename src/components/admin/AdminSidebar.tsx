@@ -12,6 +12,8 @@ const navLinks = [
   { href: '/admin/reports', label: 'Reports' },
   { href: '/admin/cash-up', label: 'Cash-Up' },
   { href: '/admin/integrations', label: 'Integrations' },
+  { href: '/admin/settings', label: 'Settings' },
+  { href: '/admin/billing', label: 'Billing' },
 ]
 
 interface AdminSidebarProps {
