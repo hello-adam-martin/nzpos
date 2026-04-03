@@ -679,6 +679,8 @@ export type Database = {
           owner_auth_id: string
           phone: string | null
           primary_color: string | null
+          setup_completed_steps: number
+          setup_wizard_dismissed: boolean
           slug: string
           store_description: string | null
           stripe_customer_id: string | null
@@ -696,6 +698,8 @@ export type Database = {
           owner_auth_id: string
           phone?: string | null
           primary_color?: string | null
+          setup_completed_steps?: number
+          setup_wizard_dismissed?: boolean
           slug: string
           store_description?: string | null
           stripe_customer_id?: string | null
@@ -713,6 +717,8 @@ export type Database = {
           owner_auth_id?: string
           phone?: string | null
           primary_color?: string | null
+          setup_completed_steps?: number
+          setup_wizard_dismissed?: boolean
           slug?: string
           store_description?: string | null
           stripe_customer_id?: string | null

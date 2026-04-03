@@ -102,6 +102,21 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/unauthorized', request.url))
     }
 
+    // D-01: Setup wizard redirect — first admin visit goes to /admin/setup
+    // Excludes /admin/setup itself (loop prevention) and /admin/settings (accessible pre-wizard)
+    if (!pathname.startsWith('/admin/setup') && !pathname.startsWith('/admin/settings')) {
+      const adminClient = createMiddlewareAdminClient()
+      const { data: storeCheck } = await adminClient
+        .from('stores')
+        .select('setup_wizard_dismissed')
+        .eq('id', storeId)
+        .single()
+
+      if (storeCheck && !storeCheck.setup_wizard_dismissed) {
+        return NextResponse.redirect(new URL('/admin/setup', request.url))
+      }
+    }
+
     // Inject tenant headers into the response for downstream Server Components
     response.headers.set('x-store-id', storeId)
     response.headers.set('x-store-slug', slug)

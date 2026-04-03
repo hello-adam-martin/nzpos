@@ -104,7 +104,7 @@ export async function completeSale(input: unknown) {
   // 7. Update the order with receipt_data
   await supabase
     .from('orders')
-    .update({ receipt_data: receiptData as unknown as Record<string, unknown> })
+    .update({ receipt_data: receiptData as unknown as import('@/types/database').Json })
     .eq('id', orderId)
 
   // 8. Revalidate POS page for inventory refresh-on-transaction
