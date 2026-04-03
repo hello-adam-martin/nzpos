@@ -685,3 +685,26 @@ grep -c "^## Domain" .planning/phases/17-security-audit/SECURITY-AUDIT.md
 - SEC-14: PASS WITH FINDINGS (Domain 9)
 
 **No source code files were modified during this audit.**
+
+---
+
+## Post-Remediation Notes
+*(Added after Plans 02-04 remediation — 2026-04-04)*
+
+### SEC-04: Owner JWT verified server-side
+PASS confirmed. No remediation required.
+
+### SEC-06: Super admin routes inaccessible to regular users
+PASS confirmed. No remediation required.
+
+### SEC-07: Customer JWT cannot access owner/staff Server Actions
+PASS confirmed. No remediation required.
+
+### SEC-10: server-only guards (defense-in-depth)
+Plan 03 added `import 'server-only'` to admin-client files (High findings). Plan 04 added `import 'server-only'` to all 18 remaining Server Action files (categories, products, auth) as defense-in-depth. All Server Actions are now directly guarded — 46 total files verified.
+
+### SEC-13: Staff PIN IP-level rate limiting
+Plan 04 added `check_rate_limit` RPC call to `staffPin.ts` before PIN verification. 20 attempts per IP per 5-minute window (higher than per-account limit to allow multiple staff on shared iPad). Both layers now enforced: per-IP (20/5min) and per-account DB lockout (10/5min).
+
+### SEC-14: super_admin_actions immutability verified
+`super_admin_actions` table has SELECT-only RLS for super admins. No INSERT RLS policy — writes occur exclusively via service_role through `createSupabaseAdminClient()`. This is intentional immutability by design (F-1.2 confirmed-correct). All 4 super-admin action files (`suspendTenant`, `unsuspendTenant`, `impersonateMerchant`, `updateStoreStatus`) write to the table via admin client. Non-admin mutation logging (F-9.1) deferred — refund records in `refunds`/`refund_items` tables provide natural audit trail; stock adjustment audit logging is Low severity and tracked for v2.2.

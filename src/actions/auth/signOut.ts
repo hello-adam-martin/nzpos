@@ -1,4 +1,5 @@
 'use server'
+import 'server-only'
 import { cookies } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'

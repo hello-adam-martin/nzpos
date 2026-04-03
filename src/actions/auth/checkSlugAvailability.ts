@@ -1,4 +1,5 @@
 'use server'
+import 'server-only'
 import { z } from 'zod'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { validateSlug } from '@/lib/slugValidation'

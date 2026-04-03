@@ -1,4 +1,5 @@
 'use server'
+import 'server-only'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { UpdateProductSchema } from '@/schemas/product'

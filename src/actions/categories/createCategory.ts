@@ -1,4 +1,5 @@
 'use server'
+import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { CreateCategorySchema } from '@/schemas/category'
 import { revalidatePath } from 'next/cache'
