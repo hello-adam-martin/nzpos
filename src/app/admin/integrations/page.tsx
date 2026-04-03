@@ -5,6 +5,7 @@ import XeroConnectButton from '@/components/admin/integrations/XeroConnectButton
 import XeroAccountCodeForm from '@/components/admin/integrations/XeroAccountCodeForm'
 import XeroSyncButton from '@/components/admin/integrations/XeroSyncButton'
 import XeroSyncLog from '@/components/admin/integrations/XeroSyncLog'
+import { UpgradePrompt } from '@/components/admin/billing/UpgradePrompt'
 import type { XeroConnection, XeroSyncLogEntry } from '@/lib/xero/types'
 
 export const dynamic = 'force-dynamic'
@@ -16,6 +17,9 @@ export default async function IntegrationsPage() {
   if (!storeId) {
     redirect('/admin/login')
   }
+
+  // Check Xero subscription from JWT claims (fast path)
+  const hasXero = user?.app_metadata?.xero === true
 
   // Query xero_connections for current store
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -59,7 +63,15 @@ export default async function IntegrationsPage() {
       <section className={cardClass}>
         <div className="space-y-[var(--space-md)]">
           <h2 className={sectionHeadingClass}>Xero</h2>
-          <XeroConnectButton connection={xeroConnection} />
+          {hasXero ? (
+            <XeroConnectButton connection={xeroConnection} />
+          ) : (
+            <UpgradePrompt
+              feature="xero"
+              headline="Xero sync requires an upgrade"
+              body="Connect your Xero account and sync sales automatically. No manual data entry."
+            />
+          )}
         </div>
       </section>
 

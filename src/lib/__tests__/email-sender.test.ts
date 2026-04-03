@@ -4,6 +4,11 @@ import React from 'react'
 // Mock server-only to no-op so it doesn't throw in test environment
 vi.mock('server-only', () => ({}))
 
+// Mock requireFeature to always authorize (email tests test email logic, not gating)
+vi.mock('@/lib/requireFeature', () => ({
+  requireFeature: vi.fn().mockResolvedValue({ authorized: true }),
+}))
+
 // Mock the resend module before importing email.ts
 const mockSend = vi.fn()
 vi.mock('resend', () => ({
@@ -18,6 +23,7 @@ const { sendEmail } = await import('@/lib/email')
 describe('sendEmail', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    process.env.RESEND_API_KEY = 'test-api-key'
     process.env.RESEND_FROM_ADDRESS = 'Test Store <noreply@test.co.nz>'
   })
 
