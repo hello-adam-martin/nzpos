@@ -1,4 +1,5 @@
 'use server'
+import 'server-only'
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
