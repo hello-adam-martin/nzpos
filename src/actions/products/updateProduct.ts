@@ -64,7 +64,8 @@ export async function updateProduct(id: string, formData: FormData) {
     if (dbError.code === '23505' && dbError.message.includes('sku')) {
       return { error: { sku: ['This SKU is already in use.'] } }
     }
-    return { error: { _form: [dbError.message] } }
+    console.error('[updateProduct] DB error:', dbError)
+    return { error: { _form: ['Failed to update product'] } }
   }
 
   revalidatePath('/admin/products')

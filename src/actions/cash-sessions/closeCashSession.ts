@@ -76,7 +76,8 @@ export async function closeCashSession(input: {
     .eq('id', parsed.data.sessionId)
 
   if (error) {
-    return { error: error.message }
+    console.error('[closeCashSession] DB error:', error)
+    return { error: 'Failed to close cash session' }
   }
 
   revalidatePath('/pos')

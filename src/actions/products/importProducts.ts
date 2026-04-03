@@ -1,19 +1,30 @@
 'use server'
+import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 const CHUNK_SIZE = 100
 
-export interface ImportRow {
-  name: string
-  sku?: string
-  barcode?: string
-  price_cents: number
-  stock_quantity?: number
-  reorder_threshold?: number
-  category_name?: string
-  category_id?: string
-}
+// ---------------------------------------------------------------------------
+// Zod schema — SEC-08 / F-6.2: runtime validation before any DB access
+// ---------------------------------------------------------------------------
+
+const ImportRowSchema = z.object({
+  name: z.string().min(1).max(200),
+  sku: z.string().max(50).optional(),
+  barcode: z.string().max(50).optional(),
+  price_cents: z.number().int().min(0),
+  stock_quantity: z.number().int().min(0).optional(),
+  reorder_threshold: z.number().int().min(0).optional(),
+  category_name: z.string().max(100).optional(),
+  category_id: z.string().uuid().optional(),
+})
+
+const ImportSchema = z.object({
+  rows: z.array(ImportRowSchema).min(1).max(1000),
+})
+
+export type ImportRow = z.infer<typeof ImportRowSchema>
 
 export interface ImportResult {
   success: true
@@ -22,8 +33,15 @@ export interface ImportResult {
 }
 
 export async function importProducts(
-  rows: ImportRow[]
+  rows: unknown
 ): Promise<ImportResult | { error: string }> {
+  // Validate all input before touching the database
+  const parsedInput = ImportSchema.safeParse({ rows })
+  if (!parsedInput.success) {
+    return { error: 'Invalid import data. Check that all rows have valid names and non-negative prices.' }
+  }
+
+  const validatedRows = parsedInput.data.rows
   const supabase = await createSupabaseServerClient()
 
   const {
@@ -39,7 +57,7 @@ export async function importProducts(
   // D-10: Auto-create categories that don't exist yet
   // Collect unique category names needing creation (those with category_name but no category_id)
   const categoryNamesNeeded = new Set<string>()
-  for (const row of rows) {
+  for (const row of validatedRows) {
     if (row.category_name && !row.category_id) {
       categoryNamesNeeded.add(row.category_name)
     }
@@ -94,7 +112,7 @@ export async function importProducts(
   }
 
   // Prepare insert rows: resolve category_id for auto-created categories
-  const insertRows = rows.map((row) => {
+  const insertRows = validatedRows.map((row) => {
     let category_id = row.category_id
     if (!category_id && row.category_name) {
       category_id = categoryIdByName.get(row.category_name.toLowerCase())
@@ -125,11 +143,12 @@ export async function importProducts(
       .select('id')
 
     if (insertError) {
-      // Record error for each row in the chunk
+      // Record generic error per row — do not expose raw DB error to client
+      console.error(`[importProducts] DB error on chunk starting at row ${i + 1}:`, insertError)
       for (let j = 0; j < chunk.length; j++) {
         errors.push({
           row: i + j + 1,
-          message: insertError.message,
+          message: 'Failed to import row',
         })
       }
     } else {

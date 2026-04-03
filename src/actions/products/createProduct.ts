@@ -59,7 +59,8 @@ export async function createProduct(formData: FormData) {
     if (dbError.code === '23505' && dbError.message.includes('sku')) {
       return { error: { sku: ['This SKU is already in use.'] } }
     }
-    return { error: { _form: [dbError.message] } }
+    console.error('[createProduct] DB error:', dbError)
+    return { error: { _form: ['Failed to create product'] } }
   }
 
   revalidatePath('/admin/products')

@@ -1,13 +1,18 @@
 'use server'
 import 'server-only'
+import { z } from 'zod'
 import { headers } from 'next/headers'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { formatNZD } from '@/lib/money'
 
-interface ValidatePromoCodeInput {
-  code: string
-  cartTotalCents: number
-}
+// ---------------------------------------------------------------------------
+// Zod schema — SEC-08 / F-6.3: runtime validation before any DB access
+// ---------------------------------------------------------------------------
+
+const ValidatePromoCodeSchema = z.object({
+  code: z.string().min(1).max(50).trim(),
+  cartTotalCents: z.number().int().min(0),
+})
 
 type ValidatePromoCodeResult =
   | { success: true; promoId: string; discountCents: number; discountType: 'percentage' | 'fixed'; code: string }
@@ -18,9 +23,15 @@ type ValidatePromoCodeResult =
   | { error: 'min_order'; message: string }
 
 export async function validatePromoCode(
-  input: ValidatePromoCodeInput
+  input: unknown
 ): Promise<ValidatePromoCodeResult> {
-  const { code, cartTotalCents } = input
+  // Validate input before touching the database
+  const parsed = ValidatePromoCodeSchema.safeParse(input)
+  if (!parsed.success) {
+    return { error: 'invalid', message: 'That code is invalid or has expired. Double-check the code or contact us for help.' }
+  }
+
+  const { code, cartTotalCents } = parsed.data
   const storeId = process.env.STORE_ID!
 
   // Use admin client — storefront has no authenticated session

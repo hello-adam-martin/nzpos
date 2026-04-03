@@ -55,7 +55,8 @@ export async function openCashSession(input: { openingFloatCents: number }): Pro
     .single()
 
   if (error || !session) {
-    return { error: error?.message ?? 'Failed to open session' }
+    console.error('[openCashSession] DB error:', error)
+    return { error: 'Failed to open cash session' }
   }
 
   revalidatePath('/pos')

@@ -1,24 +1,25 @@
 'use server'
 import 'server-only'
+import { z } from 'zod'
 import { stripe } from '@/lib/stripe'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { calcLineItem, calcOrderGST } from '@/lib/gst'
 
 // ---------------------------------------------------------------------------
-// Types
+// Zod schema — SEC-08 / F-6.1: runtime validation before any DB access
 // ---------------------------------------------------------------------------
 
-interface CheckoutItem {
-  productId: string
-  quantity: number
-}
+const CheckoutItemSchema = z.object({
+  productId: z.string().uuid(),
+  quantity: z.number().int().positive().max(999),
+})
 
-interface CreateCheckoutSessionInput {
-  items: CheckoutItem[]
-  promoId?: string
-  promoDiscountCents?: number
-  promoDiscountType?: 'percentage' | 'fixed'
-}
+const CreateCheckoutSessionSchema = z.object({
+  items: z.array(CheckoutItemSchema).min(1).max(100),
+  promoId: z.string().uuid().optional(),
+  promoDiscountCents: z.number().int().min(0).optional(),
+  promoDiscountType: z.enum(['percentage', 'fixed']).optional(),
+})
 
 type CreateCheckoutSessionResult =
   | { url: string }
@@ -31,16 +32,18 @@ type CreateCheckoutSessionResult =
 // ---------------------------------------------------------------------------
 
 export async function createCheckoutSession(
-  input: CreateCheckoutSessionInput
+  input: unknown
 ): Promise<CreateCheckoutSessionResult> {
+  // Validate all user-supplied input before touching the database
+  const parsed = CreateCheckoutSessionSchema.safeParse(input)
+  if (!parsed.success) {
+    return { error: 'invalid_input' }
+  }
+
   const storeId = process.env.STORE_ID!
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL!
 
-  const { items, promoId, promoDiscountCents = 0, promoDiscountType } = input
-
-  if (!items || items.length === 0) {
-    return { error: 'invalid_input' }
-  }
+  const { items, promoId, promoDiscountCents = 0, promoDiscountType } = parsed.data
 
   const supabase = createSupabaseAdminClient()
 

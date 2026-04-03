@@ -24,7 +24,8 @@ export async function deactivateProduct(id: string) {
     .eq('id', idParsed.data)
 
   if (dbError) {
-    return { error: { _form: [dbError.message] } }
+    console.error('[deactivateProduct] DB error:', dbError)
+    return { error: { _form: ['Failed to update product status'] } }
   }
 
   revalidatePath('/admin/products')
