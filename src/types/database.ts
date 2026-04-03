@@ -1,34 +1,4 @@
 Connecting to db 5432
-v0.96.2: Pulling from supabase/postgres-meta
-8fe3f02e677c: Pulling fs layer
-178d432d7435: Pulling fs layer
-d8646ad9a82b: Pulling fs layer
-9317fbe8c492: Pulling fs layer
-e98b56fa233c: Pulling fs layer
-5b87ba79cccd: Pulling fs layer
-cbcfcb5cf281: Pulling fs layer
-8406ff1aa65b: Pulling fs layer
-3dfce94b11fc: Pulling fs layer
-8fe3f02e677c: Download complete
-9317fbe8c492: Download complete
-cbcfcb5cf281: Download complete
-3dfce94b11fc: Download complete
-e98b56fa233c: Download complete
-3dfce94b11fc: Pull complete
-d8646ad9a82b: Download complete
-5b87ba79cccd: Download complete
-8406ff1aa65b: Download complete
-178d432d7435: Download complete
-9317fbe8c492: Pull complete
-cbcfcb5cf281: Pull complete
-5b87ba79cccd: Pull complete
-e98b56fa233c: Pull complete
-8406ff1aa65b: Pull complete
-8fe3f02e677c: Pull complete
-d8646ad9a82b: Pull complete
-178d432d7435: Pull complete
-Digest: sha256:4ed8f7c5d3b2e25aa4aa29794605b49799b66da4b36a3c70894cd5241af63f97
-Status: Downloaded newer image for public.ecr.aws/supabase/postgres-meta:v0.96.2
 export type Json =
   | string
   | number
@@ -977,6 +947,15 @@ export type Database = {
       link_customer_orders: {
         Args: { p_auth_user_id: string; p_email: string }
         Returns: number
+      }
+      provision_store: {
+        Args: {
+          p_auth_user_id: string
+          p_owner_email: string
+          p_slug: string
+          p_store_name: string
+        }
+        Returns: Json
       }
       restore_stock: {
         Args: { p_product_id: string; p_quantity: number }
