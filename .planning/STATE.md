@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production Launch + Feature Waves
-status: executing
-stopped_at: Completed 14-03-PLAN.md
-last_updated: "2026-04-03T02:47:08.696Z"
+status: completed
+stopped_at: "14-02: paused at Task 3 checkpoint (human-verify)"
+last_updated: "2026-04-03T02:56:05.298Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 10
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 25
   completed_plans: 25
   percent: 100
@@ -72,6 +72,8 @@ Progress: [██████████] 100%
 - [Phase 14-store-setup-wizard-marketing]: Middleware admin client used for setup_wizard_dismissed check to bypass RLS (consistent with tenant resolution pattern)
 - [14-03]: Mobile hamburger nav uses HTML details/summary pattern — no JavaScript, page remains fully static
 - [14-03]: Landing page hero illustration is CSS-only iPad mockup (no external images) — keeps page lightweight and static
+- [Phase 14]: SetupWizard extracted as separate client component from setup/page.tsx — Server Component page passes initialStep/storeData/categories as props
+- [Phase 14]: BrandingForm extracted to settings/BrandingForm.tsx — keeps settings/page.tsx as Server Component while form is interactive
 
 ### Blockers/Concerns
 
@@ -81,6 +83,6 @@ Progress: [██████████] 100%
 
 ## Session Continuity
 
-Last session: 2026-04-03T02:47:08.694Z
-Stopped at: Completed 14-03-PLAN.md
+Last session: 2026-04-03T02:55:58.799Z
+Stopped at: 14-02: paused at Task 3 checkpoint (human-verify)
 Resume file: None

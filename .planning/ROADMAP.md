@@ -35,7 +35,7 @@
 
 - [x] **Phase 12: Multi-Tenant Infrastructure** — Wildcard subdomain routing, schema upgrades, and tenant-isolated RLS in place (completed 2026-04-02)
 - [x] **Phase 13: Merchant Self-Serve Signup** — Any NZ business can sign up and get a working POS + storefront immediately (completed 2026-04-03)
-- [ ] **Phase 14: Store Setup Wizard + Marketing** — Merchants onboard in under 5 minutes and a public landing page drives signups
+- [x] **Phase 14: Store Setup Wizard + Marketing** — Merchants onboard in under 5 minutes and a public landing page drives signups (completed 2026-04-03)
 - [ ] **Phase 15: Stripe Billing + Feature Gating** — Paid add-ons are purchasable, enforced server-side, and self-manageable
 - [ ] **Phase 16: Super Admin Panel** — Platform operator can view, manage, and support all tenants
 
@@ -172,7 +172,7 @@ Plans:
 **Plans**: 3 plans
 Plans:
 - [x] 14-01-PLAN.md — Schema migration, Server Actions, logo route, middleware redirect, checklist utility
-- [ ] 14-02-PLAN.md — Wizard UI (3 steps), dashboard checklist banner, admin settings page
+- [x] 14-02-PLAN.md — Wizard UI (3 steps), dashboard checklist banner, admin settings page
 - [x] 14-03-PLAN.md — Static marketing landing page (hero, features, pricing, CTAs)
 **UI hint**: yes
 
@@ -219,6 +219,6 @@ Plans:
 | 11. Partial Refunds | v1.1 | 2/2 | Complete | 2026-04-02 |
 | 12. Multi-Tenant Infrastructure | v2.0 | 4/4 | Complete    | 2026-04-02 |
 | 13. Merchant Self-Serve Signup | v2.0 | 3/3 | Complete    | 2026-04-03 |
-| 14. Store Setup Wizard + Marketing | v2.0 | 2/3 | In Progress|  |
+| 14. Store Setup Wizard + Marketing | v2.0 | 3/3 | Complete   | 2026-04-03 |
 | 15. Stripe Billing + Feature Gating | v2.0 | 0/? | Not started | — |
 | 16. Super Admin Panel | v2.0 | 0/? | Not started | — |
