@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Production Launch + Feature Waves
 status: executing
-stopped_at: Completed 16-super-admin-panel 16-02-PLAN.md
-last_updated: "2026-04-03T07:06:25.615Z"
+stopped_at: Completed 16-super-admin-panel 16-03-PLAN.md
+last_updated: "2026-04-03T07:09:20.229Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 10
   completed_phases: 9
   total_plans: 33
-  completed_plans: 31
+  completed_plans: 32
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 16 (super-admin-panel) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-04-03
 
@@ -88,6 +88,8 @@ Progress: [██████████] 100%
 - [Phase 16-super-admin-panel]: Super admin manual override pattern: has_xero_manual_override boolean distinguishes admin comp (true) from Stripe-paid (false); deactivation blocks on Stripe-managed add-ons
 - [Phase 16-super-admin-panel]: Cached-path suspension check adds one indexed DB lookup per request — accepted for correctness across serverless instances
 - [Phase 16-super-admin-panel]: ownerSignin redirects super admins to /super-admin/tenants (tenants list is effective super admin home page)
+- [Phase 16-super-admin-panel]: TenantDetailActions extracted as client wrapper to keep detail page a Server Component
+- [Phase 16-super-admin-panel]: unsuspendTenant wrapped in async void arrow for React form action type compatibility
 
 ### Blockers/Concerns
 
@@ -97,6 +99,6 @@ Progress: [██████████] 100%
 
 ## Session Continuity
 
-Last session: 2026-04-03T07:06:25.612Z
-Stopped at: Completed 16-super-admin-panel 16-02-PLAN.md
+Last session: 2026-04-03T07:09:20.226Z
+Stopped at: Completed 16-super-admin-panel 16-03-PLAN.md
 Resume file: None
