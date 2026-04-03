@@ -1,4 +1,5 @@
 'use server'
+import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'

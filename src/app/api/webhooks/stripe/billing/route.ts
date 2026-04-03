@@ -1,3 +1,4 @@
+import 'server-only'
 import { headers } from 'next/headers'
 import Stripe from 'stripe'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
