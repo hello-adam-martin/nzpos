@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Inventory Management
-status: verifying
-stopped_at: Phase 22 context gathered
-last_updated: "2026-04-04T07:16:33.876Z"
+status: executing
+stopped_at: Completed 22-01-PLAN.md
+last_updated: "2026-04-04T08:16:18.585Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 8
+  completed_plans: 4
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 21 — service-product-type-free-tier-simplification
+**Current focus:** Phase 22 — inventory-add-on-core
 
 ## Current Position
 
-Phase: 22
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 22 (inventory-add-on-core) — EXECUTING
+Plan: 2 of 5
+Status: Ready to execute
 Last activity: 2026-04-04
 
 Progress: [░░░░░░░░░░] 0%
@@ -57,6 +57,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 21-02]: createCheckoutSession uses \!== 'service' guard (not === 'physical') — future product types default to physical behavior without code change
 - [Phase 21]: ProductGrid added as intermediate hasInventory carrier in POS component chain
 - [Phase 21]: StoreProductCard uses hasInventory === true (strict) to avoid false truthy on undefined for free-tier
+- [Phase 22]: append-only RLS on stock_adjustments uses separate INSERT and SELECT policies (no UPDATE/DELETE) — enforces immutable audit log at DB level
+- [Phase 22]: restore_stock upgraded from sql to plpgsql language to INSERT stock_adjustments on refund — service_role-only GRANT from migration 021 preserved
 
 ### Pending Todos
 
@@ -70,6 +72,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T07:16:33.873Z
-Stopped at: Phase 22 context gathered
-Resume file: .planning/phases/22-inventory-add-on-core/22-CONTEXT.md
+Last session: 2026-04-04T08:16:18.582Z
+Stopped at: Completed 22-01-PLAN.md
+Resume file: None

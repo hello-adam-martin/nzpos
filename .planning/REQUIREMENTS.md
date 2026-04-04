@@ -16,24 +16,24 @@ Requirements for Inventory Management milestone. Each maps to roadmap phases.
 
 ### Free-Tier Experience
 
-- [ ] **FREE-01**: Stores without inventory add-on see no stock quantities, badges, or alerts in admin/POS/storefront
+- [x] **FREE-01**: Stores without inventory add-on see no stock quantities, badges, or alerts in admin/POS/storefront
 - [x] **FREE-02**: Products sell freely (no out-of-stock blocking) when inventory add-on is inactive
 - [x] **FREE-03**: Stock decrements continue silently in RPCs regardless of add-on status (data stays accurate)
 
 ### Stock Management (Paid Add-on)
 
-- [ ] **STOCK-01**: Admin can manually adjust stock quantity for a physical product with a reason code and optional notes
-- [ ] **STOCK-02**: System records all stock mutations (sales, refunds, manual adjustments, stocktake) in an append-only history table
+- [x] **STOCK-01**: Admin can manually adjust stock quantity for a physical product with a reason code and optional notes
+- [x] **STOCK-02**: System records all stock mutations (sales, refunds, manual adjustments, stocktake) in an append-only history table
 - [ ] **STOCK-03**: Admin can view adjustment history filtered by product, date range, and reason code
 - [ ] **STOCK-04**: Low-stock alerts are visible only when inventory add-on is active
 - [ ] **STOCK-05**: Admin can view current stock levels for all physical products in a dedicated inventory page
 
 ### Stocktake (Paid Add-on)
 
-- [ ] **TAKE-01**: Admin can create a stocktake session (full inventory or filtered by category)
-- [ ] **TAKE-02**: Admin can enter counted quantities for each product in the stocktake
-- [ ] **TAKE-03**: System calculates and displays variance (counted vs system quantity) for each product
-- [ ] **TAKE-04**: Admin can commit stocktake, atomically adjusting stock and recording adjustments with "stocktake" reason
+- [x] **TAKE-01**: Admin can create a stocktake session (full inventory or filtered by category)
+- [x] **TAKE-02**: Admin can enter counted quantities for each product in the stocktake
+- [x] **TAKE-03**: System calculates and displays variance (counted vs system quantity) for each product
+- [x] **TAKE-04**: Admin can commit stocktake, atomically adjusting stock and recording adjustments with "stocktake" reason
 - [ ] **TAKE-05**: Barcode scanner can be used to look up products during stocktake count entry
 
 ### Feature Gating & Billing
@@ -81,18 +81,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROD-02 | Phase 21 | Complete |
 | PROD-03 | Phase 21 | Complete |
 | PROD-04 | Phase 21 | Complete |
-| FREE-01 | Phase 21 | Pending |
+| FREE-01 | Phase 21 | Complete |
 | FREE-02 | Phase 21 | Complete |
 | FREE-03 | Phase 21 | Complete |
-| STOCK-01 | Phase 22 | Pending |
-| STOCK-02 | Phase 22 | Pending |
+| STOCK-01 | Phase 22 | Complete |
+| STOCK-02 | Phase 22 | Complete |
 | STOCK-03 | Phase 22 | Pending |
 | STOCK-04 | Phase 22 | Pending |
 | STOCK-05 | Phase 22 | Pending |
-| TAKE-01 | Phase 22 | Pending |
-| TAKE-02 | Phase 22 | Pending |
-| TAKE-03 | Phase 22 | Pending |
-| TAKE-04 | Phase 22 | Pending |
+| TAKE-01 | Phase 22 | Complete |
+| TAKE-02 | Phase 22 | Complete |
+| TAKE-03 | Phase 22 | Complete |
+| TAKE-04 | Phase 22 | Complete |
 | TAKE-05 | Phase 22 | Pending |
 | GATE-01 | Phase 23 | Pending |
 | GATE-02 | Phase 23 | Pending |
