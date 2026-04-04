@@ -6,6 +6,7 @@ import { deactivateProduct } from '@/actions/products/deactivateProduct'
 import type { ProductWithCategory } from './ProductDataTable'
 import ProductImagePicker from './ProductImagePicker'
 import PriceInput from './PriceInput'
+import { StockAdjustDrawer } from '@/components/admin/inventory/StockAdjustDrawer'
 
 interface Category {
   id: string
@@ -17,6 +18,7 @@ interface ProductFormDrawerProps {
   product: ProductWithCategory | null
   categories: Category[]
   onClose: () => void
+  hasInventory?: boolean
 }
 
 interface FormErrors {
@@ -33,6 +35,7 @@ export default function ProductFormDrawer({
   product,
   categories,
   onClose,
+  hasInventory,
 }: ProductFormDrawerProps) {
   const isEditMode = product !== null
 
@@ -56,7 +59,12 @@ export default function ProductFormDrawer({
   const [isDeactivating, setIsDeactivating] = useState(false)
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
+  const [showAdjustDrawer, setShowAdjustDrawer] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const productType = (product as any)?.product_type ?? 'physical'
+  const isStockManagedByInventory = hasInventory === true && productType === 'physical' && isEditMode
 
   // Dirty state tracking
   const initialValues = useRef({
@@ -344,36 +352,65 @@ export default function ProductFormDrawer({
             <label htmlFor="drawer-stock" className="text-sm font-semibold font-sans text-text">
               Stock Quantity
             </label>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setStockQuantity((v) => Math.max(0, v - 1))}
-                className="w-9 h-9 flex items-center justify-center border border-border rounded-[var(--radius-md)] text-text-muted hover:text-text hover:bg-surface transition-colors"
-                aria-label="Decrease stock"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                </svg>
-              </button>
-              <input
-                id="drawer-stock"
-                type="number"
-                min={0}
-                value={stockQuantity}
-                onChange={(e) => setStockQuantity(Math.max(0, parseInt(e.target.value) || 0))}
-                className={[inputClass(!!errors.stock_quantity), 'text-center w-24'].join(' ')}
-              />
-              <button
-                type="button"
-                onClick={() => setStockQuantity((v) => v + 1)}
-                className="w-9 h-9 flex items-center justify-center border border-border rounded-[var(--radius-md)] text-text-muted hover:text-text hover:bg-surface transition-colors"
-                aria-label="Increase stock"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-              </button>
-            </div>
+            {isStockManagedByInventory ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="drawer-stock"
+                    type="number"
+                    min={0}
+                    value={stockQuantity}
+                    readOnly
+                    className={[
+                      inputClass(!!errors.stock_quantity),
+                      'text-center w-24 cursor-not-allowed bg-surface',
+                    ].join(' ')}
+                    style={{ fontFeatureSettings: "'tnum' 1" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAdjustDrawer(true)}
+                    className="border border-border bg-transparent text-sm font-bold text-navy hover:bg-surface rounded-[var(--radius-md)] px-3 py-1.5 transition-colors"
+                  >
+                    Adjust stock
+                  </button>
+                </div>
+                <p className="text-sm font-sans text-text-muted">
+                  Stock is managed through the inventory add-on.
+                </p>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStockQuantity((v) => Math.max(0, v - 1))}
+                  className="w-9 h-9 flex items-center justify-center border border-border rounded-[var(--radius-md)] text-text-muted hover:text-text hover:bg-surface transition-colors"
+                  aria-label="Decrease stock"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                  </svg>
+                </button>
+                <input
+                  id="drawer-stock"
+                  type="number"
+                  min={0}
+                  value={stockQuantity}
+                  onChange={(e) => setStockQuantity(Math.max(0, parseInt(e.target.value) || 0))}
+                  className={[inputClass(!!errors.stock_quantity), 'text-center w-24'].join(' ')}
+                />
+                <button
+                  type="button"
+                  onClick={() => setStockQuantity((v) => v + 1)}
+                  className="w-9 h-9 flex items-center justify-center border border-border rounded-[var(--radius-md)] text-text-muted hover:text-text hover:bg-surface transition-colors"
+                  aria-label="Increase stock"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+              </div>
+            )}
             {errors.stock_quantity && (
               <p className="text-sm font-sans text-error">{errors.stock_quantity[0]}</p>
             )}
@@ -504,6 +541,22 @@ export default function ProductFormDrawer({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Stock Adjust Drawer — opened from "Adjust stock" button in inventory mode */}
+      {showAdjustDrawer && product && (
+        <StockAdjustDrawer
+          product={{
+            id: product.id,
+            name: product.name,
+            stock_quantity: stockQuantity,
+          }}
+          onClose={() => setShowAdjustDrawer(false)}
+          onSuccess={(newQuantity) => {
+            setStockQuantity(newQuantity)
+            setShowAdjustDrawer(false)
+          }}
+        />
       )}
 
       {/* Deactivate confirmation dialog */}

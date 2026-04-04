@@ -9,6 +9,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { data: { user } } = await supabase.auth.getUser()
   const userEmail = user?.email ?? null
   const storeId = user?.app_metadata?.store_id as string | undefined
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const hasInventory = !!(user?.app_metadata as any)?.inventory
 
   // Query xero_connections to determine banner state
   // Only show banner when Xero was previously connected but is now disconnected or expired (D-06)
@@ -26,7 +28,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="flex min-h-screen bg-bg">
-      <AdminSidebar userEmail={userEmail} />
+      <AdminSidebar userEmail={userEmail} hasInventory={hasInventory} />
       <div className="flex-1 flex flex-col overflow-auto">
         <StripeTestModeBanner />
         {(xeroStatus === 'disconnected' || xeroStatus === 'token_expired') && (
