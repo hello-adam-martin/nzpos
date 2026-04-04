@@ -17,7 +17,20 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 
 1,000+ source files, 99,000+ LOC TypeScript, 23 phases shipped across 94 plans. Production-ready multi-tenant SaaS POS with inventory management as a paid add-on. Service products sell without stock checks, free-tier stores see zero stock noise, paid subscribers get full stock tracking, manual adjustments, and stocktake workflows.
 
-**Next milestone:** Not yet planned. Run `/gsd:new-milestone` to start.
+## Current Milestone: v4.0 Admin Platform
+
+**Goal:** Complete the admin and super-admin areas with staff management, customer management, role-based permissions, platform analytics, and merchant account management.
+
+**Target features:**
+- Staff management — add/edit/remove/deactivate staff, PIN reset, basic roles (Owner/Manager/Staff)
+- Customer management — customer list, search, order history view, account management
+- Promo management — edit and delete existing promo codes
+- Store settings expansion — business address, phone, IRD number, receipt header/footer, store hours
+- Admin dashboard improvements — sales trend chart, recent orders widget, key metrics comparison
+- Super-admin dashboard — platform overview with tenant/signup/adoption metrics
+- Super-admin analytics — full Stripe integration (MRR, churn, revenue per add-on, payment failures)
+- Super-admin billing visibility — view tenant subscriptions, invoices, payment history
+- Super-admin user management — view merchant accounts, password resets, disable accounts, impersonation
 
 ## Core Value
 
@@ -166,4 +179,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-05 after v3.0 Inventory Management milestone*
+*Last updated: 2026-04-05 after v4.0 Admin Platform milestone started*
