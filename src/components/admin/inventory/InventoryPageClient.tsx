@@ -2,6 +2,7 @@
 
 import { useSearchParams } from 'next/navigation'
 import { StockLevelsTab } from './StockLevelsTab'
+import { StocktakesTab } from './StocktakesTab'
 import { InventoryHistoryTab } from './InventoryHistoryTab'
 
 interface StockProduct {
@@ -62,15 +63,7 @@ export function InventoryPageClient({ products, initialTab }: InventoryPageClien
       )}
 
       {activeTab === 'stocktakes' && (
-        <div className="py-[var(--space-2xl)] text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-surface mb-3">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-            </svg>
-          </div>
-          <p className="text-sm font-bold text-text mb-1">No stocktakes yet</p>
-          <p className="text-sm text-muted">Run a stocktake to count your stock on hand and catch any discrepancies.</p>
-        </div>
+        <StocktakesTab />
       )}
 
       {activeTab === 'history' && (
