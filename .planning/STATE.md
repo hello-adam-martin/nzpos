@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Hardening & Documentation
-status: verifying
-stopped_at: Phase 20 context gathered
-last_updated: "2026-04-04T03:11:33.874Z"
+status: executing
+stopped_at: Completed 20-02-PLAN.md
+last_updated: "2026-04-04T03:29:31.711Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 14
+  completed_plans: 13
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 19 — developer-documentation
+**Current focus:** Phase 20 — deployment-user-documentation
 
 ## Current Position
 
-Phase: 20
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 20 (deployment-user-documentation) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-04
 
 Progress: [░░░░░░░░░░] 0%
@@ -76,6 +76,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 19]: Tenant cache is per-serverless-instance; cold starts hit DB — documented as accepted trade-off for architecture doc
 - [Phase 19]: Server Action docs use inline Zod field summaries (not just schema names) so callers see contract without opening source files
 - [Phase 19-01]: seed.ts already had 5 categories + 25 products — no extension needed for DOC-01
+- [Phase 20]: Merchant guide uses conversational tone distinct from developer docs — numbered steps with expected outcomes per D-09
+- [Phase 20]: GST worked examples in plain-text code blocks (no language tag) — merchant audience, not developer docs
 
 ### Pending Todos
 
@@ -90,6 +92,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T03:11:33.871Z
-Stopped at: Phase 20 context gathered
-Resume file: .planning/phases/20-deployment-user-documentation/20-CONTEXT.md
+Last session: 2026-04-04T03:29:31.708Z
+Stopped at: Completed 20-02-PLAN.md
+Resume file: None

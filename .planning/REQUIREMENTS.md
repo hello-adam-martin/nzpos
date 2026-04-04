@@ -56,8 +56,8 @@ Requirements for the Hardening & Documentation milestone. Each maps to roadmap p
 
 ### User Documentation
 
-- [ ] **USER-01**: Merchant onboarding guide (signup → first product → first sale → first online order)
-- [ ] **USER-02**: GST compliance explanation for merchants (how NZPOS handles 15% tax-inclusive, IRD-compliant)
+- [x] **USER-01**: Merchant onboarding guide (signup → first product → first sale → first online order)
+- [x] **USER-02**: GST compliance explanation for merchants (how NZPOS handles 15% tax-inclusive, IRD-compliant)
 
 ## Future Requirements
 
@@ -133,8 +133,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DEPLOY-02 | Phase 20 | Pending |
 | DEPLOY-03 | Phase 20 | Pending |
 | DEPLOY-04 | Phase 20 | Pending |
-| USER-01 | Phase 20 | Pending |
-| USER-02 | Phase 20 | Pending |
+| USER-01 | Phase 20 | Complete |
+| USER-02 | Phase 20 | Complete |
 
 **Coverage:**
 - v2.1 requirements: 34 total
