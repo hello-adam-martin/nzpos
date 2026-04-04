@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Inventory Management
 status: executing
-stopped_at: Completed 22-03-PLAN.md
-last_updated: "2026-04-04T08:24:52.542Z"
+stopped_at: "Completed 22-05-PLAN.md (checkpoint:human-verify pending)"
+last_updated: "2026-04-04T08:48:25.615Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 8
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 ## Current Position
 
 Phase: 22 (inventory-add-on-core) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-04-04
 
@@ -63,6 +63,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 22]: requireFeature('inventory', { requireDbCheck: true }) used on all inventory mutations — JWT path only for UI rendering
 - [Phase 22-inventory-add-on-core]: resolveAuth() returns snake_case { store_id, staff_id } — plan pseudocode used camelCase storeId/staffId which was corrected to match actual implementation
 - [Phase 22-inventory-add-on-core]: Query actions (getStocktakeSession, getStocktakeSessions) skip requireFeature gate — sessions only exist if feature was active at creation
+- [Phase 22]: Commit confirmation uses inline strip (role=alert) not modal — in-context confirmation per UI-SPEC
+- [Phase 22]: StocktakeSessionPage uses useState tab switching (not URL-driven) — dedicated page makes URL param overkill
 
 ### Pending Todos
 
@@ -76,6 +78,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T08:24:52.539Z
-Stopped at: Completed 22-03-PLAN.md
+Last session: 2026-04-04T08:48:25.609Z
+Stopped at: Completed 22-05-PLAN.md (checkpoint:human-verify pending)
 Resume file: None

@@ -34,7 +34,7 @@ Requirements for Inventory Management milestone. Each maps to roadmap phases.
 - [x] **TAKE-02**: Admin can enter counted quantities for each product in the stocktake
 - [x] **TAKE-03**: System calculates and displays variance (counted vs system quantity) for each product
 - [x] **TAKE-04**: Admin can commit stocktake, atomically adjusting stock and recording adjustments with "stocktake" reason
-- [ ] **TAKE-05**: Barcode scanner can be used to look up products during stocktake count entry
+- [x] **TAKE-05**: Barcode scanner can be used to look up products during stocktake count entry
 
 ### Feature Gating & Billing
 
@@ -93,7 +93,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TAKE-02 | Phase 22 | Complete |
 | TAKE-03 | Phase 22 | Complete |
 | TAKE-04 | Phase 22 | Complete |
-| TAKE-05 | Phase 22 | Pending |
+| TAKE-05 | Phase 22 | Complete |
 | GATE-01 | Phase 23 | Pending |
 | GATE-02 | Phase 23 | Pending |
 | GATE-03 | Phase 23 | Pending |
