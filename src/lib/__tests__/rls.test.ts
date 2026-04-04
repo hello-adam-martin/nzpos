@@ -356,4 +356,54 @@ describe('RLS tenant isolation', () => {
       expect(plans).toEqual([])
     })
   })
+
+  describeWithSupabase('super_admin_actions RLS (D-17)', () => {
+    it('super admin can SELECT from super_admin_actions', async () => {
+      // Insert a test row via service role (admin client bypasses RLS)
+      const admin = createClient(supabaseUrl, serviceRoleKey)
+      await admin.from('super_admin_actions').insert({
+        super_admin_user_id: (await admin.auth.admin.listUsers()).data.users.find(
+          (u) => u.email === emailSuperAdmin
+        )?.id ?? '',
+        action: 'suspend',
+        store_id: storeAId,
+        note: 'RLS test row',
+      })
+
+      // Super admin client should be able to SELECT
+      const superClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: `Bearer ${superAdminAccessToken}` } },
+      })
+      const { data: actions, error } = await superClient
+        .from('super_admin_actions')
+        .select('*')
+
+      expect(error).toBeNull()
+      expect(actions).toBeDefined()
+      expect(actions!.length).toBeGreaterThanOrEqual(1)
+    })
+
+    it('regular owner cannot SELECT from super_admin_actions (RLS denies)', async () => {
+      const userAClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: `Bearer ${userAAccessToken}` } },
+      })
+      const { data: actions, error } = await userAClient
+        .from('super_admin_actions')
+        .select('*')
+
+      // RLS policy only allows super admins (is_super_admin=true in JWT)
+      // Regular owner JWT has no is_super_admin claim — should return empty or error
+      expect(actions === null || (Array.isArray(actions) && actions.length === 0)).toBe(true)
+    })
+
+    it('anonymous user cannot SELECT from super_admin_actions', async () => {
+      const anonClient = createClient(supabaseUrl, anonKey)
+      const { data: actions, error } = await anonClient
+        .from('super_admin_actions')
+        .select('*')
+
+      // Anon has no JWT claims — should be completely blocked
+      expect(actions === null || (Array.isArray(actions) && actions.length === 0)).toBe(true)
+    })
+  })
 })

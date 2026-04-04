@@ -3,12 +3,13 @@ import { describe, test, expect, vi, beforeEach } from 'vitest'
 // ---------------------------------------------------------------------------
 // Hoisted mocks (available inside vi.mock factories)
 // ---------------------------------------------------------------------------
-const { mockConstructEvent, mockHeadersGet, mockRpc, mockFrom } = vi.hoisted(() => {
+const { mockConstructEvent, mockHeadersGet, mockRpc, mockFrom, mockSendEmail } = vi.hoisted(() => {
   return {
     mockConstructEvent: vi.fn(),
     mockHeadersGet: vi.fn(),
     mockRpc: vi.fn(),
     mockFrom: vi.fn(),
+    mockSendEmail: vi.fn(),
   }
 })
 
@@ -17,6 +18,14 @@ const { mockConstructEvent, mockHeadersGet, mockRpc, mockFrom } = vi.hoisted(() 
 // ---------------------------------------------------------------------------
 
 vi.mock('server-only', () => ({}))
+
+vi.mock('@/lib/email', () => ({
+  sendEmail: mockSendEmail,
+}))
+
+vi.mock('@/emails/OnlineReceiptEmail', () => ({
+  OnlineReceiptEmail: vi.fn(() => null),
+}))
 
 vi.mock('next/headers', () => ({
   headers: () => Promise.resolve({ get: mockHeadersGet }),
@@ -202,5 +211,97 @@ describe('Stripe Webhook Handler', () => {
     await POST(makeRequest('raw-body'))
 
     expect(mockRpc).toHaveBeenCalledWith('increment_promo_uses', { p_promo_id: 'promo-abc' })
+  })
+
+  test('sends email receipt when customer email is present and receipt_data exists', async () => {
+    mockConstructEvent.mockReturnValue(mockEvent)
+    mockSendEmail.mockResolvedValue({ data: null, error: null })
+
+    const receiptData = {
+      orderId: mockSession.metadata.order_id,
+      storeName: 'Test Store',
+      storeAddress: '1 Main St',
+      storePhone: '09 123 4567',
+      gstNumber: '123-456-789',
+      completedAt: new Date().toISOString(),
+      staffName: 'Online',
+      items: [],
+      subtotalCents: 5000,
+      gstCents: 652,
+      totalCents: 5000,
+      paymentMethod: 'online',
+    }
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'stripe_events') {
+        return createChain({ data: null, error: null })
+      }
+      if (table === 'order_items') {
+        return createChain({ data: [{ product_id: 'prod-1', quantity: 1 }], error: null })
+      }
+      if (table === 'orders') {
+        return createChain({
+          data: { promo_id: null, id: mockSession.metadata.order_id, total_cents: 5000, created_at: new Date().toISOString(), receipt_data: receiptData },
+          error: null,
+        })
+      }
+      return createChain({ data: null, error: null })
+    })
+    mockRpc.mockResolvedValue({ error: null })
+
+    const res = await POST(makeRequest('raw-body'))
+    expect(res.status).toBe(200)
+    // Email is fire-and-forget (void) — verify sendEmail was called
+    // Allow async microtasks to settle
+    await Promise.resolve()
+    expect(mockSendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'test@example.com',
+        subject: expect.stringContaining('receipt'),
+      })
+    )
+  })
+
+  test('returns 200 without calling RPC when metadata is missing store_id', async () => {
+    const sessionMissingMetadata = {
+      ...mockSession,
+      metadata: { order_id: 'some-order-id' }, // missing store_id
+    }
+    const eventMissingMeta = {
+      ...mockEvent,
+      data: { object: sessionMissingMetadata },
+    }
+    mockConstructEvent.mockReturnValue(eventMissingMeta)
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'stripe_events') {
+        return createChain({ data: null, error: null })
+      }
+      return createChain({ data: null, error: null })
+    })
+
+    const res = await POST(makeRequest('raw-body'))
+    // Missing metadata returns 200 (handler logs and returns early, doesn't crash)
+    expect(res.status).toBe(200)
+    // RPC should NOT have been called
+    expect(mockRpc).not.toHaveBeenCalled()
+  })
+
+  test('returns 200 without calling RPC when metadata is missing order_id', async () => {
+    const sessionMissingOrderId = {
+      ...mockSession,
+      metadata: { store_id: 'store-1' }, // missing order_id
+    }
+    const eventMissingOrderId = {
+      ...mockEvent,
+      data: { object: sessionMissingOrderId },
+    }
+    mockConstructEvent.mockReturnValue(eventMissingOrderId)
+
+    mockFrom.mockImplementation(() => createChain({ data: null, error: null }))
+
+    const res = await POST(makeRequest('raw-body'))
+    expect(res.status).toBe(200)
+    expect(mockRpc).not.toHaveBeenCalled()
   })
 })

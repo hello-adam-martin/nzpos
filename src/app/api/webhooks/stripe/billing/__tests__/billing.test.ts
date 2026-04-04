@@ -309,6 +309,100 @@ describe('Billing Webhook Handler', () => {
     expect(updatedData).toMatchObject({ has_xero: true })
   })
 
+  test('handles customer.subscription.updated with status=past_due (sets feature false)', async () => {
+    // past_due is not 'active' or 'trialing', so feature should be set to false
+    const subscription = makeSubscription({ status: 'past_due' })
+    const event = makeEvent('customer.subscription.updated', subscription)
+    mockConstructEvent.mockReturnValue(event)
+
+    let updatedData: any = null
+
+    mockFrom.mockImplementation((table: string) => {
+      const chain: any = {
+        select: () => chain,
+        eq: () => chain,
+        is: () => chain,
+        maybeSingle: () => Promise.resolve({ data: null, error: null }),
+        single: () => Promise.resolve({ data: { stripe_customer_id: null }, error: null }),
+        insert: (_data: any) => Promise.resolve({ data: null, error: null }),
+        update: (data: any) => {
+          if (table === 'store_plans') updatedData = data
+          return chain
+        },
+        then: (resolve: any) => Promise.resolve({ data: null, error: null }).then(resolve),
+      }
+      return chain
+    })
+
+    const res = await POST(makeRequest())
+    expect(res.status).toBe(200)
+    // past_due is not active/trialing — feature should be disabled
+    expect(updatedData).toMatchObject({ has_xero: false })
+  })
+
+  test('handles customer.subscription.updated with status=incomplete (no crash, processes gracefully)', async () => {
+    // incomplete is not 'active' or 'trialing', so feature should be set to false
+    const subscription = makeSubscription({ status: 'incomplete' })
+    const event = makeEvent('customer.subscription.updated', subscription)
+    mockConstructEvent.mockReturnValue(event)
+
+    let handlerCalled = false
+
+    mockFrom.mockImplementation((table: string) => {
+      const chain: any = {
+        select: () => chain,
+        eq: () => chain,
+        is: () => chain,
+        maybeSingle: () => Promise.resolve({ data: null, error: null }),
+        single: () => Promise.resolve({ data: { stripe_customer_id: null }, error: null }),
+        insert: (_data: any) => Promise.resolve({ data: null, error: null }),
+        update: (data: any) => {
+          if (table === 'store_plans') handlerCalled = true
+          return chain
+        },
+        then: (resolve: any) => Promise.resolve({ data: null, error: null }).then(resolve),
+      }
+      return chain
+    })
+
+    // Should not crash, should return 200
+    const res = await POST(makeRequest())
+    expect(res.status).toBe(200)
+    // Handler reached store_plans update (graceful processing, not an error path)
+    expect(handlerCalled).toBe(true)
+  })
+
+  test('handles customer.subscription.updated with status=active after past_due (re-activation)', async () => {
+    // Simulates subscription moving from past_due back to active (payment recovered)
+    const subscription = makeSubscription({ status: 'active' })
+    const event = makeEvent('customer.subscription.updated', subscription)
+    mockConstructEvent.mockReturnValue(event)
+
+    let updatedData: any = null
+
+    mockFrom.mockImplementation((table: string) => {
+      const chain: any = {
+        select: () => chain,
+        eq: () => chain,
+        is: () => chain,
+        maybeSingle: () => Promise.resolve({ data: null, error: null }),
+        single: () => Promise.resolve({ data: { stripe_customer_id: null }, error: null }),
+        insert: (_data: any) => Promise.resolve({ data: null, error: null }),
+        update: (data: any) => {
+          if (table === 'store_plans') updatedData = data
+          return chain
+        },
+        then: (resolve: any) => Promise.resolve({ data: null, error: null }).then(resolve),
+      }
+      return chain
+    })
+
+    const res = await POST(makeRequest())
+    expect(res.status).toBe(200)
+    // Re-activation: feature should be set back to true
+    expect(updatedData).toMatchObject({ has_xero: true })
+  })
+
   test('falls back to stores table lookup when no store_id in metadata', async () => {
     const subscription = makeSubscription({
       status: 'active',
