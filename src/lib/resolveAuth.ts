@@ -2,6 +2,8 @@ import 'server-only'
 import { cookies, headers } from 'next/headers'
 import { jwtVerify } from 'jose'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseAdminClient } from '@/lib/supabase/admin'
+import type { PosRole } from '@/config/roles'
 
 const secret = new TextEncoder().encode(process.env.STAFF_JWT_SECRET!)
 
@@ -56,5 +58,45 @@ export async function resolveStaffAuth(): Promise<{ store_id: string; staff_id: 
     }
   } catch {
     return null
+  }
+}
+
+/**
+ * DB-verified staff auth for role-gated mutations.
+ * Extends resolveStaffAuth() by querying the database for the live role and is_active status.
+ *
+ * Per STATE.md decision: "resolveStaffAuthVerified() does DB role lookup on all role-gated
+ * mutations — never trust JWT role for writes."
+ *
+ * Returns null if:
+ * - No staff session cookie exists
+ * - Staff JWT is invalid or expired
+ * - Staff record not found in DB (deleted)
+ * - Staff is_active is false (deactivated)
+ *
+ * @returns Object with store_id, staff_id, and live role from DB, or null if not authorized
+ */
+export async function resolveStaffAuthVerified(): Promise<{
+  store_id: string
+  staff_id: string
+  role: PosRole
+} | null> {
+  const staffAuth = await resolveStaffAuth()
+  if (!staffAuth) return null
+
+  const admin = createSupabaseAdminClient()
+  const { data: staff } = await admin
+    .from('staff')
+    .select('role, is_active')
+    .eq('id', staffAuth.staff_id)
+    .eq('store_id', staffAuth.store_id)
+    .single()
+
+  if (!staff || staff.is_active === false) return null
+
+  return {
+    store_id: staffAuth.store_id,
+    staff_id: staffAuth.staff_id,
+    role: staff.role as PosRole,
   }
 }

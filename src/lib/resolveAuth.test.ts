@@ -10,12 +10,14 @@ const {
   mockHeadersGet,
   mockCookiesGet,
   mockJwtVerify,
+  mockAdminFrom,
 } = vi.hoisted(() => {
   return {
     mockGetUser: vi.fn(),
     mockHeadersGet: vi.fn(),
     mockCookiesGet: vi.fn(),
     mockJwtVerify: vi.fn(),
+    mockAdminFrom: vi.fn(),
   }
 })
 
@@ -40,10 +42,14 @@ vi.mock('@/lib/supabase/server', () => ({
   }),
 }))
 
+vi.mock('@/lib/supabase/admin', () => ({
+  createSupabaseAdminClient: () => ({ from: mockAdminFrom }),
+}))
+
 // ---------------------------------------------------------------------------
 // Import after mocks
 // ---------------------------------------------------------------------------
-import { resolveAuth, resolveStaffAuth } from './resolveAuth'
+import { resolveAuth, resolveStaffAuth, resolveStaffAuthVerified } from './resolveAuth'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -184,5 +190,97 @@ describe('resolveStaffAuth', () => {
       staff_id: 'staff-789',
       role: 'cashier',
     })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Tests: resolveStaffAuthVerified
+// ---------------------------------------------------------------------------
+
+// Helper: build a mock Supabase admin query chain returning staffData
+function buildAdminQueryChain(staffData: { role: string; is_active: boolean } | null) {
+  const single = vi.fn().mockResolvedValue({ data: staffData, error: null })
+  const eq2 = vi.fn().mockReturnValue({ single })
+  const eq1 = vi.fn().mockReturnValue({ eq: eq2 })
+  const select = vi.fn().mockReturnValue({ eq: eq1 })
+  mockAdminFrom.mockReturnValue({ select })
+}
+
+describe('resolveStaffAuthVerified', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockHeadersGet.mockReturnValue(null)
+    mockGetUser.mockResolvedValue({ data: { user: null } })
+  })
+
+  it('returns null when resolveStaffAuth returns null (no cookie)', async () => {
+    mockCookiesGet.mockReturnValue(undefined)
+
+    const result = await resolveStaffAuthVerified()
+
+    expect(result).toBeNull()
+  })
+
+  it('returns null when staff JWT is invalid', async () => {
+    mockCookiesGet.mockReturnValue({ value: 'bad-token' })
+    mockJwtVerify.mockRejectedValue(new Error('JWTInvalid'))
+
+    const result = await resolveStaffAuthVerified()
+
+    expect(result).toBeNull()
+  })
+
+  it('returns null when staff is_active is false (deactivated)', async () => {
+    mockCookiesGet.mockReturnValue({ value: 'valid-token' })
+    mockJwtVerify.mockResolvedValue({
+      payload: { store_id: 'store-123', staff_id: 'staff-456', role: 'staff' },
+    })
+    buildAdminQueryChain({ role: 'staff', is_active: false })
+
+    const result = await resolveStaffAuthVerified()
+
+    expect(result).toBeNull()
+  })
+
+  it('returns null when DB query returns no rows (staff deleted)', async () => {
+    mockCookiesGet.mockReturnValue({ value: 'valid-token' })
+    mockJwtVerify.mockResolvedValue({
+      payload: { store_id: 'store-123', staff_id: 'staff-456', role: 'staff' },
+    })
+    buildAdminQueryChain(null)
+
+    const result = await resolveStaffAuthVerified()
+
+    expect(result).toBeNull()
+  })
+
+  it('returns { store_id, staff_id, role } when staff is active', async () => {
+    mockCookiesGet.mockReturnValue({ value: 'valid-token' })
+    mockJwtVerify.mockResolvedValue({
+      payload: { store_id: 'store-abc', staff_id: 'staff-xyz', role: 'staff' },
+    })
+    buildAdminQueryChain({ role: 'manager', is_active: true })
+
+    const result = await resolveStaffAuthVerified()
+
+    expect(result).toEqual({
+      store_id: 'store-abc',
+      staff_id: 'staff-xyz',
+      role: 'manager',
+    })
+  })
+
+  it('returns DB role, not JWT role (DB is source of truth for role-gated writes)', async () => {
+    mockCookiesGet.mockReturnValue({ value: 'valid-token' })
+    // JWT says 'staff'
+    mockJwtVerify.mockResolvedValue({
+      payload: { store_id: 'store-abc', staff_id: 'staff-xyz', role: 'staff' },
+    })
+    // DB says role was promoted to 'manager'
+    buildAdminQueryChain({ role: 'manager', is_active: true })
+
+    const result = await resolveStaffAuthVerified()
+
+    expect(result?.role).toBe('manager')
   })
 })
