@@ -1,7 +1,7 @@
 # Technology Stack
 
 **Project:** NZPOS — NZ Retail POS System
-**Researched:** 2026-04-01 (v1.0 core stack) + 2026-04-03 (v2.0 SaaS additions) + 2026-04-04 (v2.1 hardening tooling)
+**Researched:** 2026-04-01 (v1.0 core stack) + 2026-04-03 (v2.0 SaaS additions) + 2026-04-04 (v2.1 hardening tooling) + 2026-04-04 (v3.0 inventory management)
 **Confidence:** HIGH (core stack verified against live Next.js 16.2.1 official docs)
 
 ---
@@ -60,9 +60,7 @@
 | Tailwind CSS | **4.2** (latest stable, released April 2025) | Utility-first CSS | v4 is a major rewrite — CSS-native config via `@import "tailwindcss"`, no `tailwind.config.js` needed by default. The design system (deep navy + amber) maps cleanly to Tailwind utility classes. |
 | @tailwindcss/postcss | **^4.x** | PostCSS integration for Next.js | Required for Tailwind v4 with Next.js. Replaces the old `tailwind.config.js` + `postcss.config.js` pattern. |
 
-**Tailwind v4 breaking change:** The configuration model changed significantly. v4 uses CSS-first config (`@theme` in globals.css) instead of `tailwind.config.js`. If scaffolding from a v3 tutorial, do not follow the old config pattern. Install: `npm install tailwindcss @tailwindcss/postcss postcss`.
-
-**What NOT to use:** Do not use Tailwind v3. Do not use CSS Modules or styled-components — Tailwind utility classes are the established pattern for this stack.
+**Tailwind v4 caution (from Key Decisions):** Spacing tokens caused bugs with the CSS-native config approach. Use `@theme` block in `globals.css` and test spacing utilities before relying on them.
 
 ---
 
@@ -72,8 +70,6 @@
 |------------|---------|---------|-----|
 | zod | **^3.x** | Schema validation on Server Actions and API inputs | The Next.js official auth documentation explicitly recommends Zod for Server Action validation (confirmed in official docs 2026-03-25). Zod 3.x is the current stable series. Every Server Action must validate inputs with `z.safeParse()` before touching the database. |
 
-**Zod v4 status (MEDIUM confidence):** Zod v4 is in active development as of mid-2025 but had not shipped stable. Default to `^3.x` which is stable and battle-tested. Upgrade when v4 ships stable.
-
 ---
 
 ### Authentication
@@ -82,10 +78,6 @@
 |------------|---------|---------|-----|
 | Supabase Auth (via @supabase/ssr) | included with Supabase | Owner email/password auth | Supabase Auth is listed explicitly in the Next.js official auth library recommendations (confirmed 2026-03-25). Handles JWT issuance, refresh tokens, and cookie management via `@supabase/ssr`. |
 | jose | **^5.x** | JWT verification for custom staff PIN sessions | Next.js official docs use `jose` for stateless session encryption (JWT signing with HS256). Staff PIN login is a custom session separate from Supabase Auth — use jose to sign/verify short-lived PIN sessions stored in HttpOnly cookies. Compatible with Edge Runtime. |
-
-**Two auth flows:** (1) Owner auth via Supabase Auth email/password — use `@supabase/ssr` with `createServerClient` in Server Components and middleware. (2) Staff PIN auth — custom stateless JWT via `jose`, cookie-based, role stored in token payload for RLS claims.
-
-**What NOT to use:** Do not use NextAuth.js (now Auth.js). It adds complexity for a system already using Supabase Auth. Do not use Clerk — paid product, unnecessary dependency. Do not store sessions in the database for staff PINs — stateless JWTs are simpler and self-healing.
 
 ---
 
@@ -97,19 +89,236 @@
 | @testing-library/react | **^16.x** | Component testing for Client Components | Pairs with Vitest for rendering Client Component tests (POS cart, PIN pad, etc). |
 | Playwright | **latest** | E2E tests for checkout flows, auth flows | Official Next.js docs (2026-03-25) recommend Playwright for E2E. Critical paths to test: online Stripe checkout, POS sale completion with EFTPOS confirmation, stock decrement after transaction. |
 
-**Testing priority for this project:** GST calculation functions must have comprehensive Vitest unit tests before any UI ships. The per-line rounding rules are IRD-compliance requirements, not best-effort.
-
 ---
 
 ### Deployment & Infrastructure
 
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
-| Vercel | Free tier → Pro for wildcard domains | Next.js hosting | Verified adapter — full Next.js feature support including Server Actions, middleware, image optimisation. Wildcard subdomain support requires pointing nameservers to Vercel. Pro plan needed for commercial SaaS at scale but free tier works for early v2.0. |
-| Supabase | Free tier → Pro | Managed Postgres + Auth + Storage | Co-located data and auth. Free tier starts v2.0; upgrade to Pro ($25/mo) when merchant count grows or as Stripe billing revenue allows. |
+| Vercel | Free tier | Next.js hosting | Verified adapter — full Next.js feature support including Server Actions, middleware, image optimisation. Zero config for a Next.js project. Free tier sufficient for v1 (100GB bandwidth, serverless functions). |
+| Supabase | Free tier | Managed Postgres + Auth + Storage | Co-located data and auth. Free tier sufficient for single-store v1. |
 | Supabase Storage | included | Product images | Use Supabase Storage buckets for product images. Serves directly via CDN URL. Integrate with `next/image` `remotePatterns` config pointing to `*.supabase.co`. |
 
-**What NOT to use for deployment:** Do not self-host Next.js on a VPS for v1 — Vercel free tier eliminates ops overhead entirely for a solo developer. Do not use AWS S3 for images when Supabase Storage is already in the stack. Do not use Cloudflare or Netlify as deployment target — they are not verified Next.js adapters (as of 2026-03-25), feature support varies.
+---
+
+## v3.0 Inventory Management — Stack Additions
+
+**No new npm packages are required.** The existing stack handles all v3.0 features. What changes are database schema (migrations), Server Actions, and `config/addons.ts` wiring.
+
+---
+
+### Database Schema Changes
+
+The following schema additions are needed. All are pure SQL migrations — no new Supabase features or extensions required.
+
+#### 1. `products` table: add `product_type` column
+
+```sql
+-- Migration: 024_inventory_management.sql (new migration)
+ALTER TABLE public.products
+  ADD COLUMN product_type TEXT NOT NULL DEFAULT 'physical'
+  CHECK (product_type IN ('physical', 'service'));
+```
+
+**Why `product_type` not `is_service` boolean:** The type system will likely expand (e.g. `digital`, `bundle`). An enum-style TEXT CHECK is more forward-compatible than a boolean. `DEFAULT 'physical'` ensures backwards compatibility with all existing products.
+
+**Impact on existing logic:** The `complete_pos_sale` RPC currently does an unconditional stock check and decrement for all items. It must be updated to skip both checks for `product_type = 'service'` items. The RPC must query `product_type` alongside `stock_quantity` in its lock step.
+
+#### 2. `store_plans` table: add `has_inventory` column
+
+```sql
+-- In same migration 024
+ALTER TABLE public.store_plans
+  ADD COLUMN has_inventory BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN has_inventory_manual_override BOOLEAN NOT NULL DEFAULT false;
+```
+
+**Pattern:** Matches the existing `has_xero` / `has_xero_manual_override` pair established in migrations 014 and 020. The `_manual_override` column lets super admins comp the add-on without a Stripe subscription — already the established pattern.
+
+#### 3. `stock_adjustments` table: new table
+
+```sql
+CREATE TABLE public.stock_adjustments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id UUID NOT NULL REFERENCES public.stores(id),
+  product_id UUID NOT NULL REFERENCES public.products(id),
+  adjusted_by UUID REFERENCES public.staff(id),  -- NULL if system (sale/refund)
+  adjustment_type TEXT NOT NULL
+    CHECK (adjustment_type IN ('sale', 'refund', 'manual', 'stocktake', 'import')),
+  quantity_before INTEGER NOT NULL,
+  quantity_change INTEGER NOT NULL,               -- positive = increase, negative = decrease
+  quantity_after INTEGER NOT NULL,
+  reason TEXT,                                    -- free-text reason for manual adjustments
+  reference_order_id UUID REFERENCES public.orders(id),  -- populated for sale/refund types
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_stock_adjustments_store ON public.stock_adjustments(store_id);
+CREATE INDEX idx_stock_adjustments_product ON public.stock_adjustments(product_id, created_at DESC);
+```
+
+**Why a separate table, not an event log on `products`:** The history needs to be queryable by product, by date, by type, and filterable by adjustment type. A dedicated table with appropriate indexes is cleaner than a JSONB audit column on products. The `quantity_before` / `quantity_after` snapshot makes history self-contained and auditable without needing to replay events.
+
+**Why `adjusted_by` is nullable:** Sales and refunds create implicit adjustments via the `complete_pos_sale` RPC. These have no staff actor in the adjustment itself (the sale has a staff_id) — linking via `reference_order_id` provides traceability.
+
+#### 4. `stocktakes` and `stocktake_items` tables: new tables
+
+```sql
+CREATE TABLE public.stocktakes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id UUID NOT NULL REFERENCES public.stores(id),
+  created_by UUID NOT NULL REFERENCES public.staff(id),
+  status TEXT NOT NULL DEFAULT 'in_progress'
+    CHECK (status IN ('in_progress', 'completed')),
+  completed_at TIMESTAMPTZ,
+  note TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.stocktake_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  stocktake_id UUID NOT NULL REFERENCES public.stocktakes(id),
+  store_id UUID NOT NULL REFERENCES public.stores(id),
+  product_id UUID NOT NULL REFERENCES public.products(id),
+  product_name TEXT NOT NULL,         -- snapshot at time of count
+  system_quantity INTEGER NOT NULL,   -- stock_quantity at time count started
+  counted_quantity INTEGER,           -- NULL until counted
+  variance INTEGER GENERATED ALWAYS AS (counted_quantity - system_quantity) STORED,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (stocktake_id, product_id)
+);
+
+CREATE INDEX idx_stocktakes_store ON public.stocktakes(store_id, created_at DESC);
+CREATE INDEX idx_stocktake_items_stocktake ON public.stocktake_items(stocktake_id);
+```
+
+**Why a two-table model:** Separates the session (stocktake) from the per-product counts. This lets the UI load only the stocktake header, then paginate or stream line items. The `GENERATED ALWAYS AS` computed column for `variance` avoids application-level arithmetic and keeps the DB as the source of truth.
+
+**Why `system_quantity` snapshot:** At commit time, the system quantity may have changed due to concurrent sales. Snapshotting at session-start makes variance calculation consistent and auditable.
+
+#### 5. RLS policies for new tables
+
+New tables need RLS policies following the established pattern: `store_id = (auth.jwt()->'app_metadata'->>'store_id')::uuid`.
+
+```sql
+-- stock_adjustments: store members read, admin client writes
+ALTER TABLE public.stock_adjustments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "stock_adjustments_store_read" ON public.stock_adjustments
+  FOR SELECT USING (
+    store_id = (auth.jwt()->'app_metadata'->>'store_id')::UUID
+  );
+-- No INSERT/UPDATE/DELETE via RLS — all writes go through SECURITY DEFINER RPCs
+
+-- stocktakes: store members read/write
+ALTER TABLE public.stocktakes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "stocktakes_store_read" ON public.stocktakes
+  FOR SELECT USING (store_id = (auth.jwt()->'app_metadata'->>'store_id')::UUID);
+
+-- stocktake_items: store members read/write
+ALTER TABLE public.stocktake_items ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "stocktake_items_store_read" ON public.stocktake_items
+  FOR SELECT USING (store_id = (auth.jwt()->'app_metadata'->>'store_id')::UUID);
+```
+
+**Pattern note:** Writes to `stock_adjustments` happen only via SECURITY DEFINER RPCs (same pattern as `complete_pos_sale`). This prevents application code from writing raw adjustments that bypass the `quantity_before`/`quantity_after` bookkeeping invariant.
+
+#### 6. Update `custom_access_token_hook` to inject `has_inventory` claim
+
+Following the exact pattern from `019_billing_claims.sql`, add `v_has_inventory BOOLEAN` to the hook and inject it into JWT claims. This enables `requireFeature('inventory')` fast path without a DB query.
+
+---
+
+### `complete_pos_sale` RPC Update
+
+The existing RPC in `005_pos_rpc.sql` must be updated (via a new migration) to:
+
+1. **Query `product_type`** in the lock step: `SELECT stock_quantity, product_type INTO v_current_stock, v_product_type FROM products WHERE ...`
+2. **Skip stock check for services:** Only raise `OUT_OF_STOCK` if `v_product_type = 'physical'`
+3. **Skip stock decrement for services:** Only `UPDATE products SET stock_quantity = ...` for physical items
+4. **Write a `stock_adjustments` row for each physical item sold** (type = `'sale'`, quantity_change = negative quantity)
+
+This keeps the RPC as the single authoritative path for stock mutations — no stock change happens outside a SECURITY DEFINER function.
+
+---
+
+### `config/addons.ts` Changes
+
+Add `'inventory'` to the `SubscriptionFeature` union and update all three maps:
+
+```typescript
+// Before
+export type SubscriptionFeature = 'xero' | 'email_notifications' | 'custom_domain'
+
+// After
+export type SubscriptionFeature = 'xero' | 'email_notifications' | 'custom_domain' | 'inventory'
+```
+
+Update `PRICE_ID_MAP`, `PRICE_TO_FEATURE`, `FEATURE_TO_COLUMN`, and `ADDONS` arrays. Add `STRIPE_PRICE_INVENTORY` env var.
+
+---
+
+### New Server Actions Required
+
+All follow the existing pattern: `'use server'`, `import 'server-only'`, Zod validation, admin client for mutations, `revalidatePath` after writes.
+
+| Action | File | Gating |
+|--------|------|--------|
+| `adjustStock` | `src/actions/inventory/adjustStock.ts` | `requireFeature('inventory', { requireDbCheck: true })` |
+| `createStocktake` | `src/actions/inventory/createStocktake.ts` | `requireFeature('inventory', { requireDbCheck: true })` |
+| `updateStocktakeItem` | `src/actions/inventory/updateStocktakeItem.ts` | `requireFeature('inventory', { requireDbCheck: true })` |
+| `commitStocktake` | `src/actions/inventory/commitStocktake.ts` | `requireFeature('inventory', { requireDbCheck: true })` |
+
+**Why `requireDbCheck: true` on all inventory mutations:** Stock adjustments are irreversible — a stale JWT claim granting inventory access when the subscription has been cancelled would create incorrect stock records. DB check on every mutation is the correct tradeoff. This matches the pattern already established for Xero disconnect/sync actions.
+
+**`adjustStock` Zod schema:**
+```typescript
+const AdjustStockSchema = z.object({
+  product_id: z.string().uuid(),
+  quantity_change: z.number().int().refine(n => n !== 0, 'Change must be non-zero'),
+  adjustment_type: z.enum(['manual', 'import']),
+  reason: z.string().max(500).optional(),
+})
+```
+
+**`commitStocktake` requirements:** Must be atomic — use a SECURITY DEFINER RPC `commit_stocktake(p_stocktake_id)` that:
+1. Locks all affected product rows
+2. Updates `stock_quantity` on each product to `counted_quantity`
+3. Writes `stock_adjustments` rows for each variance (type = `'stocktake'`)
+4. Sets `stocktake.status = 'completed'` and `completed_at = now()`
+
+This follows the same rationale as `complete_pos_sale`: stock changes must be atomic and go through a SECURITY DEFINER function.
+
+---
+
+### New Zod Schemas Required
+
+Add to `src/schemas/`:
+
+- `src/schemas/inventory.ts` — `AdjustStockSchema`, `CreateStocktakeSchema`, `UpdateStocktakeItemSchema`, `CommitStocktakeSchema`
+
+Update `src/schemas/product.ts` to include `product_type`:
+
+```typescript
+export const CreateProductSchema = z.object({
+  // existing fields...
+  product_type: z.enum(['physical', 'service']).default('physical'),
+})
+```
+
+---
+
+### Environment Variables
+
+One new env var needed:
+
+```bash
+# Stripe Price ID for Inventory Management add-on
+STRIPE_PRICE_INVENTORY=price_xxxx
+```
+
+Add to `.env.local.example` and `.env.example`. The pattern matches `STRIPE_PRICE_XERO` etc.
 
 ---
 
@@ -136,705 +345,58 @@
 | Auth library | Clerk | Paid SaaS with its own user DB. Conflicts with Supabase RLS model. |
 | CSS | CSS Modules, styled-components, Emotion | Not the chosen stack. Tailwind utility classes are sufficient for this project scope. |
 | CSS | Tailwind v3 | v4 is current. v3 uses deprecated config model incompatible with v4 PostCSS setup. |
-| Realtime | Supabase Realtime (for inventory) | The Eng review explicitly chose refresh-on-transaction over WebSocket for inventory sync. Realtime adds WebSocket failure modes for no benefit in a single-operator POS. |
-| Database | Raw pg / Drizzle / Kysely | Supabase JS client handles all query needs. Adding a second query layer creates type conflicts with Supabase's generated types. Exception: Drizzle is reasonable if Supabase client limitations become blocking — flag this for later. |
+| Realtime | Supabase Realtime (for inventory) | Refresh-on-transaction is the established pattern. Realtime adds WebSocket failure modes for no benefit in a single-operator POS. |
+| Database | Raw pg / Drizzle / Kysely | Supabase JS client handles all query needs. Adding a second query layer creates type conflicts with Supabase's generated types. |
 | Payments | Stripe Terminal SDK (v1) | Hardware EFTPOS integration explicitly deferred to v1.1. Terminal SDK is complex, requires device provisioning. |
-| Payments | Stripe Custom Elements (storefront) | Stripe Checkout hosted page is adequate, simpler, and PCI-compliant with zero frontend card handling code. |
+| Inventory | Dedicated inventory library (e.g. inventory.js, stock-keeping) | No meaningful NZ-ecosystem library exists. The requirements are simple enough that bespoke Server Actions + SECURITY DEFINER RPCs are the correct approach. Adding a library here would obscure the stock decrement logic rather than simplify it. |
 | Testing | Jest | Vitest is the recommended alternative — faster, native ESM, better TypeScript support, compatible with Vite tooling ecosystem. Jest requires significant config to work with Next.js App Router. |
-| Deployment | Self-hosted VPS (v1) | Unnecessary ops burden for solo developer. Vercel free tier covers v1 needs completely. |
-| Image storage | Cloudinary, Imgix | Third-party image CDNs add cost and another vendor dependency. Supabase Storage + `next/image` handles this natively. |
 
 ---
 
 ## Alternatives Considered
 
-| Category | Recommended | Alternative | Why Not |
-|----------|-------------|-------------|---------|
-| Framework | Next.js 16 App Router | Remix | Remix is strong but smaller ecosystem, less AI training data, team has already committed to Next.js. |
-| Framework | Next.js 16 App Router | SvelteKit | Different language paradigm, not the committed stack. |
-| BaaS | Supabase | Firebase | Firebase is NoSQL — poor fit for relational retail data (products, orders, inventory). Supabase Postgres is the right model. |
-| BaaS | Supabase | PlanetScale | PlanetScale dropped free tier in 2024. Supabase has free tier + auth + storage in one. |
-| Payments | Stripe | PayHere, Windcave | NZ-specific processors. Stripe NZ is fully operational, supports NZD, and has far better documentation and developer tooling. Windcave is the eventual EFTPOS integration target (v1.1) but Stripe handles the online storefront. |
-| Styling | Tailwind CSS v4 | shadcn/ui | shadcn/ui is a component library built on Radix UI + Tailwind. It is a strong addition but an extra dependency. Evaluate after design system components are built in Phase 1 — adopt shadcn patterns if component scope grows. |
-| Validation | Zod | Yup, Valibot | Zod is the de facto standard in Next.js + TypeScript ecosystem. Next.js official docs use Zod in all examples. Yup is older. Valibot is newer and faster but has smaller ecosystem. |
-| Testing | Playwright | Cypress | Playwright is the Next.js official recommendation. Playwright is faster, supports multiple browsers, and has better async handling. |
+| Recommended | Alternative | When to Use Alternative |
+|-------------|-------------|-------------------------|
+| `product_type TEXT CHECK (...)` | `is_service BOOLEAN` | Use boolean only if the type system will never expand beyond two values. TEXT enum is safer given the domain may add `digital`, `bundle`, or `rental` types later. |
+| SECURITY DEFINER RPC for stocktake commit | Application-level loop of `adjustStock` calls | Never. Application-level loops are not atomic. A crash mid-loop leaves stock partially updated. The RPC is the only correct approach. |
+| `stock_adjustments` dedicated table | JSONB audit column on `products` | Use JSONB only if you never need to query by adjustment type, product, or date range. Since the stocktake report filters by all three, a proper table with indexes is the correct choice. |
+| `has_inventory` + `has_inventory_manual_override` columns on `store_plans` | Separate `inventory_subscriptions` table | The existing two-column pattern (feature flag + manual override) is proven and already integrated with the JWT claims hook. A separate table would require changes to `requireFeature()`, the auth hook, and the billing webhook. |
 
 ---
 
-## v2.0 SaaS Additions
+## Version Compatibility
 
-This section covers the NEW libraries and patterns required for the v2.0 SaaS milestone. The core stack above is unchanged.
-
----
-
-### Multi-Tenant Subdomain Routing
-
-**What's needed:** Wildcard subdomain routing so each merchant gets `merchant-slug.nzpos.app`. No new library required — this is pure Next.js middleware + Vercel DNS configuration.
-
-**Implementation pattern (HIGH confidence — verified against official Next.js multi-tenant guide and Vercel docs):**
-
-```typescript
-// middleware.ts
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-
-export function middleware(request: NextRequest) {
-  const hostname = request.headers.get('host') || ''
-  const subdomain = hostname.split('.')[0]
-
-  // app.nzpos.app → main app (skip)
-  // merchant-slug.nzpos.app → rewrite to /[slug] route group
-  if (subdomain !== 'app' && subdomain !== 'www') {
-    const url = request.nextUrl.clone()
-    url.pathname = `/store/${subdomain}${url.pathname}`
-    return NextResponse.rewrite(url)
-  }
-}
-
-export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
-}
-```
-
-Key points:
-- Middleware runs on Edge Runtime — no database queries allowed. Resolve tenants in the Server Component or page, not the middleware.
-- Middleware rewrites the URL path; the hostname is preserved in request headers for the Server Component to read.
-- For local development, use `merchant.localhost:3000` with a `hosts` file entry, or read a `?tenant=` query param in dev mode.
-- Wildcard SSL on Vercel requires pointing nameservers to `ns1.vercel-dns.com` / `ns2.vercel-dns.com` (not A records).
-
-**Vercel DNS requirement (HIGH confidence — from official Vercel multi-tenant docs):** The domain must use Vercel nameservers for wildcard SSL to work. A records do NOT support wildcard certificate issuance. This is a day-1 infrastructure decision — the nzpos.app domain needs to delegate to Vercel nameservers before any tenants can be provisioned.
+| Package A | Compatible With | Notes |
+|-----------|-----------------|-------|
+| @supabase/supabase-js ^2.x | PostgreSQL GENERATED ALWAYS AS columns | Supabase JS client returns computed columns (variance) as regular fields in select results. No special handling needed. |
+| zod ^3.x | TypeScript 5.x | Compatible. `z.enum(['physical', 'service'])` works with `.default('physical')` chaining. |
+| Next.js 16.2 | SECURITY DEFINER RPCs via admin client | Admin client (service role key) bypasses RLS — required for RPCs that write across tenant boundaries. Compatible pattern confirmed through 48 existing Server Actions. |
 
 ---
 
-### Custom Domains for Merchants (Paid Add-on)
+## Installation
 
-**What's needed:** Merchants on a paid plan can bring their own domain (e.g. `shop.theirstore.co.nz`). This requires programmatic domain provisioning via the Vercel SDK.
-
-| Library | Version | Purpose | Why |
-|---------|---------|---------|-----|
-| @vercel/sdk | **^1.x** (latest ~1.19.x as of Apr 2026) | Programmatic Vercel domain management | Official TypeScript SDK for the Vercel REST API. Exposes `projectsAddProjectDomain`, `projectsVerifyProjectDomain`, `projectsRemoveProjectDomain`. Automatically handles SSL certificate issuance. |
-
-**What this does:** When a merchant activates custom domain, a Server Action calls the Vercel API to add their domain to the project, then polls for verification status. DNS propagation takes 24-48h. This requires a `VERCEL_TOKEN` and `VERCEL_TEAM_ID` as environment variables.
-
-**Important constraints (HIGH confidence — verified from Vercel SDK docs):**
-- The `@vercel/sdk` package requires a Vercel API token (bearer token). Store as `VERCEL_TOKEN` in env. Never expose client-side.
-- Domain verification: if the domain is already registered elsewhere on Vercel, the merchant must add a TXT record. Build a verification status polling UI.
-- Wildcard domains (e.g. `*.merchant.co.nz`) are NOT supported for custom merchant domains — apex + www is the pattern.
-- Free tier Vercel project has unlimited custom domains programmatically — no plan gating on domains specifically.
-
-```typescript
-import { VercelCore } from '@vercel/sdk/core.js'
-import { projectsAddProjectDomain } from '@vercel/sdk/funcs/projectsAddProjectDomain.js'
-
-const vercel = new VercelCore({ bearerToken: process.env.VERCEL_TOKEN })
-
-await projectsAddProjectDomain(vercel, {
-  idOrName: process.env.VERCEL_PROJECT_ID,
-  teamId: process.env.VERCEL_TEAM_ID,
-  requestBody: { name: merchantCustomDomain },
-})
-```
-
-**Middleware must resolve custom domains too:** The middleware needs a second lookup branch — if the hostname doesn't match `*.nzpos.app`, look up `custom_domains` table by hostname to find the store slug, then rewrite. Since middleware can't do DB queries, store a pre-resolved mapping in an edge-compatible cache or accept the slight latency of a lightweight Supabase REST query via fetch (not the JS client — fetch works in Edge).
-
----
-
-### Stripe Subscriptions and Billing
-
-**What's needed:** Merchants can activate paid add-ons (Xero, email notifications, custom domains) via Stripe subscriptions. Each add-on is a separate Stripe Product with a monthly Price.
-
-**No new packages required** — the existing `stripe ^17.x` handles subscriptions. What's new is the data model and webhook events.
-
-**Database columns to add to `stores` table:**
-
-```sql
-stripe_customer_id     TEXT UNIQUE,
-subscription_status    TEXT,   -- active | trialing | past_due | canceled | incomplete
-subscription_id        TEXT,
-subscription_period_end TIMESTAMPTZ,
-active_add_ons         TEXT[]  -- ['xero', 'email_notifications', 'custom_domain']
-```
-
-**Webhook events to handle (HIGH confidence — verified from Stripe docs and 2026 implementation guide):**
-
-| Event | Action |
-|-------|--------|
-| `checkout.session.completed` | Link Stripe customer to store, activate add-on |
-| `invoice.paid` | Extend subscription period, keep add-on active |
-| `invoice.payment_failed` | Mark `past_due`, send warning email, keep access for grace period |
-| `customer.subscription.updated` | Sync status + active add-ons |
-| `customer.subscription.deleted` | Revoke add-on access, update status to `canceled` |
-
-**Stripe Customer Portal (HIGH confidence — verified from Stripe docs):** Use the hosted Stripe Billing Portal for self-serve subscription management (upgrade, cancel, update payment method). A Server Action creates a portal session and redirects the merchant. This eliminates the need to build a custom billing UI.
-
-```typescript
-// Server Action
-'use server'
-import { stripe } from '@/lib/stripe'
-import { redirect } from 'next/navigation'
-
-export async function openBillingPortal(stripeCustomerId: string) {
-  const session = await stripe.billingPortal.sessions.create({
-    customer: stripeCustomerId,
-    return_url: `${process.env.NEXT_PUBLIC_APP_URL}/admin/billing`,
-  })
-  redirect(session.url)
-}
-```
-
-**Multiple add-ons pattern:** Use one Stripe Subscription per merchant with multiple items (one per active add-on), or separate subscriptions per add-on. Recommendation: one subscription, multiple items. Generates a single invoice per billing cycle. Limit of 20 items per subscription is well above the 3 planned add-ons.
-
-**What NOT to add:** Do not add a feature flag service (PostHog, LaunchDarkly, Statsig). Feature gating based on subscription tier is simple enough to implement with a database column check. Feature flag services add cost and complexity for what is essentially `store.active_add_ons.includes('xero')`.
-
----
-
-### Feature Gating
-
-**What's needed:** Server-side checks that block access to paid features if the merchant's subscription doesn't include them. No new library — implement as utility functions.
-
-**Pattern:**
-
-```typescript
-// lib/feature-gate.ts
-import { createClient } from '@/lib/supabase/server'
-
-export async function requireAddOn(
-  storeId: string,
-  addOn: 'xero' | 'email_notifications' | 'custom_domain'
-): Promise<void> {
-  const supabase = createClient()
-  const { data } = await supabase
-    .from('stores')
-    .select('active_add_ons, subscription_status')
-    .eq('id', storeId)
-    .single()
-
-  const hasAccess =
-    data?.subscription_status === 'active' &&
-    data?.active_add_ons?.includes(addOn)
-
-  if (!hasAccess) {
-    redirect('/admin/billing?upgrade=true')
-  }
-}
-```
-
-Call `requireAddOn()` at the top of Server Components or Server Actions for gated features.
-
-**JWT claims for feature gating (MEDIUM confidence):** The existing Supabase Custom Access Token Hook pattern (already used for `store_id` and `role`) can be extended to include `active_add_ons` in the JWT. This avoids a database query on every gated page load. Downside: JWT staleness (up to JWT TTL, typically 1h) means a cancelled subscription retains access briefly. For add-ons (not security-critical), this is acceptable. For the first pass, use the database check pattern above — it's simpler and correct. Migrate to JWT claims if performance becomes an issue.
-
----
-
-### Super Admin Panel
-
-**What's needed:** A route group accessible only to platform administrators (the founder), not merchants. This is a role check, not a new library.
-
-**Pattern:** Add a `platform_role` column (or enum) to `auth.users` via `app_metadata`. Check in middleware or layout for the `/superadmin` route group.
-
-```typescript
-// app/(superadmin)/layout.tsx
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-
-export default async function SuperAdminLayout({ children }) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const isPlatformAdmin =
-    user?.app_metadata?.platform_role === 'super_admin'
-
-  if (!isPlatformAdmin) redirect('/')
-
-  return <>{children}</>
-}
-```
-
-Set `platform_role: 'super_admin'` in `app_metadata` for the founder's Supabase user via the Supabase dashboard (or a migration). No new library needed.
-
-**What NOT to build:** Do not add a separate admin auth system. Supabase Auth already handles this — the founder logs in with email/password like any other owner, but their `app_metadata.platform_role` grants elevated access.
-
----
-
-### Store Setup Wizard
-
-**What's needed:** A multi-step onboarding flow for new merchants. No new library required — React state manages wizard step, Server Actions persist each step.
-
-**Only add this if the native React approach becomes unwieldy:** Consider `react-hook-form ^7.x` (already in the stack) for the wizard steps that have complex validation. For the store logo upload step, the existing Supabase Storage + `next/image` pattern handles image uploads.
-
----
-
-### Marketing Landing Page
-
-**What's needed:** A public marketing site at `nzpos.app` (or the apex domain). No new library required — Next.js App Router with static rendering is the correct approach.
-
-**Route structure:** The marketing pages live at the apex domain (`nzpos.app`), separate from the app subdomain (`app.nzpos.app`) and merchant subdomains (`merchant.nzpos.app`). Middleware routes the apex domain to the marketing route group.
-
-**SEO (no new libraries needed):** Next.js App Router has built-in `generateMetadata`, `sitemap.ts`, `robots.ts`, and `opengraph-image.tsx` support. Use these — no need for a headless CMS or additional SEO library.
-
-```typescript
-// app/(marketing)/layout.tsx
-export const metadata = {
-  title: 'NZPOS — POS + Online Store for NZ Small Business',
-  description: '...',
-}
-```
-
-**What NOT to add:** Do not add a headless CMS (Contentful, Sanity, Prismic). The marketing page content is static and founder-controlled. A CMS adds a new vendor, cost, and complexity. Edit the marketing page directly in code.
-
----
-
-## Updated Installation (v2.0 SaaS additions only)
+No new packages for v3.0. All changes are schema migrations, Server Actions, and config updates.
 
 ```bash
-# Vercel SDK (for custom domain provisioning)
-npm install @vercel/sdk
+# No npm install needed for v3.0
+
+# New environment variable to add to .env.local:
+# STRIPE_PRICE_INVENTORY=price_xxxx
 ```
-
-That's the only new package. Everything else — subdomain routing, feature gating, Stripe subscriptions, super admin, marketing page — uses existing libraries.
-
----
-
-## v2.1 Hardening & Documentation Tooling
-
-This section covers tooling added specifically for the v2.1 milestone: security auditing, code quality hardening, test coverage analysis, and documentation generation. The core stack is unchanged.
-
-**Principle for this milestone:** Minimal new dependencies. Every tool added must directly serve security, quality, coverage, or documentation goals. Do not add tools speculatively.
-
----
-
-### 1. Security Scanning
-
-#### Dependency vulnerability scanning
-
-**Use `npm audit` (built-in) — no new package.**
-
-`npm audit` is already available and scans the dependency tree against the npm advisory database. Run `npm audit --audit-level=moderate` to fail on moderate+ CVEs.
-
-```bash
-npm audit --audit-level=moderate
-```
-
-Add to CI as a required step. No additional SCA tool needed for a project of this size.
-
-**Do NOT add:** Snyk CLI, Dependabot CLI, or other paid SCA tools. `npm audit` covers the dependency surface area completely for a solo developer. Snyk's free tier is useful but adds another auth dependency and rate limits.
-
-#### Static application security testing (SAST)
-
-**Use `eslint-plugin-no-unsanitized ^4.1.5` (HIGH confidence — actively maintained by Mozilla, current as of 2026-04-04).**
-
-This plugin catches `innerHTML`, `outerHTML`, `insertAdjacentHTML`, and `setHTMLUnsafe` assignments — the XSS attack surface in React/Next.js codebases. Despite the project using React (which escapes by default), `dangerouslySetInnerHTML` usages and template literals injected into DOM APIs are genuine risk surfaces.
-
-```bash
-npm install -D eslint-plugin-no-unsanitized
-```
-
-**Do NOT add `eslint-plugin-security ^4.0.0`** — this package is effectively unmaintained (only 13 rules, no meaningful updates since 2020). It generates false positives on regex patterns and lacks coverage of modern vulnerability categories (JWT attacks, SQL injection via template literals). Its reputation exceeds its current utility. The `eslint-plugin-no-unsanitized` + `typescript-eslint strict-type-checked` combination covers the meaningful surface area better.
-
-**Do NOT add Semgrep.** Semgrep is an excellent enterprise SAST tool with Next.js-specific rules, but it requires a separate installation (Python), separate config management, and CI integration overhead that is disproportionate for a solo developer. Its primary value is detecting patterns that ESLint misses — primarily SQL injection via string concatenation and authentication bypass patterns. Both of these are already prevented architecturally: the project uses the Supabase JS client (parameterized queries only) and Zod validation on all Server Actions. The risk surface Semgrep would catch is already closed.
-
-#### RLS policy audit (manual + Supabase built-in tooling)
-
-**Use Supabase Dashboard Security Advisor — no new package.**
-
-The Supabase Dashboard includes a built-in Security Advisor that detects tables without RLS enabled, policies that expose data across tenant boundaries, and common RLS misconfigurations. Access via Dashboard > Security. This is the correct first-pass RLS audit tool.
-
-For a manual audit, the checklist is:
-1. Every table has RLS enabled (`SELECT relname, relrowsecurity FROM pg_class WHERE relkind = 'r'`)
-2. Every SELECT policy filters on `store_id` matching JWT claim
-3. INSERT/UPDATE/DELETE policies require matching `store_id`
-4. `SECURITY DEFINER` functions (`provision_store`, Xero token RPCs) use `service_role` only
-5. No anon key access to sensitive tables (orders, customers, staff)
-
-No external tool improves on this manual checklist for a codebase of this size.
-
----
-
-### 2. Code Quality & Linting
-
-#### TypeScript strict linting
-
-**Upgrade the existing ESLint config to use `typescript-eslint ^8.58.0` with `strict-type-checked`.**
-
-The project already has ESLint 10 + `eslint-config-next` in flat config format. The gap is that `eslint-config-next/typescript` (which the current `eslint.config.mjs` uses) is a lighter ruleset — it does not enable the full `strict-type-checked` rules from `typescript-eslint`.
-
-Add `@typescript-eslint/eslint-plugin ^8.58.0` and `@typescript-eslint/parser ^8.58.0` to enable typed linting rules. The `strict-type-checked` preset catches: unsafe `any` assignments, unchecked array access, unsafe member access on `any`, floating promises (critical for Server Actions), and unnecessary type assertions.
-
-```bash
-npm install -D @typescript-eslint/eslint-plugin @typescript-eslint/parser
-```
-
-Updated `eslint.config.mjs`:
-```javascript
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
-import tseslint from "typescript-eslint";
-import noUnsanitized from "eslint-plugin-no-unsanitized";
-
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
-  ...tseslint.configs.strictTypeChecked,
-  {
-    plugins: { "no-unsanitized": noUnsanitized },
-    rules: {
-      ...noUnsanitized.configs.DOM.rules,
-      // Relax rules that conflict with Next.js patterns:
-      "@typescript-eslint/no-misused-promises": [
-        "error",
-        { checksVoidReturn: { attributes: false } },
-      ],
-    },
-    languageOptions: {
-      parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
-      },
-    },
-  },
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
-]);
-
-export default eslintConfig;
-```
-
-**Why `strict-type-checked` over `strict`:** The type-aware rules are the ones that catch real bugs in this codebase. `@typescript-eslint/no-floating-promises` catches unawaited Server Actions. `@typescript-eslint/no-unsafe-assignment` catches responses from Supabase that TypeScript widens to `any`. These require type information and cannot be expressed without `parserOptions.projectService`.
-
-**Version compatibility (HIGH confidence — verified npm 2026-04-04):**
-- `typescript-eslint` 8.58.0 is the current monorepo package
-- `@typescript-eslint/eslint-plugin` and `@typescript-eslint/parser` are both 8.58.0
-- Compatible with ESLint ^10 and TypeScript ^5
-
-#### Dead code detection
-
-**Use `knip ^6.3.0` (HIGH confidence — actively maintained, Next.js plugin built-in as of 2026).**
-
-Knip finds unused files, exports, and dependencies. It ships with a Next.js plugin that understands App Router entry points (`page.tsx`, `layout.tsx`, `route.ts`, `middleware.ts`) so it does not false-positive on framework-required files.
-
-After 16 phases and 336 source files, this codebase will have dead code. Run Knip once as a one-time audit during v2.1 and remove what it finds. Do not add it to the pre-commit hook — it is too slow for that use case. CI-only or on-demand.
-
-```bash
-npm install -D knip
-```
-
-`knip.json`:
-```json
-{
-  "entry": ["src/app/**/{page,layout,route,middleware,template,error,loading,not-found}.{ts,tsx}"],
-  "project": ["src/**/*.{ts,tsx}"],
-  "ignore": ["src/test/**", "tests/**"]
-}
-```
-
-Run: `npx knip`
-
-**Do NOT add:** `ts-prune` (unmaintained), `unimported` (superseded by Knip). Knip is the current standard and covers more surface area.
-
-#### Code formatting
-
-**Use `prettier ^3.8.1` + `eslint-config-prettier ^10.1.8` (HIGH confidence — current stable versions as of 2026-04-04).**
-
-Prettier is not currently in the project. Adding it for v2.1 enforces consistent formatting as a pre-requisite to documentation and code review work. `eslint-config-prettier` disables ESLint rules that conflict with Prettier's output.
-
-```bash
-npm install -D prettier eslint-config-prettier
-```
-
-Add `eslint-config-prettier` as the last item in the ESLint config array (so it wins over any formatting rules). Add a `.prettierrc` at the project root.
-
-`.prettierrc`:
-```json
-{
-  "semi": false,
-  "singleQuote": true,
-  "tabWidth": 2,
-  "trailingComma": "es5",
-  "printWidth": 100
-}
-```
-
-#### Pre-commit hooks
-
-**Use `husky ^9.1.7` + `lint-staged ^16.4.0` (HIGH confidence — current stable versions as of 2026-04-04).**
-
-These enforce that ESLint and Prettier run on staged files before every commit. For v2.1, this prevents regressions introduced during the code review and cleanup phases.
-
-```bash
-npm install -D husky lint-staged
-npx husky init
-```
-
-`package.json` addition:
-```json
-{
-  "lint-staged": {
-    "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
-    "*.{json,md,css}": ["prettier --write"]
-  }
-}
-```
-
-`.husky/pre-commit`:
-```sh
-npx lint-staged
-```
-
-**Do NOT add:** commitlint or commitizen. Commit message enforcement is overhead for a solo developer. The value is negative for this project size.
-
----
-
-### 3. Test Coverage Reporting
-
-#### Coverage provider
-
-**Use `@vitest/coverage-v8 ^4.1.2` (HIGH confidence — current stable, verified npm 2026-04-04).**
-
-The project runs Vitest 4.1.2 but has no coverage configuration. V8 is the correct provider for this project because:
-- V8 coverage requires no code transformation — it works with Next.js's SWC compilation pipeline without conflict.
-- Istanbul requires pre-instrumentation and does not work with SWC + Server Actions.
-- As of Vitest 3.2.0+, V8 uses AST-based remapping that produces accuracy equivalent to Istanbul for the patterns in this codebase.
-
-```bash
-npm install -D @vitest/coverage-v8
-```
-
-Updated `vitest.config.mts`:
-```typescript
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
-import tsconfigPaths from 'vite-tsconfig-paths'
-
-export default defineConfig({
-  plugins: [tsconfigPaths(), react()],
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: ['./src/test/setup.ts'],
-    exclude: ['**/node_modules/**', '**/.claude/**', '**/dist/**'],
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'html', 'lcov'],
-      reportsDirectory: './coverage',
-      exclude: [
-        'node_modules/**',
-        'src/test/**',
-        '**/*.config.*',
-        '**/types/**',
-        'src/app/**/page.tsx',      // Next.js page shells — tested via E2E
-        'src/app/**/layout.tsx',    // Next.js layout shells
-        'src/app/**/loading.tsx',
-        'src/app/**/error.tsx',
-        'src/app/**/not-found.tsx',
-      ],
-      thresholds: {
-        lines: 70,
-        functions: 70,
-        branches: 60,
-        statements: 70,
-      },
-    },
-  },
-})
-```
-
-Run coverage: `npx vitest run --coverage`
-
-**Coverage thresholds rationale:** 70% line/function coverage is realistic for a 336-file codebase where Next.js page/layout shells and Server Components with database calls are not unit-testable. The 60% branch threshold accounts for error handling branches that require integration-level setup. These thresholds exist to catch regressions, not to enforce 100% coverage.
-
-#### E2E coverage merging (optional, deferred)
-
-`nextcov ^1.2.1` can collect V8 coverage during Playwright runs and merge it with Vitest coverage into a unified report. This is valuable but complex to configure correctly (requires Next.js instrumentation hooks).
-
-**Decision: Do not add `nextcov` in v2.1.** The gap analysis for v2.1 is identifying which code paths lack unit tests, not producing a combined E2E+unit coverage number. Add `nextcov` in a future hardening pass if combined coverage metrics become a requirement.
-
----
-
-### 4. Documentation Generation
-
-#### API and inline documentation
-
-**Use `typedoc ^0.28.18` (HIGH confidence — current stable, verified npm 2026-04-04).**
-
-TypeDoc generates HTML documentation from TSDoc comments in TypeScript source files. For v2.1, this serves two audiences:
-1. The founder-as-developer reviewing complex business logic (GST, Xero sync, tenant provisioning)
-2. Future contributors understanding the Server Action API surface
-
-TypeDoc understands the existing TypeScript exports and does not require additional code transformation. It runs on Next.js TypeScript projects without friction because it reads the compiled type information, not Next.js-specific constructs.
-
-```bash
-npm install -D typedoc
-```
-
-`typedoc.json`:
-```json
-{
-  "entryPoints": ["src/lib", "src/actions"],
-  "entryPointStrategy": "expand",
-  "out": "docs/api",
-  "name": "NZPOS API Documentation",
-  "readme": "none",
-  "excludePrivate": true,
-  "excludeInternal": true,
-  "skipErrorChecking": false,
-  "tsconfig": "./tsconfig.json"
-}
-```
-
-Run: `npx typedoc`
-
-**What TypeDoc covers:** `src/lib/` (utility functions, GST calculations, Supabase client factories, feature gate utilities) and `src/actions/` (Server Actions API surface). These are the highest-value targets for inline documentation.
-
-**What TypeDoc does NOT cover:** React components, Next.js pages, and layout files. These are better documented via README files and architecture docs, not auto-generated API docs. Do not run TypeDoc over the entire `src/` — the output becomes noise.
-
-**TSDoc comment standard:** TypeDoc uses TSDoc syntax (`@param`, `@returns`, `@throws`, `@example`). Do not use JSDoc (`@type`, `@typedef`) in `.ts`/`.tsx` files — TypeScript's type system makes these redundant and they conflict with TypeDoc output.
-
-#### Developer and user documentation
-
-**No documentation generation tool.** Developer docs (setup guide, architecture overview, deployment runbook) and user-facing docs (merchant onboarding guide, admin manual) are markdown files written by hand. Tools like Docusaurus or GitBook add build complexity for what is static content that a solo developer will author directly.
-
-Write docs as markdown files in a `docs/` directory:
-- `docs/setup.md` — local development setup
-- `docs/architecture.md` — system architecture, data flow
-- `docs/deployment.md` — production deployment runbook
-- `docs/merchant-guide.md` — merchant onboarding
-- `docs/admin-manual.md` — admin panel reference
-- `docs/env-vars.md` — all environment variables with descriptions
-
-No tool needed. Markdown in the repo is sufficient and maintainable by a solo developer.
-
----
-
-### v2.1 Tooling Summary
-
-| Tool | Version | Purpose | Install |
-|------|---------|---------|---------|
-| `@typescript-eslint/eslint-plugin` | `^8.58.0` | Strict typed linting (catches floating promises, unsafe `any`) | dev |
-| `@typescript-eslint/parser` | `^8.58.0` | TypeScript parser for ESLint type-aware rules | dev |
-| `eslint-plugin-no-unsanitized` | `^4.1.5` | XSS-risk detection for DOM injection patterns | dev |
-| `eslint-config-prettier` | `^10.1.8` | Disables ESLint rules that conflict with Prettier | dev |
-| `prettier` | `^3.8.1` | Code formatting enforcement | dev |
-| `husky` | `^9.1.7` | Git pre-commit hook runner | dev |
-| `lint-staged` | `^16.4.0` | Run linters only on staged files | dev |
-| `knip` | `^6.3.0` | Dead code and unused dependency detection | dev |
-| `@vitest/coverage-v8` | `^4.1.2` | V8-native test coverage for Vitest | dev |
-| `typedoc` | `^0.28.18` | API documentation from TSDoc comments | dev |
-
-**Total new packages: 10 dev dependencies.** All existing packages remain unchanged.
-
-```bash
-npm install -D \
-  @typescript-eslint/eslint-plugin \
-  @typescript-eslint/parser \
-  eslint-plugin-no-unsanitized \
-  eslint-config-prettier \
-  prettier \
-  husky \
-  lint-staged \
-  knip \
-  @vitest/coverage-v8 \
-  typedoc
-```
-
-### What NOT to Add in v2.1
-
-| Tool | Why Not |
-|------|---------|
-| `eslint-plugin-security` | Unmaintained (13 rules, no updates since 2020). High false-positive rate on regex patterns. The `typescript-eslint strict-type-checked` + `no-unsanitized` combination covers meaningful security surface better. |
-| Semgrep | Python-based SAST with separate config and CI setup. The risk surface it catches (SQL injection via string concatenation) is already closed by the Supabase JS client architecture. Overhead is disproportionate for solo developer. |
-| Snyk CLI | Paid SCA with rate limits on free tier. `npm audit` covers the same vulnerability database for this project size. |
-| `nextcov` | E2E coverage merging adds configuration complexity. Not needed for v2.1's gap analysis goal. Revisit post-v2.1. |
-| Docusaurus / GitBook | Documentation site generators. Overkill for a solo developer writing static markdown. Adds a build pipeline for no gain. |
-| `@vitest/coverage-istanbul` | Istanbul does not work with SWC + Server Actions in Next.js App Router. V8 is the correct choice. |
-| SonarQube / SonarCloud | Enterprise code quality platform. Valuable at team scale but heavy overhead for a solo project. The ESLint + TypeScript strict combination delivers equivalent signal. |
-
----
-
-## Key Configuration Notes
-
-### Tailwind v4 with Next.js
-```css
-/* app/globals.css */
-@import "tailwindcss";
-
-@theme {
-  --color-navy: #1E293B;
-  --color-amber: #E67E22;
-  /* Satoshi + DM Sans font variables here */
-}
-```
-
-```js
-// postcss.config.mjs
-const config = { plugins: { "@tailwindcss/postcss": {} } };
-export default config;
-```
-
-### next.config.ts — image domains for Supabase Storage
-```ts
-const config: NextConfig = {
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '*.supabase.co',
-        pathname: '/storage/v1/object/public/**',
-      },
-    ],
-  },
-}
-```
-
-### Supabase RLS Custom JWT Claims Pattern
-Set `store_id` and `role` in `raw_app_meta_data` via a Supabase auth hook. Reference in RLS as:
-```sql
-auth.jwt()->'app_metadata'->>'store_id' = store_id::text
-```
-This fires from the JWT, not a table join.
-
-### Vercel Wildcard Domain DNS Setup
-For `*.nzpos.app` subdomain routing:
-1. Point nameservers to `ns1.vercel-dns.com` and `ns2.vercel-dns.com`
-2. Add apex domain `nzpos.app` to Vercel project
-3. Add wildcard domain `*.nzpos.app` to Vercel project
-4. Vercel issues individual SSL certificates per subdomain automatically
-
-For custom merchant domains (paid add-on):
-- Use `@vercel/sdk` `projectsAddProjectDomain` to provision programmatically
-- Merchant must add CNAME record pointing to `cname.vercel-dns.com`
-- Poll `projectsGetProjectDomain` for verification status
 
 ---
 
 ## Sources
 
-- Next.js 16.2.1 official documentation, version confirmed 2026-03-25: https://nextjs.org/docs
-- Next.js multi-tenant guide (official, 2026-03-31): https://nextjs.org/docs/app/guides/multi-tenant
-- Vercel multi-tenant domain management docs: https://vercel.com/docs/multi-tenant/domain-management
-- Vercel Platforms Starter Kit: https://vercel.com/templates/next.js/platforms-starter-kit
-- @vercel/sdk npm package (~1.19.x as of Apr 2026): https://www.npmjs.com/package/@vercel/sdk
-- Stripe subscription lifecycle guide (2026): https://dev.to/thekarlesi/stripe-subscription-lifecycle-in-nextjs-the-complete-developer-guide-2026-4l9d
-- Stripe billing portal integration: https://docs.stripe.com/customer-management/integrate-customer-portal
-- Stripe subscription webhooks: https://docs.stripe.com/billing/subscriptions/webhooks
-- Supabase Custom Access Token Hook: https://supabase.com/docs/guides/auth/auth-hooks/custom-access-token-hook
-- Supabase custom claims and RBAC: https://supabase.com/docs/guides/database/postgres/custom-claims-and-role-based-access-control-rbac
-- Tailwind CSS v4.1/v4.2 blog: https://tailwindcss.com/blog
-- Next.js authentication guide (official, 2026-03-25): https://nextjs.org/docs/app/guides/authentication
-- Next.js Vitest guide (official, 2026-03-25): https://nextjs.org/docs/app/guides/testing/vitest
-- Next.js Playwright guide (official, 2026-03-25): https://nextjs.org/docs/app/guides/testing/playwright
-- Next.js deployment guide (official, 2026-03-25): https://nextjs.org/docs/app/getting-started/deploying
-- Next.js `use cache` directive (official, 2026-03-25): https://nextjs.org/docs/app/api-reference/directives/use-cache
-- Next.js blog — v16.2 release: https://nextjs.org/blog (confirmed version 16.2, released 2026-03-18)
-- Next.js ESLint configuration (official, 2026-04-02): https://nextjs.org/docs/app/api-reference/config/eslint
-- typescript-eslint v8 announcement and shared configs: https://typescript-eslint.io/blog/announcing-typescript-eslint-v8/
-- typescript-eslint shared configs reference: https://typescript-eslint.io/users/configs/
-- eslint-plugin-no-unsanitized (Mozilla): https://github.com/mozilla/eslint-plugin-no-unsanitized
-- eslint-plugin-security maintenance status (2026): https://dev.to/ofri-peretz/eslint-plugin-security-is-unmaintained-heres-what-nobody-tells-you-96h
-- Vitest coverage guide (official): https://vitest.dev/guide/coverage.html
-- Why Istanbul coverage does not work with Next.js App Router: https://dev.to/stevez/why-istanbul-coverage-doesnt-work-with-nextjs-app-router-9ip
-- V8 vs Istanbul coverage accuracy (2026): https://dev.to/stevez/v8-coverage-vs-istanbul-performance-and-accuracy-3ei8
-- nextcov — Next.js Playwright E2E coverage: https://github.com/stevez/nextcov
-- TypeDoc documentation generator: https://typedoc.org/
-- Knip dead code detector: https://knip.dev
-- Semgrep JavaScript/TypeScript SAST: https://semgrep.dev/docs/languages/javascript
-- Semgrep vs ESLint (2026): https://dev.to/rahulxsingh/semgrep-vs-eslint-security-focused-sast-vs-javascript-linter-2026-hef
-- npm package versions verified 2026-04-04: typescript-eslint@8.58.0, knip@6.3.0, @vitest/coverage-v8@4.1.2, typedoc@0.28.18, prettier@3.8.1, husky@9.1.7, lint-staged@16.4.0, eslint-plugin-no-unsanitized@4.1.5, eslint-config-prettier@10.1.8
+- Codebase analysis: `supabase/migrations/001_initial_schema.sql` through `023_performance_indexes.sql` — schema patterns confirmed HIGH confidence
+- Codebase analysis: `src/lib/requireFeature.ts` — dual-path JWT/DB feature gating pattern confirmed HIGH confidence
+- Codebase analysis: `src/config/addons.ts` — add-on extension pattern confirmed HIGH confidence
+- Codebase analysis: `supabase/migrations/005_pos_rpc.sql` — SECURITY DEFINER RPC atomic pattern confirmed HIGH confidence
+- Codebase analysis: `supabase/migrations/019_billing_claims.sql` — JWT claims injection pattern confirmed HIGH confidence
+- Codebase analysis: `supabase/migrations/020_super_admin_panel.sql` — manual override column pattern confirmed HIGH confidence
+- PostgreSQL documentation: `GENERATED ALWAYS AS ... STORED` — available in PostgreSQL 12+; Supabase runs Postgres 15+ (HIGH confidence)
+
+---
+*Stack research for: NZPOS inventory management (v3.0)*
+*Researched: 2026-04-04*

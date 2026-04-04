@@ -1,479 +1,468 @@
 # Architecture Research
 
-**Domain:** Multi-tenant SaaS POS + Online Store — v2.1 Hardening & Documentation
+**Domain:** Inventory management add-on + service product types for existing multi-tenant SaaS POS
 **Researched:** 2026-04-04
-**Confidence:** HIGH (direct codebase inspection: middleware.ts, 20 migrations, all action files, webhook routes)
+**Confidence:** HIGH — based on direct codebase inspection, all claims verified against source
 
----
+## Standard Architecture
 
-## Context: This Is Not Greenfield Research
-
-v2.0 shipped a complete architecture. v2.1 adds no new routes or major components. This document maps the existing system to answer: **where does security review, code quality review, and documentation apply, in what order, and why?**
-
-All components described below exist and are in production.
-
----
-
-## System Overview
+### System Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         REQUEST ENTRY POINTS                                │
-├──────────────────┬──────────────────┬───────────────────┬───────────────────┤
-│  Root Domain     │  Store Subdomain  │  Webhook Routes   │  Cron Routes      │
-│  (marketing,     │  (pos/, admin/,   │  /api/webhooks/   │  /api/cron/       │
-│   signup,        │   store/, /)      │  stripe/          │  daily-summary    │
-│   super-admin)   │                   │  stripe/billing/  │  expire-orders    │
-└────────┬─────────┴─────────┬─────────┴──────────┬────────┴────────┬──────────┘
-         │                   │                     │                 │
-         ▼                   ▼                     │                 │
-┌──────────────────────────────────────────┐       │                 │
-│         MIDDLEWARE (Edge, 221 LOC)        │       │                 │
-│  src/middleware.ts                        │       │                 │
-│                                           │       │                 │
-│  1. Webhook bypass (/api/webhooks)        │       │                 │
-│  2. Root vs subdomain detection           │       │                 │
-│  3. Super admin auth gate                 │       │                 │
-│  4. Slug → store_id lookup                │       │                 │
-│     (5-min TTL in-memory cache +          │       │                 │
-│      active status check on every hit)   │       │                 │
-│  5. Suspension enforcement                │       │                 │
-│  6. Admin route: owner-only auth          │       │                 │
-│  7. POS route: jose JWT or owner auth     │       │                 │
-│  8. Storefront: public + session refresh  │       │                 │
-│  Injects: x-store-id, x-store-slug       │       │                 │
-└───────────────────┬──────────────────────┘       │                 │
-                    │                              │                 │
-         ┌──────────┘                              │                 │
-         ▼                                         ▼                 ▼
-┌────────────────────────┐           ┌──────────────────────────────────────┐
-│  SERVER COMPONENTS &   │           │       ROUTE HANDLERS (self-auth)     │
-│  SERVER ACTIONS        │           │                                      │
-│                        │           │  /api/webhooks/stripe/               │
-│  src/actions/          │           │    HMAC sig verify → raw body        │
-│    auth/ (14 files)    │           │    Idempotency: stripe_events table  │
-│    orders/ (6 files)   │           │    complete_online_sale RPC          │
-│    products/ (5 files) │           │    GST fallback (duplicates gst.ts)  │
-│    billing/ (2 files)  │           │                                      │
-│    xero/ (3 files)     │           │  /api/webhooks/stripe/billing/       │
-│    super-admin/ (4)    │           │    Separate HMAC secret              │
-│    setup/ (?)          │           │    store_plans feature flag update   │
-│    cash-sessions/ (?)  │           │    JWT stale window: documented      │
-│                        │           │                                      │
-│  Auth pattern per      │           │  /api/xero/callback, /connect        │
-│  action:               │           │    OAuth PKCE exchange               │
-│    resolveAuth() or    │           │    Tokens → Supabase Vault           │
-│    resolveStaffAuth()  │           │                                      │
-│  + Zod.safeParse()     │           │  /api/cron/* (Vercel cron)           │
-│    on all inputs       │           │    CRON_SECRET header auth only      │
-└───────────┬────────────┘           └──────────────────┬───────────────────┘
-            └──────────────────┬──────────────────────────┘
-                               ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                         SUPABASE LAYER                                       │
-├──────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  DUAL AUTH SYSTEM                                                            │
-│  ┌────────────────────────────────┐  ┌─────────────────────────────────┐    │
-│  │ Supabase Auth                  │  │ Jose JWT (staff PIN sessions)   │    │
-│  │ owners + customers + superadmin│  │ HMAC HS256, 8h expiry           │    │
-│  │ Custom token hook injects:     │  │ HttpOnly cookie: staff_session  │    │
-│  │   store_id, role,              │  │ Verified by: resolveStaffAuth() │    │
-│  │   is_super_admin,              │  └─────────────────────────────────┘    │
-│  │   billing feature flags        │                                          │
-│  └────────────────────────────────┘  FEATURE GATING (requireFeature.ts)    │
-│                                      ┌─────────────────────────────────┐    │
-│                                      │ Fast path: JWT app_metadata     │    │
-│                                      │ DB fallback: store_plans table  │    │
-│                                      │ (requireDbCheck: true for       │    │
-│                                      │  billing-critical mutations)    │    │
-│                                      └─────────────────────────────────┘    │
-│                                                                              │
-│  ROW LEVEL SECURITY (20 migrations, canonical rewrite in 015)               │
-│  Unified pattern: auth.jwt() -> 'app_metadata' ->> 'store_id'               │
-│  Super admin: SELECT-only across all tenants                                 │
-│  Public read: products (active), promo_codes (active + non-expired)          │
-│  Customer isolation: own orders/profile only                                 │
-│  store_plans: owner-read, service_role write only                            │
-│  orders_public_read: channel = 'online' (no store_id filter — by design)   │
-│                                                                              │
-│  SECURITY DEFINER RPCs (service_role caller required)                       │
-│  provision_store, complete_pos_sale, complete_online_sale,                   │
-│  increment_promo_uses, restore_stock, check_rate_limit,                     │
-│  get/upsert/delete_xero_tokens (Vault access)                               │
-│                                                                              │
-│  SUPABASE VAULT                                                              │
-│  Xero OAuth tokens — encrypted at rest, never in plain columns              │
-│  Access only via SECURITY DEFINER RPCs                                       │
-└──────────────────────────────────────────────────────────────────────────────┘
+│                         Next.js App Router Layer                             │
+├──────────────┬──────────────┬──────────────┬─────────────────────────────────┤
+│  /pos        │  /admin      │  /(store)    │  /api/webhooks/stripe            │
+│  POS shell   │  Inventory   │  Storefront  │  Billing + stock restore         │
+│  (staff JWT) │  pages (new) │  (public)    │  (service role)                  │
+└──────┬───────┴──────┬───────┴──────┬───────┴──────────────┬──────────────────┘
+       │              │              │                       │
+       ▼              ▼              ▼                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         Server Actions (48 existing + ~8 new)                │
+│  completeSale  updateProduct  createProduct  adjustStock(NEW)                │
+│  processRefund importProducts              recordStocktake(NEW)              │
+│  [all validated with Zod, guarded with server-only, admin client for RPCs]   │
+└──────────────────────────────────┬──────────────────────────────────────────┘
+                                   │
+       ┌───────────────────────────┼───────────────────────────────────┐
+       ▼                           ▼                                   ▼
+┌─────────────┐      ┌─────────────────────────┐          ┌──────────────────────┐
+│ requireFeat │      │  Supabase Admin Client   │          │  JWT Claims / Auth   │
+│ ure('inven  │      │  (service role -- RPCs,  │          │  hook injects:       │
+│ tory') NEW  │      │  stock writes bypass RLS)│          │  inventory: boolean  │
+└─────────────┘      └────────────┬────────────┘          │  (NEW claim needed)  │
+                                  │                        └──────────────────────┘
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         Supabase Postgres (RLS on all tables)                │
+├─────────────────┬─────────────────┬──────────────────┬───────────────────────┤
+│ products        │ stock_adjust-   │ stocktakes       │ store_plans           │
+│ +product_type   │ ments (NEW)     │ (NEW)            │ +has_inventory (NEW)  │
+│ (physical|svc)  │                 │                  │ +has_inventory_       │
+│                 │                 │                  │  manual_override (NEW)│
+├─────────────────┴─────────────────┴──────────────────┴───────────────────────┤
+│ EXISTING: complete_pos_sale RPC   (modified: skip stock check for services)   │
+│ EXISTING: complete_online_sale RPC (modified: skip stock check for services)  │
+│ EXISTING: restore_stock RPC       (no change -- service items have no stock)  │
+│ NEW:      adjust_stock RPC        (manual adjustment with audit trail)        │
+│ NEW:      complete_stocktake RPC  (apply variance, write history)             │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
----
+### Component Responsibilities
 
-## Component Boundaries
+| Component | Responsibility | Current State |
+|-----------|----------------|---------------|
+| `products` table | Source of truth for product catalog, stock levels | EXISTS -- needs `product_type` column |
+| `stock_adjustments` table | Audit log for all manual stock changes (adjustments + stocktake variances) | NEW |
+| `stocktakes` / `stocktake_items` tables | Snapshot of counted quantities with variance vs system | NEW |
+| `store_plans` table | Per-tenant feature flags linked to Stripe billing | EXISTS -- needs `has_inventory` column |
+| `complete_pos_sale` RPC | Atomic POS sale: lock then check stock then insert order then decrement | EXISTS -- must be modified |
+| `complete_online_sale` RPC | Atomic online sale: same as above for Stripe webhook path | EXISTS -- must be modified |
+| `adjust_stock` RPC | SECURITY DEFINER: apply manual stock adjustment + write audit row | NEW |
+| `complete_stocktake` RPC | SECURITY DEFINER: apply variance adjustments + write stocktake record | NEW |
+| `requireFeature('inventory')` | Guard for all inventory Server Actions and admin UI pages | NEW call site wiring |
+| `custom_access_token_hook` | Injects `inventory: boolean` into JWT app_metadata | EXISTS -- must be modified |
+| `addons.ts` config | Central registry of all add-on features, Stripe Price IDs, column mappings | EXISTS -- must be extended |
 
-### Entry Points by Risk Level
-
-| Entry Point | Auth Mechanism | Risk Level | Notes |
-|-------------|----------------|------------|-------|
-| `middleware.ts` | Supabase Auth + jose JWT | CRITICAL | All tenant routing flows through here |
-| `/super-admin/*` | Supabase Auth (`is_super_admin`) | CRITICAL | Cross-tenant read access |
-| `/api/webhooks/stripe/` | Stripe HMAC signature | CRITICAL | Payment completion + stock decrement |
-| `/api/webhooks/stripe/billing/` | Stripe HMAC signature (separate secret) | HIGH | Subscription feature flag updates |
-| `/admin/*` | Supabase Auth (owner role) | HIGH | Financial data, product mutations |
-| `/pos/*` | Supabase Auth or jose JWT | HIGH | Sale completion, cash sessions |
-| Server Actions (`src/actions/`) | `resolveAuth()` or `resolveStaffAuth()` | HIGH | All mutations |
-| `/api/xero/*` | PKCE state + Supabase Auth | HIGH | OAuth token exchange |
-| `/api/cron/*` | `CRON_SECRET` header | MEDIUM | Scheduled jobs |
-| `/store/*` (storefront) | Public + optional session | MEDIUM | Read-heavy, Stripe Checkout link |
-| `/(marketing)` | None | LOW | Static pages |
-
-### Auth Context Flow
+## Recommended Project Structure
 
 ```
-Browser Request
-    ↓
-middleware.ts
-    ├─ Bypass: /api/webhooks/* → no auth, no tenant resolution
-    ├─ Root domain detection (host === ROOT_DOMAIN)
-    │    ├─ /super-admin → Supabase Auth + is_super_admin check
-    │    └─ other root paths → pass through (marketing)
-    └─ Subdomain:
-         ├─ slug → store_id (tenantCache → DB)
-         ├─ Suspension check (even for cached entries)
-         ├─ Inject x-store-id, x-store-slug headers
-         └─ Route-specific auth:
-              /admin  → Supabase Auth, owner role + email verified
-              /pos    → jose JWT (staff_session) OR Supabase Auth (owner)
-              /       → public pass-through (storefront)
-
-Server Action / Route Handler
-    ├─ resolveAuth() [owner or staff fallback] or resolveStaffAuth() [staff only]
-    │    ├─ Supabase Auth user → app_metadata.store_id
-    │    └─ jose JWT staff_session cookie → store_id
-    │    Both: prefer x-store-id header over JWT store_id (subdomain context)
-    ├─ Zod.safeParse() on all input
-    └─ admin client → atomic RPC or scoped query
+src/
+├── actions/
+│   ├── products/
+│   │   ├── createProduct.ts          # MODIFY: add product_type field
+│   │   └── updateProduct.ts          # MODIFY: add product_type field
+│   └── inventory/                    # NEW directory
+│       ├── adjustStock.ts            # NEW: manual adjustment action
+│       ├── recordStocktake.ts        # NEW: save counted quantities
+│       └── completeStocktake.ts      # NEW: apply variance + finalise
+├── schemas/
+│   ├── product.ts                    # MODIFY: add product_type to Zod schema
+│   └── inventory.ts                  # NEW: AdjustStockSchema, StocktakeSchema
+├── config/
+│   └── addons.ts                     # MODIFY: add 'inventory' to SubscriptionFeature
+├── components/
+│   ├── pos/
+│   │   └── ProductCard.tsx           # MODIFY: hide stock badge if !hasInventory
+│   └── admin/
+│       └── inventory/                # NEW directory
+│           ├── StockAdjustmentForm.tsx
+│           ├── StocktakeSheet.tsx
+│           └── StockHistoryTable.tsx
+├── app/
+│   └── admin/
+│       └── inventory/                # NEW route group
+│           ├── page.tsx              # Stock overview (requires inventory feature)
+│           ├── adjust/page.tsx       # Manual adjustment form
+│           └── stocktake/page.tsx    # Stocktake workflow
+└── types/
+    └── database.ts                   # REGENERATE after migrations applied
 ```
 
-### Data Isolation Chain
+### Structure Rationale
 
-```
-store_id encoded in JWT (app_metadata)
-    ↓ set by: custom_access_token_hook (003_auth_hook.sql)
-    ↓ reads: public.staff WHERE auth_user_id = event.user_id
-    ↓
-Carried by middleware as x-store-id request header
-    ↓
-Read by resolveAuth() / resolveStaffAuth()
-    ↓ x-store-id header preferred over JWT store_id
-    ↓
-All queries filtered WHERE store_id = resolved_store_id
-    ↓
-Enforced independently by RLS (015_rls_policy_rewrite.sql)
-    ↓ auth.jwt() -> 'app_metadata' ->> 'store_id'
-```
+- **`actions/inventory/`:** Separate action directory follows the existing pattern (`actions/products/`, `actions/orders/`). Keeps inventory mutations isolated.
+- **`config/addons.ts`:** Already the single source of truth for feature/Stripe/column mappings. Extending it (not duplicating) is the correct pattern.
+- **`app/admin/inventory/`:** Matches the existing admin route group pattern (`app/admin/reports/`, `app/admin/orders/`).
 
----
+## Architectural Patterns
 
-## Security Review Integration Points
+### Pattern 1: Feature Gate at the Server Action Entry Point
 
-### 1. RLS Policy Layer (HIGHEST PRIORITY)
+**What:** Every Server Action that touches inventory calls `requireFeature('inventory', { requireDbCheck: true })` before any DB work. The `{ requireDbCheck: true }` option forces a DB read against `store_plans` -- critical for mutations where a stale JWT claim would allow inventory writes after a cancelled subscription.
 
-**Location:** `supabase/migrations/015_rls_policy_rewrite.sql` + any tables added in 016–020.
+**When to use:** All write paths (adjustStock, recordStocktake, completeStocktake). Read paths (stock history display) can use the JWT fast path.
 
-**Specific concerns to audit:**
+**Trade-offs:** One extra DB round-trip per mutation. Acceptable -- inventory adjustments are low-frequency, correctness matters more than latency.
 
-`orders_public_read` — policy is `FOR SELECT USING (channel = 'online')`. This allows any caller (including anonymous) to read any online order across all stores with no `store_id` filter. This is intentional for guest checkout confirmation (the order page needs to load without auth). Verify: (a) no sensitive merchant data is exposed on the `orders` row that a competitor could harvest; (b) the client always scopes queries by `order_id` + `lookup_token`, not by `store_id`.
+**Example:**
+```typescript
+export async function adjustStock(input: unknown) {
+  'use server'
+  import 'server-only'
 
-`products_public_read` — active products across all stores are readable. Correct for public storefronts. Verify no sensitive fields (cost price, internal notes) are on the `products` table.
-
-`promo_codes_public_read` — all active, non-expired promo codes across all stores are readable via the Supabase API. Any authenticated or anonymous caller can enumerate codes. Verify the storefront promo validation action scopes by `store_id` (so store A's codes don't apply to store B's checkout).
-
-`refund_items_staff_read` uses a subquery join to `refunds` which itself has an RLS policy (`refunds_staff_access`). The subquery inherits the caller's RLS context. Document this dependency explicitly so future policy changes don't break the chain.
-
-`super_admin_actions` table — verify this table has RLS preventing non-super-admin reads. It records suspension reasons and admin actions; leaking it to store owners would be a privacy issue.
-
-`store_plans` — `store_plans_owner_read` allows owner to read their own plan. No INSERT/UPDATE policies exist — only service_role can write. Verify no migration after 015 accidentally added an UPDATE policy.
-
-**Tables added after 015 (016–020):** Each new table in migrations 016–020 needs explicit RLS audit. Confirm RLS is enabled (`ENABLE ROW LEVEL SECURITY`) and appropriate policies exist.
-
-### 2. Webhook Security (CRITICAL)
-
-**Location:** `src/app/api/webhooks/stripe/route.ts`, `src/app/api/webhooks/stripe/billing/route.ts`
-
-**What to audit:**
-
-Both webhooks correctly use `req.text()` before `constructEvent()`. Middleware bypasses `/api/webhooks/*` entirely (line 13–15 in middleware.ts). Verify no `bodyParser` or middleware intercepts the request before the raw body is consumed.
-
-Idempotency in `route.ts`: reads `stripe_events` BEFORE the RPC, inserts AFTER success. This is correct — a failed RPC leaves no dedup row, so Stripe retries will re-execute. Verify `complete_online_sale` RPC handles duplicate calls gracefully (same order + same stripe session = no double-processing).
-
-Idempotency in `billing/route.ts`: same pattern. Verify `store_plans UPDATE` is idempotent (it is — setting a boolean to the same value is safe).
-
-The `billing/route.ts` does not update JWT claims after changing `store_plans`. The `requireFeature()` fast path (JWT) will return stale data until the owner refreshes their session. This is an accepted design trade-off. Document it explicitly in `requireFeature.ts` with a note about when to use `requireDbCheck: true`.
-
-GST fallback in `route.ts` (line ~134): `Math.round(item.line_total_cents * 3 / 23)` duplicates `gstFromInclusiveCents()` from `src/lib/gst.ts`. Flag as a code quality issue — should import the shared utility.
-
-### 3. Authentication Layer (HIGH PRIORITY)
-
-**Location:** `src/middleware.ts`, `src/lib/resolveAuth.ts`, `src/actions/auth/`
-
-**What to audit:**
-
-`resolveAuth()` tries Supabase Auth first (owner/customer), then falls back to jose staff JWT. A valid Supabase Auth session with role `customer` will produce a `store_id` from `app_metadata`. Verify that Server Actions which should be staff/owner only call `resolveStaffAuth()` (not `resolveAuth()`), or that `resolveAuth()` callers check the returned role before proceeding.
-
-Middleware email verification gate (line 103–111): blocks unverified owners from `/admin`. This gate only runs in middleware. Verify that Server Actions in `src/actions/` that perform owner-only mutations independently re-verify authentication (via `resolveAuth()` + Supabase JWT) — they cannot rely on middleware having already done the check.
-
-Staff PIN lockout: `src/actions/auth/staffPin.ts` — verify lockout state is stored server-side (ideally in the database, not in-memory), cannot be reset by the client, and has a defined lockout duration.
-
-`ownerSignup.ts` orphaned user cleanup: on RPC failure, it calls `admin.auth.admin.deleteUser(authData.user.id)`. Verify this cleanup itself is error-handled — if `deleteUser` fails, the orphaned auth user will persist with no store record, blocking re-signup with the same email.
-
-Rate limiting: `src/lib/signupRateLimit.ts` — the migration 009 comment says "replaces in-memory Map" but the actual `signupRateLimit.ts` lib may still use an in-memory `Map`. Verify which implementation is active. In-memory rate limiting does not survive server restarts and does not work across multiple Vercel instances. If in-memory, migrate to the `check_rate_limit` DB RPC.
-
-### 4. Multi-Tenant Isolation (CRITICAL)
-
-**Location:** `src/middleware.ts`, `src/lib/tenantCache.ts`, `src/lib/resolveAuth.ts`
-
-**What to audit:**
-
-`tenantCache.ts` module-level `Map` is per-process. On Vercel serverless, each instance is isolated — no cross-tenant cache leakage. However, middleware still queries `is_active` on every request even for cached entries (lines 55–63). This is correct — suspension takes effect within one request cycle even for cached stores. Verify this active check is always reached for cached entries (the code shows it is, but confirm it cannot be short-circuited).
-
-`resolveAuth()` and `resolveStaffAuth()` both use `middlewareStoreId` from the `x-store-id` header when present. The `x-store-id` header is set by middleware — but a direct HTTP request (not via browser) could include a spoofed `x-store-id` header. Verify: are Server Actions reachable via direct POST without going through middleware? In Next.js App Router, Server Actions are invoked via POST to the page URL with special headers — middleware runs for these requests. However, Route Handlers at `/api/*` bypass some middleware gates. Confirm all `/api/*` handlers that read `x-store-id` independently verify the authenticated user's `store_id` matches.
-
-Super admin: middleware checks `user.app_metadata?.is_super_admin === true` for `/super-admin` routes. Verify every super admin Server Action (`src/actions/super-admin/`) independently calls `supabase.auth.getUser()` and re-checks `is_super_admin` — it cannot rely solely on middleware having guarded the route. (Inspected `suspendTenant.ts`: it does this correctly. Audit the other 3 actions.)
-
-`invalidateCachedStoreId()` must be called whenever a store's `is_active` status changes. `suspendTenant.ts` calls it. Verify `unsuspendTenant.ts` also calls it. Verify no other code path sets `is_active = false` without cache invalidation.
-
-### 5. Financial Logic (HIGH PRIORITY)
-
-**Location:** `src/lib/gst.ts`, `src/lib/money.ts`, `src/actions/orders/completeSale.ts`, `src/actions/orders/processPartialRefund.ts`
-
-**What to audit:**
-
-All monetary values are INTEGER cents throughout the codebase. Verify no division or multiplication in any action or utility produces a non-integer intermediate value without immediate `Math.round()`.
-
-`gstFromInclusiveCents(cents)` = `Math.round(cents * 3 / 23)`. Verify Vitest tests cover: zero, odd cent values that round at exactly 0.5, large values (>100,000 cents), negative values (should this be allowed?).
-
-Partial refund in `processPartialRefund.ts`: per-item refund amounts are summed. Verify the sum cannot exceed the original order total. Verify Stripe partial refund amount is calculated in NZD cents (not dollars — Stripe uses smallest currency unit for NZD).
-
-`completeSale.ts` passes `p_cash_tendered_cents` to the RPC. If payment method is not cash, this should be undefined. Verify there is no path where a non-cash payment accidentally records a cash_tendered amount that affects the cash session reconciliation.
-
----
-
-## Code Quality Review Order (Risk-Based)
-
-Review in this order, highest risk first. Later tiers should not be started until Tier 1 is complete, as security fixes may affect code that later tiers document.
-
-### Tier 1: Security-Critical
-
-1. `supabase/migrations/015_rls_policy_rewrite.sql` + migrations 016–020
-2. `src/middleware.ts`
-3. `src/lib/resolveAuth.ts`
-4. `src/app/api/webhooks/stripe/route.ts`
-5. `src/app/api/webhooks/stripe/billing/route.ts`
-6. `src/actions/auth/` (all 14 files)
-7. `supabase/migrations/003_auth_hook.sql`
-8. `src/lib/requireFeature.ts`
-9. `src/actions/super-admin/` (all 4 files)
-
-### Tier 2: Financial Logic
-
-10. `src/lib/gst.ts` + `src/lib/gst.test.ts`
-11. `src/lib/money.ts` + `src/lib/money.test.ts`
-12. `src/actions/orders/completeSale.ts`
-13. `src/actions/orders/processPartialRefund.ts`
-14. `src/actions/orders/processRefund.ts`
-15. `supabase/migrations/005_pos_rpc.sql` (complete_pos_sale PL/pgSQL)
-16. `supabase/migrations/006_online_store.sql` (complete_online_sale PL/pgSQL)
-
-### Tier 3: Data Integrity
-
-17. `src/actions/orders/createCheckoutSession.ts`
-18. `src/lib/cart.ts`
-19. `src/actions/products/importProducts.ts` (CSV import, stock values)
-20. `src/lib/tenantCache.ts` (cache invalidation completeness)
-21. `src/lib/signupRateLimit.ts` (in-memory vs DB-backed determination)
-
-### Tier 4: General Code Quality
-
-22. All remaining `src/actions/` files — error handling consistency, return type shapes
-23. `src/app/api/cron/` — `CRON_SECRET` verification, error handling
-24. `src/lib/xero/` — token refresh logic, sync error handling
-25. Dead code scan: unused exports, `server-only` import coverage, commented-out code
-
----
-
-## Documentation Structure
-
-### Where Documentation Lives (target state after v2.1)
-
-```
-/
-├── README.md                        ← TO CREATE: project overview, quick start for devs
-│
-├── CLAUDE.md                        ← Exists, comprehensive — tech rationale, stack decisions
-├── DESIGN.md                        ← Exists — design system spec
-│
-├── docs/
-│   ├── setup.md                     ← TO CREATE: local dev environment, env vars, Supabase local
-│   ├── architecture.md              ← TO CREATE: system overview, component diagram, data flow
-│   ├── security.md                  ← TO CREATE: auth model, RLS design, webhook security
-│   ├── gst-compliance.md            ← TO CREATE: IRD requirements, GST formula, test cases
-│   ├── multi-tenancy.md             ← TO CREATE: tenant isolation, subdomain routing, RLS patterns
-│   ├── api-reference.md             ← TO CREATE: Server Actions catalogue, Route Handlers, webhooks
-│   ├── deployment.md                ← TO CREATE: production Supabase, Stripe live keys, Vercel config
-│   ├── merchant-onboarding.md       ← TO CREATE: user-facing signup flow, setup wizard, first sale
-│   └── admin-manual.md              ← TO CREATE: POS usage, admin dashboard, Xero, reports
-│
-├── supabase/
-│   └── migrations/                  ← Most have header comments — fill gaps (016–020)
-│
-└── src/
-    ├── lib/
-    │   ├── gst.ts                   ← Has JSDoc header ✓ — add edge case notes
-    │   ├── resolveAuth.ts           ← Has inline comments ✓ — document x-store-id trust decision
-    │   ├── requireFeature.ts        ← Has JSDoc ✓ — document stale JWT trade-off more explicitly
-    │   └── tenantCache.ts           ← Has JSDoc header ✓
-    └── actions/
-        ├── orders/completeSale.ts   ← Has numbered step comments ✓
-        ├── auth/ownerSignup.ts      ← Has numbered step comments ✓
-        └── [others]                 ← Coverage varies — add where missing
+  const result = await requireFeature('inventory', { requireDbCheck: true })
+  if (!result.authorized) {
+    return { success: false, error: 'FEATURE_GATED', upgradeUrl: result.upgradeUrl }
+  }
+  // ... rest of action
+}
 ```
 
-### Inline Documentation Priority
+### Pattern 2: Service Products Skip All Stock Logic
 
-Files that most need documentation added or improved, in order of complexity and review risk:
+**What:** The `product_type` column (`'physical' | 'service'`) is the single gate for all stock operations. Services never have stock checked, never decrement, never show stock badges. This gate lives in three places: the two SECURITY DEFINER RPCs (DB layer), the POS ProductCard component (UI layer), and the storefront product page (UI layer).
 
-| File | What to Document |
-|------|-----------------|
-| `src/middleware.ts` | Why super admin is checked before subdomain resolution. Why webhook bypass is first. Security reasoning for each auth gate. |
-| `src/lib/resolveAuth.ts` | Why x-store-id header is trusted over JWT store_id. Why owner auth takes priority over staff JWT. The role check gap for customer sessions. |
-| `supabase/migrations/003_auth_hook.sql` | Why REVOKE is applied from `authenticated`, `anon`, `public`. What happens if the hook function errors. |
-| `src/lib/requireFeature.ts` | Exactly when `requireDbCheck: true` is required. The stale JWT window with concrete timing estimate. |
-| `src/actions/auth/ownerSignup.ts` | The orphaned user cleanup race condition. Why `refreshSession()` is called after `updateUserById`. |
-| `src/app/api/webhooks/stripe/route.ts` | The idempotency pattern — why dedup insert is AFTER the RPC, not before. |
-| `supabase/migrations/015_rls_policy_rewrite.sql` | Why `orders_public_read` has no store_id filter. The `refund_items` subquery RLS chain dependency. |
+**When to use:** Everywhere stock quantity is read or written. The RPC is the authoritative gating point -- UI checks are defense-in-depth.
 
----
+**Trade-offs:** Requires modifying existing RPCs. The RPCs are SECURITY DEFINER so one migration changes the actual stock logic. UI changes are additive (conditional rendering).
 
-## Architectural Patterns in Use
+**Example -- RPC modification pattern:**
+```sql
+-- In complete_pos_sale, branch on product_type in the item JSONB:
+IF (v_item->>'product_type') IS DISTINCT FROM 'service' THEN
+  SELECT stock_quantity INTO v_current_stock
+  FROM products WHERE id = (v_item->>'product_id')::UUID ...
+  FOR UPDATE;
+  -- check and decrement as before
+END IF;
+```
 
-### Pattern 1: SECURITY DEFINER RPC for Sensitive Mutations
+### Pattern 3: Append-Only Audit Log for Stock Changes
 
-**What:** Any mutation that requires atomicity across multiple tables (or bypasses RLS) runs as a PostgreSQL `SECURITY DEFINER` function called via the service_role admin client.
+**What:** All stock changes (sale decrement, refund restore, manual adjustment, stocktake variance) write a row to `stock_adjustments`. The `products.stock_quantity` column is the live total; `stock_adjustments` is the history. Never rewrite history rows.
 
-**Integration point for security review:** Every SECURITY DEFINER function accepts a `p_store_id` parameter. Verify each function internally validates ownership (e.g., confirm the product being decremented belongs to `p_store_id`). A misconfigured function could allow one tenant's action to affect another tenant's data.
+**When to use:** Always. This is the audit trail for IRD compliance and theft detection.
 
-### Pattern 2: Dual-Path Feature Gating
+**Trade-offs:** Slightly more writes per transaction. The `adjust_stock` and `complete_stocktake` RPCs handle this atomically so there is no risk of orphaned history rows.
 
-**What:** `requireFeature()` reads JWT `app_metadata` claims (fast, no DB) for most checks. For billing-critical mutations, it queries `store_plans` directly (`requireDbCheck: true`).
+**Note on scope:** For v3.0, `stock_adjustments` rows for sales (reason='sale') can be written inside the modified RPCs. This keeps the audit trail complete without any extra application-layer work.
 
-**Integration point for review:** Audit all `requireFeature()` call sites. Confirm that actions which process payments or grant entitlements use `requireDbCheck: true`. Actions that merely show/hide UI features may use the fast path.
+## Data Flow
 
-### Pattern 3: Tenant Header Propagation
+### Manual Stock Adjustment Flow
 
-**What:** Middleware resolves subdomain → `store_id`, injects `x-store-id` and `x-store-slug` headers. Server Components and Server Actions read via `headers()`.
+```
+Admin UI (StockAdjustmentForm)
+    -> Server Action: adjustStock(input)
+    -> requireFeature('inventory', { requireDbCheck: true })
+    -> Zod: AdjustStockSchema.safeParse(input)
+    -> adminClient.rpc('adjust_stock', { p_product_id, p_delta, p_reason, p_note, p_staff_id })
+         -> SECURITY DEFINER RPC (atomic):
+              SELECT stock_quantity FOR UPDATE
+              UPDATE products SET stock_quantity = stock_quantity + p_delta
+              INSERT INTO stock_adjustments (quantity_before, quantity_after, ...)
+    -> revalidatePath('/admin/inventory')
+    -> revalidatePath('/pos')  -- POS needs refreshed stock
+```
 
-**Integration point for security review:** The `x-store-id` header is set by middleware, but a crafted HTTP request could include a spoofed `x-store-id` header. Middleware runs for all routes in Next.js App Router including Server Action invocations. However, any Server Action that reads `x-store-id` directly (without using `resolveAuth()`) should be flagged — `resolveAuth()` cross-checks the header against the authenticated user's JWT `store_id`.
+### POS Sale with Service Product
 
-### Pattern 4: In-Memory Tenant Cache with Active Verification
+```
+POS Cart contains: [Widget (physical, qty=2), Installation (service, qty=1)]
+    -> completeSale() Server Action
+    -> resolveStaffAuth()  (staff PIN JWT)
+    -> CreateOrderSchema.safeParse()
+    -> adminClient.rpc('complete_pos_sale', { p_items: [...] })
+         -> SECURITY DEFINER RPC:
+              FOR EACH item:
+                IF product_type != 'service': lock + check + decrement stock
+                IF product_type == 'service': skip stock entirely
+              INSERT order + order_items (service items recorded for revenue)
+```
 
-**What:** `tenantCache.ts` caches `slug → store_id` for 5 minutes. Middleware checks `is_active` on every request even for cached stores — suspension is immediate.
+### Feature Flag Injection (new `inventory` claim)
 
-**Integration point for review:** `invalidateCachedStoreId()` must be called every time a store's `is_active` status changes. Audit all code paths that write to `stores.is_active`.
+```
+User logs in -> Supabase Auth -> custom_access_token_hook fires
+    -> Reads store_plans WHERE store_id = user's store
+    -> Injects into app_metadata:
+         xero: boolean (existing)
+         email_notifications: boolean (existing)
+         custom_domain: boolean (existing)
+         inventory: boolean (NEW)
+    -> JWT signed and returned to client
+    -> requireFeature('inventory') reads user.app_metadata.inventory (fast path)
+    -> requireFeature('inventory', { requireDbCheck: true }) reads store_plans.has_inventory (DB path)
+```
 
-### Pattern 5: Idempotent Webhook Processing
+### Stocktake Flow
 
-**What:** Both Stripe webhooks check `stripe_events` for the event ID before processing. The dedup row is inserted AFTER the RPC succeeds.
+```
+Admin opens Stocktake page
+    -> Server Component: loads all physical products (name, sku, current stock_quantity)
+    -> Staff counts physical quantities, enters into StocktakeSheet form
+    -> Server Action: recordStocktake(items[]) -- saves draft, computes variance
+    -> Staff reviews variance report (counted vs system)
+    -> Server Action: completeStocktake(stocktake_id)
+         -> requireFeature('inventory', { requireDbCheck: true })
+         -> adminClient.rpc('complete_stocktake', { p_stocktake_id, p_staff_id })
+              -> SECURITY DEFINER RPC (atomic):
+                   FOR EACH stocktake_item with variance != 0:
+                     UPDATE products.stock_quantity (set to counted value)
+                     INSERT stock_adjustments (reason='stocktake', delta=variance)
+                   UPDATE stocktakes SET status='completed', completed_at=now()
+```
 
-**Integration point for review:** The `complete_online_sale` and `complete_pos_sale` RPCs must handle duplicate invocations without double-processing. Verify each RPC either uses `ON CONFLICT DO NOTHING` for the order insert, or checks for an existing order before creating one.
+## Schema Changes
 
----
+### New Column: `products.product_type`
 
-## Anti-Patterns to Avoid During Review
+```sql
+-- In migration 024
+ALTER TABLE public.products
+  ADD COLUMN product_type TEXT NOT NULL DEFAULT 'physical'
+  CHECK (product_type IN ('physical', 'service'));
+```
 
-### Anti-Pattern 1: Trusting x-store-id Without Ownership Verification
+All existing products default to `'physical'` -- no data migration needed. The `product_type` must be passed in the RPC item JSONB so RPCs can branch without an extra DB lookup per item.
 
-**What people might do:** Read `headers().get('x-store-id')` in a Server Action and trust it implicitly without checking the authenticated user's JWT.
+### New Column: `store_plans.has_inventory`
 
-**Why wrong:** The header is set by middleware based on the request's subdomain. It cannot be fully trusted in isolation.
+```sql
+ALTER TABLE public.store_plans
+  ADD COLUMN has_inventory BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN has_inventory_manual_override BOOLEAN NOT NULL DEFAULT false;
+```
 
-**Instead:** Use `resolveAuth()` which cross-checks `x-store-id` against `user.app_metadata.store_id`. Flag any Server Action that reads `x-store-id` directly without routing through `resolveAuth()`.
+Follows the exact pattern of `has_xero` / `has_xero_manual_override` already in the table (migration 020).
 
-### Anti-Pattern 2: Admin Client Where Server Client Suffices
+### New Tables
 
-**What people might do:** Default to `createSupabaseAdminClient()` everywhere because it bypasses RLS and eliminates "not found" errors.
+```sql
+-- stock_adjustments: append-only audit log for all stock changes
+CREATE TABLE public.stock_adjustments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id UUID NOT NULL REFERENCES public.stores(id),
+  product_id UUID NOT NULL REFERENCES public.products(id),
+  adjusted_by UUID REFERENCES public.staff(id),  -- NULL for RPC-driven (sale/refund)
+  reason TEXT NOT NULL CHECK (reason IN (
+    'sale', 'refund', 'manual_add', 'manual_remove',
+    'stocktake', 'damage', 'shrinkage', 'correction', 'opening_count'
+  )),
+  quantity_delta INTEGER NOT NULL,
+  quantity_before INTEGER NOT NULL,
+  quantity_after INTEGER NOT NULL,
+  note TEXT,
+  order_id UUID REFERENCES public.orders(id),  -- populated for sale/refund entries
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
-**Why wrong:** Bypasses all RLS — removes tenant isolation guarantee. The existing codebase uses admin client correctly (only in Server Actions after `resolveAuth()`, in webhooks after signature verification).
+-- stocktakes: header record for each physical count session
+CREATE TABLE public.stocktakes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id UUID NOT NULL REFERENCES public.stores(id),
+  created_by UUID NOT NULL REFERENCES public.staff(id),
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'completed')),
+  completed_at TIMESTAMPTZ,
+  note TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
-**Instead:** Use `createSupabaseServerClient()` for user-context reads. Reserve admin client for: atomic RPCs, webhook handlers, super admin actions, orphan cleanup.
+-- stocktake_items: counted quantities per product
+CREATE TABLE public.stocktake_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  stocktake_id UUID NOT NULL REFERENCES public.stocktakes(id) ON DELETE CASCADE,
+  store_id UUID NOT NULL REFERENCES public.stores(id),
+  product_id UUID NOT NULL REFERENCES public.products(id),
+  product_name TEXT NOT NULL,          -- snapshot
+  system_quantity INTEGER NOT NULL,    -- snapshot at time of stocktake creation
+  counted_quantity INTEGER NOT NULL,
+  variance INTEGER GENERATED ALWAYS AS (counted_quantity - system_quantity) STORED,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+```
 
-### Anti-Pattern 3: Monetary Values as Floats
+### Modified RPCs
 
-**What people might do:** Compute `total * 0.15` for a 15% GST component and store the result.
+**`complete_pos_sale`** -- Add `product_type` to item JSONB; skip stock check and decrement for services.
 
-**Why wrong:** Floating point arithmetic is non-deterministic for financial data.
+**`complete_online_sale`** -- Same service-skip logic as POS.
 
-**Instead:** All monetary values must be INTEGER cents. Any percentage calculation must round immediately. Flag any occurrence of `* 0.` or `/ 100` without `Math.round()` wrapping.
+**`restore_stock`** -- No change. Callers (`processRefund`, `processPartialRefund`) must check `product_type` in the Server Action and skip calling it for service items.
 
-### Anti-Pattern 4: Inline GST Calculation Instead of Shared Utility
+**`custom_access_token_hook`** -- Add `v_has_inventory` variable; read `sp.has_inventory` in the store_plans SELECT; inject `inventory` claim into app_metadata.
 
-**What exists:** The Stripe webhook fallback path in `route.ts` contains `Math.round(item.line_total_cents * 3 / 23)` instead of importing `gstFromInclusiveCents` from `@/lib/gst`.
+### New RPCs
 
-**Why wrong:** If the GST formula changes, the inline copy diverges silently.
+**`adjust_stock(p_store_id, p_product_id, p_delta, p_reason, p_note, p_adjusted_by)`** -- SECURITY DEFINER: atomic SELECT FOR UPDATE then UPDATE products then INSERT stock_adjustments. Returns `quantity_after`.
 
-**Fix:** Import `gstFromInclusiveCents` from `@/lib/gst` in the webhook fallback. One-line change, no behavior change.
+**`complete_stocktake(p_stocktake_id, p_store_id, p_staff_id)`** -- SECURITY DEFINER: applies all non-zero variances, writes stock_adjustments rows, marks stocktake completed.
 
-### Anti-Pattern 5: Documenting Before Fixing
+## Integration Points
 
-**Why wrong:** Writing API reference or architecture docs before the security review is complete means documenting potentially incorrect behavior. When the security fix changes the code, the docs are immediately stale.
+### Existing Code to Modify
 
-**Instead:** Security review → fixes → tests → inline docs → external docs. In that order.
+| File | Change | Risk |
+|------|--------|------|
+| `supabase/migrations/005_pos_rpc.sql` (via new migration) | `complete_pos_sale`: accept `product_type` in item JSONB; skip stock for services | HIGH -- touches sale critical path |
+| `supabase/migrations/006_online_store.sql` (via new migration) | `complete_online_sale`: same service-skip logic | HIGH -- Stripe webhook path |
+| `supabase/migrations/019_billing_claims.sql` (via new migration) | `custom_access_token_hook`: add `has_inventory` claim injection | LOW -- additive, proven pattern |
+| `src/config/addons.ts` | Add `'inventory'` to `SubscriptionFeature` type, all maps, `ADDONS` array | LOW -- purely additive |
+| `src/schemas/product.ts` | Add `product_type` field to `CreateProductSchema` and `UpdateProductSchema` | LOW |
+| `src/actions/products/createProduct.ts` | Pass `product_type` to DB insert | LOW |
+| `src/actions/products/updateProduct.ts` | Pass `product_type` to DB update | LOW |
+| `src/actions/orders/processRefund.ts` | Check `product_type` before calling `restore_stock` -- skip for service items | MEDIUM |
+| `src/actions/orders/processPartialRefund.ts` | Same service check as processRefund | MEDIUM |
+| `src/components/pos/ProductCard.tsx` | Conditionally hide stock badge when inventory add-on inactive OR product is a service | LOW -- UI only |
+| `src/app/(store)/products/[slug]/page.tsx` | Hide "X in stock" / "Sold out" for service products | LOW |
+| `src/app/admin/dashboard/page.tsx` | Gate low-stock widget behind inventory feature flag | LOW |
+| `src/app/admin/reports/page.tsx` | Gate stock levels section behind inventory feature flag | LOW |
+| `src/app/api/cron/daily-summary/route.ts` | Gate low-stock email block behind inventory feature check | LOW |
+| `src/types/database.ts` | Regenerate after migrations applied | LOW -- tooling handles this |
 
----
+### New Code
 
-## New vs Modified for v2.1
+| What | Where | Notes |
+|------|-------|-------|
+| Migration 024 | `supabase/migrations/024_inventory_addon.sql` | All schema changes in one file: new tables, new columns, modified RPCs, new RPCs, RLS policies, indexes, auth hook update |
+| `adjustStock` Server Action | `src/actions/inventory/adjustStock.ts` | Calls `adjust_stock` RPC via admin client |
+| `recordStocktake` Server Action | `src/actions/inventory/recordStocktake.ts` | Inserts `stocktakes` + `stocktake_items` draft |
+| `completeStocktake` Server Action | `src/actions/inventory/completeStocktake.ts` | Calls `complete_stocktake` RPC |
+| `AdjustStockSchema` + `StocktakeSchema` | `src/schemas/inventory.ts` | Zod validation for new actions |
+| Admin inventory pages | `src/app/admin/inventory/` | Route group with feature gate in layout |
+| Inventory UI components | `src/components/admin/inventory/` | StockAdjustmentForm, StocktakeSheet, StockHistoryTable |
 
-This milestone adds documentation and targeted fixes — no new routes or architectural components.
+### Internal Boundaries
 
-| Work Item | Type | Scope | Notes |
-|-----------|------|-------|-------|
-| RLS policy audit | Analysis + possible SQL | `supabase/migrations/` | New migrations only if policies need correction |
-| Server Action auth review | Analysis + possible code fixes | `src/actions/`, `src/lib/resolveAuth.ts` | Surgical edits to role checks — not rewrites |
-| Webhook security review | Analysis + possible code fixes | `src/app/api/webhooks/stripe/` | Idempotency, error handling |
-| GST utility deduplication | Small code fix | `src/app/api/webhooks/stripe/route.ts` | Import `gstFromInclusiveCents`, one line |
-| Rate limit investigation | Analysis + possible migration | `src/lib/signupRateLimit.ts` | Determine in-memory vs DB; migrate if needed |
-| Inline documentation | Docs only | Various `src/lib/`, `src/actions/` files | JSDoc + step comments. No behavior change. |
-| `docs/` directory | New content | Repo root `docs/` | No impact on application code |
-| `README.md` | New content | Repo root | No impact on application code |
-| Deployment runbook | New content | `docs/deployment.md` | Written last, after security config finalized |
-| Test coverage gaps | New test files | `src/**/__tests__/` | New files only; production code unchanged unless a test reveals a bug |
+| Boundary | Communication | Notes |
+|----------|---------------|-------|
+| Server Action -> RPC | `adminClient.rpc('adjust_stock', ...)` | Admin client required -- SECURITY DEFINER RPCs need service role |
+| POS sale -> stock_adjustments | Inside modified `complete_pos_sale` RPC | No application layer; atomicity guaranteed |
+| Feature gate -> store_plans | `requireFeature('inventory', { requireDbCheck: true })` | DB path for mutations, JWT path for reads |
+| Auth hook -> store_plans | `SELECT has_inventory FROM store_plans WHERE store_id = ...` | Additive to existing SELECT |
+| Admin pages -> feature gate | Layout-level `requireFeature` check for `/admin/inventory/` route group | Redirect to billing upgrade page on deny |
 
-### Build Order (Risk-Driven)
+## RLS Policy Requirements for New Tables
 
-1. Security audit (RLS + auth + webhooks) — fixes first, docs after correct code
-2. Financial logic review — completeSale, partialRefund, GST edge cases
-3. Code quality fixes — GST dedup, rate limit, error handling
-4. Test coverage — lock in correct behavior after fixes
-5. Inline documentation — document the now-correct code
-6. Developer documentation (`docs/`) — setup guide, architecture overview
-7. User-facing documentation — merchant guide, admin manual
-8. Deployment runbook — last, after production security configuration is finalized
+All new tables need RLS enabled. Follow the existing pattern:
 
----
+```sql
+-- stock_adjustments: staff read only; no direct write (SECURITY DEFINER RPCs only)
+ALTER TABLE public.stock_adjustments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Staff can read stock adjustments for their store"
+  ON public.stock_adjustments FOR SELECT
+  USING (
+    store_id = (auth.jwt() -> 'app_metadata' ->> 'store_id')::uuid
+    AND (auth.jwt() -> 'app_metadata' ->> 'role') IN ('owner', 'staff')
+  );
+
+-- No INSERT/UPDATE policies -- written by SECURITY DEFINER RPCs (admin client) only
+
+-- stocktakes: staff can read and create drafts; only complete_stocktake RPC updates status
+-- stocktake_items: staff can read and insert counted items
+```
+
+## Build Order
+
+The dependency graph drives this ordering:
+
+1. **Migration first** (`024_inventory_addon.sql`) -- schema changes enable everything else. One file to keep it atomic: new tables, `product_type` column, `has_inventory` columns, modified RPCs, new RPCs, updated auth hook, RLS policies, indexes.
+
+2. **`addons.ts` config** -- adds `'inventory'` type and maps. All subsequent TypeScript compiles against this.
+
+3. **Product schema + actions** -- add `product_type` to Zod schema; update createProduct, updateProduct, importProducts.
+
+4. **Refund actions** -- add `product_type` guard before `restore_stock` calls. Unblocks correctness for service products without needing any new UI.
+
+5. **Inventory Server Actions** -- `adjustStock`, `recordStocktake`, `completeStocktake` (depend on migration + addons.ts).
+
+6. **Admin UI -- inventory pages** -- depend on Server Actions being available.
+
+7. **POS + storefront UI** -- conditional rendering for service products and inventory gate (depends on addons.ts + product schema).
+
+8. **Super admin panel** -- add inventory add-on to activate/deactivate flows. Follows the xero/email_notifications pattern exactly.
+
+9. **`database.ts` regeneration** -- run after all migrations applied to update generated types.
+
+## Scaling Considerations
+
+| Scale | Architecture Adjustments |
+|-------|--------------------------|
+| Current (single store in prod) | No changes needed. Existing indexes on `products(store_id)` are sufficient. |
+| 1k-100k stores | Add index `stock_adjustments(store_id, created_at DESC)` for stock history queries. The `stock_adjustments` table grows fast for high-volume stores. |
+| 100k+ stores | `stock_adjustments` will be the largest table. Consider partitioning by `store_id` or archiving old rows. `products.stock_quantity` column stays fast regardless. |
+
+### Scaling Priorities
+
+1. **First bottleneck:** `stock_adjustments` table size on high-volume stores. Compound index `(store_id, product_id, created_at DESC)` handles history queries. Add `(store_id, created_at DESC)` for store-level history.
+2. **Second bottleneck:** Stocktake page loading all products. Already mitigated by `idx_products_store` existing index. Filter to `product_type = 'physical'` and paginate if needed.
+
+## Anti-Patterns
+
+### Anti-Pattern 1: Add Product Type Check Only in the UI Layer
+
+**What people do:** Check `product.product_type === 'service'` in the React component and skip adding it to cart; never modify the RPCs.
+
+**Why it's wrong:** The `complete_pos_sale` and `complete_online_sale` RPCs will still try to lock and decrement stock for service items, causing `OUT_OF_STOCK` errors on service products that have `stock_quantity = 0`. The RPC is the only atomic layer and cannot be bypassed.
+
+**Do this instead:** Modify both RPCs to skip stock logic for service items. Pass `product_type` in the item JSONB so the RPC knows without a second lookup per item.
+
+### Anti-Pattern 2: Mix Service Skip Logic with Inventory Add-on Gate in the RPC
+
+**What people do:** Add a `has_inventory` check inside `complete_pos_sale` -- skip stock checks if the store doesn't have the inventory add-on.
+
+**Why it's wrong:** Service-product skip and inventory-add-on gate are different concerns. A store without the inventory add-on must still have services work correctly (services are always sellable). Mixing them in the RPC creates a logic tangle when the add-on is later activated.
+
+**Do this instead:** `product_type` is unconditional -- services always skip stock regardless of the add-on. The inventory add-on gate lives at the Server Action / UI layer (whether stock badges display, whether the admin inventory section is accessible). They are orthogonal concerns.
+
+### Anti-Pattern 3: Write `stock_adjustments` from Application Layer
+
+**What people do:** After calling `adjust_stock` RPC, write a separate `stock_adjustments` row from the Server Action (two DB calls).
+
+**Why it's wrong:** If the application crashes between the two calls, stock is updated but no audit history exists. This is the exact race condition the SECURITY DEFINER RPC pattern is designed to prevent.
+
+**Do this instead:** The `adjust_stock` RPC updates `products.stock_quantity` and inserts the `stock_adjustments` row in a single transaction. The Server Action gets one atomic call.
+
+### Anti-Pattern 4: Multiple Migration Files for Tightly Coupled Changes
+
+**What people do:** Create `024_product_type.sql`, `025_inventory_tables.sql`, `026_modify_rpcs.sql` separately.
+
+**Why it's wrong:** The modified RPCs reference the new `stock_adjustments` table. If migrations run in order but one fails mid-way, the RPCs may reference tables that do not exist. Rolling back is complex.
+
+**Do this instead:** One migration file (`024_inventory_addon.sql`) for all inventory changes. The entire feature either applies or rolls back as a unit.
 
 ## Sources
 
-- Direct codebase inspection (HIGH confidence):
-  - `src/middleware.ts` (221 LOC)
-  - `src/lib/resolveAuth.ts`, `src/lib/requireFeature.ts`, `src/lib/tenantCache.ts`, `src/lib/gst.ts`
-  - `supabase/migrations/002_rls_policies.sql`, `003_auth_hook.sql`, `009_security_fixes.sql`, `015_rls_policy_rewrite.sql`
-  - `src/actions/auth/ownerSignup.ts`, `src/actions/orders/completeSale.ts`
-  - `src/actions/super-admin/suspendTenant.ts`
-  - `src/app/api/webhooks/stripe/route.ts`, `src/app/api/webhooks/stripe/billing/route.ts`
-  - `src/lib/xero/vault.ts`
+- Direct codebase inspection: `supabase/migrations/001_initial_schema.sql` -- products table structure, `stock_quantity`, `reorder_threshold` columns
+- Direct codebase inspection: `supabase/migrations/005_pos_rpc.sql` -- `complete_pos_sale` full RPC source, SELECT FOR UPDATE pattern
+- Direct codebase inspection: `supabase/migrations/006_online_store.sql` -- `complete_online_sale` full RPC source
+- Direct codebase inspection: `supabase/migrations/009_security_fixes.sql` -- `restore_stock` SECURITY DEFINER RPC pattern
+- Direct codebase inspection: `supabase/migrations/013_partial_refunds.sql` -- new table + RLS pattern (refunds/refund_items)
+- Direct codebase inspection: `supabase/migrations/014_multi_tenant_schema.sql` -- `store_plans` table structure with has_xero, has_email_notifications
+- Direct codebase inspection: `supabase/migrations/019_billing_claims.sql` -- full `custom_access_token_hook` source, feature flag injection pattern
+- Direct codebase inspection: `supabase/migrations/020_super_admin_panel.sql` -- `has_xero_manual_override` column pattern
+- Direct codebase inspection: `supabase/migrations/021_security_audit_fixes.sql` -- REVOKE/GRANT pattern for SECURITY DEFINER RPCs
+- Direct codebase inspection: `src/lib/requireFeature.ts` -- JWT fast path + DB fallback dual-path implementation
+- Direct codebase inspection: `src/config/addons.ts` -- `SubscriptionFeature` type, `FEATURE_TO_COLUMN`, `PRICE_TO_FEATURE` maps
+- Direct codebase inspection: `src/components/pos/ProductCard.tsx` -- current stock badge rendering using `stock_quantity` and `reorder_threshold`
+- Direct codebase inspection: `src/actions/orders/completeSale.ts` -- Server Action + admin client RPC call pattern
+- Direct codebase inspection: `src/actions/orders/processRefund.ts` -- `restore_stock` call with `restoreStock` boolean gate
 
 ---
-
-*Architecture research for: NZPOS v2.1 Hardening & Documentation*
+*Architecture research for: Inventory management add-on + service product types*
 *Researched: 2026-04-04*

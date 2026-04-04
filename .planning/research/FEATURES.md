@@ -1,302 +1,256 @@
 # Feature Landscape
 
-**Domain:** Hardening & Documentation — multi-tenant SaaS POS preparing for production launch
+**Domain:** Retail POS — inventory management add-on and service product types
 **Researched:** 2026-04-04
-**Confidence:** HIGH — domain is well-established engineering practice; specifics drawn from OWASP, Next.js App Router patterns, and project codebase analysis
+**Confidence:** HIGH — domain is well-established in retail POS; patterns drawn from Square, Lightspeed/Vend, Shopify POS, and Oracle Retail documentation
 
 ---
 
 ## Scope Note
 
-This document covers **v2.1 Hardening & Documentation** — the milestone that bridges a shipped SaaS platform (336 source files, 36,329 LOC, 365+ tests) to a production-ready product that can be onboarded by external merchants with confidence.
+This document covers **v3.0 Inventory Management** — adding inventory management as a paid add-on (stock tracking, adjustments, stocktake) and introducing a service product type that skips all stock logic.
 
-The research question: for a multi-tenant Next.js + Supabase + Stripe SaaS app at this stage, what are table stakes vs differentiators across security audit, code quality, test coverage, API documentation, developer documentation, user documentation, and deployment readiness?
+**Existing infrastructure to build on:**
+- `stock_quantity` column already on products table
+- Atomic stock decrement already implemented (no overselling)
+- Low stock alerts already exist
+- `requireFeature()` + Stripe billing + `store_plans` infrastructure already in place
+- Per-add-on billing pattern already proven (Xero, email notifications)
 
-Prior milestones (v1.0, v2.0) are shipped. All feature work is complete. This milestone is entirely about hardening, validation, and documentation.
+The research question: what do merchants of small NZ retail stores expect from inventory management, and how should service products behave?
 
 ---
 
 ## Table Stakes
 
-These are non-negotiable for a production launch. Missing any of these is a liability — either a security exposure, an onboarding blocker, or a support burden.
+Features merchants expect from any inventory management add-on. Missing these makes the add-on feel half-built.
 
-### Security Audit
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| RLS policy review for all tables | Row-level security is the primary tenant isolation mechanism. A misconfigured policy = data leak between tenants. One missed table is catastrophic. | MEDIUM | Audit every table in Supabase schema: stores, products, orders, order_items, customers, subscriptions, add_ons, audit_logs, etc. Verify `store_id` filter is on SELECT/INSERT/UPDATE/DELETE. Check SECURITY DEFINER RPCs. |
-| Auth flow verification (owner + staff PIN) | Owner email/password via Supabase Auth and staff PIN via custom jose JWT are two separate auth systems. Both must be verified end-to-end. | MEDIUM | Verify: JWT expiry enforced, PIN lockout fires correctly, staff session cannot escalate to owner privileges, PINs are hashed (not plaintext) in DB. |
-| Server Action input validation audit | Every Server Action must use `z.safeParse()` before DB access. Unvalidated inputs = SQL injection surface or data corruption. | MEDIUM | Grep for Server Actions without Zod validation. 67 action files to check. Flag any that accept user input without schema validation. |
-| OWASP Top 10 spot-check | Industry baseline. Investors, enterprise merchants, and penetration testers will ask about this. | MEDIUM | Check: injection (Zod covers most), broken auth (both auth systems), sensitive data exposure (Xero tokens in Vault, env vars), security misconfiguration (Supabase anon key vs service_role boundaries), insecure direct object references (store_id RLS), CSRF (Server Actions have CSRF protection built-in in Next.js). |
-| Stripe webhook signature verification | Webhooks without signature verification = any attacker can fake subscription events, granting free access to paid features. | LOW | Confirm `stripe.webhooks.constructEvent()` is called with `STRIPE_WEBHOOK_SECRET` in all webhook handlers. Currently one handler in `/api/webhooks/stripe/`. |
-| Environment variable audit | Secrets in source code, .env committed, or wrong keys in production are common pre-launch failures. | LOW | Verify: no secrets in source, .env.example is complete and accurate, service_role key is never exposed to client bundle, STRIPE_SECRET_KEY vs STRIPE_PUBLISHABLE_KEY usage is correct. |
-| Super admin route protection | Super admin panel must be completely inaccessible to regular merchants. A bypassed check here = full platform compromise. | LOW | Verify `is_super_admin` check cannot be bypassed. Confirm it reads from JWT claim or server-side DB check — not client-provided data. |
-| Supabase anon vs service_role boundary | `service_role` bypasses RLS entirely. Any file importing the admin client must be server-only. A client-side import of the admin client = all RLS bypassed for all tenants. | LOW | Grep for `createClient` with service_role key. Confirm `server-only` guard is on every file that imports it. 15 files in `src/lib` currently have service_role usage — all must be verified. |
-
-### Code Quality Review
+### Core Inventory Features
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Dead code removal | 336 source files across 16 phases. Refactors and pivots leave orphaned exports, unused imports, and commented-out logic. Dead code confuses future developers and inflates bundle size. | MEDIUM | Use TypeScript compiler + ESLint `no-unused-vars` to surface. Manual review of flagged items. Focus on large files. |
-| Consistent error handling | Unhandled rejections in Server Actions return 500 errors to users. Error handling must be uniform: try/catch, structured error returns, user-facing messages vs internal logs. | MEDIUM | Audit Server Actions and Route Handlers. Verify every async path has error handling. Check that error messages don't leak stack traces to clients. |
-| TypeScript strict mode compliance | `strict: true` catches null dereferences, implicit any, and unchecked index access. Any type suppressions (`as any`, `!` non-null assertions) should be documented and justified. | LOW | Run `tsc --strict --noEmit`. Count and triage errors. Fix or document with justification. |
-| Performance-critical path review | Money calculations, GST rounding, and stock decrements are correctness-critical. Any slow query on a hot path (POS checkout, storefront product list) needs a Supabase index. | MEDIUM | Check: RLS policies don't cause full table scans (add indexes on `store_id` columns if missing), N+1 queries in product list or order history, Server Component data fetching patterns. |
-| Inline documentation for complex business logic | GST calculation, Xero sync, tenant provisioning, `requireFeature()` dual-path, `provision_store` RPC — these are non-obvious. Future maintainers (including the solo developer after 6 months away) need comments. | MEDIUM | JSDoc comments on `gst.ts`, `xero/sync.ts`, `requireFeature.ts`, `tenantCache.ts`, `provision_store` migration. Explain the "why", not the "what". |
+| Quantity on hand per product | Foundation of any inventory system. Without a visible count, merchants cannot trust or act on their stock. | LOW | Already in DB as `stock_quantity`. Needs UI surfacing when add-on is active. |
+| Manual stock adjustment with reason code | Every POS in the market (Square, Lightspeed, Shopify) supports this. Merchants need to record why stock changed. | LOW | Reason codes: Stock Received, Damage, Theft/Loss, Store Use, Stocktake Recount, Return to Supplier. Each adjustment writes a row to an adjustment history table. |
+| Adjustment history log | Merchants ask "who changed this and when?" when counts don't match. An audit trail is table stakes for any business handling physical goods. | MEDIUM | Log: timestamp, product, quantity before, quantity after, delta, reason code, actor (owner/staff name or "POS sale" or "online order"). |
+| Low stock alert (threshold per product) | Already shipped in v1.0. When add-on is active, this is a core expectation. | LOW | Already implemented. Re-confirm it is gated behind add-on or always-on is acceptable. Threshold should be configurable per product. |
+| Stock level visible in product admin | When managing inventory, merchants need to see current stock inline without navigating away. | LOW | Stock column in product list. Highlight red when at or below threshold. |
+| Stock blocked at zero when add-on active | If a product hits zero stock, the POS should block sale (or warn). Without this the add-on has no protective value. | LOW | Already implemented as atomic decrement. When add-on is active, enforce the block on POS checkout. Zero-stock products should be clearly marked. |
+| Service product type — no stock tracked | Merchants selling labour, repairs, or consultation need a product type that never triggers stock checks, never shows a count, and never blocks at zero. | LOW | Add `product_type: 'physical' \| 'service'` to products table. Services skip all stock logic at POS, storefront, and in admin. |
 
-### Test Coverage Gap Analysis
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Coverage report generation | 365+ tests exist but coverage distribution is unknown. Some critical paths may have zero tests while utility functions have exhaustive coverage. | LOW | Run `vitest --coverage`. Identify files below 80% coverage. Prioritize: GST logic, money utilities, Server Actions, RLS integration. |
-| GST and money calculation coverage | Per-line GST on discounted amounts is the IRD-compliance core. If this breaks, the product is non-compliant. Must be 100% covered. | LOW | `gst.ts` and `money.ts` already have tests. Verify edge cases: zero price, 100% discount, fractional cents, large orders. |
-| Authentication path coverage | Staff PIN lockout, owner session expiry, super admin guard — authentication failures are the highest-risk paths. | MEDIUM | Verify: PIN lockout after N failures, expired JWT handling, session cookie manipulation, super admin bypass attempts. |
-| Webhook handler coverage | Stripe webhooks update subscription state. Missing coverage here = undetected billing bugs. | MEDIUM | Test: subscription.created, subscription.updated, subscription.deleted, invoice.payment_failed. Each event type with valid and invalid payloads. |
-| RLS integration tests | The existing `rls.test.ts` covers initial RLS. Verify v2.0 tables (add_ons, subscriptions, audit_logs) are also covered. Cross-tenant access attempts must fail. | MEDIUM | Expand `rls.test.ts` or add `rls-v2.test.ts`. Test: tenant A cannot read tenant B's data on any table. |
-
-### Developer Documentation
+### Stocktake (Physical Count)
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Setup guide (local dev) | Without this, a new contributor (or the founder returning after 3 months) cannot run the project. | LOW | Steps: clone, install, env vars, Supabase local, seed data, run dev. Should take under 20 minutes to follow. |
-| Environment variable reference | 336 source files with multiple env vars. What is each one? Where does it come from? What breaks if it's missing? | LOW | Table: variable name, purpose, where to get it, required vs optional, which environments. |
-| Architecture overview | The system has non-obvious patterns: custom JWT claims for RLS, dual-path `requireFeature()`, separate staff PIN auth, SECURITY DEFINER RPCs, tenant cache. These need documentation. | MEDIUM | Diagrams or prose: tenant isolation model, auth system map (owner vs staff vs super admin), feature gating architecture, data flow for POS sale, data flow for online order. |
-| Server Action + Route Handler inventory | 67 action files, multiple API route directories. Developers need a map of what exists and what it does. | MEDIUM | Table or structured list: action name, input schema, auth required, what it does, what it returns. |
-| Contribution guide | When a second developer joins (or the founder hires a contractor), they need conventions: branch naming, commit format, test requirements, PR process. | LOW | Brief guide: how to run tests, what to test, code style, how phases/plans work with GSD, how to update PROJECT.md. |
-
-### Deployment Runbook
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Production Supabase setup | Supabase free tier is used for development. Production requires a Supabase project with proper settings: connection pooling, prod credentials, migration application. | MEDIUM | Step-by-step: create org + project, apply migrations in order, seed required data (super admin user, default plans), configure auth providers, set up storage buckets, configure email templates. |
-| Stripe live key configuration | Test keys and live keys are different. Going live requires: live publishable key, live secret key, live webhook endpoint registered with Stripe, live webhook signing secret. | LOW | Checklist: register webhook endpoint in Stripe dashboard, copy live keys to Vercel env vars, verify webhook handler receives live events, test with a real card. |
-| Vercel production config | Wildcard subdomains require DNS delegation. Custom domains require Vercel project configuration. Environment variables in Vercel must match .env.example. | MEDIUM | Steps: add `*.nzpos.app` wildcard DNS, configure Vercel env vars (production vs preview vs development), verify Next.js middleware runs on correct domains, test tenant routing end-to-end. |
-| Database migration strategy | 16 phases of migrations must apply in order. A missed or out-of-order migration breaks the schema. | LOW | Document: migration file naming convention, how to apply to a new Supabase project, how to verify schema is correct, rollback approach if a migration fails. |
-| Monitoring and alerting baseline | A production SaaS with external merchants needs error visibility. Silent failures in Stripe webhooks, Xero sync, or email delivery are undetectable without monitoring. | LOW | Minimum viable: Vercel error logs, Supabase logs, Stripe dashboard for failed webhook deliveries. Document how to check each. Add Sentry or similar when budget allows. |
-
-### User-Facing Documentation
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Merchant onboarding guide | The setup wizard covers UI steps. Documentation covers: what the POS is, how to take a first sale, how the storefront works, how inventory syncs. Without this, support volume is high. | MEDIUM | Format: step-by-step with screenshots. Scope: signup → first product → first sale → first online order. Not a full manual — the critical first-hour experience. |
-| Admin dashboard reference | 336 source files means a large feature surface. Merchants navigating the admin for the first time need a map. | MEDIUM | Structured reference: each section of admin (Products, Orders, Reports, Billing, Settings), what it does, common tasks. |
-| GST and compliance explanation | NZ merchants need to trust that GST is handled correctly. A brief explanation of how NZPOS handles GST (15%, tax-inclusive, per-line rounding, IRD-compliant) builds confidence and reduces support tickets about "why does the GST number look different?" | LOW | Short prose in merchant docs. Link to the relevant IRD guidance. |
+| Create a named stocktake session | All major POS systems (Lightspeed, Shopify Stocky, Square) organise counts into named sessions with a status. Merchants expect a "start stocktake" action rather than ad-hoc adjustments. | LOW | Session has: name, created_at, status (in_progress / completed), created_by. |
+| Enter counted quantities per product | The core stocktake interaction. Merchant sees product name + expected quantity, enters actual counted quantity. | MEDIUM | UI: list of products with current system quantity shown, input field for counted quantity. Can be done product-by-product or bulk. Barcode scan input is an accelerator (already have camera scanner). |
+| Variance calculation (counted vs system) | Lightspeed, Square, and Shopify all surface variance as a primary column in their stocktake UI. Merchants need to see discrepancy, not calculate it. Variance = counted - system quantity at time of count snapshot. | LOW | Variance column: positive = surplus, negative = shrinkage. Shown as ±N with colour coding. Cost variance (variance × cost price) is a differentiator but not table stakes. |
+| Commit stocktake to update live quantities | At the end of a count, the merchant submits and all stock quantities are updated to the counted values. This is the "reconcile" action. Cannot be undone — confirm modal required. | MEDIUM | Each line generates a stock adjustment with reason "Stocktake Recount". Old quantity and new quantity are recorded. Deltas flow to adjustment history. |
+| Partial stocktake (subset of products) | Lightspeed and Shopify both support counting only a subset (by category, tag, or manual selection). Merchants with large catalogs need this — counting everything at once is impractical. | MEDIUM | Filter by category when starting the stocktake session. Products not in the count are not adjusted. |
 
 ---
 
 ## Differentiators
 
-Hardening work that goes beyond baseline and meaningfully differentiates a serious production product.
-
-### Security
+Features that set this inventory add-on apart from the baseline. Not expected by merchants, but valued when present.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Rate limiting on auth and signup endpoints | Prevents brute-force PIN attacks, credential stuffing on owner login, and spam signups. Most SaaS apps skip this at launch and regret it. | MEDIUM | The project has `signupRateLimit.ts` — verify it's applied and effective. Extend to PIN login attempts. Use Upstash Redis or Vercel KV for distributed rate limit state (free tier available). |
-| Penetration testing of RLS isolation | Automated RLS tests verify logic. Manual pen test attempts to leak cross-tenant data via crafted requests, malformed JWTs, or exploiting SECURITY DEFINER functions. Gives high confidence in isolation. | MEDIUM | Structured test: use two test tenants, attempt cross-tenant reads via REST API, GraphQL (if enabled), RPC calls. Document results. |
-| Audit log completeness review | v2.0 includes an audit trail for super admin actions. Verify: all sensitive mutations are logged (suspend, plan override, Xero token access), log entries are immutable (no UPDATE/DELETE on audit_log table), logs are retained. | LOW | Check RLS on audit_log table: INSERT allowed for service_role, no UPDATE or DELETE. Verify trigger or explicit log call on all sensitive actions. |
-| Content Security Policy headers | CSP prevents XSS attacks from injecting scripts. Next.js makes CSP configuration easy via `next.config.ts` headers. Uncommon at early-stage SaaS but meaningful for merchant trust. | LOW | Add CSP headers: `default-src 'self'`, allow Stripe.js, Supabase CDN, and any other third-party scripts. Use report-only mode first to catch violations. |
-
-### Code Quality
-
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| GST specimen test suite | The IRD publishes GST calculation specimens. A test suite that directly validates against IRD-published examples is a genuine compliance artifact. Gives merchants and accountants confidence that the software is correct. | LOW | Locate IRD GST rounding examples (integer cents, per-line). Add them as named test cases in `gst.test.ts`. Comment with IRD source. |
-| Money invariant tests | Integer-only arithmetic is correct, but tests should assert the invariants: no floating point results, no values below zero, refund amounts never exceed original. | LOW | Add property-based tests or explicit invariant assertions to `money.test.ts`. |
-| Structured logging pattern | `console.log` scattered through Server Actions makes production debugging hard. A structured logger (with request ID, store_id, action name) makes logs searchable in Vercel. | MEDIUM | Thin wrapper around `console.log` that adds context. Not a full observability stack — just consistent format. Replace raw `console.log` in Server Actions with the structured logger. |
-
-### Documentation
-
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| Data model diagram | ERD or table-relationship diagram for the Supabase schema. Enormously useful for onboarding developers, debugging, and understanding foreign key chains (store → products → order_items, etc.). | LOW | Can be generated from Supabase schema inspector or drawn in Mermaid. Embed in ARCHITECTURE.md. |
-| Decision log | PROJECT.md already has a key decisions table. Expanding it with the "what we tried and rejected" context — especially for GST rounding, Xero token storage, and staff PIN design — is rare but valuable for a codebase that will be maintained for years. | LOW | Add to PROJECT.md or a separate `DECISIONS.md`. Each entry: decision, date, rationale, outcome. |
-| Video walkthrough (merchant-facing) | A 5-minute Loom of taking a first sale through the POS and fulfilling an online order converts better than written docs for non-technical merchant users. | MEDIUM | Record after deployment runbook is complete (requires live Supabase + Stripe). Not a blocker for written docs. |
-
-### Deployment
-
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| Smoke test suite post-deploy | After deploying to production, run a structured smoke test: sign up a new merchant, create a product, take a POS sale, place a storefront order, verify Stripe payment, check Xero sync. Catches environment misconfigurations immediately. | MEDIUM | Checklist format in runbook. Could be partially automated with Playwright against the production URL. |
-| Automated migration CI check | GitHub Action that runs `supabase db diff` on PRs to catch schema drift. Prevents "works on dev, breaks on prod" migration failures. | MEDIUM | Supabase CLI supports this. Requires Supabase access token in GitHub secrets. Appropriate to add now before the codebase grows further. |
+| Cost variance in stocktake (variance × cost price) | Makes shrinkage financially tangible. Merchant sees "missing 3 units of X = $45 loss" rather than just a count discrepancy. Lightspeed surfaces this prominently. | LOW | Requires cost_price field on products (may not exist). If no cost price, skip. Useful for a supplies store where cost of goods is known. |
+| Stock history per product (timeline view) | Drill down to a single product and see its full movement history: sales, adjustments, stocktakes. Useful when investigating a discrepancy. Square gates this behind paid tier. | MEDIUM | Filter adjustment_history by product_id. Show source for each movement: "POS sale #123", "Online order #456", "Manual adjustment — Damage", "Stocktake 2026-04-01". |
+| "Who adjusted this?" traceability | Log actor on every stock movement: owner, named staff member, or system (POS sale, online order). Reduces internal theft and error disputes. | LOW | Requires recording the actor on every mutation. Staff PIN sessions already have a staff identity. Extend adjustment log to capture this. |
+| Barcode scanning in stocktake | Speed up physical count using the existing barcode scanner infrastructure. Scan a product barcode to select it, then enter count. No need to navigate a list. | LOW | The barcode scanner (camera overlay, EAN-13/UPC-A) is already shipped. In stocktake mode, scanning a barcode auto-focuses the count input for that product. Low implementation effort because the scanner infrastructure exists. |
+| Free-tier simplification (no stock clutter) | Merchants on the free tier should not see empty stock columns, zero counts, or low stock warnings they cannot act on. Cleaning up the free experience is a quality differentiator. | MEDIUM | When inventory add-on is not active: hide stock quantity columns from product list, remove low stock indicators, remove stocktake menu, products sell freely with no stock checks. Requires conditional rendering throughout admin and POS. |
+| Stock received workflow | When a supplier delivery arrives, merchants need a fast way to add stock in bulk. A "receive stock" workflow (select products, enter quantities received) is cleaner than individual manual adjustments. | MEDIUM | A bulk-adjustment screen pre-filtered to "Stock Received" reason code. Enter supplier name/reference as optional note. Each product gets an adjustment row with the reason "Stock Received". |
 
 ---
 
 ## Anti-Features
 
-Things that are commonly added during hardening milestones but create more work than value at this stage.
+Commonly built but problematic for this scope and audience.
 
 | Anti-Feature | Why Requested | Why Problematic | Alternative |
 |--------------|---------------|-----------------|-------------|
-| Full SOC 2 compliance audit | "We're a SaaS, we need SOC 2" | SOC 2 Type II is a 6-12 month process involving external auditors. Premature at single-store launch. The audit requires logging infrastructure, access controls, and organizational policies that don't yet exist. | OWASP Top 10 review + RLS audit + documented key management is the appropriate baseline. Revisit SOC 2 when first enterprise merchant requires it. |
-| GDPR compliance deep-dive | "We handle personal data" | NZ operates under the Privacy Act 2020 (not GDPR). The relevant compliance is the NZ Privacy Principles. A full GDPR implementation (right to erasure workflows, DPA agreements, cookie consent banners) is over-scoped. | Document Privacy Act 2020 compliance posture: what data is collected, how it's stored, how merchants can delete a customer. Soft-delete pattern for customer records. |
-| Automated security scanner (DAST) | "Run OWASP ZAP against production" | DAST tools generate large volumes of false positives against Next.js/Supabase apps. Triaging results takes more time than the targeted manual review justified by this codebase's size. | Manual OWASP Top 10 review + structured RLS pen test is higher signal for this app. |
-| Full API documentation site (OpenAPI/Swagger) | "Document all API endpoints" | This app uses Server Actions for most mutations — not a REST API. Route Handlers exist for webhooks, Stripe, and Xero callbacks, but they're not a public API. Generating OpenAPI docs for internal webhook handlers has no audience. | Document Server Actions in a structured table in ARCHITECTURE.md. Reserve OpenAPI for when a public API is actually needed (v3+). |
-| i18n / localisation | "Support multiple languages for documentation" | The target market is NZ English speakers. Multiple language support adds translation workflow overhead with zero near-term audience. | Write all docs in NZ English. Localise if and when a non-English-speaking market is targeted. |
-| Comprehensive performance benchmarking suite | "We need p95 latency baselines" | Meaningful performance benchmarks require production traffic patterns. Synthetic benchmarks against a dev environment are misleading. The POS is single-user-per-store; latency is not the constraint. | Document known performance considerations (index on store_id, avoid N+1 in product list). Add Vercel analytics after launch for real data. |
-| Full test coverage enforcement (100%) | "We should have 100% coverage" | 100% coverage is a coverage-gaming incentive, not a quality metric. It encourages trivial tests for getters/setters while not improving coverage of complex conditional paths. Supabase RLS integration tests and GST edge cases are higher value than 100% line coverage. | Target 80%+ on critical paths (GST, money, auth, RLS). Accept lower coverage on UI components and boilerplate. |
+| Purchase orders / supplier management | "Inventory management means tracking what we ordered" | Full PO workflow (create order, send to supplier, receive against PO, track backorders) is a separate product surface. Adds schema complexity, a new entity type, and a significant UI surface. Not needed for a supplies store doing manual restocking. | Simple "Stock Received" manual adjustment with optional supplier reference note. Good enough for v3.0. PO module is v4.0+ work. |
+| Reorder point automation | "Alert me to reorder when stock hits X" | Low stock alerts already exist. Automated reorder emails or PO creation requires supplier data model. Merchants at this scale order manually. | Low stock threshold per product (already exists). Manual reorder decision by owner. |
+| Inventory forecasting / demand prediction | "Tell me what I'll need next month" | Requires sufficient sales history and a forecasting model. Premature for a product that may have only weeks of data. | Basic top-products report (already in admin) surfaces what's selling. Merchant makes their own reorder decisions. |
+| Multi-location stock | "I have a warehouse and a shopfront" | Multi-store is explicitly out of scope (one store per signup, multi-store deferred to v3). Multi-location inventory requires a locations table, transfers between locations, and location-scoped counts. | One inventory per store. Multi-location is a future milestone if demand signal appears. |
+| FIFO / LIFO / weighted average costing | "I need to know my actual COGS per sale" | Accounting-grade cost tracking requires recording cost price at time of each stock receipt, maintaining a cost layer, and updating COGS on each sale. This is accounting software scope (Xero handles this). | Record cost_price on the product as a snapshot. Use Xero for COGS accounting. |
+| Serialised / batch-tracked stock | "Each unit has its own serial number" | Serialised inventory requires a separate item-level table (each unit is a row), dramatically complicating the data model. Relevant for electronics, medical, or high-value goods — not a supplies store. | SKU-level quantity tracking is sufficient. |
+| Minimum viable "freeze sales during stocktake" | "Stop selling while I count" | Freezing sales on a live POS is a significant UX disruption and a complex technical state (block all checkouts, unblock on commit). For a small store, the merchant can simply do their count after hours when there are no sales. | Documentation guidance: conduct stocktake when the store is closed. The system records a snapshot quantity at count start; live sales that occur during a count will be visible as adjustments. |
 
 ---
 
 ## Feature Dependencies
 
 ```
-Security audit
-    └──requires──> RLS policy review (must happen before deployment)
-    └──requires──> Auth flow verification (must happen before external merchants)
-    └──requires──> Webhook signature verification (must be confirmed, not assumed)
-    └──informs──> Test coverage gaps (audit reveals untested paths)
+Service product type
+    └──enables──> Free tier simplification (service products should always sell freely, regardless of add-on status)
+    └──is prerequisite for──> POS and storefront rendering correctly (services never show stock badges)
 
-Deployment runbook
-    └──requires──> Environment variable audit (know what vars are needed)
-    └──requires──> Database migration strategy (know migration order)
-    └──requires──> Stripe live key configuration
-    └──requires──> Production Supabase setup
-    └──enables──> Smoke test suite (needs production to run against)
-    └──enables──> Merchant onboarding guide (screenshots require live environment)
+Inventory add-on (requireFeature gate)
+    └──unlocks──> Manual stock adjustments
+    └──unlocks──> Adjustment history log
+    └──unlocks──> Stocktake sessions
+    └──unlocks──> Stock quantity visible in admin
+    └──unlocks──> Stock blocking at zero
+    └──unlocks──> Low stock threshold alerts (or confirm always-on is acceptable)
 
-Developer documentation
-    └──requires──> Architecture is stable (don't document what's about to change)
-    └──requires──> Server Action inventory (must enumerate what exists)
-    └──informs──> Contribution guide (conventions must be agreed before documenting)
+Manual stock adjustment
+    └──requires──> Adjustment history table (adjustments write rows)
+    └──is used by──> Stocktake commit (stocktake generates adjustment rows)
+    └──is used by──> POS sale (sales generate negative adjustment rows)
+    └──is used by──> Online order (online orders generate negative adjustment rows)
 
-User-facing documentation
-    └──requires──> Deployment runbook complete (screenshots need live environment)
-    └──requires──> Feature set stable (docs for shipped v2.1 features, not in-progress)
-    └──enhances──> Merchant onboarding (reduces time-to-first-sale)
+Stocktake session
+    └──requires──> Manual stock adjustment (commit writes adjustments)
+    └──enhanced by──> Barcode scanning (already shipped, low integration effort)
+    └──enhanced by──> Category filter (partial stocktake)
 
-Test coverage gap analysis
-    └──requires──> Coverage report run (vitest --coverage)
-    └──informs──> Which security paths need additional tests
-    └──informs──> Whether GST/money coverage is complete
+Adjustment history log
+    └──requires──> Actor tracking on all mutations (staff PIN sessions already have identity)
+    └──enhanced by──> Stock history per product view (filtered history per product)
 
-Code quality review
-    └──requires──> Dead code removal (before documenting architecture, remove what's dead)
-    └──informs──> Inline documentation (document complex code that survives review)
-    └──enhances──> Developer documentation (cleaner code = easier to document)
+Free tier simplification
+    └──requires──> Conditional rendering audit across admin, POS, storefront
+    └──conflicts with──> Existing stock_quantity column being shown everywhere (must be hidden when add-on not active)
 ```
 
 ### Dependency Notes
 
-- **Security audit must precede external merchant onboarding.** RLS and auth verification cannot be deferred — they're the foundation of multi-tenant trust.
-- **Deployment runbook must precede user documentation.** Screenshots and URLs in merchant docs require a live production environment.
-- **Code quality review should precede inline documentation.** Documenting code that will be removed is wasted work.
-- **Test coverage gaps should be filled before the security audit is declared complete.** Untested auth paths are unknown security posture.
+- **Service product type must ship first.** It is a prerequisite for POS and storefront rendering changes (services never show stock badges regardless of add-on status), and it is independent of billing gating.
+- **Inventory add-on gate must precede all inventory UI.** All stock visibility (columns, badges, alerts) should render only when `requireFeature('inventory')` returns true.
+- **Adjustment history table is the shared backbone.** Manual adjustments, POS sales, online orders, and stocktake commits all write to this table. Define its schema early — all other inventory features depend on it.
+- **Stocktake depends on adjustment.** The commit step of a stocktake is simply a batch of manual adjustments with reason "Stocktake Recount". No separate commit mechanism needed.
+- **Free tier simplification depends on add-on gate being correct.** Do not attempt the conditional rendering pass until the gate is confirmed working.
 
 ---
 
-## MVP Definition for v2.1
+## MVP Definition for v3.0
 
-### Must Complete Before First External Merchant (P0)
+### Launch With (Phase 1 — Foundation)
 
-Non-negotiable. These are active liabilities if skipped.
+Minimum viable inventory add-on. Unlocks the paid add-on and delivers the core value.
 
-- [ ] RLS policy audit across all tables (new v2.0 tables: add_ons, subscriptions, audit_logs, store_wizard_state) — security liability
-- [ ] Auth flow verification: PIN lockout, JWT expiry, super admin guard — security liability
-- [ ] Stripe webhook signature verification confirmed — billing integrity
-- [ ] Server Action Zod validation audit (67 action files) — input safety
-- [ ] Environment variable audit + .env.example updated — deployment blocker
-- [ ] Deployment runbook: production Supabase + Stripe live keys + Vercel wildcard DNS — launch blocker
-- [ ] Setup guide (local dev) — developer productivity, solo dev returning after time away
+- [ ] `product_type` column (`physical` / `service`) with migration and admin UI toggle — services skip all stock logic
+- [ ] `inventory_adjustments` table: product_id, store_id, delta, quantity_before, quantity_after, reason, notes, actor, source, created_at
+- [ ] Manual stock adjustment UI in admin (select product, enter delta, select reason code, optional notes)
+- [ ] Adjustment history view in admin (filterable by product, date range, reason)
+- [ ] `requireFeature('inventory')` gate wired to Stripe billing (add-on slug, billing portal description)
+- [ ] Free tier: hide stock columns and stock indicators when add-on not active; products sell freely
 
-### High Value, Ship Early in Milestone (P1)
+### Add After Foundation (Phase 2 — Stocktake)
 
-- [ ] Test coverage report — identify gaps before shipping to production
-- [ ] RLS integration tests for v2.0 tables (add_ons, subscriptions, audit_logs)
-- [ ] Webhook handler test coverage (Stripe subscription events)
-- [ ] Inline documentation for: `gst.ts`, `requireFeature.ts`, `tenantCache.ts`, `xero/sync.ts`, `provision_store` RPC
-- [ ] Architecture overview document (auth systems map, tenant isolation model, feature gating)
-- [ ] Server Action inventory (67 actions, what each does, auth required)
-- [ ] Merchant onboarding guide (first sale walkthrough)
-- [ ] Smoke test checklist post-deploy
+- [ ] Stocktake session: create, list by product with system quantity, enter counted quantity, show variance
+- [ ] Stocktake commit: write adjustment rows for all changed products, mark session complete, confirm modal
+- [ ] Partial stocktake: filter by category when creating session
+- [ ] Barcode scan integration in stocktake count entry (existing scanner, low effort)
 
-### Meaningful but Deferrable (P2)
+### Phase 3 — POS + Storefront Integration
 
-- [ ] Dead code removal — code quality, not correctness
-- [ ] Consistent error handling audit — user experience improvement
-- [ ] TypeScript strict mode compliance check — developer quality
-- [ ] Content Security Policy headers — security hardening above baseline
-- [ ] Structured logging pattern — production debugging quality
-- [ ] Admin dashboard reference documentation
-- [ ] Contribution guide
-- [ ] Data model diagram (ERD)
-- [ ] Rate limiting audit and extension to PIN login
-- [ ] Audit log completeness review
+- [ ] POS: show stock badge on product tiles when add-on active (in-stock / low / out)
+- [ ] POS: block checkout of zero-stock physical products when add-on active (with override if store setting allows)
+- [ ] Storefront: hide out-of-stock products or show "sold out" badge when add-on active
+- [ ] Services: always sellable in POS and storefront regardless of add-on status
 
-### Nice to Have (P3)
+### Future Consideration (v3.1+)
 
-- [ ] GST IRD specimen test suite — compliance confidence artifact
-- [ ] Video walkthrough for merchants — conversion aid, not a support substitute
-- [ ] Automated migration CI check — developer tooling
-- [ ] Decision log / DECISIONS.md expansion
-- [ ] Penetration testing of RLS isolation (structured, documented)
+- [ ] Cost variance in stocktake — requires cost_price field, low complexity if field exists
+- [ ] Stock received workflow (bulk "Stock Received" adjustment screen) — reduces friction for restocking
+- [ ] Per-product stock history timeline — useful but not blocking
+- [ ] Stock movement reporting (shrinkage totals, adjustment reasons breakdown) — reporting add-on work
 
 ---
 
 ## Feature Prioritization Matrix
 
-| Feature | Value | Cost | Priority |
-|---------|-------|------|----------|
-| RLS policy audit (v2.0 tables) | HIGH | MEDIUM | P0 |
-| Auth flow verification | HIGH | MEDIUM | P0 |
-| Stripe webhook signature verification | HIGH | LOW | P0 |
-| Server Action Zod audit | HIGH | MEDIUM | P0 |
-| Env var audit + .env.example | HIGH | LOW | P0 |
-| Production deployment runbook | HIGH | MEDIUM | P0 |
-| Local dev setup guide | HIGH | LOW | P0 |
-| Test coverage report | HIGH | LOW | P1 |
-| RLS tests for v2.0 tables | HIGH | MEDIUM | P1 |
-| Webhook handler test coverage | HIGH | MEDIUM | P1 |
-| Inline docs (GST, requireFeature, tenantCache, Xero, provision_store) | HIGH | MEDIUM | P1 |
-| Architecture overview | HIGH | MEDIUM | P1 |
-| Server Action inventory | MEDIUM | MEDIUM | P1 |
-| Merchant onboarding guide | HIGH | MEDIUM | P1 |
-| Smoke test checklist | HIGH | LOW | P1 |
-| Dead code removal | MEDIUM | MEDIUM | P2 |
-| Error handling consistency | MEDIUM | MEDIUM | P2 |
-| TypeScript strict check | MEDIUM | LOW | P2 |
-| CSP headers | MEDIUM | LOW | P2 |
-| Structured logging | MEDIUM | MEDIUM | P2 |
-| Admin dashboard reference | MEDIUM | MEDIUM | P2 |
-| Contribution guide | MEDIUM | LOW | P2 |
-| ERD / data model diagram | MEDIUM | LOW | P2 |
-| Rate limiting audit | MEDIUM | MEDIUM | P2 |
-| Audit log completeness | MEDIUM | LOW | P2 |
-| GST IRD specimen tests | LOW | LOW | P3 |
-| Merchant video walkthrough | MEDIUM | MEDIUM | P3 |
-| Automated migration CI | LOW | MEDIUM | P3 |
-| Decision log expansion | LOW | LOW | P3 |
-| RLS pen test (structured) | MEDIUM | HIGH | P3 |
+| Feature | User Value | Implementation Cost | Priority |
+|---------|------------|---------------------|----------|
+| Service product type (`physical`/`service`) | HIGH | LOW | P1 |
+| `inventory_adjustments` table schema | HIGH | LOW | P1 |
+| Manual stock adjustment UI | HIGH | LOW | P1 |
+| Adjustment history log | HIGH | MEDIUM | P1 |
+| `requireFeature('inventory')` billing gate | HIGH | LOW | P1 |
+| Free tier stock UI cleanup | HIGH | MEDIUM | P1 |
+| Stocktake session create + count entry | HIGH | MEDIUM | P1 |
+| Stocktake variance display | HIGH | LOW | P1 |
+| Stocktake commit (reconcile) | HIGH | MEDIUM | P1 |
+| Partial stocktake (by category) | MEDIUM | LOW | P2 |
+| Barcode scan in stocktake | MEDIUM | LOW | P2 |
+| POS stock badges (in-stock/low/out) | HIGH | LOW | P1 |
+| POS zero-stock blocking | HIGH | LOW | P1 |
+| Storefront sold-out handling | MEDIUM | LOW | P2 |
+| Cost variance in stocktake | MEDIUM | LOW | P3 |
+| Stock received bulk workflow | MEDIUM | MEDIUM | P3 |
+| Per-product stock history view | MEDIUM | MEDIUM | P3 |
+| Stock movement reporting | LOW | MEDIUM | P3 |
+
+**Priority key:**
+- P1: Must have — add-on is not shippable without this
+- P2: Should have — add in same milestone when possible
+- P3: Nice to have — future milestone or later phase
 
 ---
 
-## Domain-Specific Complexity Notes
+## Standard Reason Codes
 
-### What Makes This Harder Than a Typical SaaS Hardening
+Based on Square, Oracle Retail, and Lightspeed documentation, the standard reason codes for a small retail POS are:
 
-**Two auth systems.** Owner Supabase Auth + staff PIN jose JWTs are independent. Both must be audited. Edge cases: can a staff PIN JWT be used to trigger owner-level Server Actions? Can an expired owner session fall through to staff permissions?
+| Reason Code | Direction | Description |
+|-------------|-----------|-------------|
+| Stock Received | + (increase) | Supplier delivery or restocking |
+| Stocktake Recount | ± (both) | Quantity corrected during stocktake |
+| Damage | - (decrease) | Items damaged and removed from sellable inventory |
+| Theft / Loss | - (decrease) | Shoplifting, employee theft, or unexplained loss |
+| Store Use | - (decrease) | Item consumed for internal store use |
+| Return to Supplier | - (decrease) | Items sent back to supplier |
+| Customer Return | + (increase) | Returned item put back to stock (partial refunds already restore stock; this is for manual scenarios) |
+| Correction | ± (both) | Administrative correction for data entry error |
 
-**Custom JWT claims for RLS.** The `store_id` claim in JWTs is not Supabase-native — it's a custom claim that drives all RLS policies. If the claim is missing from a JWT (new auth flow, edge case), RLS policies that use it fall back to no-match = no data (safe) or might error. Verify the fallback is safe silence, not an exception that breaks the request.
+System-generated (not manually selectable):
+| Source | Direction | Description |
+|--------|-----------|-------------|
+| POS Sale | - (decrease) | Sale completed at POS terminal |
+| Online Order | - (decrease) | Order placed on storefront |
+| Refund | + (increase) | Partial refund stock restore (already implemented) |
 
-**SECURITY DEFINER RPCs.** `provision_store` runs with elevated privileges. Any flaw in its input validation allows privilege escalation. It must be audited in isolation: what inputs does it accept? Does it validate the caller's identity? Can it be called by a merchant to overprovision?
+**Existing dependency:** Partial refunds already restore stock. The new adjustment history table should also capture these system-generated movements so the history is complete. Requires writing a row to `inventory_adjustments` on each refund stock restore (backfill or hook into existing refund logic).
 
-**67 Server Actions across 16 phases.** These were written incrementally. Patterns evolved. Early actions may not follow conventions established in later phases. The audit must be systematic, not spot-check.
+---
 
-**Xero tokens in Supabase Vault.** Vault access is service_role only, via SECURITY DEFINER RPCs. This is a correct pattern but must be verified: are there any paths that expose Vault values to the client bundle or logs?
+## Competitor Feature Analysis
+
+| Feature | Square Free | Square Retail Plus ($49/mo) | Lightspeed X (Vend) | Our Approach |
+|---------|-------------|------------------------------|----------------------|--------------|
+| Basic stock quantity | Yes | Yes | Yes | Yes — free when add-on active |
+| Manual adjustment + reason | Limited | Full (6 reasons) | Full (custom reasons) | 8 standard reasons, no custom in v3.0 |
+| Adjustment history | No | Yes (filterable) | Yes | Yes — filterable by product, date, reason |
+| Stocktake / inventory count | No | Yes (full UI) | Yes (count sheets, barcode, spreadsheet import) | Yes — session-based with variance |
+| Partial stocktake | No | Yes | Yes | Yes — by category |
+| Barcode scanning in count | No | Yes | Yes | Yes — existing scanner, low cost |
+| Service/non-inventory item type | Yes (toggle) | Yes | Yes | Yes — explicit product_type field |
+| Stock badges on POS | Yes | Yes | Yes | Yes — when add-on active |
+| Sold-out blocking | Yes | Yes | Yes | Yes — when add-on active |
+| Cost variance in stocktake | No | No | Yes | Deferred to v3.1 |
+| Purchase orders | No | No | Yes (paid add-on) | Out of scope |
+| Inventory forecasting | No | No | Paid add-on | Out of scope |
+
+**Confidence note:** Square and Lightspeed/Vend feature details drawn from official support documentation (verified via web fetch). Cost and tier information as of 2026-04-04; may drift.
 
 ---
 
 ## Sources
 
-- OWASP Top 10 (2021, remains current): https://owasp.org/Top10/ — HIGH confidence
-- Next.js App Router security guidance: https://nextjs.org/docs/app/guides/authentication — HIGH confidence
-- Supabase RLS documentation: https://supabase.com/docs/guides/database/row-level-security — HIGH confidence
-- Supabase Vault documentation: https://supabase.com/docs/guides/database/vault — HIGH confidence
-- Stripe webhook signature verification: https://docs.stripe.com/webhooks/signature-verification — HIGH confidence
-- Next.js security headers: https://nextjs.org/docs/app/api-reference/config/next-config-js/headers — HIGH confidence
-- Codebase analysis: 336 source files, 67 action files in `src/actions/`, 51 lib files in `src/lib/`, 570 test files — direct inspection
-- PROJECT.md analysis: known gaps (DEPLOY-02/03/04 pending, human UAT pending) — direct read
+- Square stock adjustment documentation: https://squareup.com/help/us/en/article/8331-set-up-inventory-tracking — MEDIUM confidence (verified via WebFetch)
+- Square stock adjustment history (paid feature): https://squareup.com/help/us/en/article/6061-view-stock-adjustment-history-with-square-for-retail — MEDIUM confidence (verified via WebFetch)
+- Lightspeed Retail X-Series inventory counting workflow: https://retail-support.lightspeedhq.com/hc/en-us/articles/229129948-Counting-inventory — MEDIUM confidence (verified via WebFetch)
+- Oracle Retail Store Inventory Management reason codes: https://docs.oracle.com/cd/E12454_01/sim/pdf/160/html/store_user_guide/inventory_adjustments.htm — HIGH confidence (verified via WebFetch; enterprise reference, not all codes apply to small retail)
+- Fishbowl stocktake best practices: https://www.fishbowlinventory.com/blog/stocktake — MEDIUM confidence (WebSearch)
+- MrPeasy stocktake guide: https://www.mrpeasy.com/blog/stocktake/ — MEDIUM confidence (verified via WebFetch)
+- Shopify "Track quantity" per-product toggle: https://help.shopify.com/en/manual/products/inventory/setup/set-up-inventory-tracking — MEDIUM confidence (WebSearch summary, direct fetch blocked by 403)
+- RetailOrbit stocktake workflow: https://support.retailorbit.com/hc/en-us/articles/28370586705819-How-to-Run-Stocktakes — LOW confidence (WebSearch summary only)
+- Square retail inventory management overview: https://squareup.com/gb/en/the-bottom-line/operating-your-business/retail-inventory-management — MEDIUM confidence
 
 ---
 
-*Feature research for: NZPOS v2.1 Hardening & Documentation*
+*Feature research for: NZPOS v3.0 Inventory Management — inventory add-on and service product types*
 *Researched: 2026-04-04*
