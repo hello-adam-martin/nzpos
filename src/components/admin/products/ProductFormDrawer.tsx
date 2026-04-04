@@ -17,6 +17,7 @@ interface ProductFormDrawerProps {
   product: ProductWithCategory | null
   categories: Category[]
   onClose: () => void
+  hasInventory: boolean
 }
 
 interface FormErrors {
@@ -33,6 +34,7 @@ export default function ProductFormDrawer({
   product,
   categories,
   onClose,
+  hasInventory,
 }: ProductFormDrawerProps) {
   const isEditMode = product !== null
 
@@ -46,6 +48,9 @@ export default function ProductFormDrawer({
   const [stockQuantity, setStockQuantity] = useState<number>(product?.stock_quantity ?? 0)
   const [reorderThreshold, setReorderThreshold] = useState<number>(product?.reorder_threshold ?? 0)
   const [isActive, setIsActive] = useState<boolean>(product?.is_active ?? true)
+  const [productType, setProductType] = useState<'physical' | 'service'>(
+    (product as any)?.product_type ?? 'physical'
+  )
 
   // New category inline
   const [isAddingCategory, setIsAddingCategory] = useState(false)
@@ -69,6 +74,7 @@ export default function ProductFormDrawer({
     stockQuantity: product?.stock_quantity ?? 0,
     reorderThreshold: product?.reorder_threshold ?? 0,
     isActive: product?.is_active ?? true,
+    productType: (product as any)?.product_type ?? 'physical',
   })
 
   function isDirty(): boolean {
@@ -82,7 +88,8 @@ export default function ProductFormDrawer({
       categoryId !== init.categoryId ||
       stockQuantity !== init.stockQuantity ||
       reorderThreshold !== init.reorderThreshold ||
-      isActive !== init.isActive
+      isActive !== init.isActive ||
+      productType !== init.productType
     )
   }
 
@@ -138,6 +145,7 @@ export default function ProductFormDrawer({
     formData.set('stock_quantity', String(stockQuantity))
     formData.set('reorder_threshold', String(reorderThreshold))
     if (imageUrl) formData.set('image_url', imageUrl)
+    formData.set('product_type', productType)
 
     let result
     if (isEditMode && product) {
@@ -339,66 +347,135 @@ export default function ProductFormDrawer({
             )}
           </div>
 
-          {/* Stock Quantity */}
-          <div className="flex flex-col gap-1">
-            <label htmlFor="drawer-stock" className="text-sm font-semibold font-sans text-text">
-              Stock Quantity
-            </label>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setStockQuantity((v) => Math.max(0, v - 1))}
-                className="w-9 h-9 flex items-center justify-center border border-border rounded-[var(--radius-md)] text-text-muted hover:text-text hover:bg-surface transition-colors"
-                aria-label="Decrease stock"
+          {/* Product type — D-01 */}
+          <fieldset>
+            <legend className="text-xl font-semibold font-sans text-text mb-2">
+              Product type
+            </legend>
+            <div className="flex gap-2" role="radiogroup">
+              <label
+                className={[
+                  'flex-1 flex items-center gap-2 rounded-lg border px-4 py-3 min-h-[44px] cursor-pointer focus-within:ring-2 focus-within:ring-[var(--color-amber)]',
+                  productType === 'physical'
+                    ? 'bg-[var(--color-card)] border-[var(--color-amber)] ring-2 ring-[var(--color-amber)]'
+                    : 'bg-[var(--color-surface)] border-[var(--color-border)]',
+                  isSaving ? 'opacity-50 cursor-not-allowed' : '',
+                ].filter(Boolean).join(' ')}
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                </svg>
-              </button>
-              <input
-                id="drawer-stock"
-                type="number"
-                min={0}
-                value={stockQuantity}
-                onChange={(e) => setStockQuantity(Math.max(0, parseInt(e.target.value) || 0))}
-                className={[inputClass(!!errors.stock_quantity), 'text-center w-24'].join(' ')}
-              />
-              <button
-                type="button"
-                onClick={() => setStockQuantity((v) => v + 1)}
-                className="w-9 h-9 flex items-center justify-center border border-border rounded-[var(--radius-md)] text-text-muted hover:text-text hover:bg-surface transition-colors"
-                aria-label="Increase stock"
+                <input
+                  type="radio"
+                  name="product_type_display"
+                  value="physical"
+                  checked={productType === 'physical'}
+                  onChange={() => setProductType('physical')}
+                  disabled={isSaving}
+                  className="sr-only"
+                />
+                <div>
+                  <span className={`text-sm font-sans text-text ${productType === 'physical' ? 'font-semibold' : 'font-normal'}`}>
+                    Physical
+                  </span>
+                  <p className="text-sm font-sans text-[var(--color-text-muted)]">Tracks stock quantity</p>
+                </div>
+              </label>
+              <label
+                className={[
+                  'flex-1 flex items-center gap-2 rounded-lg border px-4 py-3 min-h-[44px] cursor-pointer focus-within:ring-2 focus-within:ring-[var(--color-amber)]',
+                  productType === 'service'
+                    ? 'bg-[var(--color-card)] border-[var(--color-amber)] ring-2 ring-[var(--color-amber)]'
+                    : 'bg-[var(--color-surface)] border-[var(--color-border)]',
+                  isSaving ? 'opacity-50 cursor-not-allowed' : '',
+                ].filter(Boolean).join(' ')}
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-              </button>
+                <input
+                  type="radio"
+                  name="product_type_display"
+                  value="service"
+                  checked={productType === 'service'}
+                  onChange={() => setProductType('service')}
+                  disabled={isSaving}
+                  className="sr-only"
+                />
+                <div>
+                  <span className={`text-sm font-sans text-text ${productType === 'service' ? 'font-semibold' : 'font-normal'}`}>
+                    Service
+                  </span>
+                  <p className="text-sm font-sans text-[var(--color-text-muted)]">No stock tracking</p>
+                </div>
+              </label>
             </div>
-            {errors.stock_quantity && (
-              <p className="text-sm font-sans text-error">{errors.stock_quantity[0]}</p>
+            {!isEditMode && (
+              <p className="text-sm font-sans text-[var(--color-text-muted)] mt-1">
+                New products default to Physical.
+              </p>
             )}
-          </div>
+          </fieldset>
 
-          {/* Reorder Threshold */}
-          <div className="flex flex-col gap-1">
-            <label htmlFor="drawer-reorder" className="text-sm font-semibold font-sans text-text">
-              Reorder Threshold
-            </label>
-            <input
-              id="drawer-reorder"
-              type="number"
-              min={0}
-              value={reorderThreshold}
-              onChange={(e) => setReorderThreshold(Math.max(0, parseInt(e.target.value) || 0))}
-              className={inputClass(!!errors.reorder_threshold)}
-            />
-            <p className="text-sm font-sans text-text-muted">
-              Alert when stock falls below this number.
-            </p>
-            {errors.reorder_threshold && (
-              <p className="text-sm font-sans text-error">{errors.reorder_threshold[0]}</p>
-            )}
-          </div>
+          {/* Stock fields — only shown for inventory stores with physical products (D-03, D-05) */}
+          {hasInventory && productType === 'physical' && (
+            <>
+              {/* Stock Quantity */}
+              <div className="flex flex-col gap-1">
+                <label htmlFor="drawer-stock" className="text-sm font-semibold font-sans text-text">
+                  Stock Quantity
+                </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setStockQuantity((v) => Math.max(0, v - 1))}
+                    className="w-9 h-9 flex items-center justify-center border border-border rounded-[var(--radius-md)] text-text-muted hover:text-text hover:bg-surface transition-colors"
+                    aria-label="Decrease stock"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                    </svg>
+                  </button>
+                  <input
+                    id="drawer-stock"
+                    type="number"
+                    min={0}
+                    value={stockQuantity}
+                    onChange={(e) => setStockQuantity(Math.max(0, parseInt(e.target.value) || 0))}
+                    className={[inputClass(!!errors.stock_quantity), 'text-center w-24'].join(' ')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setStockQuantity((v) => v + 1)}
+                    className="w-9 h-9 flex items-center justify-center border border-border rounded-[var(--radius-md)] text-text-muted hover:text-text hover:bg-surface transition-colors"
+                    aria-label="Increase stock"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+                {errors.stock_quantity && (
+                  <p className="text-sm font-sans text-error">{errors.stock_quantity[0]}</p>
+                )}
+              </div>
+
+              {/* Reorder Threshold */}
+              <div className="flex flex-col gap-1">
+                <label htmlFor="drawer-reorder" className="text-sm font-semibold font-sans text-text">
+                  Reorder Threshold
+                </label>
+                <input
+                  id="drawer-reorder"
+                  type="number"
+                  min={0}
+                  value={reorderThreshold}
+                  onChange={(e) => setReorderThreshold(Math.max(0, parseInt(e.target.value) || 0))}
+                  className={inputClass(!!errors.reorder_threshold)}
+                />
+                <p className="text-sm font-sans text-text-muted">
+                  Alert when stock falls below this number.
+                </p>
+                {errors.reorder_threshold && (
+                  <p className="text-sm font-sans text-error">{errors.reorder_threshold[0]}</p>
+                )}
+              </div>
+            </>
+          )}
 
           {/* Active toggle */}
           <div className="flex items-center justify-between">
