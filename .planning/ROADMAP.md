@@ -43,7 +43,7 @@
 - [x] **Phase 17: Security Audit** — Verify tenant isolation, auth flows, webhook integrity, and input validation across the entire codebase (completed 2026-04-03)
 - [x] **Phase 18: Code Quality + Test Coverage** — Remove dead code, enforce consistent error handling, fill test coverage gaps on critical paths (completed 2026-04-04)
 - [x] **Phase 19: Developer Documentation** — Write setup guide, architecture overview, env var reference, and Server Action inventory (completed 2026-04-04)
-- [ ] **Phase 20: Deployment + User Documentation** — Production runbook, merchant onboarding guide, and GST compliance explanation
+- [x] **Phase 20: Deployment + User Documentation** — Production runbook, merchant onboarding guide, and GST compliance explanation (completed 2026-04-04)
 
 ## Phase Details
 
@@ -108,9 +108,9 @@ Plans:
   3. A post-deploy smoke test checklist exists and a deployer can verify signup, product creation, POS sale, online order, Stripe payment, and Xero sync are all functioning
   4. A merchant onboarding guide exists walking through signup through first product through first sale through first online order — a new merchant can complete setup without support
   5. A GST compliance explanation exists that a non-technical merchant can read to understand how NZPOS handles 15% tax-inclusive pricing and IRD compliance
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
-- [ ] 20-01-PLAN.md — Production deployment runbook: Supabase, Stripe, Vercel, smoke test (DEPLOY-01, DEPLOY-02, DEPLOY-03, DEPLOY-04)
+- [x] 20-01-PLAN.md — Production deployment runbook: Supabase, Stripe, Vercel, smoke test (DEPLOY-01, DEPLOY-02, DEPLOY-03, DEPLOY-04)
 - [x] 20-02-PLAN.md — Merchant onboarding guide with GST compliance explanation (USER-01, USER-02)
 
 ## Progress
@@ -136,4 +136,4 @@ Plans:
 | 17. Security Audit | v2.1 | 5/5 | Complete    | 2026-04-03 |
 | 18. Code Quality + Test Coverage | v2.1 | 4/4 | Complete    | 2026-04-04 |
 | 19. Developer Documentation | v2.1 | 3/3 | Complete    | 2026-04-04 |
-| 20. Deployment + User Documentation | v2.1 | 1/2 | In Progress|  |
+| 20. Deployment + User Documentation | v2.1 | 2/2 | Complete   | 2026-04-04 |

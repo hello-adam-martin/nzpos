@@ -49,10 +49,10 @@ Requirements for the Hardening & Documentation milestone. Each maps to roadmap p
 
 ### Deployment & Operations
 
-- [ ] **DEPLOY-01**: Production Supabase setup guide (project creation, migrations, seed data, auth config)
-- [ ] **DEPLOY-02**: Stripe live key configuration checklist (webhook endpoint, keys, verification)
-- [ ] **DEPLOY-03**: Vercel production config guide (wildcard DNS, env vars, middleware verification)
-- [ ] **DEPLOY-04**: Post-deploy smoke test checklist (signup, product, POS sale, online order, Stripe, Xero)
+- [x] **DEPLOY-01**: Production Supabase setup guide (project creation, migrations, seed data, auth config)
+- [x] **DEPLOY-02**: Stripe live key configuration checklist (webhook endpoint, keys, verification)
+- [x] **DEPLOY-03**: Vercel production config guide (wildcard DNS, env vars, middleware verification)
+- [x] **DEPLOY-04**: Post-deploy smoke test checklist (signup, product, POS sale, online order, Stripe, Xero)
 
 ### User Documentation
 
@@ -129,10 +129,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DOC-02 | Phase 19 | Complete |
 | DOC-03 | Phase 19 | Complete |
 | DOC-04 | Phase 19 | Complete |
-| DEPLOY-01 | Phase 20 | Pending |
-| DEPLOY-02 | Phase 20 | Pending |
-| DEPLOY-03 | Phase 20 | Pending |
-| DEPLOY-04 | Phase 20 | Pending |
+| DEPLOY-01 | Phase 20 | Complete |
+| DEPLOY-02 | Phase 20 | Complete |
+| DEPLOY-03 | Phase 20 | Complete |
+| DEPLOY-04 | Phase 20 | Complete |
 | USER-01 | Phase 20 | Complete |
 | USER-02 | Phase 20 | Complete |
 

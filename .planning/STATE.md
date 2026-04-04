@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Hardening & Documentation
-status: executing
-stopped_at: Completed 20-02-PLAN.md
-last_updated: "2026-04-04T03:29:31.711Z"
+status: verifying
+stopped_at: Completed 20-01-PLAN.md (production deployment runbook)
+last_updated: "2026-04-04T03:30:27.801Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 14
-  completed_plans: 13
+  completed_plans: 14
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 
 Phase: 20 (deployment-user-documentation) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-04
 
 Progress: [░░░░░░░░░░] 0%
@@ -78,6 +78,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 19-01]: seed.ts already had 5 categories + 25 products — no extension needed for DOC-01
 - [Phase 20]: Merchant guide uses conversational tone distinct from developer docs — numbered steps with expected outcomes per D-09
 - [Phase 20]: GST worked examples in plain-text code blocks (no language tag) — merchant audience, not developer docs
+- [Phase 20]: NS delegation (not CNAME) required for Vercel wildcard SSL — documented with Critical callout in deploy.md
+- [Phase 20]: Two Stripe webhook endpoints with separate signing secrets (STRIPE_WEBHOOK_SECRET and STRIPE_BILLING_WEBHOOK_SECRET) — swapping causes 400 on all webhook requests
 
 ### Pending Todos
 
@@ -92,6 +94,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T03:29:31.708Z
-Stopped at: Completed 20-02-PLAN.md
+Last session: 2026-04-04T03:30:27.798Z
+Stopped at: Completed 20-01-PLAN.md (production deployment runbook)
 Resume file: None
