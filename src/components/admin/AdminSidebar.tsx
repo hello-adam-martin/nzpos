@@ -11,9 +11,17 @@ const BASE_NAV_LINKS = [
   { href: '/admin/orders', label: 'Orders' },
   { href: '/admin/reports', label: 'Reports' },
   { href: '/admin/cash-up', label: 'Cash-Up' },
+  { href: '/admin/staff', label: 'Staff' },
   { href: '/admin/integrations', label: 'Integrations' },
   { href: '/admin/settings', label: 'Settings' },
   { href: '/admin/billing', label: 'Billing' },
+]
+
+const MANAGER_NAV_LINKS = [
+  { href: '/admin/dashboard', label: 'Dashboard' },
+  { href: '/admin/orders', label: 'Orders' },
+  { href: '/admin/reports', label: 'Reports' },
+  { href: '/admin/cash-up', label: 'Cash-Up' },
 ]
 
 interface AdminSidebarProps {
@@ -23,19 +31,23 @@ interface AdminSidebarProps {
   staffName?: string | null
 }
 
-export default function AdminSidebar({ userEmail, hasInventory, role, staffName }: AdminSidebarProps) {
+export default function AdminSidebar({ userEmail, hasInventory, role = 'owner', staffName }: AdminSidebarProps) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  // Build nav links — insert Inventory after Products when add-on is active
-  const navLinks = hasInventory === true
-    ? [
-        BASE_NAV_LINKS[0], // Dashboard
-        BASE_NAV_LINKS[1], // Products
-        { href: '/admin/inventory', label: 'Inventory' },
-        ...BASE_NAV_LINKS.slice(2), // Promos, Orders, Reports, Cash-Up, Integrations, Settings, Billing
-      ]
-    : BASE_NAV_LINKS
+  // Build nav links based on role
+  // Manager role: restricted to Dashboard, Orders, Reports, Cash-Up — removed from DOM (not hidden)
+  // Owner role: full nav, with optional Inventory insert when add-on is active
+  const navLinks = role === 'manager'
+    ? MANAGER_NAV_LINKS
+    : hasInventory === true
+      ? [
+          BASE_NAV_LINKS[0], // Dashboard
+          BASE_NAV_LINKS[1], // Products
+          { href: '/admin/inventory', label: 'Inventory' },
+          ...BASE_NAV_LINKS.slice(2), // Promos, Orders, Reports, Cash-Up, Staff, Integrations, Settings, Billing
+        ]
+      : BASE_NAV_LINKS
 
   const sidebarContent = (
     <>
@@ -78,9 +90,9 @@ export default function AdminSidebar({ userEmail, hasInventory, role, staffName 
 
       {/* Footer area */}
       <div className="px-4 py-4 border-t border-white/10 space-y-3">
-        {userEmail && (
-          <p className="text-xs text-white/50 font-sans truncate" title={userEmail}>
-            {userEmail}
+        {(userEmail || staffName) && (
+          <p className="text-xs text-white/50 font-sans truncate" title={userEmail ?? staffName ?? ''}>
+            {userEmail ?? staffName}
           </p>
         )}
         <form action={signOut}>
