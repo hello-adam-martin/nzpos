@@ -29,7 +29,9 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 
 **Phase 21 complete (2026-04-04):** Service product type (`physical`/`service`) added with full stock skip in RPCs, server actions, and UI. Inventory feature gated behind `store_plans.has_inventory` — free-tier stores see zero stock noise. Auth hook injects inventory JWT claim.
 
-**Next:** Phase 22 — Inventory add-on core (stock tracking, adjustments, stocktake).
+**Phase 22 complete (2026-04-04):** Inventory add-on core shipped — migration 025 with stock_adjustments (append-only audit), stocktake_sessions/lines tables, adjust_stock and complete_stocktake RPCs. 9 server actions, /admin/inventory page with Stock Levels, Adjustment drawer, History, and full Stocktake flow (count entry with auto-save, variance review, commit/discard). 72 tests passing. Human UAT pending.
+
+**Next:** Phase 23 — Feature gating + POS/storefront integration.
 
 ## Core Value
 
@@ -168,4 +170,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-04 after v3.0 Inventory Management milestone started*
+*Last updated: 2026-04-04 after Phase 22 Inventory Add-on Core completed*
