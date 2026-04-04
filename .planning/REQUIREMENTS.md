@@ -9,16 +9,16 @@ Requirements for Inventory Management milestone. Each maps to roadmap phases.
 
 ### Product Types
 
-- [ ] **PROD-01**: Admin can set a product as "physical" or "service" type when creating or editing
-- [ ] **PROD-02**: Service products skip all stock decrement logic in POS and online sale RPCs
+- [x] **PROD-01**: Admin can set a product as "physical" or "service" type when creating or editing
+- [x] **PROD-02**: Service products skip all stock decrement logic in POS and online sale RPCs
 - [ ] **PROD-03**: Service products skip stock restore logic in refund and partial refund actions
 - [ ] **PROD-04**: CSV import supports `product_type` column and never overwrites `stock_quantity` without explicit flag
 
 ### Free-Tier Experience
 
 - [ ] **FREE-01**: Stores without inventory add-on see no stock quantities, badges, or alerts in admin/POS/storefront
-- [ ] **FREE-02**: Products sell freely (no out-of-stock blocking) when inventory add-on is inactive
-- [ ] **FREE-03**: Stock decrements continue silently in RPCs regardless of add-on status (data stays accurate)
+- [x] **FREE-02**: Products sell freely (no out-of-stock blocking) when inventory add-on is inactive
+- [x] **FREE-03**: Stock decrements continue silently in RPCs regardless of add-on status (data stays accurate)
 
 ### Stock Management (Paid Add-on)
 
@@ -49,7 +49,7 @@ Requirements for Inventory Management milestone. Each maps to roadmap phases.
 - [ ] **POS-01**: POS product grid shows stock badges (in-stock / low / out-of-stock) when inventory add-on is active
 - [ ] **POS-02**: POS blocks adding out-of-stock physical products to cart when inventory add-on is active
 - [ ] **POS-03**: Storefront shows "sold out" and disables add-to-cart for out-of-stock physical products when add-on is active
-- [ ] **POS-04**: Service products are always sellable in POS and storefront regardless of add-on status
+- [x] **POS-04**: Service products are always sellable in POS and storefront regardless of add-on status
 
 ## Future Requirements (v3.1+)
 
@@ -77,13 +77,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PROD-01 | Phase 21 | Pending |
-| PROD-02 | Phase 21 | Pending |
+| PROD-01 | Phase 21 | Complete |
+| PROD-02 | Phase 21 | Complete |
 | PROD-03 | Phase 21 | Pending |
 | PROD-04 | Phase 21 | Pending |
 | FREE-01 | Phase 21 | Pending |
-| FREE-02 | Phase 21 | Pending |
-| FREE-03 | Phase 21 | Pending |
+| FREE-02 | Phase 21 | Complete |
+| FREE-03 | Phase 21 | Complete |
 | STOCK-01 | Phase 22 | Pending |
 | STOCK-02 | Phase 22 | Pending |
 | STOCK-03 | Phase 22 | Pending |
@@ -102,7 +102,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | POS-01 | Phase 23 | Pending |
 | POS-02 | Phase 23 | Pending |
 | POS-03 | Phase 23 | Pending |
-| POS-04 | Phase 21 | Pending |
+| POS-04 | Phase 21 | Complete |
 
 **Coverage:**
 - v3.0 requirements: 26 total

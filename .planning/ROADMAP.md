@@ -69,7 +69,7 @@
   5. A store without the inventory add-on sees no stock quantities, low-stock badges, or out-of-stock warnings anywhere in admin, POS, or storefront — products sell freely
 **Plans**: 3 plans
 Plans:
-- [ ] 21-01-PLAN.md — Database migration + TypeScript types + addon config (foundation)
+- [x] 21-01-PLAN.md — Database migration + TypeScript types + addon config (foundation)
 - [ ] 21-02-PLAN.md — Server actions: product CRUD, CSV import, refund guards, checkout stock check
 - [ ] 21-03-PLAN.md — UI gating: admin form, data table, dashboard, reports, POS, storefront
 **UI hint**: yes
@@ -125,6 +125,6 @@ Plans:
 | 18. Code Quality + Test Coverage | v2.1 | 4/4 | Complete | 2026-04-04 |
 | 19. Developer Documentation | v2.1 | 3/3 | Complete | 2026-04-04 |
 | 20. Deployment + User Documentation | v2.1 | 2/2 | Complete | 2026-04-04 |
-| 21. Service Product Type + Free-Tier Simplification | v3.0 | 0/3 | Not started | - |
+| 21. Service Product Type + Free-Tier Simplification | v3.0 | 1/3 | In Progress|  |
 | 22. Inventory Add-on Core | v3.0 | 0/TBD | Not started | - |
 | 23. Feature Gating + POS/Storefront Integration | v3.0 | 0/TBD | Not started | - |
