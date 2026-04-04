@@ -6,7 +6,7 @@ export const RefundSchema = z.object({
   restoreStock: z.boolean(),
 })
 
-export type RefundInput = z.infer<typeof RefundSchema>
+type RefundInput = z.infer<typeof RefundSchema>
 
 export const PartialRefundSchema = z.object({
   orderId: z.string().uuid(),
@@ -17,4 +17,4 @@ export const PartialRefundSchema = z.object({
   })).min(1),
 })
 
-export type PartialRefundInput = z.infer<typeof PartialRefundSchema>
+type PartialRefundInput = z.infer<typeof PartialRefundSchema>

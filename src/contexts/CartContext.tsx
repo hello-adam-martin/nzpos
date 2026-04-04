@@ -25,7 +25,7 @@ export type StoreCartItem = {
   maxStock: number // tracks available stock for sold-out check
 }
 
-export type StoreCartState = {
+type StoreCartState = {
   items: StoreCartItem[]
   promoCode: string | null
   promoDiscountCents: number
@@ -33,7 +33,7 @@ export type StoreCartState = {
   isDrawerOpen: boolean
 }
 
-export type StoreCartAction =
+type StoreCartAction =
   | {
       type: 'ADD_ITEM'
       product: {

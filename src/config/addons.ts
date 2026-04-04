@@ -3,7 +3,7 @@
 
 export type SubscriptionFeature = 'xero' | 'email_notifications' | 'custom_domain'
 
-export interface FeatureFlags {
+interface FeatureFlags {
   has_xero: boolean
   has_email_notifications: boolean
   has_custom_domain: boolean

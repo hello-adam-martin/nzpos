@@ -44,7 +44,7 @@ export type ReceiptData = {
 // Factory
 // ---------------------------------------------------------------------------
 
-export type BuildReceiptDataParams = {
+type BuildReceiptDataParams = {
   orderId: string
   store: {
     name: string

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const OrderItemSchema = z.object({
+const OrderItemSchema = z.object({
   product_id: z.string().uuid(),
   product_name: z.string().min(1),
   unit_price_cents: z.number().int().min(0),
@@ -35,6 +35,6 @@ export const CreatePromoCodeSchema = z.object({
   expires_at: z.string().datetime().optional(),
 })
 
-export type CreateOrderInput = z.infer<typeof CreateOrderSchema>
-export type OrderItemInput = z.infer<typeof OrderItemSchema>
-export type CreatePromoCodeInput = z.infer<typeof CreatePromoCodeSchema>
+type CreateOrderInput = z.infer<typeof CreateOrderSchema>
+type OrderItemInput = z.infer<typeof OrderItemSchema>
+type CreatePromoCodeInput = z.infer<typeof CreatePromoCodeSchema>

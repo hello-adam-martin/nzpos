@@ -13,8 +13,8 @@ interface RateLimitEntry {
 
 const store = new Map<string, RateLimitEntry>()
 
-export const WINDOW_MS = 60 * 60 * 1000 // 1 hour
-export const MAX_ATTEMPTS = 5
+const WINDOW_MS = 60 * 60 * 1000 // 1 hour
+const MAX_ATTEMPTS = 5
 
 /**
  * Check whether a request from the given IP should be allowed.

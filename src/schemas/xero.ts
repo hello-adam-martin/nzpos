@@ -6,4 +6,4 @@ export const XeroAccountCodesSchema = z.object({
   onlineAccountCode: z.string().min(1, 'Online account code is required').max(20),
 })
 
-export type XeroAccountCodesInput = z.infer<typeof XeroAccountCodesSchema>
+type XeroAccountCodesInput = z.infer<typeof XeroAccountCodesSchema>

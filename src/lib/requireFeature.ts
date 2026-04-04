@@ -3,7 +3,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { FEATURE_TO_COLUMN, type SubscriptionFeature } from '@/config/addons'
 
-export type GatedFeature = SubscriptionFeature
+type GatedFeature = SubscriptionFeature
 
 type FeatureResult =
   | { authorized: true }

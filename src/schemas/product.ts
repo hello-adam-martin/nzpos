@@ -13,5 +13,5 @@ export const CreateProductSchema = z.object({
 
 export const UpdateProductSchema = CreateProductSchema.partial()
 
-export type CreateProductInput = z.infer<typeof CreateProductSchema>
-export type UpdateProductInput = z.infer<typeof UpdateProductSchema>
+type CreateProductInput = z.infer<typeof CreateProductSchema>
+type UpdateProductInput = z.infer<typeof UpdateProductSchema>

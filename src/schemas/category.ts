@@ -20,6 +20,6 @@ export const DeleteCategorySchema = z.object({
   id: z.string().uuid(),
 })
 
-export type CreateCategoryInput = z.infer<typeof CreateCategorySchema>
-export type UpdateCategoryInput = z.infer<typeof UpdateCategorySchema>
-export type ReorderCategoriesInput = z.infer<typeof ReorderCategoriesSchema>
+type CreateCategoryInput = z.infer<typeof CreateCategorySchema>
+type UpdateCategoryInput = z.infer<typeof UpdateCategorySchema>
+type ReorderCategoriesInput = z.infer<typeof ReorderCategoriesSchema>

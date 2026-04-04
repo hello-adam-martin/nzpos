@@ -40,7 +40,7 @@ export const RESERVED_SLUGS = [
  * - Followed by lowercase alphanumeric characters
  * - Hyphens allowed between segments (no consecutive, no leading/trailing)
  */
-export const SLUG_REGEX = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/
+const SLUG_REGEX = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/
 
 /**
  * Validate a slug string.

@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 
-export interface AddOnCardProps {
+interface AddOnCardProps {
   feature: 'xero' | 'email_notifications' | 'custom_domain'
   name: string
   benefitLine: string

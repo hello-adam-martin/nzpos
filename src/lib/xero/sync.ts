@@ -15,7 +15,7 @@ const NON_RETRYABLE_MESSAGES = ['Xero not connected', 'Account codes not configu
 /**
  * Sleep helper for retry backoff delays.
  */
-export function sleep(ms: number): Promise<void> {
+function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
