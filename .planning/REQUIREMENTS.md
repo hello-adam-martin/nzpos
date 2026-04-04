@@ -46,9 +46,9 @@ Requirements for Inventory Management milestone. Each maps to roadmap phases.
 
 ### POS & Storefront Integration
 
-- [ ] **POS-01**: POS product grid shows stock badges (in-stock / low / out-of-stock) when inventory add-on is active
-- [ ] **POS-02**: POS blocks adding out-of-stock physical products to cart when inventory add-on is active
-- [ ] **POS-03**: Storefront shows "sold out" and disables add-to-cart for out-of-stock physical products when add-on is active
+- [x] **POS-01**: POS product grid shows stock badges (in-stock / low / out-of-stock) when inventory add-on is active
+- [x] **POS-02**: POS blocks adding out-of-stock physical products to cart when inventory add-on is active
+- [x] **POS-03**: Storefront shows "sold out" and disables add-to-cart for out-of-stock physical products when add-on is active
 - [x] **POS-04**: Service products are always sellable in POS and storefront regardless of add-on status
 
 ## Future Requirements (v3.1+)
@@ -99,9 +99,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GATE-03 | Phase 23 | Pending |
 | GATE-04 | Phase 23 | Pending |
 | GATE-05 | Phase 23 | Pending |
-| POS-01 | Phase 23 | Pending |
-| POS-02 | Phase 23 | Pending |
-| POS-03 | Phase 23 | Pending |
+| POS-01 | Phase 23 | Complete |
+| POS-02 | Phase 23 | Complete |
+| POS-03 | Phase 23 | Complete |
 | POS-04 | Phase 21 | Complete |
 
 **Coverage:**
