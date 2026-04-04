@@ -155,32 +155,31 @@ export async function middleware(request: NextRequest) {
       if (role === 'customer') {
         return addSecurityHeaders(NextResponse.redirect(new URL('/', request.url)))
       }
-      if (role !== 'owner') {
-        return addSecurityHeaders(NextResponse.redirect(new URL('/unauthorized', request.url)))
-      }
+      if (role === 'owner') {
+        // D-01: Setup wizard redirect — first admin visit goes to /admin/setup
+        // Excludes /admin/setup itself (loop prevention) and /admin/settings (accessible pre-wizard)
+        if (!pathname.startsWith('/admin/setup') && !pathname.startsWith('/admin/settings')) {
+          const adminClient = createMiddlewareAdminClient()
+          const { data: storeCheck } = await adminClient
+            .from('stores')
+            .select('setup_wizard_dismissed')
+            .eq('id', storeId)
+            .single()
 
-      // D-01: Setup wizard redirect — first admin visit goes to /admin/setup
-      // Excludes /admin/setup itself (loop prevention) and /admin/settings (accessible pre-wizard)
-      if (!pathname.startsWith('/admin/setup') && !pathname.startsWith('/admin/settings')) {
-        const adminClient = createMiddlewareAdminClient()
-        const { data: storeCheck } = await adminClient
-          .from('stores')
-          .select('setup_wizard_dismissed')
-          .eq('id', storeId)
-          .single()
-
-        if (storeCheck && !storeCheck.setup_wizard_dismissed) {
-          return addSecurityHeaders(NextResponse.redirect(new URL('/admin/setup', request.url)))
+          if (storeCheck && !storeCheck.setup_wizard_dismissed) {
+            return addSecurityHeaders(NextResponse.redirect(new URL('/admin/setup', request.url)))
+          }
         }
-      }
 
-      // Inject tenant headers into the response for downstream Server Components
-      response.headers.set('x-store-id', storeId)
-      response.headers.set('x-store-slug', slug)
-      return addSecurityHeaders(response)
+        // Inject tenant headers into the response for downstream Server Components
+        response.headers.set('x-store-id', storeId)
+        response.headers.set('x-store-slug', slug)
+        return addSecurityHeaders(response)
+      }
+      // Non-owner Supabase user — fall through to staff JWT check below
     }
 
-    // No Supabase Auth user — try manager staff JWT (per D-02, D-03)
+    // No owner Supabase Auth — try manager staff JWT (per D-02, D-03)
     const staffToken = request.cookies.get('staff_session')?.value
     if (staffToken) {
       try {
