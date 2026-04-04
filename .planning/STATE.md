@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Admin Platform
-status: ready_to_plan
-stopped_at: Roadmap created — Phase 24 ready to plan
-last_updated: "2026-04-05"
-last_activity: 2026-04-05
+status: planning
+stopped_at: Phase 24 context gathered
+last_updated: "2026-04-04T12:17:03.888Z"
+last_activity: 2026-04-05 — v4.0 roadmap created, 4 phases, 32 requirements mapped
 progress:
   total_phases: 4
   completed_phases: 0
@@ -47,12 +47,14 @@ Progress: [░░░░░░░░░░] 0%
 ### Decisions
 
 (Carried from v3.0)
+
 - requireFeature() JWT/DB dual-path pattern established for all add-on gating
 - Append-only audit tables with INSERT+SELECT RLS for tamper-proof history
 - SECURITY DEFINER RPCs for atomic DB operations
 - resolveAuth() returns snake_case { store_id, staff_id }
 
 (v4.0 — from research)
+
 - POS_ROLES constant centralised in src/config/roles.ts — import in middleware, staffPin.ts, and staff.ts Zod schema before adding manager role to DB
 - resolveStaffAuthVerified() does DB role lookup on all role-gated mutations — never trust JWT role for writes
 - On role change, force re-login by setting pin_locked_until = now() to invalidate stale JWT
@@ -71,6 +73,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-05
-Stopped at: v4.0 roadmap created — ready to plan Phase 24
-Resume file: None
+Last session: 2026-04-04T12:17:03.885Z
+Stopped at: Phase 24 context gathered
+Resume file: .planning/phases/24-staff-rbac-foundation/24-CONTEXT.md
