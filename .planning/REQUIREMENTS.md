@@ -24,9 +24,9 @@ Requirements for Inventory Management milestone. Each maps to roadmap phases.
 
 - [x] **STOCK-01**: Admin can manually adjust stock quantity for a physical product with a reason code and optional notes
 - [x] **STOCK-02**: System records all stock mutations (sales, refunds, manual adjustments, stocktake) in an append-only history table
-- [ ] **STOCK-03**: Admin can view adjustment history filtered by product, date range, and reason code
+- [x] **STOCK-03**: Admin can view adjustment history filtered by product, date range, and reason code
 - [ ] **STOCK-04**: Low-stock alerts are visible only when inventory add-on is active
-- [ ] **STOCK-05**: Admin can view current stock levels for all physical products in a dedicated inventory page
+- [x] **STOCK-05**: Admin can view current stock levels for all physical products in a dedicated inventory page
 
 ### Stocktake (Paid Add-on)
 
@@ -86,9 +86,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FREE-03 | Phase 21 | Complete |
 | STOCK-01 | Phase 22 | Complete |
 | STOCK-02 | Phase 22 | Complete |
-| STOCK-03 | Phase 22 | Pending |
+| STOCK-03 | Phase 22 | Complete |
 | STOCK-04 | Phase 22 | Pending |
-| STOCK-05 | Phase 22 | Pending |
+| STOCK-05 | Phase 22 | Complete |
 | TAKE-01 | Phase 22 | Complete |
 | TAKE-02 | Phase 22 | Complete |
 | TAKE-03 | Phase 22 | Complete |

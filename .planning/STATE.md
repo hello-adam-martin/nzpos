@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Inventory Management
 status: executing
-stopped_at: Completed 22-01-PLAN.md
-last_updated: "2026-04-04T08:16:18.585Z"
+stopped_at: Completed 22-02-PLAN.md
+last_updated: "2026-04-04T08:21:12.376Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 8
-  completed_plans: 4
+  completed_plans: 5
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 ## Current Position
 
 Phase: 22 (inventory-add-on-core) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-04-04
 
@@ -59,6 +59,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 21]: StoreProductCard uses hasInventory === true (strict) to avoid false truthy on undefined for free-tier
 - [Phase 22]: append-only RLS on stock_adjustments uses separate INSERT and SELECT policies (no UPDATE/DELETE) — enforces immutable audit log at DB level
 - [Phase 22]: restore_stock upgraded from sql to plpgsql language to INSERT stock_adjustments on refund — service_role-only GRANT from migration 021 preserved
+- [Phase 22]: resolveAuth returns snake_case keys (store_id/staff_id), not camelCase — corrected in all inventory server actions
+- [Phase 22]: requireFeature('inventory', { requireDbCheck: true }) used on all inventory mutations — JWT path only for UI rendering
 
 ### Pending Todos
 
@@ -72,6 +74,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T08:16:18.582Z
-Stopped at: Completed 22-01-PLAN.md
+Last session: 2026-04-04T08:21:12.373Z
+Stopped at: Completed 22-02-PLAN.md
 Resume file: None
