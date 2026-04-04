@@ -104,7 +104,10 @@ Plans:
   4. POS blocks adding an out-of-stock physical product to the cart when inventory add-on is active; service products are always addable
   5. Storefront shows "sold out" and disables add-to-cart for out-of-stock physical products when add-on is active
   6. Super admin can manually override inventory add-on status per store from the super admin panel
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 23-01-PLAN.md — Billing checkout enum, super admin wiring, billing page query/flagMap, success banner
+- [ ] 23-02-PLAN.md — Inventory upgrade wall, page gate, POS/storefront verification
 **UI hint**: yes
 
 ## Progress
@@ -133,4 +136,4 @@ Plans:
 | 20. Deployment + User Documentation | v2.1 | 2/2 | Complete | 2026-04-04 |
 | 21. Service Product Type + Free-Tier Simplification | v3.0 | 3/3 | Complete    | 2026-04-04 |
 | 22. Inventory Add-on Core | v3.0 | 5/5 | Complete    | 2026-04-04 |
-| 23. Feature Gating + POS/Storefront Integration | v3.0 | 0/TBD | Not started | - |
+| 23. Feature Gating + POS/Storefront Integration | v3.0 | 0/2 | Not started | - |
