@@ -1,159 +1,174 @@
 # Project Research Summary
 
-**Project:** NZPOS v3.0 — Inventory Management Add-on
-**Domain:** Multi-tenant SaaS POS — inventory management, service product types, free-tier simplification
-**Researched:** 2026-04-04
+**Project:** NZPOS v4.0 — Admin Platform
+**Domain:** SaaS POS admin platform — staff RBAC, customer management, enhanced dashboard analytics, super-admin billing visibility and merchant impersonation
+**Researched:** 2026-04-05
 **Confidence:** HIGH
 
 ## Executive Summary
 
-NZPOS v3.0 adds inventory management as a paid add-on to an existing multi-tenant SaaS POS that already tracks `stock_quantity` on every product and atomically decrements it at sale time. The core challenge is not building inventory from scratch — it is making the existing stock logic conditional, introducing a new product type that bypasses stock entirely, and ensuring the free tier feels clean without breaking the data model that already works. The existing `requireFeature()` + Stripe billing + `store_plans` infrastructure (proven with Xero and email notification add-ons) provides the exact pattern to follow.
+NZPOS v4.0 is an incremental expansion of an already-shipped multi-tenant SaaS POS system. The stack (Next.js 16 App Router, Supabase, Stripe, Tailwind CSS v4) is confirmed correct and requires no changes. The codebase has established patterns for auth, feature gating, tenant resolution, super-admin actions, and audit logging — v4.0 work is almost entirely additive, extending existing patterns rather than introducing new ones. Most features are low-to-medium complexity because the underlying data (staff, customers, promos, orders, store settings, Stripe subscriptions) already exists in the database.
 
-The recommended approach is surgical: one migration file adds the `product_type` column, the `stock_adjustments` audit table, the stocktake tables, and modifies the existing SECURITY DEFINER RPCs — all as a single atomic unit. No new npm packages are needed. The `complete_pos_sale` and `complete_online_sale` RPCs must learn to skip stock logic for service products at the database layer (not the UI layer). The add-on feature gate controls the management UI and alerts, but stock decrements continue unconditionally for all stores — this keeps the data accurate for merchants who subscribe later.
+The recommended approach is to sequence work by dependency order: schema migrations first, then CRUD UI, then analytics and advanced features. Three migration-dependent chains must be unblocked in the first phase — the manager role CHECK constraint expansion, the `stores` table receipt columns, and the shared role constants refactor. The significant complexity risks are concentrated in two features: merchant impersonation (session isolation and audit trail) and Stripe analytics (rate limiting and MRR normalisation). Both have clear solutions documented in the architecture research, but both require getting the architecture right before writing any application code.
 
-The highest risks are: (1) modifying the two sale RPCs that are on the checkout critical path, (2) stale JWT claims allowing inventory mutations after subscription cancellation, and (3) stocktake variance being wrong when sales occur during counting. All three have clear prevention strategies documented in the research. The refund path is a frequently overlooked integration point — it must be audited in the same phase as the product type introduction.
+The primary risk is security: stale JWT roles acting on wrong permissions, impersonation sessions overwriting the super-admin's own session, and cross-tenant customer data exposure via the Supabase admin client. None of these are novel problems — all have well-established mitigations. The codebase's existing patterns (RLS-enforced server client, `requireFeature()` DB verification, `super_admin_actions` audit trail) provide the right model; v4.0 work must extend those patterns consistently rather than short-circuit them.
 
 ## Key Findings
 
-### Stack Impact
+### Recommended Stack
 
-No new npm packages required for v3.0. All changes are database migrations, Server Actions, Zod schemas, and `config/addons.ts` wiring. See STACK.md for full details.
+The existing stack is validated and unchanged for v4.0. The only new runtime dependency is `recharts@2.x` for the admin dashboard chart. No ORM, no new auth library, no new BaaS. All features are built on existing packages.
 
-**Schema additions:**
-- `products.product_type` TEXT column (`physical` | `service`, default `physical`) — forward-compatible enum, not a boolean
-- `store_plans.has_inventory` + `has_inventory_manual_override` BOOLEAN columns — matches existing `has_xero` pattern exactly
-- `stock_adjustments` table — append-only audit log for all stock mutations (sales, refunds, manual, stocktake)
-- `stocktakes` + `stocktake_items` tables — session-based physical count with computed variance column
-
-**New environment variable:** `STRIPE_PRICE_INVENTORY` (Stripe Price ID for the add-on)
-
-### Architecture Decisions
-
-Five critical design choices surfaced from the research:
-
-1. **Service-product skip lives in the RPC, not the UI.** Both `complete_pos_sale` and `complete_online_sale` must branch on `product_type` inside the SECURITY DEFINER function. UI checks are defense-in-depth only. Putting the check only in the UI is the single most common anti-pattern in this domain.
-
-2. **Free-tier stores keep decrementing stock silently.** The RPCs do not change behaviour based on subscription status. Stock data stays accurate. The add-on gates the management UI (adjustments, stocktake, badges, alerts), not the data itself. This is the cleanest approach and avoids a baseline stocktake requirement on subscription.
-
-3. **All stock mutations go through SECURITY DEFINER RPCs.** Manual adjustments and stocktake commits use new RPCs (`adjust_stock`, `complete_stocktake`) that atomically update `products.stock_quantity` and insert `stock_adjustments` rows in a single transaction. Application-layer loops are forbidden.
-
-4. **Feature gate uses DB path for mutations, JWT fast path for reads.** `requireFeature('inventory', { requireDbCheck: true })` on every inventory write action. JWT path acceptable for UI rendering decisions only.
-
-5. **One migration file for all inventory changes.** Tables, columns, modified RPCs, new RPCs, RLS policies, indexes, and auth hook update — all in `024_inventory_addon.sql`. Partial application of tightly coupled changes is a documented failure mode.
+**Core technologies:**
+- Next.js 16.2 App Router + React 19: full-stack framework — Server Components for data fetching, Server Actions for mutations, Tailwind v4 CSS-native config
+- Supabase (supabase-js ^2.x + @supabase/ssr): Postgres + RLS + Auth — RLS with custom JWT claims enforces multi-tenant isolation; server client for merchant routes, admin client for super-admin routes only
+- jose ^5.x: JWT signing for staff PIN sessions and new impersonation tokens — Edge Runtime compatible, already in use; extend to `sa_impersonation` cookie for impersonation
+- Stripe node ^17.x: billing API — list subscriptions/invoices for super-admin billing views; normalize all amounts to monthly for MRR calculation
+- recharts 2.x (new dependency): `'use client'` chart rendering — server fetches aggregated data, client renders; React 19 compatible as of v2.13+
+- Zod ^3.x: Server Action input validation — every mutation validates before DB access; `z.enum(POS_ROLES)` derived from shared constants
+- Vitest + Playwright: unit tests for MRR normalisation and role logic, E2E for role-gated action bypass attempts
 
 ### Expected Features
 
-**Must have (P1 — add-on not shippable without):**
-- Service product type (`physical` / `service`) with full RPC integration
-- Manual stock adjustment with predefined reason code enum + free-text notes
-- Adjustment history log (filterable by product, date, reason)
-- Stocktake session: create, count, show variance, commit atomically
-- `requireFeature('inventory')` billing gate wired to Stripe
-- Free-tier cleanup: hide stock columns/badges/alerts when add-on inactive
-- POS stock badges (in-stock / low / out) when add-on active
-- POS zero-stock blocking for physical products when add-on active
+**Must have (v4.0 core — table stakes):**
+- Staff management UI — add, edit, deactivate, PIN reset (staff table exists; UI-only addition)
+- Manager role migration — expand CHECK constraint + permission gates on void/refund/discount Server Actions
+- Promo edit and soft delete — create-only today; edit+delete expected by any merchant
+- Store settings expansion — address, phone, IRD/GST number, receipt header/footer (most data columns already exist)
+- Customer list with search — paginated, store-scoped; `customers` table already exists from v2.0
+- Customer order history view — join on `auth_user_id`; no new schema
+- Customer account disable — flip `is_active` via service role
+- Admin dashboard: 7/30-day sales trend chart and period comparison metrics
+- Admin dashboard: recent orders widget
+- Super-admin: per-tenant billing visibility (subscriptions, invoices, payment failures)
+- Super-admin: platform overview metrics (total tenants, active add-ons, new signups chart)
 
-**Should have (P2 — same milestone if possible):**
-- Partial stocktake by category
-- Barcode scan integration in stocktake (existing scanner, low effort)
-- Storefront sold-out handling when add-on active
+**Should have (v4.1 — add after core is complete):**
+- Super-admin MRR/churn analytics — high complexity Stripe aggregation; validate need before building
+- Merchant impersonation — significant security surface; highest value for support operations
+- Store hours display on storefront
 
-**Defer (v3.1+):**
-- Cost variance in stocktake (requires `cost_price` field)
-- Stock received bulk workflow
-- Per-product stock history timeline view
-- Stock movement reporting (shrinkage totals, reason breakdowns)
-- Purchase orders / supplier management (explicitly out of scope)
+**Defer (v5+):**
+- Loyalty program integration (explicitly out of scope in PROJECT.md)
+- Customer email broadcast / CRM campaigns
+- Granular per-permission RBAC beyond three fixed tiers
 
-### Risk Areas
+### Architecture Approach
 
-Top 5 pitfalls ranked by severity:
+v4.0 follows every established architectural pattern in the codebase. Auth is dual-path (Supabase Auth for owners/super-admins, jose JWT for staff PIN). Feature gating uses `requireFeature()` with JWT fast-path and DB fallback on mutations. Tenant resolution is middleware-injected `x-store-id` header. Impersonation uses a shadow `sa_impersonation` jose JWT cookie — not `supabase.auth.signInAsUser()` — to preserve the super-admin's own Supabase session. Stripe analytics data is materialised into a local snapshot table via a sync job; the analytics page reads from Supabase, not the live Stripe API. Role strings are centralised in `src/config/roles.ts` and imported by middleware, JWT issuance, and Zod schemas to prevent the "manager added to DB but not middleware" failure mode.
 
-1. **Service products break existing RPCs.** The `complete_pos_sale` RPC will try to decrement `stock_quantity` for service items, causing negative stock and false out-of-stock errors. Prevention: modify both sale RPCs in the same migration as the `product_type` column. Write a test that sells a service product 100 times and verifies `stock_quantity` is unchanged.
+**Major components:**
+1. Staff RBAC layer — `requireRole()` utility + `resolveStaffAuthVerified()` DB-verified check in all role-gated Server Actions; shared `POS_ROLES` constant; new admin routes `/admin/staff/**`
+2. Admin dashboard charts — `SalesTrendChart` (Client Component, recharts) + `MetricsComparisonRow` (Server Component); server aggregates orders, serializes to client
+3. Store settings expansion — two new columns (`receipt_header`, `receipt_footer`), new form components following `BrandingForm.tsx` pattern; `address`/`phone`/`gst_number` already exist
+4. Customer management — new `/admin/customers/**` routes; standard server client enforces RLS isolation; paginated list + detail with order history
+5. Super-admin billing panel — `TenantBillingPanel` added to existing tenant detail page; reads Stripe subscriptions/invoices by `stripe_customer_id`
+6. Super-admin analytics — new `/super-admin/analytics` page with `platform_analytics_snapshots` Supabase table; daily Stripe sync job; 5-minute page-level revalidation
+7. Merchant impersonation — shadow `sa_impersonation` jose cookie; middleware branch injects `x-store-id` for impersonated store; `ImpersonationBanner` in admin layout; audit trail for all mutations during session
 
-2. **Stale JWT claims after subscription cancellation.** A cancelled subscriber retains inventory write access for up to 60 minutes via cached JWT claims. Prevention: all inventory mutations use `requireDbCheck: true`. Stripe cancellation webhook should trigger token refresh.
+### Critical Pitfalls
 
-3. **Stocktake variance wrong during live sales.** If variance is calculated against live `stock_quantity` instead of a snapshot, sales during counting appear as phantom shrinkage. Prevention: snapshot `system_quantity` at stocktake creation; use `stock_adjustments` rows to account for sales during count, or document that counts should happen when store is closed.
+1. **Stale role in staff JWT after role change** — JWT embeds role, valid for 8 hours. After demotion, staff can act under the old role until re-login. Fix: `resolveStaffAuthVerified()` does a DB role lookup for all role-gated mutations; never trust JWT role for write actions. On role change, force re-login by setting `pin_locked_until` to now.
 
-4. **Refund path not audited for new product types.** `processRefund` and `processPartialRefund` call `restore_stock` — this must skip service products entirely. Prevention: test matrix covering physical+refund, service+refund, both with and without add-on active.
+2. **Impersonation overwrites super-admin Supabase session** — `supabase.auth.signInAsUser()` replaces the session cookie, logging out the super-admin on impersonation end. Fix: shadow `sa_impersonation` jose cookie independent of Supabase session cookies; `endImpersonation` deletes only the jose cookie, original session untouched.
 
-5. **CSV import overwrites managed stock levels.** A price-update CSV import silently resets `stock_quantity` to stale values. Prevention: CSV import must never change `stock_quantity` without an explicit `update_stock` flag. Add `product_type` as a CSV column.
+3. **Manager role breaks existing middleware POS gate** — middleware currently allows only `role='owner' || 'staff'`; adding `manager` to the DB without updating the middleware allowlist locks managers out of POS. Fix: centralise role enum in `src/config/roles.ts`, import in `middleware.ts`, `staffPin.ts`, and `staff.ts` Zod schema.
 
-## Requirements Implications
+4. **Stripe analytics rate limiting** — super-admin analytics via live Stripe API on page load can trigger 30–50+ API calls when paginating subscriptions across tenants, hitting Stripe's 100 req/s limit. Fix: materialise to `platform_analytics_snapshots` in Supabase; page reads from DB with 5-minute revalidation; on-demand "Refresh now" rate-limited to once per 5 minutes.
 
-### What research tells us about scoping
+5. **Cross-tenant customer data leak** — using Supabase admin client (service role) for merchant-facing customer list bypasses RLS and returns all tenants' customers. This is a Privacy Act 2020 breach. Fix: always use standard server client for merchant admin routes; admin client only in super-admin routes with explicit `store_id` filter.
 
-The work divides cleanly into three phases based on dependency order.
+6. **MRR miscalculation for annual plans** — summing `plan.amount` without normalising interval overstates annual plans by 12x. Fix: divide annual plan amounts by 12 in the Stripe sync job; add a unit test asserting a $120/year plan contributes $10/month to MRR.
 
-### Phase 1: Service Product Type + Free-Tier Simplification
-**Rationale:** `product_type` is a prerequisite for everything else. Both sale RPCs, both refund actions, the CSV import, low-stock alerts, and the storefront must all handle services correctly before any inventory management features are built. Free-tier simplification is coupled because it requires the same conditional rendering audit.
-**Delivers:** Service products that sell without stock checks everywhere. Clean free-tier experience with no stock clutter.
-**Addresses:** P1 features: service product type, free-tier cleanup
-**Avoids:** Pitfalls 1 (RPC decrement behaviour), 2 (service products break constraints), 6 (refund undefined behaviour), 7 (CSV import), 8 (API data leakage)
-**Scope note:** This phase touches existing code heavily (RPCs, refund actions, CSV import, POS, storefront, admin). It is the riskiest phase despite being foundational.
+## Implications for Roadmap
 
-### Phase 2: Inventory Add-on Core (Adjustments + Stocktake)
-**Rationale:** With service products handled, the inventory features can be built as purely additive new code. The `stock_adjustments` table is the shared backbone — manual adjustments, stocktake commits, and sale-generated history all write to it.
-**Delivers:** The paid add-on: manual stock adjustments with reason codes, adjustment history, stocktake sessions with variance, atomic commit. Admin UI pages for all inventory management.
-**Addresses:** P1 features: manual adjustment, history log, stocktake create/count/variance/commit. P2 features: partial stocktake, barcode scan.
-**Avoids:** Pitfalls 4 (history table growth — indexes in migration), 5 (stocktake stale data — snapshot design), 9 (reason code validation — enum from day one)
+Based on research, the natural phase structure follows dependency chains: unblock schemas and shared constants first, then add CRUD UI, then analytics, then high-security features last.
 
-### Phase 3: Feature Gating + POS/Storefront Integration
-**Rationale:** The billing gate and POS/storefront stock badges depend on the inventory infrastructure being complete. The `requireFeature('inventory')` wiring, Stripe product creation, and conditional UI rendering are the final layer.
-**Delivers:** Stripe-billed add-on with purchase flow. POS stock badges and zero-stock blocking. Storefront sold-out handling. Super admin panel integration.
-**Addresses:** P1 features: billing gate, POS badges, POS zero-stock blocking. P2 features: storefront sold-out.
-**Avoids:** Pitfall 3 (JWT stale claims — DB path enforcement on all mutations)
+### Phase 1: Schema and Staff RBAC Foundation
+**Rationale:** Two features block everything else. The manager role CHECK constraint must exist before any role-gated UI can be built. The shared `POS_ROLES` constant refactor must be the very first commit — otherwise Pitfall 4 (middleware gate breakage) is guaranteed when manager is added. The `receipt_header`/`receipt_footer` columns must exist before the settings form can save.
+**Delivers:** `manager` role in DB, updated middleware and JWT issuance, `requireRole()` utility, `resolveStaffAuthVerified()` DB-verified role check, staff management UI (list, add, edit, deactivate, PIN reset), `receipt_header`/`receipt_footer` migration
+**Features:** Staff management UI, manager role migration + permission gates, store settings (receipt columns)
+**Avoids:** Pitfall 1 (stale role in mutations), Pitfall 4 (middleware gate broken), Pitfall 7 (Server Action bypass)
+
+### Phase 2: Admin Operational UI
+**Rationale:** Low complexity, high merchant value, no security risk. Customer management and promo edit/delete follow established patterns with no new schema. Admin dashboard charts require only one new dependency (recharts) and an aggregation query on existing `orders` data. All work is additive to existing pages.
+**Delivers:** Customer list + search + order history + account disable; promo edit and soft delete; admin dashboard sales chart + period comparison + recent orders widget; store settings form for address/phone/IRD number/receipt text
+**Features:** All remaining P1 admin features
+**Avoids:** Pitfall 8 (cross-tenant customer data — enforce server client + RLS in acceptance criteria for customer list)
+
+### Phase 3: Super-Admin Billing Visibility
+**Rationale:** Read-only Stripe integration with no new schema. `stripe_customer_id` already on `stores`. Pattern already exists in `admin/billing/page.tsx`. This is isolated enough to build without touching impersonation or analytics infrastructure.
+**Delivers:** Per-tenant subscription/invoice/payment-failure view in existing tenant detail page; platform overview metrics (tenant count, signup trend, active add-ons count)
+**Features:** Super-admin billing visibility, platform overview metrics
+**Avoids:** Pitfall 5 by keeping this phase read-only per-tenant (no aggregation pagination loops yet)
+
+### Phase 4: Super-Admin Analytics (MRR, Churn, Add-on Revenue)
+**Rationale:** Requires materialised snapshot architecture before any code is written — this cannot be retrofitted. Phase 3 establishes the Stripe API call patterns; Phase 4 adds the sync job and the analytics page that reads from local DB.
+**Delivers:** `platform_analytics_snapshots` table, daily Stripe sync job (Vercel Cron or pg_cron), super-admin analytics page with MRR/churn/add-on revenue breakdown, payment failures list, platform growth chart
+**Features:** Super-admin MRR/churn analytics (v4.1)
+**Avoids:** Pitfall 5 (rate limiting via snapshot architecture), Pitfall 6 (MRR normalisation for annual plans — unit test required)
+
+### Phase 5: Merchant Impersonation
+**Rationale:** Highest security surface in v4.0. Must be designed in isolation, with session isolation (Pitfall 2) and audit trail completeness (Pitfall 3) as explicit acceptance criteria. Building last ensures all other admin features are stable and that the impersonation context (injecting `x-store-id`) is tested against a mature admin surface.
+**Delivers:** Shadow `sa_impersonation` jose cookie, middleware branch for impersonation routing, `ImpersonationBanner` persistent in admin layout, `startImpersonation`/`endImpersonation` Server Actions with audit rows, `resolveImpersonationContext()` helper enforcing audit logging on mutations during impersonation
+**Features:** Merchant impersonation (v4.1)
+**Avoids:** Pitfall 2 (session overwrite — never use `supabase.auth.signInAsUser()`), Pitfall 3 (missing audit trail for mutations during impersonation)
 
 ### Phase Ordering Rationale
 
-- Phase 1 must come first because it modifies the checkout critical path (sale RPCs). All subsequent work assumes services are handled correctly.
-- Phase 2 is pure additive — new tables, new RPCs, new Server Actions, new UI pages. No existing code is modified except the sale RPCs (to write `stock_adjustments` rows).
-- Phase 3 is the integration layer — it connects inventory to billing and surfaces it in POS/storefront. It depends on Phase 2 being complete so there is something to gate.
-- The `addons.ts` config change and the auth hook JWT claim injection should happen in Phase 3, not Phase 1, because the inventory feature does not need to be gated until the management UI exists.
+- Phase 1 must come first: role enum and DB constraint are hard prerequisites for all role-gated code throughout v4.0
+- Phases 2 and 3 can largely run in parallel — they share no dependencies; sequence them by priority
+- Phase 4 references Phase 3's Stripe API patterns but has no hard dependency; can follow Phase 3 or run overlapping
+- Phase 5 is deliberately last — impersonation touching a half-built admin creates unpredictable audit noise and an untestable security surface
 
 ### Research Flags
 
 Phases likely needing deeper research during planning:
-- **Phase 1:** HIGH risk. Modifies two SECURITY DEFINER RPCs on the checkout hot path. Needs careful test planning and a rollback strategy. Research the exact RPC source before writing the migration.
-- **Phase 2 (Stocktake):** MEDIUM risk. The snapshot-vs-live-quantity decision for concurrent-sale handling needs a firm product decision before implementation.
+- **Phase 4 (Super-admin analytics):** Vercel Cron availability on free tier vs Supabase pg_cron; `platform_analytics_snapshots` schema finalisation for MRR/churn queries; webhook event handling for incremental updates between daily syncs
+- **Phase 5 (Impersonation):** Security review of middleware branch; CSRF protection for `startImpersonation`; final policy decision on impersonation write-mode (read-only vs audited writes)
 
 Phases with standard patterns (skip research-phase):
-- **Phase 3:** LOW risk. The `requireFeature()` + `addons.ts` + Stripe billing pattern is proven across two existing add-ons. Follow the Xero add-on implementation as a template.
+- **Phase 1 (Staff RBAC):** Schema migration + CRUD UI; all patterns already exist in codebase
+- **Phase 2 (Admin operational UI):** Follows existing `admin/orders` and `admin/promos` patterns exactly; recharts integration is well-documented
+- **Phase 3 (Super-admin billing):** Stripe list API documented in research; pattern already exists in `admin/billing/page.tsx`
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | No new packages. All changes verified against existing codebase patterns through 23 migration files and 48 Server Actions. |
-| Features | HIGH | Feature landscape well-established in retail POS. Validated against Square, Lightspeed, Shopify POS documentation. |
-| Architecture | HIGH | All claims verified via direct codebase inspection. Build order derived from actual dependency graph. |
-| Pitfalls | HIGH | Critical pitfalls (RPC modification, JWT stale claims, stocktake snapshot) confirmed via PostgreSQL documentation and POS industry patterns. |
+| Stack | HIGH | Verified against live Next.js 16.2.1 docs; all packages confirmed current; recharts v2.13+ React 19 compatibility confirmed |
+| Features | HIGH | Existing schema verified in codebase migrations 001–026; competitor patterns (Square, Lightspeed) confirmed via WebSearch |
+| Architecture | HIGH | Direct codebase analysis of middleware, resolveAuth, staffPin, existing admin patterns; decisions validated against official Supabase and Next.js docs |
+| Pitfalls | HIGH | Critical pitfalls confirmed against existing codebase files (`middleware.ts` lines 204–208, `staffPin.ts`, `resolveAuth.ts`); Stripe rate limits from official docs |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Stocktake concurrent-sale strategy:** Research recommends snapshot-at-start with sales-during-count adjustment, but the simpler "count after close" approach may be sufficient for v3.0. Needs a product decision.
-- **Low-stock alerts scope:** Currently always-on. Research did not conclusively determine whether alerts should be gated behind the inventory add-on or remain free. Needs a product decision.
-- **`cost_price` field existence:** Cost variance in stocktake (deferred to v3.1) requires a `cost_price` column on products. Unclear if this field exists. Check before Phase 2.
-- **Staff vs owner permissions for stock adjustments:** Pitfalls research flags that staff PIN sessions should not have adjustment access (theft risk). Needs a product decision on whether trusted staff can adjust stock.
+- **Vercel Cron on free tier:** Phase 4 needs a Stripe sync job scheduler. Vercel Cron supports 1 job on free tier (last confirmed 2025) — verify before committing. Alternative: Supabase pg_cron (available on free tier via extensions).
+- **Manager admin read-only access:** Architecture recommends deferring manager `/admin` route access to a later task (Option A). If product decides managers need read-only admin access before v4.0 ships, middleware must be extended in Phase 1. Flag for product confirmation before Phase 1 planning begins.
+- **Impersonation write mode policy:** Research recommends read-only impersonation with explicit super-admin Server Actions for writes. Final policy needed before Phase 5 spec.
+- **`receipt_header`/`receipt_footer` columns confirmed absent:** Architecture research confirmed these two columns do not yet exist. All other settings columns (`address`, `phone`, `gst_number`, `opening_hours`) are present from migrations 010/011. The gap is two SQL columns — trivial to add.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Direct codebase inspection: 23 migration files (`001_initial_schema.sql` through `023_performance_indexes.sql`)
-- Direct codebase inspection: `src/lib/requireFeature.ts`, `src/config/addons.ts`, `src/actions/orders/completeSale.ts`
-- PostgreSQL documentation: `GENERATED ALWAYS AS ... STORED`, `SELECT FOR UPDATE`, SECURITY DEFINER functions
+- Next.js 16.2.1 official docs (confirmed 2026-03-25) — Server Components, Server Actions, middleware, testing (Vitest, Playwright)
+- Supabase custom claims and RBAC docs — JWT claims pattern, RLS policy structure
+- Stripe API docs — subscriptions list, invoices list, rate limits (100 req/s), pagination
+- Existing codebase: `src/middleware.ts`, `src/actions/auth/staffPin.ts`, `src/lib/resolveAuth.ts`, `src/schemas/staff.ts`, `supabase/migrations/001–026`
 
 ### Secondary (MEDIUM confidence)
-- Square stock adjustment documentation: https://squareup.com/help/us/en/article/8331-set-up-inventory-tracking
-- Lightspeed Retail X-Series inventory counting: https://retail-support.lightspeedhq.com/hc/en-us/articles/229129948-Counting-inventory
-- Oracle Retail Store Inventory Management reason codes
-- WooCommerce NULL vs zero stock_quantity bug (GitHub issue #21392)
+- Stripe MRR calculation accuracy analysis (getlago.com) — confirmed interval normalisation requirement and common mistakes
+- WorkOS multi-tenant RBAC design — three-tier role model validation against industry norms
+- OWASP Session Management Cheat Sheet — impersonation session isolation pattern
+- Supabase user impersonation pattern (jjacky.substack.com) — shadow cookie approach confirmation
+- Stripe SaaS analytics patterns (stripe.com/resources) — pull-on-demand vs webhook-sourced MRR trade-offs
 
 ### Tertiary (LOW confidence)
-- Supabase free tier limits (pricing page blocked, from training data) — verify before multi-tenant rollout
+- Supabase free tier limits (from training data; pricing page not confirmed) — 500MB DB, 1GB storage, 50K MAU; assumed sufficient for v1
+- Vercel Cron free tier (1 job) — assumed available; verify before Phase 4 planning
 
 ---
-*Research completed: 2026-04-04*
+*Research completed: 2026-04-05*
 *Ready for roadmap: yes*

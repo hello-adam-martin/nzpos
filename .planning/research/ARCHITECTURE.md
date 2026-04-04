@@ -1,468 +1,781 @@
 # Architecture Research
 
-**Domain:** Inventory management add-on + service product types for existing multi-tenant SaaS POS
-**Researched:** 2026-04-04
-**Confidence:** HIGH — based on direct codebase inspection, all claims verified against source
+**Domain:** Admin platform features — staff RBAC, Stripe analytics, merchant impersonation, customer management
+**Researched:** 2026-04-05
+**Confidence:** HIGH (direct codebase analysis + verified patterns from official docs)
 
-## Standard Architecture
+---
 
-### System Overview
+## Existing Architecture Summary
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         Next.js App Router Layer                             │
-├──────────────┬──────────────┬──────────────┬─────────────────────────────────┤
-│  /pos        │  /admin      │  /(store)    │  /api/webhooks/stripe            │
-│  POS shell   │  Inventory   │  Storefront  │  Billing + stock restore         │
-│  (staff JWT) │  pages (new) │  (public)    │  (service role)                  │
-└──────┬───────┴──────┬───────┴──────┬───────┴──────────────┬──────────────────┘
-       │              │              │                       │
-       ▼              ▼              ▼                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         Server Actions (48 existing + ~8 new)                │
-│  completeSale  updateProduct  createProduct  adjustStock(NEW)                │
-│  processRefund importProducts              recordStocktake(NEW)              │
-│  [all validated with Zod, guarded with server-only, admin client for RPCs]   │
-└──────────────────────────────────┬──────────────────────────────────────────┘
-                                   │
-       ┌───────────────────────────┼───────────────────────────────────┐
-       ▼                           ▼                                   ▼
-┌─────────────┐      ┌─────────────────────────┐          ┌──────────────────────┐
-│ requireFeat │      │  Supabase Admin Client   │          │  JWT Claims / Auth   │
-│ ure('inven  │      │  (service role -- RPCs,  │          │  hook injects:       │
-│ tory') NEW  │      │  stock writes bypass RLS)│          │  inventory: boolean  │
-└─────────────┘      └────────────┬────────────┘          │  (NEW claim needed)  │
-                                  │                        └──────────────────────┘
-                                  ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         Supabase Postgres (RLS on all tables)                │
-├─────────────────┬─────────────────┬──────────────────┬───────────────────────┤
-│ products        │ stock_adjust-   │ stocktakes       │ store_plans           │
-│ +product_type   │ ments (NEW)     │ (NEW)            │ +has_inventory (NEW)  │
-│ (physical|svc)  │                 │                  │ +has_inventory_       │
-│                 │                 │                  │  manual_override (NEW)│
-├─────────────────┴─────────────────┴──────────────────┴───────────────────────┤
-│ EXISTING: complete_pos_sale RPC   (modified: skip stock check for services)   │
-│ EXISTING: complete_online_sale RPC (modified: skip stock check for services)  │
-│ EXISTING: restore_stock RPC       (no change -- service items have no stock)  │
-│ NEW:      adjust_stock RPC        (manual adjustment with audit trail)        │
-│ NEW:      complete_stocktake RPC  (apply variance, write history)             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+Before documenting new integration points, this is what already exists and must not be changed.
 
-### Component Responsibilities
-
-| Component | Responsibility | Current State |
-|-----------|----------------|---------------|
-| `products` table | Source of truth for product catalog, stock levels | EXISTS -- needs `product_type` column |
-| `stock_adjustments` table | Audit log for all manual stock changes (adjustments + stocktake variances) | NEW |
-| `stocktakes` / `stocktake_items` tables | Snapshot of counted quantities with variance vs system | NEW |
-| `store_plans` table | Per-tenant feature flags linked to Stripe billing | EXISTS -- needs `has_inventory` column |
-| `complete_pos_sale` RPC | Atomic POS sale: lock then check stock then insert order then decrement | EXISTS -- must be modified |
-| `complete_online_sale` RPC | Atomic online sale: same as above for Stripe webhook path | EXISTS -- must be modified |
-| `adjust_stock` RPC | SECURITY DEFINER: apply manual stock adjustment + write audit row | NEW |
-| `complete_stocktake` RPC | SECURITY DEFINER: apply variance adjustments + write stocktake record | NEW |
-| `requireFeature('inventory')` | Guard for all inventory Server Actions and admin UI pages | NEW call site wiring |
-| `custom_access_token_hook` | Injects `inventory: boolean` into JWT app_metadata | EXISTS -- must be modified |
-| `addons.ts` config | Central registry of all add-on features, Stripe Price IDs, column mappings | EXISTS -- must be extended |
-
-## Recommended Project Structure
+### Auth Layer (Dual-path, already working)
 
 ```
-src/
-├── actions/
-│   ├── products/
-│   │   ├── createProduct.ts          # MODIFY: add product_type field
-│   │   └── updateProduct.ts          # MODIFY: add product_type field
-│   └── inventory/                    # NEW directory
-│       ├── adjustStock.ts            # NEW: manual adjustment action
-│       ├── recordStocktake.ts        # NEW: save counted quantities
-│       └── completeStocktake.ts      # NEW: apply variance + finalise
-├── schemas/
-│   ├── product.ts                    # MODIFY: add product_type to Zod schema
-│   └── inventory.ts                  # NEW: AdjustStockSchema, StocktakeSchema
-├── config/
-│   └── addons.ts                     # MODIFY: add 'inventory' to SubscriptionFeature
-├── components/
-│   ├── pos/
-│   │   └── ProductCard.tsx           # MODIFY: hide stock badge if !hasInventory
-│   └── admin/
-│       └── inventory/                # NEW directory
-│           ├── StockAdjustmentForm.tsx
-│           ├── StocktakeSheet.tsx
-│           └── StockHistoryTable.tsx
-├── app/
-│   └── admin/
-│       └── inventory/                # NEW route group
-│           ├── page.tsx              # Stock overview (requires inventory feature)
-│           ├── adjust/page.tsx       # Manual adjustment form
-│           └── stocktake/page.tsx    # Stocktake workflow
-└── types/
-    └── database.ts                   # REGENERATE after migrations applied
+Owner login  → Supabase Auth → app_metadata.role='owner', store_id, is_super_admin
+Staff login  → staffPin.ts   → jose JWT in staff_session cookie (role, store_id, staff_id)
+Super admin  → Supabase Auth → app_metadata.is_super_admin=true (no store_id)
+Customer     → Supabase Auth → app_metadata.role='customer'
 ```
 
-### Structure Rationale
+`resolveAuth()` tries Supabase owner session first, falls back to staff JWT cookie.
+`resolveStaffAuth()` reads staff JWT only — used in POS actions.
+Both return `{ store_id, staff_id, role? }` or null.
 
-- **`actions/inventory/`:** Separate action directory follows the existing pattern (`actions/products/`, `actions/orders/`). Keeps inventory mutations isolated.
-- **`config/addons.ts`:** Already the single source of truth for feature/Stripe/column mappings. Extending it (not duplicating) is the correct pattern.
-- **`app/admin/inventory/`:** Matches the existing admin route group pattern (`app/admin/reports/`, `app/admin/orders/`).
+### Feature Gating (JWT fast-path + DB fallback)
 
-## Architectural Patterns
+`requireFeature(feature, { requireDbCheck })` in `src/lib/requireFeature.ts`:
+- Default: reads `user.app_metadata[feature]` from JWT (no DB roundtrip)
+- `requireDbCheck: true`: queries `store_plans` table via admin client (used on mutations)
 
-### Pattern 1: Feature Gate at the Server Action Entry Point
+### Tenant Resolution (Middleware)
 
-**What:** Every Server Action that touches inventory calls `requireFeature('inventory', { requireDbCheck: true })` before any DB work. The `{ requireDbCheck: true }` option forces a DB read against `store_plans` -- critical for mutations where a stale JWT claim would allow inventory writes after a cancelled subscription.
+Middleware resolves `store_id` from subdomain slug, injects `x-store-id` header.
+Server Components and Server Actions read it via `resolveAuth()` or directly from `headers()`.
 
-**When to use:** All write paths (adjustStock, recordStocktake, completeStocktake). Read paths (stock history display) can use the JWT fast path.
+### Super Admin Pattern (Established)
 
-**Trade-offs:** One extra DB round-trip per mutation. Acceptable -- inventory adjustments are low-frequency, correctness matters more than latency.
+- Route protection: `super-admin/layout.tsx` checks `user.app_metadata.is_super_admin === true`
+- Actions: `createSupabaseAdminClient()` (service_role) for all super-admin mutations
+- Audit trail: `super_admin_actions` table — every mutation inserts an audit row
+- Tenant cache invalidation: `invalidateCachedStoreId(slug)` after store state changes
 
-**Example:**
+### Existing `staff` Table Schema
+
+```sql
+staff (
+  id UUID PRIMARY KEY,
+  store_id UUID NOT NULL REFERENCES stores(id),
+  auth_user_id UUID REFERENCES auth.users(id),  -- only owners
+  name TEXT NOT NULL,
+  pin_hash TEXT,           -- bcrypt, 4-digit PIN
+  role TEXT CHECK (role IN ('owner', 'staff')),  -- CURRENT: only 2 values
+  is_active BOOLEAN DEFAULT true,
+  pin_attempts INTEGER DEFAULT 0,
+  pin_locked_until TIMESTAMPTZ,
+  created_at, updated_at
+)
+```
+
+Role values in JWT claims: `'owner'` | `'staff'`. No `'manager'` yet.
+
+### Existing `stores` Table (Relevant Columns)
+
+Columns confirmed present across migrations 001–026:
+```
+slug, name, logo_url, primary_color, store_description
+address, phone, gst_number   -- migration 010
+opening_hours                -- migration 011
+stripe_customer_id           -- migration 014
+is_active, suspended_at, suspension_reason  -- migration 014/020
+setup_wizard_dismissed       -- migration 018
+```
+
+Missing for v4.0: `receipt_header`, `receipt_footer`. The `gst_number` column serves as the IRD number field — no separate column needed.
+
+---
+
+## New Integration Points
+
+### 1. Staff Role-Based Permissions (RBAC)
+
+**Current state:** `staff.role` accepts `'owner'` | `'staff'`. Middleware only allows `role='owner'` into `/admin`. Staff use POS only via PIN JWT. No admin UI exists for managing staff.
+
+**New requirement:** Three-tier roles (`Owner / Manager / Staff`). Manager can view admin read-only areas (orders, reports). Owner retains all write access. Admin UI for creating, editing, deactivating, and resetting PINs for staff members.
+
+**Schema change (new migration):**
+```sql
+-- Drop existing CHECK constraint and add 'manager'
+ALTER TABLE public.staff DROP CONSTRAINT staff_role_check;
+ALTER TABLE public.staff ADD CONSTRAINT staff_role_check
+  CHECK (role IN ('owner', 'manager', 'staff'));
+```
+
+CHECK constraint (not ENUM) — follows established `product_type` pattern, allows easy future extension.
+
+**JWT claims:** Staff PIN JWT already embeds `role` in payload. `resolveStaffAuth()` already returns `role`. No JWT structure changes needed — new enum value flows through automatically once the DB constraint allows it.
+
+**New `requireRole()` utility** (new file, does not replace `resolveAuth()`):
 ```typescript
-export async function adjustStock(input: unknown) {
-  'use server'
-  import 'server-only'
+// src/lib/requireRole.ts
+import 'server-only'
+import { resolveAuth } from './resolveAuth'
 
-  const result = await requireFeature('inventory', { requireDbCheck: true })
-  if (!result.authorized) {
-    return { success: false, error: 'FEATURE_GATED', upgradeUrl: result.upgradeUrl }
-  }
-  // ... rest of action
+type AllowedRole = 'owner' | 'manager' | 'staff'
+const HIERARCHY: Record<AllowedRole, number> = { owner: 3, manager: 2, staff: 1 }
+
+export async function requireRole(minimumRole: AllowedRole) {
+  const auth = await resolveAuth()
+  if (!auth) return null
+  const userLevel = HIERARCHY[(auth as { role?: AllowedRole }).role ?? 'staff'] ?? 0
+  return userLevel >= HIERARCHY[minimumRole] ? auth : null
 }
 ```
 
-### Pattern 2: Service Products Skip All Stock Logic
+**Admin route access for managers:** Middleware currently blocks non-owner from `/admin` (line 158: `if (role !== 'owner') redirect`). The manager role comes via staff PIN JWT, not Supabase Auth, so `role` is extracted from a different path than owner. Two options:
 
-**What:** The `product_type` column (`'physical' | 'service'`) is the single gate for all stock operations. Services never have stock checked, never decrement, never show stock badges. This gate lives in three places: the two SECURITY DEFINER RPCs (DB layer), the POS ProductCard component (UI layer), and the storefront product page (UI layer).
+- Option A: Keep middleware unchanged. Managers only use POS. Admin read-only is an owner-only concern. (Simpler — defers manager complexity entirely.)
+- Option B: Extend middleware to detect valid staff JWT with `role='manager'` on admin routes, inject `x-staff-role: manager` header. Admin Server Components gate write-only UI behind `x-staff-role !== 'manager'`.
 
-**When to use:** Everywhere stock quantity is read or written. The RPC is the authoritative gating point -- UI checks are defense-in-depth.
+**Recommendation:** Option A for Phase 1. The PROJECT.md v4.0 target lists "basic roles (Owner/Manager/Staff)" but the initial constraint is admin UI for staff management, not manager access to admin. Build the CRUD UI and schema first; middleware extension is a second task if product demands it.
 
-**Trade-offs:** Requires modifying existing RPCs. The RPCs are SECURITY DEFINER so one migration changes the actual stock logic. UI changes are additive (conditional rendering).
+**How Server Actions consume roles:**
+```typescript
+// Write-only actions (create product, update settings): unchanged
+const auth = await resolveAuth()
+if (!auth || auth.role !== 'owner') return { error: 'Unauthorized' }
 
-**Example -- RPC modification pattern:**
+// New staff management actions: owner only
+const auth = await requireRole('owner')
+if (!auth) return { error: 'Unauthorized' }
+```
+
+**UI permission rendering:** Pass `role` from server component as prop to client components. Client components gate edit buttons with `role === 'owner'` check. No separate permission lookup on client — server already verified.
+
+**Schema update:** `src/schemas/staff.ts` `CreateStaffSchema` role field:
+```typescript
+role: z.enum(['owner', 'manager', 'staff'])
+```
+
+**New admin routes:**
+```
+src/app/admin/staff/page.tsx        ← Staff list
+src/app/admin/staff/new/page.tsx    ← Create staff
+src/app/admin/staff/[id]/page.tsx   ← Edit / deactivate / reset PIN
+```
+
+**New Server Actions:**
+```
+src/actions/staff/createStaff.ts       ← Zod validate, bcrypt PIN, insert
+src/actions/staff/updateStaff.ts       ← Update name/role/is_active
+src/actions/staff/resetStaffPin.ts     ← Owner resets a staff PIN
+```
+
+**Data flow:**
+```
+Admin staff page (Server Component)
+  → supabase.from('staff').select().eq('store_id', storeId)
+  → StaffListClient (Client Component)
+    → StaffForm (modal/page, role-gated)
+      → createStaff / updateStaff / resetStaffPin Server Actions
+        → requireRole('owner')   [only owners manage staff]
+        → Zod validate
+        → supabase admin client: insert / update
+        → revalidatePath('/admin/staff')
+```
+
+---
+
+### 2. Admin Dashboard Improvements (Sales Trend Chart + Metrics)
+
+**Current state:** `src/app/admin/dashboard/page.tsx` fetches today's orders inline, renders `DashboardHeroCard` + `LowStockAlertList`. No charts, no period comparison.
+
+**New requirement:** 7/30-day sales trend chart, recent orders widget, current-vs-prior-period metric comparison.
+
+**Library:** Recharts. Confirmed requirement: `'use client'` — Recharts uses browser-only APIs and cannot render in Server Components. Use `recharts@2.x` (React 19 compatible as of v2.13+). Do not use v3 (alpha).
+
+**Pattern — server fetches, client renders (established in `admin/billing/page.tsx`):**
+
+```typescript
+// dashboard/page.tsx (Server Component) — add to existing page
+const thirtyDaysAgo = subDays(new Date(), 30)
+const { data: historicalOrders } = await supabase
+  .from('orders')
+  .select('created_at, total_cents')
+  .eq('store_id', storeId)
+  .in('status', ['completed', 'pending_pickup', 'ready', 'collected'])
+  .gte('created_at', thirtyDaysAgo.toISOString())
+
+// Group by day in TypeScript — pass serialized array to Client Component
+const dailyTotals = groupByDay(historicalOrders ?? [])
+return <SalesTrendChart data={dailyTotals} />
+```
+
+**New components:**
+```
+src/components/admin/dashboard/SalesTrendChart.tsx      ← 'use client', recharts AreaChart
+src/components/admin/dashboard/RecentOrdersList.tsx     ← Server Component (no interactivity)
+src/components/admin/dashboard/MetricsComparisonRow.tsx ← Server Component (pure display)
+```
+
+**No new routes** — all additions go into the existing `dashboard/page.tsx` and new component files.
+
+---
+
+### 3. Store Settings Expansion
+
+**Current state:** `stores` table already has `address`, `phone`, `gst_number`, `opening_hours`. Admin settings page only shows branding (name, slug, logo, primary_color).
+
+**New requirement:** Business address, phone, IRD number, receipt header/footer, store hours.
+
+**Schema addition (new migration):**
 ```sql
--- In complete_pos_sale, branch on product_type in the item JSONB:
-IF (v_item->>'product_type') IS DISTINCT FROM 'service' THEN
-  SELECT stock_quantity INTO v_current_stock
-  FROM products WHERE id = (v_item->>'product_id')::UUID ...
-  FOR UPDATE;
-  -- check and decrement as before
-END IF;
+ALTER TABLE public.stores
+  ADD COLUMN IF NOT EXISTS receipt_header TEXT,
+  ADD COLUMN IF NOT EXISTS receipt_footer TEXT;
+-- address, phone, gst_number, opening_hours already exist (migrations 010/011)
 ```
 
-### Pattern 3: Append-Only Audit Log for Stock Changes
+**No new routes** — expand existing `src/app/admin/settings/page.tsx` with additional form sections, following the `BrandingForm.tsx` pattern.
 
-**What:** All stock changes (sale decrement, refund restore, manual adjustment, stocktake variance) write a row to `stock_adjustments`. The `products.stock_quantity` column is the live total; `stock_adjustments` is the history. Never rewrite history rows.
-
-**When to use:** Always. This is the audit trail for IRD compliance and theft detection.
-
-**Trade-offs:** Slightly more writes per transaction. The `adjust_stock` and `complete_stocktake` RPCs handle this atomically so there is no risk of orphaned history rows.
-
-**Note on scope:** For v3.0, `stock_adjustments` rows for sales (reason='sale') can be written inside the modified RPCs. This keeps the audit trail complete without any extra application-layer work.
-
-## Data Flow
-
-### Manual Stock Adjustment Flow
-
+**New form components:**
 ```
-Admin UI (StockAdjustmentForm)
-    -> Server Action: adjustStock(input)
-    -> requireFeature('inventory', { requireDbCheck: true })
-    -> Zod: AdjustStockSchema.safeParse(input)
-    -> adminClient.rpc('adjust_stock', { p_product_id, p_delta, p_reason, p_note, p_staff_id })
-         -> SECURITY DEFINER RPC (atomic):
-              SELECT stock_quantity FOR UPDATE
-              UPDATE products SET stock_quantity = stock_quantity + p_delta
-              INSERT INTO stock_adjustments (quantity_before, quantity_after, ...)
-    -> revalidatePath('/admin/inventory')
-    -> revalidatePath('/pos')  -- POS needs refreshed stock
+src/components/admin/settings/BusinessInfoForm.tsx     ← address, phone, gst_number
+src/components/admin/settings/ReceiptSettingsForm.tsx  ← receipt_header, receipt_footer
+src/components/admin/settings/HoursForm.tsx            ← opening_hours
 ```
 
-### POS Sale with Service Product
+**New Server Action:** `src/actions/settings/updateBusinessInfo.ts` — follows `updateBranding.ts` pattern (Zod validate, `requireRole('owner')`, supabase update, revalidatePath).
 
-```
-POS Cart contains: [Widget (physical, qty=2), Installation (service, qty=1)]
-    -> completeSale() Server Action
-    -> resolveStaffAuth()  (staff PIN JWT)
-    -> CreateOrderSchema.safeParse()
-    -> adminClient.rpc('complete_pos_sale', { p_items: [...] })
-         -> SECURITY DEFINER RPC:
-              FOR EACH item:
-                IF product_type != 'service': lock + check + decrement stock
-                IF product_type == 'service': skip stock entirely
-              INSERT order + order_items (service items recorded for revenue)
-```
+---
 
-### Feature Flag Injection (new `inventory` claim)
+### 4. Customer Management (Admin UI)
 
+**Current state:** `customers` table exists (migration 012). RLS policy `staff_read_customers` allows `role IN ('owner', 'staff')` to read. `orders.customer_id` references `auth.users.id`. No admin UI exists.
+
+**New requirement:** Customer list, search, order history per customer, basic account management.
+
+**No schema changes needed.** RLS already allows owner to read customers.
+
+**New admin routes:**
 ```
-User logs in -> Supabase Auth -> custom_access_token_hook fires
-    -> Reads store_plans WHERE store_id = user's store
-    -> Injects into app_metadata:
-         xero: boolean (existing)
-         email_notifications: boolean (existing)
-         custom_domain: boolean (existing)
-         inventory: boolean (NEW)
-    -> JWT signed and returned to client
-    -> requireFeature('inventory') reads user.app_metadata.inventory (fast path)
-    -> requireFeature('inventory', { requireDbCheck: true }) reads store_plans.has_inventory (DB path)
+src/app/admin/customers/page.tsx       ← Paginated list with search
+src/app/admin/customers/[id]/page.tsx  ← Customer detail: profile + order history
 ```
 
-### Stocktake Flow
+**Data fetching (follows `admin/orders/page.tsx` pattern):**
+```typescript
+// Customer list — standard Supabase client (RLS enforces store_id isolation)
+const { data: customers } = await supabase
+  .from('customers')
+  .select('id, name, email, created_at, auth_user_id')
+  .eq('store_id', storeId)
+  .ilike('email', `%${q}%`)
+  .order('created_at', { ascending: false })
+  .range(offset, offset + PAGE_SIZE - 1)
 
-```
-Admin opens Stocktake page
-    -> Server Component: loads all physical products (name, sku, current stock_quantity)
-    -> Staff counts physical quantities, enters into StocktakeSheet form
-    -> Server Action: recordStocktake(items[]) -- saves draft, computes variance
-    -> Staff reviews variance report (counted vs system)
-    -> Server Action: completeStocktake(stocktake_id)
-         -> requireFeature('inventory', { requireDbCheck: true })
-         -> adminClient.rpc('complete_stocktake', { p_stocktake_id, p_staff_id })
-              -> SECURITY DEFINER RPC (atomic):
-                   FOR EACH stocktake_item with variance != 0:
-                     UPDATE products.stock_quantity (set to counted value)
-                     INSERT stock_adjustments (reason='stocktake', delta=variance)
-                   UPDATE stocktakes SET status='completed', completed_at=now()
-```
-
-## Schema Changes
-
-### New Column: `products.product_type`
-
-```sql
--- In migration 024
-ALTER TABLE public.products
-  ADD COLUMN product_type TEXT NOT NULL DEFAULT 'physical'
-  CHECK (product_type IN ('physical', 'service'));
+// Customer orders — join via auth_user_id -> customer_id on orders
+const { data: orders } = await supabase
+  .from('orders')
+  .select('id, total_cents, status, created_at, channel')
+  .eq('store_id', storeId)
+  .eq('customer_id', customer.auth_user_id)
+  .order('created_at', { ascending: false })
 ```
 
-All existing products default to `'physical'` -- no data migration needed. The `product_type` must be passed in the RPC item JSONB so RPCs can branch without an extra DB lookup per item.
+**Important relationship:** `orders.customer_id` = `auth.users.id` = `customers.auth_user_id`. The join is `customers.auth_user_id = orders.customer_id`, not `customers.id`.
 
-### New Column: `store_plans.has_inventory`
+**No new Server Actions** for read-only view. Account deactivation (if required) uses `supabase.auth.admin.updateUserById` via service_role — wrap in a Server Action with `requireRole('owner')` guard.
 
-```sql
-ALTER TABLE public.store_plans
-  ADD COLUMN has_inventory BOOLEAN NOT NULL DEFAULT false,
-  ADD COLUMN has_inventory_manual_override BOOLEAN NOT NULL DEFAULT false;
+**New components:**
+```
+src/components/admin/customers/CustomerTable.tsx        ← Paginated, searchable
+src/components/admin/customers/CustomerDetailPanel.tsx  ← Order history + profile
 ```
 
-Follows the exact pattern of `has_xero` / `has_xero_manual_override` already in the table (migration 020).
+---
 
-### New Tables
+### 5. Promo Management Edit/Delete
 
-```sql
--- stock_adjustments: append-only audit log for all stock changes
-CREATE TABLE public.stock_adjustments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_id UUID NOT NULL REFERENCES public.stores(id),
-  product_id UUID NOT NULL REFERENCES public.products(id),
-  adjusted_by UUID REFERENCES public.staff(id),  -- NULL for RPC-driven (sale/refund)
-  reason TEXT NOT NULL CHECK (reason IN (
-    'sale', 'refund', 'manual_add', 'manual_remove',
-    'stocktake', 'damage', 'shrinkage', 'correction', 'opening_count'
-  )),
-  quantity_delta INTEGER NOT NULL,
-  quantity_before INTEGER NOT NULL,
-  quantity_after INTEGER NOT NULL,
-  note TEXT,
-  order_id UUID REFERENCES public.orders(id),  -- populated for sale/refund entries
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+**Current state:** `PromoList.tsx` and `PromoForm.tsx` exist in `src/components/admin/`. Create flow exists. No edit or delete.
 
--- stocktakes: header record for each physical count session
-CREATE TABLE public.stocktakes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_id UUID NOT NULL REFERENCES public.stores(id),
-  created_by UUID NOT NULL REFERENCES public.staff(id),
-  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'completed')),
-  completed_at TIMESTAMPTZ,
-  note TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+**No schema changes needed.** `promo_codes` table already exists.
 
--- stocktake_items: counted quantities per product
-CREATE TABLE public.stocktake_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  stocktake_id UUID NOT NULL REFERENCES public.stocktakes(id) ON DELETE CASCADE,
-  store_id UUID NOT NULL REFERENCES public.stores(id),
-  product_id UUID NOT NULL REFERENCES public.products(id),
-  product_name TEXT NOT NULL,          -- snapshot
-  system_quantity INTEGER NOT NULL,    -- snapshot at time of stocktake creation
-  counted_quantity INTEGER NOT NULL,
-  variance INTEGER GENERATED ALWAYS AS (counted_quantity - system_quantity) STORED,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+**Additions only:**
+- Extend `PromoList.tsx` with edit/delete buttons
+- New Server Actions: `updatePromo.ts`, `deletePromo.ts` (follows existing `createPromo` pattern)
+
+---
+
+### 6. Super-Admin Dashboard (Platform Overview)
+
+**Current state:** Super admin has tenant list and tenant detail. No aggregate platform metrics.
+
+**New requirement:** Platform overview — total tenants, signups (30d), revenue breakdown.
+
+**New route:** `src/app/super-admin/page.tsx` (or promote existing redirect to a real dashboard page).
+
+**Data sources:** Supabase `stores` count (admin client) + Stripe subscriptions.
+
+**New components:**
+```
+src/components/super-admin/PlatformMetricsGrid.tsx   ← Tenant/signup/MRR counts
 ```
 
-### Modified RPCs
+---
 
-**`complete_pos_sale`** -- Add `product_type` to item JSONB; skip stock check and decrement for services.
+### 7. Super-Admin Stripe Analytics (MRR, Churn, Revenue per Add-on)
 
-**`complete_online_sale`** -- Same service-skip logic as POS.
+**Current state:** No Stripe analytics in super-admin. The pattern for Stripe subscription queries exists in `src/app/admin/billing/page.tsx`.
 
-**`restore_stock`** -- No change. Callers (`processRefund`, `processPartialRefund`) must check `product_type` in the Server Action and skip calling it for service items.
+**New requirement:** Platform-wide MRR, active subscriber count, revenue per add-on, payment failures.
 
-**`custom_access_token_hook`** -- Add `v_has_inventory` variable; read `sp.has_inventory` in the store_plans SELECT; inject `inventory` claim into app_metadata.
+**Stripe API does NOT have a pre-built MRR endpoint.** MRR is calculated by aggregating active subscription items. This is confirmed by official Stripe documentation — the analytics UI is not an API.
 
-### New RPCs
+**Key Stripe calls:**
 
-**`adjust_stock(p_store_id, p_product_id, p_delta, p_reason, p_note, p_adjusted_by)`** -- SECURITY DEFINER: atomic SELECT FOR UPDATE then UPDATE products then INSERT stock_adjustments. Returns `quantity_after`.
+```typescript
+// All active subscriptions — paginate if tenant count exceeds 100
+const activeSubs = await stripe.subscriptions.list({
+  status: 'active',
+  limit: 100,
+  expand: ['data.items.data.price'],
+})
 
-**`complete_stocktake(p_stocktake_id, p_store_id, p_staff_id)`** -- SECURITY DEFINER: applies all non-zero variances, writes stock_adjustments rows, marks stocktake completed.
+// Open/past-due invoices (payment failures)
+const failedInvoices = await stripe.invoices.list({
+  status: 'open',
+  limit: 50,
+})
 
-## Integration Points
-
-### Existing Code to Modify
-
-| File | Change | Risk |
-|------|--------|------|
-| `supabase/migrations/005_pos_rpc.sql` (via new migration) | `complete_pos_sale`: accept `product_type` in item JSONB; skip stock for services | HIGH -- touches sale critical path |
-| `supabase/migrations/006_online_store.sql` (via new migration) | `complete_online_sale`: same service-skip logic | HIGH -- Stripe webhook path |
-| `supabase/migrations/019_billing_claims.sql` (via new migration) | `custom_access_token_hook`: add `has_inventory` claim injection | LOW -- additive, proven pattern |
-| `src/config/addons.ts` | Add `'inventory'` to `SubscriptionFeature` type, all maps, `ADDONS` array | LOW -- purely additive |
-| `src/schemas/product.ts` | Add `product_type` field to `CreateProductSchema` and `UpdateProductSchema` | LOW |
-| `src/actions/products/createProduct.ts` | Pass `product_type` to DB insert | LOW |
-| `src/actions/products/updateProduct.ts` | Pass `product_type` to DB update | LOW |
-| `src/actions/orders/processRefund.ts` | Check `product_type` before calling `restore_stock` -- skip for service items | MEDIUM |
-| `src/actions/orders/processPartialRefund.ts` | Same service check as processRefund | MEDIUM |
-| `src/components/pos/ProductCard.tsx` | Conditionally hide stock badge when inventory add-on inactive OR product is a service | LOW -- UI only |
-| `src/app/(store)/products/[slug]/page.tsx` | Hide "X in stock" / "Sold out" for service products | LOW |
-| `src/app/admin/dashboard/page.tsx` | Gate low-stock widget behind inventory feature flag | LOW |
-| `src/app/admin/reports/page.tsx` | Gate stock levels section behind inventory feature flag | LOW |
-| `src/app/api/cron/daily-summary/route.ts` | Gate low-stock email block behind inventory feature check | LOW |
-| `src/types/database.ts` | Regenerate after migrations applied | LOW -- tooling handles this |
-
-### New Code
-
-| What | Where | Notes |
-|------|-------|-------|
-| Migration 024 | `supabase/migrations/024_inventory_addon.sql` | All schema changes in one file: new tables, new columns, modified RPCs, new RPCs, RLS policies, indexes, auth hook update |
-| `adjustStock` Server Action | `src/actions/inventory/adjustStock.ts` | Calls `adjust_stock` RPC via admin client |
-| `recordStocktake` Server Action | `src/actions/inventory/recordStocktake.ts` | Inserts `stocktakes` + `stocktake_items` draft |
-| `completeStocktake` Server Action | `src/actions/inventory/completeStocktake.ts` | Calls `complete_stocktake` RPC |
-| `AdjustStockSchema` + `StocktakeSchema` | `src/schemas/inventory.ts` | Zod validation for new actions |
-| Admin inventory pages | `src/app/admin/inventory/` | Route group with feature gate in layout |
-| Inventory UI components | `src/components/admin/inventory/` | StockAdjustmentForm, StocktakeSheet, StockHistoryTable |
-
-### Internal Boundaries
-
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| Server Action -> RPC | `adminClient.rpc('adjust_stock', ...)` | Admin client required -- SECURITY DEFINER RPCs need service role |
-| POS sale -> stock_adjustments | Inside modified `complete_pos_sale` RPC | No application layer; atomicity guaranteed |
-| Feature gate -> store_plans | `requireFeature('inventory', { requireDbCheck: true })` | DB path for mutations, JWT path for reads |
-| Auth hook -> store_plans | `SELECT has_inventory FROM store_plans WHERE store_id = ...` | Additive to existing SELECT |
-| Admin pages -> feature gate | Layout-level `requireFeature` check for `/admin/inventory/` route group | Redirect to billing upgrade page on deny |
-
-## RLS Policy Requirements for New Tables
-
-All new tables need RLS enabled. Follow the existing pattern:
-
-```sql
--- stock_adjustments: staff read only; no direct write (SECURITY DEFINER RPCs only)
-ALTER TABLE public.stock_adjustments ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Staff can read stock adjustments for their store"
-  ON public.stock_adjustments FOR SELECT
-  USING (
-    store_id = (auth.jwt() -> 'app_metadata' ->> 'store_id')::uuid
-    AND (auth.jwt() -> 'app_metadata' ->> 'role') IN ('owner', 'staff')
-  );
-
--- No INSERT/UPDATE policies -- written by SECURITY DEFINER RPCs (admin client) only
-
--- stocktakes: staff can read and create drafts; only complete_stocktake RPC updates status
--- stocktake_items: staff can read and insert counted items
+// Recent new subscriptions for growth trend
+const recentSubs = await stripe.subscriptions.list({
+  created: { gte: Math.floor(subDays(new Date(), 30).getTime() / 1000) },
+  limit: 100,
+})
 ```
 
-## Build Order
+**MRR calculation (normalize all intervals to monthly):**
+```typescript
+const mrrCents = activeSubs.data.reduce((sum, sub) => {
+  return sum + sub.items.data.reduce((itemSum, item) => {
+    const amount = item.price.unit_amount ?? 0
+    const interval = item.price.recurring?.interval ?? 'month'
+    const count = item.price.recurring?.interval_count ?? 1
+    const monthly = interval === 'year' ? amount / (12 * count) : amount / count
+    return itemSum + monthly * (item.quantity ?? 1)
+  }, 0)
+}, 0)
+```
 
-The dependency graph drives this ordering:
+**Revenue per add-on:** Group active subscription items by `price.id`, map to feature via `PRICE_TO_FEATURE` (already exists in `src/config/addons.ts`).
 
-1. **Migration first** (`024_inventory_addon.sql`) -- schema changes enable everything else. One file to keep it atomic: new tables, `product_type` column, `has_inventory` columns, modified RPCs, new RPCs, updated auth hook, RLS policies, indexes.
+**Caching:** Stripe API calls are slow and super-admin analytics do not need real-time data. Use page-level revalidation:
+```typescript
+// src/app/super-admin/analytics/page.tsx
+export const revalidate = 300 // 5-minute cache
+```
 
-2. **`addons.ts` config** -- adds `'inventory'` type and maps. All subsequent TypeScript compiles against this.
+This is compatible with `force-dynamic` already used on tenant pages — only the analytics page gets the cache.
 
-3. **Product schema + actions** -- add `product_type` to Zod schema; update createProduct, updateProduct, importProducts.
+**New routes:**
+```
+src/app/super-admin/analytics/page.tsx    ← Platform analytics dashboard
+```
 
-4. **Refund actions** -- add `product_type` guard before `restore_stock` calls. Unblocks correctness for service products without needing any new UI.
+**New components:**
+```
+src/components/super-admin/PlatformMetricsGrid.tsx     ← MRR, subscriber count, failure count
+src/components/super-admin/AddOnRevenueTable.tsx        ← Revenue breakdown per add-on
+src/components/super-admin/PaymentFailuresList.tsx      ← Open/past-due invoices
+src/components/super-admin/PlatformGrowthChart.tsx      ← 'use client' + recharts (signup trend)
+```
 
-5. **Inventory Server Actions** -- `adjustStock`, `recordStocktake`, `completeStocktake` (depend on migration + addons.ts).
+---
 
-6. **Admin UI -- inventory pages** -- depend on Server Actions being available.
+### 8. Super-Admin Billing Visibility (View Tenant Invoices)
 
-7. **POS + storefront UI** -- conditional rendering for service products and inventory gate (depends on addons.ts + product schema).
+**Current state:** Tenant detail page shows add-on status from `store_plans`. No Stripe invoice history.
 
-8. **Super admin panel** -- add inventory add-on to activate/deactivate flows. Follows the xero/email_notifications pattern exactly.
+**New requirement:** Super-admin can view a tenant's subscription history and invoices.
 
-9. **`database.ts` regeneration** -- run after all migrations applied to update generated types.
+**Integration approach:** `stores.stripe_customer_id` already exists. `admin/billing/page.tsx` already shows the exact query pattern.
+
+**Addition to existing tenant detail page** (`/super-admin/tenants/[id]/page.tsx`):
+```typescript
+// Add to parallel Promise.all in tenant detail page
+stripe.subscriptions.list({ customer: stripeCustomerId, status: 'all' }),
+stripe.invoices.list({ customer: stripeCustomerId, limit: 10 }),
+```
+
+**No new routes.** New component only:
+```
+src/components/super-admin/TenantBillingPanel.tsx  ← Invoice list + subscription history
+```
+
+---
+
+### 9. Super-Admin User Management + Impersonation
+
+**Current state:** Tenant detail shows store info, can suspend/unsuspend and override add-ons. No user account management.
+
+**New requirement:** View merchant accounts, password resets, disable accounts, impersonation.
+
+**Password reset:** `supabase.auth.admin.generateLink({ type: 'recovery', email })` (service_role). New Server Action follows `suspendTenant.ts` pattern with `is_super_admin` guard + audit row.
+
+**Disable account:** `supabase.auth.admin.updateUserById(userId, { ban_duration: '876600h' })` (service_role). Effectively permanent. Combines with `stores.is_active = false` (suspension already does this via `suspendTenant` action).
+
+**Impersonation approach:**
+
+Direct session impersonation (magic-link sign-in as merchant) creates session complexity and risks the super-admin losing their own session. The simpler and more auditable approach for this codebase is a **short-lived impersonation JWT that injects merchant store context**:
+
+1. Super-admin clicks "Impersonate" on tenant detail page
+2. `startImpersonation` Server Action: verifies `is_super_admin`, creates a 15-minute jose JWT containing `{ store_id, super_admin_id }`, sets it in an httpOnly cookie `sa_impersonation`
+3. Inserts `super_admin_actions` audit row: action='impersonate_start'
+4. Redirects to `/admin/dashboard` on the root domain (not the merchant's subdomain)
+5. New middleware branch detects `sa_impersonation` cookie on root-domain `/admin` routes: verifies the JWT, injects `x-store-id` = merchant's store ID and `x-impersonating: 'true'` header
+6. Admin Server Components render merchant data (they already read `x-store-id` from headers via `resolveAuth()`)
+7. `ImpersonationBanner` component reads `x-impersonating` header from a layout and renders a dismissal bar
+8. `endImpersonation` Server Action clears the cookie and inserts audit row: action='impersonate_end'
+
+**New utility file:**
+```typescript
+// src/lib/impersonation.ts  (NEW)
+import 'server-only'
+import { SignJWT, jwtVerify } from 'jose'
+
+const secret = new TextEncoder().encode(process.env.SUPER_ADMIN_JWT_SECRET!)
+
+export async function createImpersonationToken(storeId: string, superAdminId: string) {
+  return new SignJWT({ store_id: storeId, super_admin_id: superAdminId })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('15m')
+    .sign(secret)
+}
+
+export async function verifyImpersonationToken(token: string) {
+  const { payload } = await jwtVerify(token, secret)
+  return payload as { store_id: string; super_admin_id: string }
+}
+```
+
+**Middleware addition** (new branch before existing `/admin` route check):
+```typescript
+// In middleware.ts, before the "Admin routes" block:
+const impersonationToken = request.cookies.get('sa_impersonation')?.value
+if (isRoot && pathname.startsWith('/admin') && impersonationToken) {
+  const supabase = createSupabaseMiddlewareClient(request)
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user?.app_metadata?.is_super_admin === true) {
+    try {
+      const { store_id } = await verifyImpersonationToken(impersonationToken)
+      // Inject merchant store context into request headers
+      requestHeaders.set('x-store-id', store_id)
+      requestHeaders.set('x-impersonating', 'true')
+      return NextResponse.next({ request: { headers: requestHeaders } })
+    } catch {
+      // Token expired — fall through to normal admin auth check
+    }
+  }
+}
+```
+
+**New env var required:** `SUPER_ADMIN_JWT_SECRET` (separate from `STAFF_JWT_SECRET` for independent rotation).
+
+**New Server Actions:**
+```
+src/actions/super-admin/startImpersonation.ts       ← Create token, set cookie, audit
+src/actions/super-admin/endImpersonation.ts         ← Clear cookie, audit
+src/actions/super-admin/sendPasswordReset.ts        ← auth.admin.generateLink recovery
+src/actions/super-admin/disableMerchantAccount.ts   ← auth.admin.updateUserById ban
+```
+
+**New component:**
+```
+src/components/super-admin/ImpersonationBanner.tsx  ← 'use client', "Impersonating X / Exit"
+```
+
+---
+
+## Component Boundaries Summary
+
+| Component | Type | Receives From | Calls |
+|-----------|------|---------------|-------|
+| `SalesTrendChart` | Client | Dashboard Server Component (serialized daily sales array) | Nothing (pure render) |
+| `MetricsComparisonRow` | Server | Dashboard page (computed period comparison) | Nothing |
+| `StaffListClient` | Client | Staff page Server Component (staff rows, owner role) | `updateStaff`, `resetStaffPin` Server Actions |
+| `CustomerTable` | Client | Customers Server Component (customer rows) | Navigation only |
+| `PlatformMetricsGrid` | Server | Analytics page (MRR, counts computed server-side) | Nothing |
+| `PlatformGrowthChart` | Client | Analytics page (time series serialized) | Nothing |
+| `AddOnRevenueTable` | Server | Analytics page (per-add-on revenue map) | Nothing |
+| `TenantBillingPanel` | Server | Tenant detail page (Stripe sub + invoice data) | Nothing |
+| `ImpersonationBanner` | Client | Admin layout (reads `x-impersonating` header via cookie/prop) | `endImpersonation` Server Action |
+
+---
+
+## Data Flow Diagrams
+
+### Staff RBAC Flow
+
+```
+POST /admin/staff/new
+  → createStaff Server Action
+    → requireRole('owner')   [only owners manage staff]
+    → Zod: CreateStaffSchema.safeParse (name, pin, role IN ['manager','staff'])
+    → bcrypt.hash(pin, 12)
+    → supabase.from('staff').insert({ store_id, name, pin_hash, role })
+    → revalidatePath('/admin/staff')
+    → { success: true }
+```
+
+### Stripe Analytics Flow
+
+```
+GET /super-admin/analytics  (revalidate: 300s)
+  → Auth check via super-admin layout (already done)
+  → Server Component:
+    → stripe.subscriptions.list({ status: 'active', expand: ['data.items.data.price'] })
+    → stripe.invoices.list({ status: 'open', limit: 50 })
+    → Calculate MRR, revenue per add-on, failure count
+    → supabase admin: SELECT COUNT(*) FROM stores WHERE created_at >= 30daysAgo
+    → Render PlatformMetricsGrid (Server Component, computed values)
+    → Render PlatformGrowthChart (Client Component, serialized time series)
+```
+
+### Impersonation Flow
+
+```
+Super Admin → "Impersonate" button on /super-admin/tenants/[id]
+  → startImpersonation Server Action
+    → verify user.app_metadata.is_super_admin === true
+    → createImpersonationToken(storeId, superAdminId)
+    → Set httpOnly cookie 'sa_impersonation' (15min, Secure, SameSite=Lax)
+    → Insert super_admin_actions { action: 'impersonate_start', store_id, note }
+    → Return { success: true }  → Client redirects to /admin/dashboard
+
+Root domain GET /admin/dashboard
+  → Middleware detects 'sa_impersonation' cookie
+    → Verifies super admin session (Supabase Auth)
+    → verifyImpersonationToken(cookie)
+    → Injects x-store-id: merchantStoreId, x-impersonating: 'true'
+    → NextResponse.next() with modified headers
+
+Admin dashboard renders
+  → resolveAuth() reads x-store-id → returns merchant's store_id
+  → All queries use merchant's store_id (RLS via JWT, but admin actions use admin client)
+  → ImpersonationBanner receives x-impersonating prop from layout, renders exit button
+```
+
+### Customer Management Flow
+
+```
+GET /admin/customers
+  → Server Component
+    → resolveAuth() → storeId
+    → supabase.from('customers').select().eq('store_id', storeId).ilike('email', ...)
+    → CustomerTable (Client Component) — search/pagination
+      → URL search params drive re-fetches (Server Component re-runs on navigation)
+
+GET /admin/customers/[id]
+  → Server Component
+    → Fetch customer by id + store_id
+    → Fetch customer.auth_user_id
+    → supabase.from('orders').eq('customer_id', auth_user_id)
+    → CustomerDetailPanel (Server Component — no interactivity needed)
+```
+
+---
+
+## Recommended Build Order
+
+Dependencies drive the ordering. Each item below is unblocked by items above it.
+
+**1. Store Settings Expansion** (no dependencies, simple schema add + form extension)
+- Migration: `receipt_header`, `receipt_footer` columns
+- Expand settings page with BusinessInfoForm, ReceiptSettingsForm, HoursForm
+- New `updateBusinessInfo` Server Action
+
+**2. Promo Management Edit/Delete** (no dependencies, extends existing list)
+- `updatePromo.ts` + `deletePromo.ts` Server Actions
+- Extend `PromoList.tsx` with edit/delete buttons
+
+**3. Staff Management CRUD** (depends on schema migration for `'manager'` role)
+- Migration: update role CHECK constraint to allow `'manager'`
+- New `requireRole()` utility
+- Staff admin pages + Server Actions
+- Update `schemas/staff.ts`
+
+**4. Admin Dashboard Charts** (depends on recharts install, no schema changes)
+- `npm install recharts`
+- Add historical sales query to dashboard page
+- `SalesTrendChart`, `RecentOrdersList`, `MetricsComparisonRow` components
+
+**5. Customer Management** (no schema changes, RLS already covers it)
+- New `/admin/customers` routes and components
+
+**6. Super-Admin Platform Dashboard** (depends on understanding existing admin patterns)
+- Simple tenant count + signup count from Supabase
+- `PlatformMetricsGrid` component
+
+**7. Super-Admin Stripe Analytics** (depends on Stripe patterns, no schema changes)
+- New `/super-admin/analytics` page with Stripe API calls
+- `AddOnRevenueTable`, `PaymentFailuresList`, `PlatformGrowthChart` components
+
+**8. Super-Admin Billing Visibility** (depends on 7 for Stripe familiarity)
+- Additions to existing tenant detail page
+- `TenantBillingPanel` component
+
+**9. Super-Admin User Management + Impersonation** (most complex, build last)
+- New env var `SUPER_ADMIN_JWT_SECRET`
+- `src/lib/impersonation.ts` utility
+- Middleware extension (impersonation cookie branch)
+- New super-admin actions: sendPasswordReset, disableMerchantAccount, startImpersonation, endImpersonation
+- `ImpersonationBanner` component
+- Super-admin sidebar additions (Analytics, Billing links)
+
+---
+
+## Full New Files List
+
+### New Source Files
+
+| File | Type | Purpose |
+|------|------|---------|
+| `src/lib/requireRole.ts` | Utility | Role hierarchy guard (owner > manager > staff) |
+| `src/lib/impersonation.ts` | Utility | Impersonation JWT creation/verification |
+| `src/app/admin/staff/page.tsx` | Server Component | Staff list |
+| `src/app/admin/staff/new/page.tsx` | Server Component | Create staff form |
+| `src/app/admin/staff/[id]/page.tsx` | Server Component | Edit/deactivate staff |
+| `src/app/admin/customers/page.tsx` | Server Component | Customer list |
+| `src/app/admin/customers/[id]/page.tsx` | Server Component | Customer detail + order history |
+| `src/app/super-admin/analytics/page.tsx` | Server Component | Platform Stripe analytics |
+| `src/app/super-admin/billing/page.tsx` | Server Component | Platform billing overview |
+| `src/actions/staff/createStaff.ts` | Server Action | Create staff member with PIN |
+| `src/actions/staff/updateStaff.ts` | Server Action | Update name/role/is_active |
+| `src/actions/staff/resetStaffPin.ts` | Server Action | Owner resets a staff PIN |
+| `src/actions/settings/updateBusinessInfo.ts` | Server Action | Update address/phone/IRD/receipt |
+| `src/actions/promos/updatePromo.ts` | Server Action | Edit existing promo |
+| `src/actions/promos/deletePromo.ts` | Server Action | Delete promo code |
+| `src/actions/super-admin/startImpersonation.ts` | Server Action | Begin merchant impersonation |
+| `src/actions/super-admin/endImpersonation.ts` | Server Action | Clear impersonation cookie |
+| `src/actions/super-admin/sendPasswordReset.ts` | Server Action | Email merchant recovery link |
+| `src/actions/super-admin/disableMerchantAccount.ts` | Server Action | Ban merchant auth account |
+| `src/components/admin/dashboard/SalesTrendChart.tsx` | Client Component | Recharts area chart |
+| `src/components/admin/dashboard/RecentOrdersList.tsx` | Server Component | Latest orders widget |
+| `src/components/admin/dashboard/MetricsComparisonRow.tsx` | Server Component | Period comparison |
+| `src/components/admin/settings/BusinessInfoForm.tsx` | Client Component | Address/phone/IRD form |
+| `src/components/admin/settings/ReceiptSettingsForm.tsx` | Client Component | Receipt header/footer |
+| `src/components/admin/settings/HoursForm.tsx` | Client Component | Opening hours |
+| `src/components/admin/customers/CustomerTable.tsx` | Client Component | Paginated customer list |
+| `src/components/admin/customers/CustomerDetailPanel.tsx` | Server Component | Order history + profile |
+| `src/components/super-admin/PlatformMetricsGrid.tsx` | Server Component | MRR/subscriber metrics |
+| `src/components/super-admin/AddOnRevenueTable.tsx` | Server Component | Revenue breakdown |
+| `src/components/super-admin/PaymentFailuresList.tsx` | Server Component | Failed invoice list |
+| `src/components/super-admin/PlatformGrowthChart.tsx` | Client Component | Recharts signup trend |
+| `src/components/super-admin/TenantBillingPanel.tsx` | Server Component | Tenant Stripe history |
+| `src/components/super-admin/ImpersonationBanner.tsx` | Client Component | "Impersonating X / Exit" bar |
+
+### Modified Files
+
+| File | Change |
+|------|--------|
+| `src/middleware.ts` | Add impersonation cookie branch before admin route check |
+| `src/schemas/staff.ts` | Add `'manager'` to role enum in `CreateStaffSchema` |
+| `src/app/admin/settings/page.tsx` | Add business info + receipt settings form sections |
+| `src/app/admin/dashboard/page.tsx` | Add 30-day historical orders query + chart component |
+| `src/app/super-admin/tenants/[id]/page.tsx` | Add Stripe billing data fetch + TenantBillingPanel |
+| `src/components/super-admin/SuperAdminSidebar.tsx` | Add Analytics + Billing nav links |
+| `src/components/admin/AdminSidebar.tsx` | Add Staff + Customers nav links |
+| `src/components/admin/PromoList.tsx` | Add edit/delete buttons + actions |
+
+### New Migration
+
+| File | Contents |
+|------|----------|
+| `supabase/migrations/027_v4_admin_platform.sql` | `manager` role in staff CHECK constraint; `receipt_header`, `receipt_footer` columns on stores |
+
+---
+
+## Architectural Patterns to Follow
+
+### Pattern: Server Component → Client Component Data Bridge
+
+**What:** Server Component fetches and serializes data, passes to Client Component as plain props.
+**When:** All charts, tables with interactive state (search/pagination), forms.
+**Established in codebase:** `admin/billing/page.tsx` → `BillingClient.tsx`
+
+### Pattern: Super-Admin Action Guard
+
+**What:** Every super-admin Server Action checks `is_super_admin === true` before executing.
+**Established in codebase:** `suspendTenant.ts`, `activateAddon.ts`
+
+```typescript
+const { data: { user } } = await supabase.auth.getUser()
+if (!user || user.app_metadata?.is_super_admin !== true) {
+  return { error: 'Unauthorized' }
+}
+```
+
+### Pattern: Audit Every Super-Admin Mutation
+
+**What:** All super-admin mutations insert into `super_admin_actions` table.
+**When:** Any state change (suspend, override, impersonate, disable, password reset).
+**Established in codebase:** `suspendTenant.ts` step 6
+
+### Pattern: Admin Client for Super-Admin Data Access
+
+**What:** Super-admin pages use `createSupabaseAdminClient()` (service_role), bypassing RLS.
+**Why:** Super-admin has no `store_id` in JWT — RLS would block all tenant data reads.
+**Established in codebase:** All super-admin pages and actions.
+
+---
+
+## Anti-Patterns to Avoid
+
+### Anti-Pattern: Supabase Realtime for UI Sync
+
+**What people do:** Subscribe to real-time changes for live dashboard updates.
+**Why wrong:** Established project decision — refresh-on-transaction, not WebSocket.
+**Do this instead:** `revalidatePath('/admin/...')` in Server Actions + `export const dynamic = 'force-dynamic'` on pages.
+
+### Anti-Pattern: MRR from a Single Stripe API Endpoint
+
+**What people do:** Look for `stripe.billing.mrr` or similar endpoint.
+**Why wrong:** No such endpoint. Stripe analytics dashboard is UI-only, not an API.
+**Do this instead:** Calculate MRR by aggregating `stripe.subscriptions.list()` items (pattern documented above).
+
+### Anti-Pattern: Client-Side Stripe API Calls
+
+**What people do:** Call Stripe from a Client Component.
+**Why wrong:** Secret key exposure. Stripe secret key must remain server-only.
+**Do this instead:** All Stripe calls in Server Components or Server Actions. Enforced by `server-only` import in `src/lib/stripe.ts`.
+
+### Anti-Pattern: Magic-Link Session Swap for Impersonation
+
+**What people do:** Use `auth.admin.generateLink()` + `verifyOtp()` to log in as the merchant, replacing the super-admin's session.
+**Why wrong:** Super-admin loses their session. Session management becomes complex. Rolling back requires another magic link.
+**Do this instead:** Short-lived impersonation JWT that injects `store_id` context into request headers — super-admin session remains untouched.
+
+### Anti-Pattern: Role Checks Only in Middleware
+
+**What people do:** Trust middleware role check, skip guard in Server Actions.
+**Why wrong:** Server Actions can be called directly without going through middleware. Every Server Action must independently verify authentication and authorization.
+**Do this instead:** `requireRole('owner')` (or equivalent) as first step in every write Server Action.
+
+---
+
+## Integration Points: External Services
+
+| Service | Integration Pattern | Notes |
+|---------|---------------------|-------|
+| Stripe (platform analytics) | `stripe.subscriptions.list()` + `stripe.invoices.list()` in Server Components | Cache with `revalidate: 300`. Paginate if tenants > 100 (use `autoPagingEach`). Existing `stripe` singleton in `src/lib/stripe.ts`. |
+| Stripe (tenant billing) | `stripe.subscriptions.list({ customer })` + `stripe.invoices.list({ customer })` | Same pattern as `admin/billing/page.tsx`. No new Stripe setup. |
+| Supabase Auth Admin API | `auth.admin.generateLink()`, `auth.admin.updateUserById()` | Service role only. Available via `createSupabaseAdminClient()` — already exists. |
+| jose (impersonation JWT) | `SignJWT` / `jwtVerify` | New env var `SUPER_ADMIN_JWT_SECRET`. Same library already used for staff PINs. |
+
+---
 
 ## Scaling Considerations
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| Current (single store in prod) | No changes needed. Existing indexes on `products(store_id)` are sufficient. |
-| 1k-100k stores | Add index `stock_adjustments(store_id, created_at DESC)` for stock history queries. The `stock_adjustments` table grows fast for high-volume stores. |
-| 100k+ stores | `stock_adjustments` will be the largest table. Consider partitioning by `store_id` or archiving old rows. `products.stock_quantity` column stays fast regardless. |
+| Concern | Now (0-50 tenants) | At 500+ tenants |
+|---------|---------------------|-----------------|
+| Stripe analytics | `subscriptions.list(limit: 100)` is fine | Must use `autoPagingEach` for >100 active subscriptions |
+| Customer list | Simple Supabase query | Add composite index `(store_id, email)` if search is slow |
+| Staff RBAC check | `resolveAuth()` + string compare — fast | No change needed |
+| Impersonation | Short-lived jose JWT — stateless, no DB | No change needed |
 
-### Scaling Priorities
-
-1. **First bottleneck:** `stock_adjustments` table size on high-volume stores. Compound index `(store_id, product_id, created_at DESC)` handles history queries. Add `(store_id, created_at DESC)` for store-level history.
-2. **Second bottleneck:** Stocktake page loading all products. Already mitigated by `idx_products_store` existing index. Filter to `product_type = 'physical'` and paginate if needed.
-
-## Anti-Patterns
-
-### Anti-Pattern 1: Add Product Type Check Only in the UI Layer
-
-**What people do:** Check `product.product_type === 'service'` in the React component and skip adding it to cart; never modify the RPCs.
-
-**Why it's wrong:** The `complete_pos_sale` and `complete_online_sale` RPCs will still try to lock and decrement stock for service items, causing `OUT_OF_STOCK` errors on service products that have `stock_quantity = 0`. The RPC is the only atomic layer and cannot be bypassed.
-
-**Do this instead:** Modify both RPCs to skip stock logic for service items. Pass `product_type` in the item JSONB so the RPC knows without a second lookup per item.
-
-### Anti-Pattern 2: Mix Service Skip Logic with Inventory Add-on Gate in the RPC
-
-**What people do:** Add a `has_inventory` check inside `complete_pos_sale` -- skip stock checks if the store doesn't have the inventory add-on.
-
-**Why it's wrong:** Service-product skip and inventory-add-on gate are different concerns. A store without the inventory add-on must still have services work correctly (services are always sellable). Mixing them in the RPC creates a logic tangle when the add-on is later activated.
-
-**Do this instead:** `product_type` is unconditional -- services always skip stock regardless of the add-on. The inventory add-on gate lives at the Server Action / UI layer (whether stock badges display, whether the admin inventory section is accessible). They are orthogonal concerns.
-
-### Anti-Pattern 3: Write `stock_adjustments` from Application Layer
-
-**What people do:** After calling `adjust_stock` RPC, write a separate `stock_adjustments` row from the Server Action (two DB calls).
-
-**Why it's wrong:** If the application crashes between the two calls, stock is updated but no audit history exists. This is the exact race condition the SECURITY DEFINER RPC pattern is designed to prevent.
-
-**Do this instead:** The `adjust_stock` RPC updates `products.stock_quantity` and inserts the `stock_adjustments` row in a single transaction. The Server Action gets one atomic call.
-
-### Anti-Pattern 4: Multiple Migration Files for Tightly Coupled Changes
-
-**What people do:** Create `024_product_type.sql`, `025_inventory_tables.sql`, `026_modify_rpcs.sql` separately.
-
-**Why it's wrong:** The modified RPCs reference the new `stock_adjustments` table. If migrations run in order but one fails mid-way, the RPCs may reference tables that do not exist. Rolling back is complex.
-
-**Do this instead:** One migration file (`024_inventory_addon.sql`) for all inventory changes. The entire feature either applies or rolls back as a unit.
+---
 
 ## Sources
 
-- Direct codebase inspection: `supabase/migrations/001_initial_schema.sql` -- products table structure, `stock_quantity`, `reorder_threshold` columns
-- Direct codebase inspection: `supabase/migrations/005_pos_rpc.sql` -- `complete_pos_sale` full RPC source, SELECT FOR UPDATE pattern
-- Direct codebase inspection: `supabase/migrations/006_online_store.sql` -- `complete_online_sale` full RPC source
-- Direct codebase inspection: `supabase/migrations/009_security_fixes.sql` -- `restore_stock` SECURITY DEFINER RPC pattern
-- Direct codebase inspection: `supabase/migrations/013_partial_refunds.sql` -- new table + RLS pattern (refunds/refund_items)
-- Direct codebase inspection: `supabase/migrations/014_multi_tenant_schema.sql` -- `store_plans` table structure with has_xero, has_email_notifications
-- Direct codebase inspection: `supabase/migrations/019_billing_claims.sql` -- full `custom_access_token_hook` source, feature flag injection pattern
-- Direct codebase inspection: `supabase/migrations/020_super_admin_panel.sql` -- `has_xero_manual_override` column pattern
-- Direct codebase inspection: `supabase/migrations/021_security_audit_fixes.sql` -- REVOKE/GRANT pattern for SECURITY DEFINER RPCs
-- Direct codebase inspection: `src/lib/requireFeature.ts` -- JWT fast path + DB fallback dual-path implementation
-- Direct codebase inspection: `src/config/addons.ts` -- `SubscriptionFeature` type, `FEATURE_TO_COLUMN`, `PRICE_TO_FEATURE` maps
-- Direct codebase inspection: `src/components/pos/ProductCard.tsx` -- current stock badge rendering using `stock_quantity` and `reorder_threshold`
-- Direct codebase inspection: `src/actions/orders/completeSale.ts` -- Server Action + admin client RPC call pattern
-- Direct codebase inspection: `src/actions/orders/processRefund.ts` -- `restore_stock` call with `restoreStock` boolean gate
+- Existing codebase: `src/lib/resolveAuth.ts`, `src/lib/requireFeature.ts`, `src/middleware.ts`, `src/actions/super-admin/suspendTenant.ts`, `src/app/admin/billing/page.tsx`, `supabase/migrations/001–026` — HIGH confidence (direct read)
+- Stripe subscriptions list API: [docs.stripe.com/api/subscriptions/list](https://docs.stripe.com/api/subscriptions/list) — HIGH confidence
+- Stripe MRR calculation: [support.stripe.com/questions/calculating-monthly-recurring-revenue-mrr-in-billing](https://support.stripe.com/questions/calculating-monthly-recurring-revenue-mrr-in-billing) — HIGH confidence (official Stripe)
+- Recharts + Next.js App Router (client component requirement): [app-generator.dev/docs/technologies/nextjs/integrate-recharts.html](https://app-generator.dev/docs/technologies/nextjs/integrate-recharts.html) — MEDIUM confidence (verified against React 19 compatibility notes)
+- Supabase impersonation patterns: [catjam.fi/articles/supabase-admin-impersonation](https://catjam.fi/articles/supabase-admin-impersonation) and [github.com/orgs/supabase/discussions/31244](https://github.com/orgs/supabase/discussions/31244) — MEDIUM confidence
+- Supabase RBAC + custom claims: [supabase.com/docs/guides/database/postgres/custom-claims-and-role-based-access-control-rbac](https://supabase.com/docs/guides/database/postgres/custom-claims-and-role-based-access-control-rbac) — HIGH confidence
 
 ---
-*Architecture research for: Inventory management add-on + service product types*
-*Researched: 2026-04-04*
+*Architecture research for: NZPOS v4.0 Admin Platform milestone*
+*Researched: 2026-04-05*

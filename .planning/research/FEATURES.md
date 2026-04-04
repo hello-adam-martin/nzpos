@@ -1,163 +1,154 @@
-# Feature Landscape
+# Feature Research
 
-**Domain:** Retail POS — inventory management add-on and service product types
-**Researched:** 2026-04-04
-**Confidence:** HIGH — domain is well-established in retail POS; patterns drawn from Square, Lightspeed/Vend, Shopify POS, and Oracle Retail documentation
-
----
-
-## Scope Note
-
-This document covers **v3.0 Inventory Management** — adding inventory management as a paid add-on (stock tracking, adjustments, stocktake) and introducing a service product type that skips all stock logic.
-
-**Existing infrastructure to build on:**
-- `stock_quantity` column already on products table
-- Atomic stock decrement already implemented (no overselling)
-- Low stock alerts already exist
-- `requireFeature()` + Stripe billing + `store_plans` infrastructure already in place
-- Per-add-on billing pattern already proven (Xero, email notifications)
-
-The research question: what do merchants of small NZ retail stores expect from inventory management, and how should service products behave?
+**Domain:** Admin Platform — SaaS POS (Staff Management, Customer Management, Promo Editing, Store Settings, Admin Dashboard, Super-Admin Analytics, Billing Visibility, Merchant Impersonation)
+**Researched:** 2026-04-05
+**Confidence:** HIGH (existing schema verified in codebase; competitor patterns verified via WebSearch)
 
 ---
 
-## Table Stakes
+## Context: What Already Exists
 
-Features merchants expect from any inventory management add-on. Missing these makes the add-on feel half-built.
+These features are SHIPPED and must not be rebuilt:
 
-### Core Inventory Features
+- **Staff table** — `staff` table exists with `role IN ('owner', 'staff')`, `pin_hash`, `is_active`, `pin_attempts`, `pin_locked_until`. No `manager` role yet.
+- **Customer accounts** — shipped in v2.0 (signup, login, order history, profile)
+- **Promo creation** — `/admin/promos` page exists (create only, no edit/delete)
+- **Store settings** — `/admin/settings` with branding only (name, logo, primary_color). No address, phone, IRD, receipt text, hours.
+- **Admin dashboard** — `/admin/dashboard` exists (today's sales/orders — basic KPIs). No charts, no trend data, no comparison.
+- **Super-admin tenant list** — `/super-admin/tenants` with suspend/unsuspend, add-on overrides, audit trail. No Stripe billing data, no analytics.
+
+---
+
+## Feature Landscape
+
+### Table Stakes (Users Expect These)
+
+These are features that any merchant or platform operator will expect as baseline functionality. Missing them makes the product feel incomplete.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Quantity on hand per product | Foundation of any inventory system. Without a visible count, merchants cannot trust or act on their stock. | LOW | Already in DB as `stock_quantity`. Needs UI surfacing when add-on is active. |
-| Manual stock adjustment with reason code | Every POS in the market (Square, Lightspeed, Shopify) supports this. Merchants need to record why stock changed. | LOW | Reason codes: Stock Received, Damage, Theft/Loss, Store Use, Stocktake Recount, Return to Supplier. Each adjustment writes a row to an adjustment history table. |
-| Adjustment history log | Merchants ask "who changed this and when?" when counts don't match. An audit trail is table stakes for any business handling physical goods. | MEDIUM | Log: timestamp, product, quantity before, quantity after, delta, reason code, actor (owner/staff name or "POS sale" or "online order"). |
-| Low stock alert (threshold per product) | Already shipped in v1.0. When add-on is active, this is a core expectation. | LOW | Already implemented. Re-confirm it is gated behind add-on or always-on is acceptable. Threshold should be configurable per product. |
-| Stock level visible in product admin | When managing inventory, merchants need to see current stock inline without navigating away. | LOW | Stock column in product list. Highlight red when at or below threshold. |
-| Stock blocked at zero when add-on active | If a product hits zero stock, the POS should block sale (or warn). Without this the add-on has no protective value. | LOW | Already implemented as atomic decrement. When add-on is active, enforce the block on POS checkout. Zero-stock products should be clearly marked. |
-| Service product type — no stock tracked | Merchants selling labour, repairs, or consultation need a product type that never triggers stock checks, never shows a count, and never blocks at zero. | LOW | Add `product_type: 'physical' \| 'service'` to products table. Services skip all stock logic at POS, storefront, and in admin. |
+| Staff list with add/edit/deactivate | Standard in every POS (Square, Lightspeed, Vend all have this) | LOW | `staff` table already exists — this is UI only |
+| Staff PIN reset | Staff forget PINs constantly; if only the DB can reset it, owner is blocked | LOW | Clear `pin_hash`, reset `pin_attempts`, `pin_locked_until` — no new schema |
+| Role assignment (Owner/Manager/Staff) | Every POS has at least 2 tiers; manager needs void/discount permissions staff don't | MEDIUM | Requires `role` column to add `manager` CHECK constraint + permission gates on Server Actions |
+| Customer list with search | Merchants need to find customers by name/email to assist with orders | LOW | `customers` table already exists from v2.0; this is a list/search UI |
+| Customer order history view | Support query "show me all orders for this customer" | LOW | Join `orders` on `customer_id` — data exists, UI doesn't |
+| Customer account disable/suspend | Merchants need to block abusive accounts | LOW | Flip `is_active` on customer record |
+| Promo edit (code, discount, expiry) | Creating promos without being able to fix typos or adjust expiry is broken | LOW | Server Action update already follows same pattern as create; UI is a form |
+| Promo delete / deactivate | Expired or mistaken promos clutter the list | LOW | Soft delete (`is_active = false`) preferred over hard delete |
+| Store settings: business address + phone | Printed on receipts; required for IRD-compliant tax invoices | LOW | New columns on `stores` table; form in settings page |
+| Store settings: IRD number | Required on GST tax invoices for NZ compliance (IRD rule: GST-registered businesses must show IRD number) | LOW | Single text column `ird_number` on `stores` |
+| Store settings: receipt header/footer | Merchants add "Thanks for shopping!" or return policy text | LOW | Two text columns `receipt_header`, `receipt_footer` on `stores` |
+| Super-admin: view tenant Stripe subscriptions | Platform operators must be able to see which add-ons a tenant pays for | MEDIUM | Stripe API: `stripe.subscriptions.list({ customer: stripeCustomerId })` — `stripe_customer_id` already on `stores` |
+| Super-admin: view tenant invoices + payment status | Support needs to check if a tenant has a failed payment | MEDIUM | Stripe API: `stripe.invoices.list({ customer: stripeCustomerId })` |
+| Super-admin: view payment failures | Failed payments that turn into churn must be visible | MEDIUM | Filter invoices by `status: 'open'` or `payment_intent.status: 'requires_payment_method'` |
 
-### Stocktake (Physical Count)
+### Differentiators (Competitive Advantage)
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Create a named stocktake session | All major POS systems (Lightspeed, Shopify Stocky, Square) organise counts into named sessions with a status. Merchants expect a "start stocktake" action rather than ad-hoc adjustments. | LOW | Session has: name, created_at, status (in_progress / completed), created_by. |
-| Enter counted quantities per product | The core stocktake interaction. Merchant sees product name + expected quantity, enters actual counted quantity. | MEDIUM | UI: list of products with current system quantity shown, input field for counted quantity. Can be done product-by-product or bulk. Barcode scan input is an accelerator (already have camera scanner). |
-| Variance calculation (counted vs system) | Lightspeed, Square, and Shopify all surface variance as a primary column in their stocktake UI. Merchants need to see discrepancy, not calculate it. Variance = counted - system quantity at time of count snapshot. | LOW | Variance column: positive = surplus, negative = shrinkage. Shown as ±N with colour coding. Cost variance (variance × cost price) is a differentiator but not table stakes. |
-| Commit stocktake to update live quantities | At the end of a count, the merchant submits and all stock quantities are updated to the counted values. This is the "reconcile" action. Cannot be undone — confirm modal required. | MEDIUM | Each line generates a stock adjustment with reason "Stocktake Recount". Old quantity and new quantity are recorded. Deltas flow to adjustment history. |
-| Partial stocktake (subset of products) | Lightspeed and Shopify both support counting only a subset (by category, tag, or manual selection). Merchants with large catalogs need this — counting everything at once is impractical. | MEDIUM | Filter by category when starting the stocktake session. Products not in the count are not adjusted. |
-
----
-
-## Differentiators
-
-Features that set this inventory add-on apart from the baseline. Not expected by merchants, but valued when present.
+Features that add genuine value beyond baseline. Not expected but create loyalty.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Cost variance in stocktake (variance × cost price) | Makes shrinkage financially tangible. Merchant sees "missing 3 units of X = $45 loss" rather than just a count discrepancy. Lightspeed surfaces this prominently. | LOW | Requires cost_price field on products (may not exist). If no cost price, skip. Useful for a supplies store where cost of goods is known. |
-| Stock history per product (timeline view) | Drill down to a single product and see its full movement history: sales, adjustments, stocktakes. Useful when investigating a discrepancy. Square gates this behind paid tier. | MEDIUM | Filter adjustment_history by product_id. Show source for each movement: "POS sale #123", "Online order #456", "Manual adjustment — Damage", "Stocktake 2026-04-01". |
-| "Who adjusted this?" traceability | Log actor on every stock movement: owner, named staff member, or system (POS sale, online order). Reduces internal theft and error disputes. | LOW | Requires recording the actor on every mutation. Staff PIN sessions already have a staff identity. Extend adjustment log to capture this. |
-| Barcode scanning in stocktake | Speed up physical count using the existing barcode scanner infrastructure. Scan a product barcode to select it, then enter count. No need to navigate a list. | LOW | The barcode scanner (camera overlay, EAN-13/UPC-A) is already shipped. In stocktake mode, scanning a barcode auto-focuses the count input for that product. Low implementation effort because the scanner infrastructure exists. |
-| Free-tier simplification (no stock clutter) | Merchants on the free tier should not see empty stock columns, zero counts, or low stock warnings they cannot act on. Cleaning up the free experience is a quality differentiator. | MEDIUM | When inventory add-on is not active: hide stock quantity columns from product list, remove low stock indicators, remove stocktake menu, products sell freely with no stock checks. Requires conditional rendering throughout admin and POS. |
-| Stock received workflow | When a supplier delivery arrives, merchants need a fast way to add stock in bulk. A "receive stock" workflow (select products, enter quantities received) is cleaner than individual manual adjustments. | MEDIUM | A bulk-adjustment screen pre-filtered to "Stock Received" reason code. Enter supplier name/reference as optional note. Each product gets an adjustment row with the reason "Stock Received". |
+| Admin dashboard: sales trend chart (7-day/30-day) | Owner sees revenue trajectory at a glance, not just today's number | MEDIUM | Aggregate `orders` by date; recharts or lightweight chart library; Server Component data fetch |
+| Admin dashboard: key metrics with comparison (vs prior period) | "Up 23% vs last week" is actionable; flat numbers aren't | MEDIUM | Two date-range queries; percentage delta calculation |
+| Admin dashboard: recent orders widget | Quick visibility into last 5-10 orders without navigating to orders page | LOW | Simple query, already have order data |
+| Super-admin: platform MRR calculation | Platform operator needs single number for MRR without paying for Baremetrics | HIGH | Must aggregate across all active Stripe subscriptions — either pull from Stripe API and compute, or use Stripe Sigma if budget allows. Stripe API is free but requires iterating subscriptions. |
+| Super-admin: churn tracking | Know when merchants cancel and which add-ons they drop | HIGH | Track `customer.subscription.deleted` webhook events into a `churn_events` table; or pull from Stripe API with `status: 'canceled'` |
+| Super-admin: add-on revenue breakdown | Which add-ons earn the most revenue? Informs pricing decisions | MEDIUM | Group active subscriptions by price/product ID; map to add-on name |
+| Super-admin: new signups over time | Understand growth curve | LOW | Count `stores` by `created_at` date range — no Stripe needed |
+| Merchant impersonation ("act as") | Support can debug merchant issues by seeing exactly what they see | HIGH | Secure token-based session swap; yellow banner during impersonation; full audit log; disable write operations or flag them as impersonated |
+| Store settings: store hours | Storefront can show "open now" indicator; click-and-collect availability | MEDIUM | Array or JSON column for hours per day; storefront display only (no booking logic) |
 
----
+### Anti-Features (Commonly Requested, Often Problematic)
 
-## Anti-Features
-
-Commonly built but problematic for this scope and audience.
-
-| Anti-Feature | Why Requested | Why Problematic | Alternative |
-|--------------|---------------|-----------------|-------------|
-| Purchase orders / supplier management | "Inventory management means tracking what we ordered" | Full PO workflow (create order, send to supplier, receive against PO, track backorders) is a separate product surface. Adds schema complexity, a new entity type, and a significant UI surface. Not needed for a supplies store doing manual restocking. | Simple "Stock Received" manual adjustment with optional supplier reference note. Good enough for v3.0. PO module is v4.0+ work. |
-| Reorder point automation | "Alert me to reorder when stock hits X" | Low stock alerts already exist. Automated reorder emails or PO creation requires supplier data model. Merchants at this scale order manually. | Low stock threshold per product (already exists). Manual reorder decision by owner. |
-| Inventory forecasting / demand prediction | "Tell me what I'll need next month" | Requires sufficient sales history and a forecasting model. Premature for a product that may have only weeks of data. | Basic top-products report (already in admin) surfaces what's selling. Merchant makes their own reorder decisions. |
-| Multi-location stock | "I have a warehouse and a shopfront" | Multi-store is explicitly out of scope (one store per signup, multi-store deferred to v3). Multi-location inventory requires a locations table, transfers between locations, and location-scoped counts. | One inventory per store. Multi-location is a future milestone if demand signal appears. |
-| FIFO / LIFO / weighted average costing | "I need to know my actual COGS per sale" | Accounting-grade cost tracking requires recording cost price at time of each stock receipt, maintaining a cost layer, and updating COGS on each sale. This is accounting software scope (Xero handles this). | Record cost_price on the product as a snapshot. Use Xero for COGS accounting. |
-| Serialised / batch-tracked stock | "Each unit has its own serial number" | Serialised inventory requires a separate item-level table (each unit is a row), dramatically complicating the data model. Relevant for electronics, medical, or high-value goods — not a supplies store. | SKU-level quantity tracking is sufficient. |
-| Minimum viable "freeze sales during stocktake" | "Stop selling while I count" | Freezing sales on a live POS is a significant UX disruption and a complex technical state (block all checkouts, unblock on commit). For a small store, the merchant can simply do their count after hours when there are no sales. | Documentation guidance: conduct stocktake when the store is closed. The system records a snapshot quantity at count start; live sales that occur during a count will be visible as adjustments. |
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Granular per-permission RBAC (50+ toggles) | "I want to control exactly what each staff member can do" | Role explosion — unmanageable matrix, high test surface, confusing UI for small-business owners who just want Owner/Manager/Staff | Three fixed roles with documented permission sets. Manager = all except billing and staff management. |
+| Real-time dashboard auto-refresh | "I want to see sales updating live" | WebSocket failure modes, Supabase Realtime cost, complexity for single-operator store — the Eng review explicitly rejected this pattern | Page-level `revalidate` (60s) or manual refresh button. Explicit decision: refresh-on-transaction. |
+| Customer loyalty points built into staff management | Loyalty + staff are separate concerns requested together | Scope creep — loyalty is a separate system (deferred to post-v4 in PROJECT.md) | Defer. Show order count/spend on customer profile as passive signal. |
+| Impersonation with full write access | Support wants to "fix things" for the merchant | Untraceable mutations — audit log becomes ambiguous about whether merchant or support made a change | Impersonation read-only by default. Specific write actions (e.g., "reset PIN") via explicit super-admin Server Actions with forced audit logging. |
+| Stripe webhook-driven MRR recalculation on every event | Always-fresh MRR in the DB | Complex event replay logic, subscription state machine errors common, webhook delivery not guaranteed | Pull-on-demand from Stripe API when super-admin loads dashboard. Cache for 5 minutes. No event-sourced MRR table needed at this scale. |
+| Customer messaging / email campaigns from admin | CRM-style broadcast emails | Email deliverability, unsubscribe compliance, SPAM risk — this is a separate product concern | Xero/Mailchimp integration deferred. Show customer email on profile for manual follow-up. |
 
 ---
 
 ## Feature Dependencies
 
 ```
-Service product type
-    └──enables──> Free tier simplification (service products should always sell freely, regardless of add-on status)
-    └──is prerequisite for──> POS and storefront rendering correctly (services never show stock badges)
+[Staff Management UI]
+    └──requires──> [staff table — ALREADY EXISTS]
+    └──requires──> [Manager role CHECK constraint migration]
+                       └──requires──> [Permission gates on void/discount Server Actions]
 
-Inventory add-on (requireFeature gate)
-    └──unlocks──> Manual stock adjustments
-    └──unlocks──> Adjustment history log
-    └──unlocks──> Stocktake sessions
-    └──unlocks──> Stock quantity visible in admin
-    └──unlocks──> Stock blocking at zero
-    └──unlocks──> Low stock threshold alerts (or confirm always-on is acceptable)
+[Customer Management UI]
+    └──requires──> [customers table — ALREADY EXISTS (v2.0)]
+    └──requires──> [orders.customer_id FK — ALREADY EXISTS]
 
-Manual stock adjustment
-    └──requires──> Adjustment history table (adjustments write rows)
-    └──is used by──> Stocktake commit (stocktake generates adjustment rows)
-    └──is used by──> POS sale (sales generate negative adjustment rows)
-    └──is used by──> Online order (online orders generate negative adjustment rows)
+[Promo Edit/Delete]
+    └──requires──> [promos table — ALREADY EXISTS]
+    └──requires──> [update/delete Server Actions — new, follow create pattern]
 
-Stocktake session
-    └──requires──> Manual stock adjustment (commit writes adjustments)
-    └──enhanced by──> Barcode scanning (already shipped, low integration effort)
-    └──enhanced by──> Category filter (partial stocktake)
+[Store Settings Expansion]
+    └──requires──> [stores table migration — add address/phone/ird_number/receipt_header/receipt_footer/hours columns]
+    └──enhances──> [Screen receipt — will pick up new header/footer/IRD columns automatically if receipt renderer reads them]
 
-Adjustment history log
-    └──requires──> Actor tracking on all mutations (staff PIN sessions already have identity)
-    └──enhanced by──> Stock history per product view (filtered history per product)
+[Admin Dashboard Charts]
+    └──requires──> [orders table — ALREADY EXISTS]
+    └──requires──> [chart library — new dependency (recharts recommended, ~45kB gzipped)]
 
-Free tier simplification
-    └──requires──> Conditional rendering audit across admin, POS, storefront
-    └──conflicts with──> Existing stock_quantity column being shown everywhere (must be hidden when add-on not active)
+[Super-Admin Billing Visibility]
+    └──requires──> [stores.stripe_customer_id — ALREADY EXISTS]
+    └──requires──> [Stripe API server-side calls from super-admin routes]
+
+[Super-Admin MRR/Churn Analytics]
+    └──requires──> [Super-Admin Billing Visibility — same Stripe API access]
+    └──requires──> [Aggregate query across all tenants — paginate Stripe subscriptions list]
+    └──optionally──> [churn_events table for historical churn tracking]
+
+[Merchant Impersonation]
+    └──requires──> [Super-Admin auth session — ALREADY EXISTS]
+    └──requires──> [Impersonation JWT: sign short-lived token with target store_id + impersonation flag]
+    └──requires──> [Audit log write on impersonation start/end — super_admin_audit_log ALREADY EXISTS]
+    └──conflicts──> [Write operations during impersonation — must be blocked or separately audited]
 ```
 
 ### Dependency Notes
 
-- **Service product type must ship first.** It is a prerequisite for POS and storefront rendering changes (services never show stock badges regardless of add-on status), and it is independent of billing gating.
-- **Inventory add-on gate must precede all inventory UI.** All stock visibility (columns, badges, alerts) should render only when `requireFeature('inventory')` returns true.
-- **Adjustment history table is the shared backbone.** Manual adjustments, POS sales, online orders, and stocktake commits all write to this table. Define its schema early — all other inventory features depend on it.
-- **Stocktake depends on adjustment.** The commit step of a stocktake is simply a batch of manual adjustments with reason "Stocktake Recount". No separate commit mechanism needed.
-- **Free tier simplification depends on add-on gate being correct.** Do not attempt the conditional rendering pass until the gate is confirmed working.
+- **Manager role requires migration first:** The `staff` table CHECK constraint is `role IN ('owner', 'staff')`. Adding `manager` requires a migration to expand the constraint. This is a one-liner ALTER but must precede any UI that sets role=manager.
+- **Store settings expansion requires migration before UI:** The new columns (address, phone, ird_number, receipt_header, receipt_footer, store_hours) do not exist on `stores`. The settings form will fail to save without them.
+- **Super-admin billing requires no migration** — `stripe_customer_id` is already on `stores`. It is Stripe API read-only.
+- **MRR requires iterating all tenants:** Stripe API does not expose platform-level aggregate MRR natively. Must paginate `stripe.subscriptions.list()` with `expand: ['data.items.data.price']` across all customers, or use Stripe Sigma (paid). Compute in a Server Action and cache.
 
 ---
 
-## MVP Definition for v3.0
+## MVP Definition
 
-### Launch With (Phase 1 — Foundation)
+This is a subsequent milestone (v4.0), not an initial launch. "MVP" here means what must ship for the milestone to be considered complete vs what can be cut.
 
-Minimum viable inventory add-on. Unlocks the paid add-on and delivers the core value.
+### Must Ship (v4.0 core)
 
-- [ ] `product_type` column (`physical` / `service`) with migration and admin UI toggle — services skip all stock logic
-- [ ] `inventory_adjustments` table: product_id, store_id, delta, quantity_before, quantity_after, reason, notes, actor, source, created_at
-- [ ] Manual stock adjustment UI in admin (select product, enter delta, select reason code, optional notes)
-- [ ] Adjustment history view in admin (filterable by product, date range, reason)
-- [ ] `requireFeature('inventory')` gate wired to Stripe billing (add-on slug, billing portal description)
-- [ ] Free tier: hide stock columns and stock indicators when add-on not active; products sell freely
+- [ ] Staff management UI — add, edit, deactivate, PIN reset
+- [ ] Manager role migration + permission gates on void/refund/discount Server Actions
+- [ ] Customer list with search and order history view
+- [ ] Customer account disable
+- [ ] Promo edit (code, value, expiry, is_active toggle)
+- [ ] Promo delete (soft delete)
+- [ ] Store settings expansion: address, phone, IRD number, receipt header/footer
+- [ ] Admin dashboard: 7-day/30-day sales chart + period comparison metrics
+- [ ] Admin dashboard: recent orders widget
+- [ ] Super-admin: per-tenant billing visibility (subscriptions, invoices, payment failures)
+- [ ] Super-admin: platform overview metrics (total tenants, active add-ons, new signups chart)
 
-### Add After Foundation (Phase 2 — Stocktake)
+### Add After Core (v4.1)
 
-- [ ] Stocktake session: create, list by product with system quantity, enter counted quantity, show variance
-- [ ] Stocktake commit: write adjustment rows for all changed products, mark session complete, confirm modal
-- [ ] Partial stocktake: filter by category when creating session
-- [ ] Barcode scan integration in stocktake count entry (existing scanner, low effort)
+- [ ] Super-admin MRR/churn analytics — high complexity; validate super-admin needs this before building
+- [ ] Merchant impersonation — high complexity, significant security surface; validate frequency of support requests first
+- [ ] Store hours configuration — low priority until storefront needs it
 
-### Phase 3 — POS + Storefront Integration
+### Future Consideration (v5+)
 
-- [ ] POS: show stock badge on product tiles when add-on active (in-stock / low / out)
-- [ ] POS: block checkout of zero-stock physical products when add-on active (with override if store setting allows)
-- [ ] Storefront: hide out-of-stock products or show "sold out" badge when add-on active
-- [ ] Services: always sellable in POS and storefront regardless of add-on status
-
-### Future Consideration (v3.1+)
-
-- [ ] Cost variance in stocktake — requires cost_price field, low complexity if field exists
-- [ ] Stock received workflow (bulk "Stock Received" adjustment screen) — reduces friction for restocking
-- [ ] Per-product stock history timeline — useful but not blocking
-- [ ] Stock movement reporting (shrinkage totals, adjustment reasons breakdown) — reporting add-on work
+- [ ] Loyalty program integration — explicitly out of scope in PROJECT.md
+- [ ] Customer email broadcast — separate product concern
+- [ ] Granular RBAC with custom permissions — not justified at current tenant scale
 
 ---
 
@@ -165,92 +156,64 @@ Minimum viable inventory add-on. Unlocks the paid add-on and delivers the core v
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Service product type (`physical`/`service`) | HIGH | LOW | P1 |
-| `inventory_adjustments` table schema | HIGH | LOW | P1 |
-| Manual stock adjustment UI | HIGH | LOW | P1 |
-| Adjustment history log | HIGH | MEDIUM | P1 |
-| `requireFeature('inventory')` billing gate | HIGH | LOW | P1 |
-| Free tier stock UI cleanup | HIGH | MEDIUM | P1 |
-| Stocktake session create + count entry | HIGH | MEDIUM | P1 |
-| Stocktake variance display | HIGH | LOW | P1 |
-| Stocktake commit (reconcile) | HIGH | MEDIUM | P1 |
-| Partial stocktake (by category) | MEDIUM | LOW | P2 |
-| Barcode scan in stocktake | MEDIUM | LOW | P2 |
-| POS stock badges (in-stock/low/out) | HIGH | LOW | P1 |
-| POS zero-stock blocking | HIGH | LOW | P1 |
-| Storefront sold-out handling | MEDIUM | LOW | P2 |
-| Cost variance in stocktake | MEDIUM | LOW | P3 |
-| Stock received bulk workflow | MEDIUM | MEDIUM | P3 |
-| Per-product stock history view | MEDIUM | MEDIUM | P3 |
-| Stock movement reporting | LOW | MEDIUM | P3 |
+| Staff management UI (add/edit/deactivate/PIN reset) | HIGH | LOW | P1 |
+| Manager role migration + permission gates | HIGH | LOW | P1 |
+| Promo edit/delete | HIGH | LOW | P1 |
+| Store settings: address/phone/IRD/receipt text | HIGH | LOW | P1 |
+| Customer list + search | HIGH | LOW | P1 |
+| Customer order history view | HIGH | LOW | P1 |
+| Admin dashboard: sales chart | HIGH | MEDIUM | P1 |
+| Admin dashboard: period comparison metrics | HIGH | MEDIUM | P1 |
+| Admin dashboard: recent orders widget | MEDIUM | LOW | P1 |
+| Super-admin: per-tenant billing visibility | HIGH | MEDIUM | P1 |
+| Super-admin: platform overview metrics (signups, active tenants) | HIGH | LOW | P1 |
+| Customer account disable | MEDIUM | LOW | P1 |
+| Store hours | LOW | MEDIUM | P2 |
+| Super-admin: platform MRR/churn | MEDIUM | HIGH | P2 |
+| Merchant impersonation | MEDIUM | HIGH | P2 |
 
 **Priority key:**
-- P1: Must have — add-on is not shippable without this
-- P2: Should have — add in same milestone when possible
-- P3: Nice to have — future milestone or later phase
-
----
-
-## Standard Reason Codes
-
-Based on Square, Oracle Retail, and Lightspeed documentation, the standard reason codes for a small retail POS are:
-
-| Reason Code | Direction | Description |
-|-------------|-----------|-------------|
-| Stock Received | + (increase) | Supplier delivery or restocking |
-| Stocktake Recount | ± (both) | Quantity corrected during stocktake |
-| Damage | - (decrease) | Items damaged and removed from sellable inventory |
-| Theft / Loss | - (decrease) | Shoplifting, employee theft, or unexplained loss |
-| Store Use | - (decrease) | Item consumed for internal store use |
-| Return to Supplier | - (decrease) | Items sent back to supplier |
-| Customer Return | + (increase) | Returned item put back to stock (partial refunds already restore stock; this is for manual scenarios) |
-| Correction | ± (both) | Administrative correction for data entry error |
-
-System-generated (not manually selectable):
-| Source | Direction | Description |
-|--------|-----------|-------------|
-| POS Sale | - (decrease) | Sale completed at POS terminal |
-| Online Order | - (decrease) | Order placed on storefront |
-| Refund | + (increase) | Partial refund stock restore (already implemented) |
-
-**Existing dependency:** Partial refunds already restore stock. The new adjustment history table should also capture these system-generated movements so the history is complete. Requires writing a row to `inventory_adjustments` on each refund stock restore (backfill or hook into existing refund logic).
+- P1: Must ship in v4.0
+- P2: Ship only if P1 complete and time permits
+- P3: Future milestone
 
 ---
 
 ## Competitor Feature Analysis
 
-| Feature | Square Free | Square Retail Plus ($49/mo) | Lightspeed X (Vend) | Our Approach |
-|---------|-------------|------------------------------|----------------------|--------------|
-| Basic stock quantity | Yes | Yes | Yes | Yes — free when add-on active |
-| Manual adjustment + reason | Limited | Full (6 reasons) | Full (custom reasons) | 8 standard reasons, no custom in v3.0 |
-| Adjustment history | No | Yes (filterable) | Yes | Yes — filterable by product, date, reason |
-| Stocktake / inventory count | No | Yes (full UI) | Yes (count sheets, barcode, spreadsheet import) | Yes — session-based with variance |
-| Partial stocktake | No | Yes | Yes | Yes — by category |
-| Barcode scanning in count | No | Yes | Yes | Yes — existing scanner, low cost |
-| Service/non-inventory item type | Yes (toggle) | Yes | Yes | Yes — explicit product_type field |
-| Stock badges on POS | Yes | Yes | Yes | Yes — when add-on active |
-| Sold-out blocking | Yes | Yes | Yes | Yes — when add-on active |
-| Cost variance in stocktake | No | No | Yes | Deferred to v3.1 |
-| Purchase orders | No | No | Yes (paid add-on) | Out of scope |
-| Inventory forecasting | No | No | Paid add-on | Out of scope |
-
-**Confidence note:** Square and Lightspeed/Vend feature details drawn from official support documentation (verified via web fetch). Cost and tier information as of 2026-04-04; may drift.
+| Feature | Square POS | Lightspeed/Vend | NZPOS v4.0 Approach |
+|---------|------------|-----------------|---------------------|
+| Staff roles | Owner / Manager / Employee (3 tiers) | Multiple custom roles with granular permissions | Owner / Manager / Staff (3 fixed tiers — avoids granularity complexity at small-biz scale) |
+| Staff PIN | Yes, numeric PIN per staff | Yes, PIN or card swipe | Existing PIN auth system; management UI only |
+| Customer profiles | Name, email, phone, order history | Full CRM: tags, notes, segments | Name, email, order history, account disable — sufficient for v4.0 |
+| Customer search | Name or email search | Full-text, segmented | Name/email search — table stakes, low complexity |
+| Promo management | Edit, deactivate, delete | Full promotion engine | Edit + soft delete — matches expectation |
+| Receipt customization | Header, footer, logo | Header, footer, custom fields | Header, footer, IRD number — NZ compliance requirement |
+| Admin dashboard | Revenue chart, comparison, recent orders | Advanced analytics, multi-location | 7/30-day chart + period comparison — right scope for single-location |
+| Super-admin billing | N/A (customer-facing product) | N/A (customer-facing product) | Per-tenant Stripe subscription/invoice view — sufficient for support operations |
+| MRR analytics | N/A (customer-facing product) | N/A (customer-facing product) | Computed from Stripe API on demand — avoid third-party analytics tool cost |
+| Merchant impersonation | N/A (customer-facing product) | N/A (customer-facing product) | Short-lived impersonation JWT, read-only default, full audit trail — industry-standard pattern for SaaS support |
 
 ---
 
 ## Sources
 
-- Square stock adjustment documentation: https://squareup.com/help/us/en/article/8331-set-up-inventory-tracking — MEDIUM confidence (verified via WebFetch)
-- Square stock adjustment history (paid feature): https://squareup.com/help/us/en/article/6061-view-stock-adjustment-history-with-square-for-retail — MEDIUM confidence (verified via WebFetch)
-- Lightspeed Retail X-Series inventory counting workflow: https://retail-support.lightspeedhq.com/hc/en-us/articles/229129948-Counting-inventory — MEDIUM confidence (verified via WebFetch)
-- Oracle Retail Store Inventory Management reason codes: https://docs.oracle.com/cd/E12454_01/sim/pdf/160/html/store_user_guide/inventory_adjustments.htm — HIGH confidence (verified via WebFetch; enterprise reference, not all codes apply to small retail)
-- Fishbowl stocktake best practices: https://www.fishbowlinventory.com/blog/stocktake — MEDIUM confidence (WebSearch)
-- MrPeasy stocktake guide: https://www.mrpeasy.com/blog/stocktake/ — MEDIUM confidence (verified via WebFetch)
-- Shopify "Track quantity" per-product toggle: https://help.shopify.com/en/manual/products/inventory/setup/set-up-inventory-tracking — MEDIUM confidence (WebSearch summary, direct fetch blocked by 403)
-- RetailOrbit stocktake workflow: https://support.retailorbit.com/hc/en-us/articles/28370586705819-How-to-Run-Stocktakes — LOW confidence (WebSearch summary only)
-- Square retail inventory management overview: https://squareup.com/gb/en/the-bottom-line/operating-your-business/retail-inventory-management — MEDIUM confidence
+- Stripe API: List subscriptions — https://docs.stripe.com/api/subscriptions/list
+- Stripe API: Subscription invoices — https://docs.stripe.com/billing/invoices/subscription
+- Stripe: SaaS analytics patterns — https://stripe.com/resources/more/saas-analytics
+- Baremetrics: Advanced Stripe dashboards — https://baremetrics.com/blog/advanced-stripe-dashboards-for-subscription-management
+- WorkOS: User management features for SaaS — https://workos.com/blog/user-management-features
+- Clerk: User impersonation for SaaS — https://clerk.com/blog/empower-support-team-user-impersonation
+- Jamie Tanna: Implementing impersonation — https://jamie.ideasasylum.com/2018/09/29/implementing-impersonation
+- EnterpriseReady: RBAC for SaaS — https://www.enterpriseready.io/features/role-based-access-control/
+- Lightspeed vs Square comparison (2026) — https://www.selecthub.com/pos-software/square-pos-vs-lightspeed-retail/
+- ConnectPOS: POS CRM features — https://www.connectpos.com/pos-crm-customer-relationship-features/
+- Existing codebase: `supabase/migrations/001_initial_schema.sql` — staff table schema (role, pin_hash, is_active)
+- Existing codebase: `supabase/migrations/014_multi_tenant_schema.sql` — store_plans, stripe_customer_id
+- Existing codebase: `src/app/admin/settings/page.tsx` — current settings scope (branding only)
+- Existing codebase: `src/app/super-admin/tenants/page.tsx` — current super-admin scope
 
 ---
 
-*Feature research for: NZPOS v3.0 Inventory Management — inventory add-on and service product types*
-*Researched: 2026-04-04*
+*Feature research for: NZPOS v4.0 Admin Platform*
+*Researched: 2026-04-05*

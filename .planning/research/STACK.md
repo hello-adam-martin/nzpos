@@ -1,7 +1,7 @@
 # Technology Stack
 
 **Project:** NZPOS — NZ Retail POS System
-**Researched:** 2026-04-01 (v1.0 core stack) + 2026-04-03 (v2.0 SaaS additions) + 2026-04-04 (v2.1 hardening tooling) + 2026-04-04 (v3.0 inventory management)
+**Researched:** 2026-04-01 (v1.0 core stack) + 2026-04-03 (v2.0 SaaS additions) + 2026-04-04 (v2.1 hardening tooling) + 2026-04-04 (v3.0 inventory management) + 2026-04-05 (v4.0 admin platform)
 **Confidence:** HIGH (core stack verified against live Next.js 16.2.1 official docs)
 
 ---
@@ -322,6 +322,292 @@ Add to `.env.local.example` and `.env.example`. The pattern matches `STRIPE_PRIC
 
 ---
 
+## v4.0 Admin Platform — Stack Additions
+
+**One new npm package required: recharts.** All other features (staff roles, impersonation, Stripe analytics, customer management) are handled by extending existing patterns — database schema, Server Actions, and the established super-admin service-role client.
+
+---
+
+### New Package: recharts
+
+| Library | Version | Purpose | Why |
+|---------|---------|---------|-----|
+| recharts | **^3.x** (latest stable: 3.8.1 as of March 2025) | Charts for admin dashboard and super-admin analytics | React-native SVG charting built on D3. No canvas/WebGL overhead. Ships client components only (requires `'use client'`) — keeps the pattern clean with Server Components fetching data and passing to chart wrappers. React 19 compatible in 3.x series. Best fit for the existing Tailwind design system: style with `className`, no theme provider required. |
+
+**Why recharts over alternatives:**
+- **Tremor:** Tremor uses recharts under the hood but adds a component layer and Radix UI dependency. For this project's design system (custom navy + amber tokens), stripping Tremor's opinionated styling would require more work than using recharts directly. Reject.
+- **Chart.js / react-chartjs-2:** Canvas-based. Harder to make responsive on iPad POS. SVG is preferable for crisp rendering on high-DPI displays.
+- **Victory:** Heavier bundle, less active maintenance relative to recharts.
+- **D3 directly:** Too low-level for the charting volume needed. recharts is the appropriate abstraction.
+
+**React 19 compatibility note (HIGH confidence):** recharts 3.x supports React 16.8+, 17, 18, and 19. React 19 support landed in 2.13.0-alpha and was stabilised in 3.x. No peer dependency override needed with Next.js 16 / React 19.
+
+**Server Component usage pattern:**
+```typescript
+// Server Component fetches data
+// app/admin/dashboard/page.tsx
+async function DashboardPage() {
+  const data = await fetchSalesTrend() // Server Action or direct Supabase call
+  return <SalesTrendChart data={data} />
+}
+
+// Client Component wraps recharts
+// components/SalesTrendChart.tsx
+'use client'
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+```
+
+**Installation:**
+```bash
+npm install recharts
+```
+
+---
+
+### Staff Role Permissions — No New Packages
+
+The existing `staff` table already has `role TEXT CHECK (role IN ('owner', 'staff'))`. v4.0 adds `'manager'` to this enum via a migration.
+
+**Pattern: extend the existing CHECK constraint — no library needed.**
+
+```sql
+-- Migration: 027_staff_roles.sql
+ALTER TABLE public.staff
+  DROP CONSTRAINT staff_role_check,
+  ADD CONSTRAINT staff_role_check
+    CHECK (role IN ('owner', 'manager', 'staff'));
+```
+
+**RBAC enforcement strategy (no new auth library):**
+- Owner/Manager/Staff roles are stored in the `staff` table `role` column.
+- The existing `jose` JWT for staff PIN sessions already embeds `role` in the payload (confirmed by existing auth pattern).
+- Server Actions check `role` from the PIN session JWT before performing sensitive operations.
+- No third-party RBAC library (Permit.io, Casbin, etc.) is needed — the permission matrix is simple enough for explicit checks.
+
+**Permission matrix for v4.0:**
+
+| Action | Owner | Manager | Staff |
+|--------|-------|---------|-------|
+| Ring up sale | Yes | Yes | Yes |
+| Apply discount | Yes | Yes | No |
+| View reports | Yes | Yes | No |
+| Manage staff | Yes | No | No |
+| Manage products | Yes | Yes | No |
+| Manage customers | Yes | Yes | No |
+| Access billing | Yes | No | No |
+
+**Implementation pattern (no new dependencies):**
+
+```typescript
+// src/lib/staffPermissions.ts
+export type StaffRole = 'owner' | 'manager' | 'staff'
+
+export const PERMISSIONS = {
+  applyDiscount: ['owner', 'manager'],
+  viewReports:   ['owner', 'manager'],
+  manageStaff:   ['owner'],
+  manageProducts:['owner', 'manager'],
+  manageCustomers:['owner', 'manager'],
+  accessBilling: ['owner'],
+} satisfies Record<string, StaffRole[]>
+
+export function can(role: StaffRole, action: keyof typeof PERMISSIONS): boolean {
+  return PERMISSIONS[action].includes(role)
+}
+```
+
+This `can()` utility is called in Server Actions before performing the operation. The check is server-side only — UI gating is defense-in-depth, not the security boundary.
+
+---
+
+### Stripe Analytics (MRR, Churn, Revenue) — No New Packages
+
+**Use the existing `stripe` (node ^17.x) package. No Stripe Sigma API required.**
+
+**What Stripe's REST API provides directly (no Sigma subscription needed):**
+- `stripe.subscriptions.list({ status: 'active', limit: 100 })` — enumerate all active subscriptions with `items.data[].price.unit_amount` for MRR calculation
+- `stripe.subscriptions.list({ status: 'canceled' })` — canceled subscriptions for churn calculation
+- `stripe.invoices.list({ status: 'open' })` — payment failures / outstanding invoices
+- `stripe.customers.list()` — merchant account overview
+
+**MRR calculation pattern (server-side, no external library):**
+
+```typescript
+// src/actions/super-admin/getStripeMrr.ts
+'use server'
+import 'server-only'
+import Stripe from 'stripe'
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+
+export async function getStripeMrr() {
+  // Paginate all active subscriptions
+  const subscriptions = await stripe.subscriptions.list({
+    status: 'active',
+    expand: ['data.items'],
+    limit: 100,
+  })
+
+  const mrrCents = subscriptions.data.reduce((sum, sub) => {
+    return sum + sub.items.data.reduce((itemSum, item) => {
+      const price = item.price
+      // Normalize to monthly: price.recurring.interval * interval_count
+      const monthlyAmount = price.recurring?.interval === 'year'
+        ? Math.round((price.unit_amount ?? 0) / 12)
+        : (price.unit_amount ?? 0)
+      return itemSum + monthlyAmount * (item.quantity ?? 1)
+    }, 0)
+  }, 0)
+
+  return { mrrCents, subscriptionCount: subscriptions.data.length }
+}
+```
+
+**Why not Stripe Sigma:** Sigma is a separate paid product (requires Stripe's Sigma add-on). It provides SQL query access to Stripe data but has 3–7 hour data freshness and is overkill for a small NZ SaaS platform. The REST API provides real-time data and is already available. Reject Sigma for v4.0.
+
+**Why not Stripe Dashboard embed:** No public embed API exists. Data must be fetched via REST and rendered with recharts.
+
+**Caching strategy:** Super-admin analytics pages should use `unstable_cache` or the `use cache` directive (Next.js 16 stable) with a 1-hour revalidation. Stripe API calls are rate-limited (100 read requests/second in live mode) — caching avoids hammering the API on every page load.
+
+---
+
+### Merchant Impersonation — No New Packages
+
+**Use `supabase.auth.admin.generateLink()` from the existing Supabase admin client. No new library needed.**
+
+The pattern uses Supabase's magic link generation to create a time-limited, single-use login link for a target merchant user, then signs the super-admin into that session while preserving an impersonation cookie.
+
+**Implementation using existing tools:**
+
+```typescript
+// src/actions/super-admin/impersonateMerchant.ts
+'use server'
+import 'server-only'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { SignJWT } from 'jose'
+import { cookies } from 'next/headers'
+
+export async function impersonateMerchant(targetUserId: string) {
+  // 1. Verify caller is super admin (existing pattern)
+  // 2. Look up target user's email
+  const supabaseAdmin = createAdminClient()
+  const { data: user } = await supabaseAdmin.auth.admin.getUserById(targetUserId)
+
+  // 3. Generate magic link
+  const { data } = await supabaseAdmin.auth.admin.generateLink({
+    type: 'magiclink',
+    email: user.user!.email!,
+  })
+
+  // 4. Store impersonation context in HttpOnly cookie (using jose — already installed)
+  const impersonationToken = await new SignJWT({
+    super_admin_user_id: currentUserId,
+    impersonating: targetUserId,
+  })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('1h')
+    .sign(new TextEncoder().encode(process.env.STAFF_JWT_SECRET!))
+
+  const cookieStore = await cookies()
+  cookieStore.set('impersonation_session', impersonationToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    maxAge: 3600,
+  })
+
+  // 5. Audit log the action
+  await supabaseAdmin.from('super_admin_actions').insert({
+    super_admin_user_id: currentUserId,
+    action: 'impersonate',
+    store_id: targetStoreId,
+    note: `Impersonating ${user.user!.email}`,
+  })
+
+  // 6. Redirect to magic link (signs in as merchant)
+  redirect(data.properties!.action_link)
+}
+```
+
+**Key security requirements:**
+- Only callable by verified super admins (existing `is_super_admin` JWT claim check)
+- Impersonation token stored as `httpOnly: true` cookie — not accessible to client JS
+- 1-hour expiry on impersonation session
+- All impersonations logged to `super_admin_actions` table (existing audit trail)
+- Extend `super_admin_actions.action` CHECK to include `'impersonate'` and `'end_impersonation'` via migration
+
+**Schema change needed:**
+
+```sql
+-- Migration: 027_staff_roles.sql (or separate 028_impersonation.sql)
+ALTER TABLE public.super_admin_actions
+  DROP CONSTRAINT super_admin_actions_action_check,
+  ADD CONSTRAINT super_admin_actions_action_check
+    CHECK (action IN ('suspend', 'unsuspend', 'activate_addon', 'deactivate_addon', 'impersonate', 'end_impersonation', 'password_reset', 'disable_account'));
+```
+
+---
+
+### Admin Dashboard Charts — recharts Integration Pattern
+
+Charts needed for v4.0:
+
+| Chart | Type | Data Source | Component |
+|-------|------|------------|-----------|
+| Sales trend (7/30/90 day) | `<AreaChart>` | `orders` table grouped by date | `SalesTrendChart` |
+| Revenue by channel (POS vs online) | `<BarChart>` | `orders` grouped by channel | `ChannelRevenueChart` |
+| Platform MRR trend | `<AreaChart>` | Stripe `subscriptions.list` + date bucketing | `PlatformMrrChart` |
+| Add-on adoption | `<BarChart>` | `store_plans` column counts | `AddonAdoptionChart` |
+| Top products | `<BarChart>` | `order_items` grouped by product | `TopProductsChart` |
+
+**Styling alignment with design system:**
+
+```typescript
+// Consistent with DESIGN.md navy + amber palette
+const CHART_COLORS = {
+  primary: '#E67E22',   // amber — matches design system
+  secondary: '#1E293B', // navy
+  muted: '#94A3B8',     // slate-400 for axis labels
+}
+```
+
+All chart components are Client Components. Data is fetched in Server Components (or Server Actions) and passed as props. This pattern avoids client-side data fetching and keeps sensitive Supabase queries server-side.
+
+---
+
+### Customer Management — No New Packages
+
+The `customers` table exists from v2.0. Customer management UI requires:
+- Server-side paginated list (existing Supabase `.range()` pattern)
+- Search by name/email (existing `ilike` pattern used in super-admin tenant search)
+- Order history view (existing orders query pattern)
+- Account deactivation (soft delete via `is_active` column — same pattern as staff)
+
+No new libraries. All implemented with existing Supabase client + Server Actions + Zod validation.
+
+---
+
+### Store Settings Expansion — No New Packages
+
+Additional store settings (business address, phone, IRD number, receipt header/footer, store hours) require:
+- Schema additions to `stores` table (migration)
+- Updated `UpdateStoreSchema` Zod schema
+- Extended admin settings UI (react-hook-form already in stack)
+
+No new libraries.
+
+---
+
+### Promo Management — No New Packages
+
+Edit and delete of existing promo codes is a straightforward CRUD extension:
+- `updatePromoCode` Server Action with Zod validation
+- `deletePromoCode` Server Action (soft or hard delete)
+
+No new libraries.
+
+---
+
 ## Supporting Libraries
 
 | Library | Version | Purpose | When to Use |
@@ -332,6 +618,7 @@ Add to `.env.local.example` and `.env.example`. The pattern matches `STRIPE_PRIC
 | @hookform/resolvers | **^3.x** | Zod integration for react-hook-form | Bridges Zod schemas into react-hook-form validation. |
 | sharp | **latest** | Image processing | Installed automatically by Next.js for image optimisation. List in `serverExternalPackages` if needed — it is on Next.js's auto-opt-out list. |
 | tsx / ts-node | dev only | Run TypeScript scripts | For database seed scripts, migration helpers. |
+| recharts | **^3.x** | Chart components (v4.0+) | Admin dashboard sales trend, super-admin MRR/churn charts. Use `'use client'` wrapper components. |
 
 ---
 
@@ -350,6 +637,11 @@ Add to `.env.local.example` and `.env.example`. The pattern matches `STRIPE_PRIC
 | Payments | Stripe Terminal SDK (v1) | Hardware EFTPOS integration explicitly deferred to v1.1. Terminal SDK is complex, requires device provisioning. |
 | Inventory | Dedicated inventory library (e.g. inventory.js, stock-keeping) | No meaningful NZ-ecosystem library exists. The requirements are simple enough that bespoke Server Actions + SECURITY DEFINER RPCs are the correct approach. Adding a library here would obscure the stock decrement logic rather than simplify it. |
 | Testing | Jest | Vitest is the recommended alternative — faster, native ESM, better TypeScript support, compatible with Vite tooling ecosystem. Jest requires significant config to work with Next.js App Router. |
+| RBAC library | Permit.io, Casbin, CASL | Permission matrix for Owner/Manager/Staff is three roles with ~7 action types. A 20-line `PERMISSIONS` object and `can()` function is sufficient. External RBAC libraries add a dependency, an external service (Permit.io), or significant setup overhead for trivial benefit at this scale. |
+| Analytics | Stripe Sigma API | Separate paid Stripe add-on with 3–7 hour data freshness. Stripe REST API provides real-time subscription data sufficient for platform MRR/churn at this scale. Sigma is appropriate when you need SQL queries across historical Stripe data at high volume — not applicable here. |
+| Charting | Tremor | Tremor is recharts + Radix UI + opinionated Tailwind styling. The existing design system uses custom navy/amber tokens that conflict with Tremor's defaults. Stripping Tremor's styles costs more than using recharts directly. |
+| Charting | Chart.js / react-chartjs-2 | Canvas-based rendering. Lower fidelity on high-DPI displays (iPad POS). SVG (recharts) renders crisply at all resolutions. |
+| Impersonation | Custom JWT impersonation (raw Supabase JWT secret manipulation) | Fragile, bypasses Supabase Auth session management, breaks cookie refresh. Use `supabase.auth.admin.generateLink()` which is the official supported path. |
 
 ---
 
@@ -361,6 +653,10 @@ Add to `.env.local.example` and `.env.example`. The pattern matches `STRIPE_PRIC
 | SECURITY DEFINER RPC for stocktake commit | Application-level loop of `adjustStock` calls | Never. Application-level loops are not atomic. A crash mid-loop leaves stock partially updated. The RPC is the only correct approach. |
 | `stock_adjustments` dedicated table | JSONB audit column on `products` | Use JSONB only if you never need to query by adjustment type, product, or date range. Since the stocktake report filters by all three, a proper table with indexes is the correct choice. |
 | `has_inventory` + `has_inventory_manual_override` columns on `store_plans` | Separate `inventory_subscriptions` table | The existing two-column pattern (feature flag + manual override) is proven and already integrated with the JWT claims hook. A separate table would require changes to `requireFeature()`, the auth hook, and the billing webhook. |
+| recharts ^3.x | Victory, Nivo | recharts has the largest ecosystem, best React 19 compatibility, and lightest bundle for the chart types needed (area, bar). Victory and Nivo are strong but recharts is the de-facto standard in 2026 for React + Tailwind dashboards. |
+| Stripe REST API for MRR | Stripe Sigma | Sigma requires a paid subscription and has data latency. REST API is real-time and sufficient for this scale (tens to low-hundreds of merchants). |
+| `supabase.auth.admin.generateLink()` for impersonation | Custom JWT signing against Supabase secret | Supabase's `generateLink` is the supported, maintained path. Custom JWT signing against the Supabase secret is an anti-pattern that can break on Supabase updates. |
+| Bespoke `can(role, action)` function | Casbin / Permit.io | Casbin adds config file complexity. Permit.io is an external service with its own auth and pricing. For three roles and seven action types, an in-code permission map is correct. |
 
 ---
 
@@ -371,32 +667,46 @@ Add to `.env.local.example` and `.env.example`. The pattern matches `STRIPE_PRIC
 | @supabase/supabase-js ^2.x | PostgreSQL GENERATED ALWAYS AS columns | Supabase JS client returns computed columns (variance) as regular fields in select results. No special handling needed. |
 | zod ^3.x | TypeScript 5.x | Compatible. `z.enum(['physical', 'service'])` works with `.default('physical')` chaining. |
 | Next.js 16.2 | SECURITY DEFINER RPCs via admin client | Admin client (service role key) bypasses RLS — required for RPCs that write across tenant boundaries. Compatible pattern confirmed through 48 existing Server Actions. |
+| recharts ^3.x | React 19 | React 19 support confirmed in recharts 3.x series. No peer dependency override or `--legacy-peer-deps` needed. |
+| recharts ^3.x | Next.js App Router | Must be used in `'use client'` components only. Data fetching stays in Server Components. No SSR issues — recharts is client-only. |
+| jose ^5.x | Impersonation cookie signing | Already installed for staff PIN sessions. Reuse the same `STAFF_JWT_SECRET` env var (or add `IMPERSONATION_JWT_SECRET` if secret separation is preferred). |
 
 ---
 
 ## Installation
 
-No new packages for v3.0. All changes are schema migrations, Server Actions, and config updates.
-
 ```bash
-# No npm install needed for v3.0
+# v4.0 Admin Platform — ONE new package
+npm install recharts
 
-# New environment variable to add to .env.local:
-# STRIPE_PRICE_INVENTORY=price_xxxx
+# No other new packages for v4.0
+# All other features use existing stack:
+# - Staff roles: SQL migration + bespoke permission utility
+# - Stripe analytics: existing stripe ^17.x REST API
+# - Merchant impersonation: existing @supabase/supabase-js admin client + jose
+# - Customer management: existing Supabase client + Server Actions
+# - Store settings: existing Zod + react-hook-form
+
+# New environment variables:
+# (None new for v4.0 — all Stripe/Supabase credentials already present)
 ```
 
 ---
 
 ## Sources
 
-- Codebase analysis: `supabase/migrations/001_initial_schema.sql` through `023_performance_indexes.sql` — schema patterns confirmed HIGH confidence
+- Codebase analysis: `supabase/migrations/001_initial_schema.sql` — staff table `role CHECK ('owner', 'staff')` confirmed, basis for 'manager' extension
+- Codebase analysis: `supabase/migrations/020_super_admin_panel.sql` — `super_admin_actions` audit table confirmed, action CHECK constraint identified for extension
 - Codebase analysis: `src/lib/requireFeature.ts` — dual-path JWT/DB feature gating pattern confirmed HIGH confidence
-- Codebase analysis: `src/config/addons.ts` — add-on extension pattern confirmed HIGH confidence
-- Codebase analysis: `supabase/migrations/005_pos_rpc.sql` — SECURITY DEFINER RPC atomic pattern confirmed HIGH confidence
 - Codebase analysis: `supabase/migrations/019_billing_claims.sql` — JWT claims injection pattern confirmed HIGH confidence
-- Codebase analysis: `supabase/migrations/020_super_admin_panel.sql` — manual override column pattern confirmed HIGH confidence
-- PostgreSQL documentation: `GENERATED ALWAYS AS ... STORED` — available in PostgreSQL 12+; Supabase runs Postgres 15+ (HIGH confidence)
+- recharts releases: https://github.com/recharts/recharts/releases — v3.8.1 confirmed latest stable (March 25, 2025)
+- recharts React 19 issue: https://github.com/recharts/recharts/issues/4558 — React 19 support confirmed in 3.x series
+- Supabase RBAC docs: https://supabase.com/docs/guides/database/postgres/custom-claims-and-role-based-access-control-rbac — Auth Hook pattern for custom role claims confirmed
+- Supabase impersonation guide: https://catjam.fi/articles/supabase-admin-impersonation — `generateLink` magic link pattern documented
+- Stripe subscriptions API: https://docs.stripe.com/api/subscriptions/list — `list()` with status filter confirmed for MRR calculation
+- Stripe analytics dashboard: https://docs.stripe.com/billing/subscriptions/analytics — Sigma confirmed as separate paid product
+- WebSearch: recharts vs Tremor vs Chart.js — recharts confirmed dominant for React + Tailwind admin dashboards in 2026
 
 ---
-*Stack research for: NZPOS inventory management (v3.0)*
-*Researched: 2026-04-04*
+*Stack research for: NZPOS v4.0 Admin Platform (staff management, Stripe analytics, merchant impersonation, admin charts, customer management)*
+*Researched: 2026-04-05*
