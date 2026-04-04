@@ -9,6 +9,7 @@ type ProductCardProps = {
   isInCart: boolean
   cartQuantity: number
   staffRole: 'owner' | 'staff'
+  hasInventory: boolean
 }
 
 export function ProductCard({
@@ -17,11 +18,12 @@ export function ProductCard({
   isInCart,
   cartQuantity,
   staffRole,
+  hasInventory,
 }: ProductCardProps) {
-  const isOutOfStock = product.stock_quantity === 0
-  const isLowStock =
-    product.stock_quantity > 0 &&
-    product.stock_quantity <= product.reorder_threshold
+  const isService = (product as any).product_type === 'service'
+  const showStockBadge = hasInventory && !isService
+  const isOutOfStock = showStockBadge && product.stock_quantity === 0
+  const isLowStock = showStockBadge && product.stock_quantity > 0 && product.stock_quantity <= product.reorder_threshold
   const isDisabled = isOutOfStock && staffRole !== 'owner'
 
   function handleClick() {
@@ -70,20 +72,22 @@ export function ProductCard({
       <p className="text-sm text-text-muted mt-1 tabular-nums">
         {formatNZD(product.price_cents)}
       </p>
-      <p
-        className={[
-          'text-xs mt-1',
-          isOutOfStock
-            ? 'text-error font-semibold'
-            : isLowStock
-              ? 'text-warning'
-              : 'text-text-light',
-        ].join(' ')}
-      >
-        {isOutOfStock
-          ? 'Out of stock'
-          : `${product.stock_quantity} in stock`}
-      </p>
+      {showStockBadge && (
+        <p
+          className={[
+            'text-xs mt-1',
+            isOutOfStock
+              ? 'text-error font-semibold'
+              : isLowStock
+                ? 'text-warning'
+                : 'text-text-light',
+          ].join(' ')}
+        >
+          {isOutOfStock
+            ? 'Out of stock'
+            : `${product.stock_quantity} in stock`}
+        </p>
+      )}
     </div>
   )
 }

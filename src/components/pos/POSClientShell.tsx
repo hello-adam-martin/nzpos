@@ -39,6 +39,7 @@ type POSClientShellProps = {
   storeName: string
   storeId: string
   staffList: StaffRow[]
+  hasInventory: boolean
 }
 
 export function POSClientShell({
@@ -49,6 +50,7 @@ export function POSClientShell({
   storeName,
   storeId,
   staffList,
+  hasInventory,
 }: POSClientShellProps) {
   const [cart, dispatch] = useReducer(cartReducer, initialCartState)
   const router = useRouter()
@@ -156,7 +158,9 @@ export function POSClientShell({
   // ---------------------------------------------------------------------------
 
   function handleAddToCart(product: ProductRow) {
-    if (product.stock_quantity === 0) {
+    const isService = (product as any).product_type === 'service'
+    // POS-04: service products always addable; free-tier skips stock check
+    if (!isService && hasInventory && product.stock_quantity === 0) {
       if (staffRole === 'owner') {
         // Owner self-overrides per D-12 — add directly
         dispatch({ type: 'ADD_PRODUCT', product })
@@ -335,6 +339,7 @@ export function POSClientShell({
             search={search}
             onSearchChange={setSearch}
             searchInputRef={searchInputRef}
+            hasInventory={hasInventory}
           />
         </div>
       </div>

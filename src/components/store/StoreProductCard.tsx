@@ -16,13 +16,18 @@ interface StoreProductCardProps {
     imageUrl: string | null
     stockQuantity: number
     reorderThreshold: number
+    productType?: string
   }
+  hasInventory?: boolean
 }
 
-export function StoreProductCard({ product }: StoreProductCardProps) {
+export function StoreProductCard({ product, hasInventory }: StoreProductCardProps) {
   const { dispatch } = useCart()
-  const isSoldOut = product.stockQuantity <= 0
+  const isService = product.productType === 'service'
+  // D-13, D-14: hide sold-out state when free-tier or service product
+  const isSoldOut = hasInventory === true && !isService && product.stockQuantity <= 0
   const isLowStock =
+    hasInventory === true && !isService &&
     product.stockQuantity > 0 &&
     product.stockQuantity <= product.reorderThreshold
 

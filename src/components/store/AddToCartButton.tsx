@@ -10,12 +10,16 @@ interface AddToCartButtonProps {
     image_url: string | null
     slug: string | null
     stock_quantity: number
+    product_type?: string
   }
+  hasInventory?: boolean
 }
 
-export function AddToCartButton({ product }: AddToCartButtonProps) {
+export function AddToCartButton({ product, hasInventory }: AddToCartButtonProps) {
   const { dispatch, state } = useCart()
-  const isSoldOut = product.stock_quantity <= 0
+  const isService = product.product_type === 'service'
+  // FREE-02, POS-04: service products and free-tier stores are never sold out
+  const isSoldOut = hasInventory === true && !isService && product.stock_quantity <= 0
   const inCart = state.items.find((i) => i.productId === product.id)
 
   function handleAddToCart() {

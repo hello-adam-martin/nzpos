@@ -30,7 +30,7 @@ export default async function PosPage() {
 
   const supabase = createSupabaseAdminClient()
 
-  const [productsResult, categoriesResult, staffResult, storeResult, staffListResult] =
+  const [productsResult, categoriesResult, staffResult, storeResult, staffListResult, storePlanResult] =
     await Promise.all([
       supabase
         .from('products')
@@ -59,6 +59,12 @@ export default async function PosPage() {
         .select('id, name, role')
         .eq('store_id', storeId)
         .eq('is_active', true),
+      // Query store_plans for hasInventory (POS uses staff JWT, not Supabase auth)
+      supabase
+        .from('store_plans')
+        .select('has_inventory')
+        .eq('store_id', storeId)
+        .single(),
     ])
 
   const products = productsResult.data ?? []
@@ -66,6 +72,7 @@ export default async function PosPage() {
   const staffName = staffResult.data?.name ?? 'Staff'
   const storeName = storeResult.data?.name ?? 'NZPOS'
   const staffList = (staffListResult.data ?? []) as { id: string; name: string; role: 'owner' | 'staff' }[]
+  const hasInventory = storePlanResult.data?.has_inventory === true
 
   return (
     <POSClientShell
@@ -76,6 +83,7 @@ export default async function PosPage() {
       storeName={storeName}
       storeId={storeId}
       staffList={staffList}
+      hasInventory={hasInventory}
     />
   )
 }

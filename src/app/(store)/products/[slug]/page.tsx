@@ -48,8 +48,19 @@ export default async function ProductDetailPage({ params }: PageProps) {
     notFound()
   }
 
-  const isSoldOut = product.stock_quantity <= 0
+  // Query store_plans for hasInventory (storefront has no auth session)
+  const supabase = await createSupabaseServerClient()
+  const { data: storePlan } = await supabase
+    .from('store_plans')
+    .select('has_inventory')
+    .eq('store_id', process.env.STORE_ID!)
+    .single()
+  const hasInventory = storePlan?.has_inventory === true
+
+  const isService = product.product_type === 'service'
+  const isSoldOut = hasInventory && !isService && product.stock_quantity <= 0
   const isLowStock =
+    hasInventory && !isService &&
     product.stock_quantity > 0 &&
     product.stock_quantity <= product.reorder_threshold
 
@@ -114,7 +125,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
               image_url: product.image_url,
               slug: product.slug,
               stock_quantity: product.stock_quantity,
+              product_type: product.product_type,
             }}
+            hasInventory={hasInventory}
           />
         </div>
       </div>

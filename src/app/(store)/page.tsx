@@ -14,6 +14,14 @@ export default async function StorePage({ searchParams }: PageProps) {
 
   const supabase = await createSupabaseServerClient()
 
+  // Query store_plans for hasInventory (storefront has no auth session)
+  const { data: storePlan } = await supabase
+    .from('store_plans')
+    .select('has_inventory')
+    .eq('store_id', process.env.STORE_ID!)
+    .single()
+  const hasInventory = storePlan?.has_inventory === true
+
   // Fetch categories for the pill bar
   const { data: categories } = await supabase
     .from('categories')
@@ -24,7 +32,7 @@ export default async function StorePage({ searchParams }: PageProps) {
   // Build product query
   let query = supabase
     .from('products')
-    .select('id, name, slug, price_cents, image_url, stock_quantity, reorder_threshold, category_id')
+    .select('id, name, slug, price_cents, image_url, stock_quantity, reorder_threshold, category_id, product_type')
     .eq('store_id', process.env.STORE_ID!)
     .eq('is_active', true)
     .order('name')
@@ -51,6 +59,7 @@ export default async function StorePage({ searchParams }: PageProps) {
     imageUrl: p.image_url,
     stockQuantity: p.stock_quantity,
     reorderThreshold: p.reorder_threshold,
+    productType: p.product_type,
   }))
 
   return (
@@ -69,6 +78,7 @@ export default async function StorePage({ searchParams }: PageProps) {
           products={products}
           hasSearch={!!q}
           hasCategory={!!category && category !== 'all'}
+          hasInventory={hasInventory}
         />
       </div>
     </div>

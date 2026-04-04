@@ -13,6 +13,7 @@ type ProductGridProps = {
   search: string
   onSearchChange: (value: string) => void
   searchInputRef?: React.RefObject<HTMLInputElement | null>
+  hasInventory: boolean
 }
 
 export function ProductGrid({
@@ -23,6 +24,7 @@ export function ProductGrid({
   search,
   onSearchChange,
   searchInputRef,
+  hasInventory,
 }: ProductGridProps) {
   // Use the forwarded ref if provided, otherwise create a local one (unused)
   const localRef = useRef<HTMLInputElement>(null)
@@ -86,6 +88,7 @@ export function ProductGrid({
                 isInCart={!!cartItem}
                 cartQuantity={cartItem?.quantity ?? 0}
                 staffRole={staffRole}
+                hasInventory={hasInventory}
               />
             )
           })}
