@@ -18,6 +18,10 @@ type FeatureResult =
  *
  * Always returns a structured result — never throws.
  * Per D-08: structured return { authorized, feature, upgradeUrl }.
+ *
+ * @param feature - The subscription feature to check (e.g. 'xero', 'email_notifications')
+ * @param options - Options object; set requireDbCheck: true for critical mutations
+ * @returns { authorized: true } if feature is active, or { authorized: false, feature, upgradeUrl } if not
  */
 export async function requireFeature(
   feature: GatedFeature,

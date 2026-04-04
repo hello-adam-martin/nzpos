@@ -46,6 +46,9 @@ const SLUG_REGEX = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/
  * Validate a slug string.
  * Returns { valid: true } on success.
  * Returns { valid: false, reason: string } on failure.
+ *
+ * @param slug - The slug string to validate
+ * @returns { valid: true } or { valid: false, reason: string }
  */
 export function validateSlug(slug: string): { valid: boolean; reason?: string } {
   if (slug.length < 3 || slug.length > 30) {
@@ -79,6 +82,9 @@ export function validateSlug(slug: string): { valid: boolean; reason?: string } 
  * 5. Collapse consecutive hyphens to one
  * 6. Strip leading/trailing hyphens
  * 7. Truncate to 30 chars (don't cut in the middle of a trailing hyphen)
+ *
+ * @param name - Store name to convert to a slug
+ * @returns Slugified string (may still need validation before use)
  */
 export function slugify(name: string): string {
   let slug = name

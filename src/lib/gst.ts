@@ -8,10 +8,24 @@
  * The 3/23 ratio is derived from: GST rate 15% means tax = price * 15/115 = price * 3/23.
  */
 
+/**
+ * Extracts GST from a GST-inclusive amount using the IRD 3/23 method.
+ *
+ * @param inclusiveCents - GST-inclusive amount in cents
+ * @returns GST component in cents, rounded to nearest cent
+ */
 export function gstFromInclusiveCents(inclusiveCents: number): number {
   return Math.round(inclusiveCents * 3 / 23)
 }
 
+/**
+ * Calculates line item totals with GST for a single order line.
+ *
+ * @param unitPriceCents - Unit price in cents (GST-inclusive)
+ * @param qty - Quantity ordered
+ * @param discountCents - Total discount applied to the line in cents (default 0)
+ * @returns Object with lineTotal, gst, and excl (GST-exclusive) amounts, all in cents
+ */
 export function calcLineItem(
   unitPriceCents: number,
   qty: number,
@@ -23,6 +37,12 @@ export function calcLineItem(
   return { lineTotal, gst, excl }
 }
 
+/**
+ * Sums per-line GST amounts for an order total.
+ *
+ * @param lineGSTs - Array of per-line GST amounts in cents
+ * @returns Total GST in cents
+ */
 export function calcOrderGST(lineGSTs: number[]): number {
   return lineGSTs.reduce((sum, g) => sum + g, 0)
 }

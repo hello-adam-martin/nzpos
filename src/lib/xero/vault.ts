@@ -8,6 +8,9 @@ import type { XeroTokenSet } from './types'
  *
  * The RPC function uses SECURITY DEFINER with service_role access to read
  * vault.decrypted_secrets — tokens are never stored in plain DB columns.
+ *
+ * @param storeId - UUID of the store whose Xero tokens to retrieve
+ * @returns XeroTokenSet with access_token, refresh_token, and expires_at, or null if not connected
  */
 export async function getXeroTokens(storeId: string): Promise<XeroTokenSet | null> {
   const supabase = createSupabaseAdminClient()
@@ -32,7 +35,10 @@ export async function getXeroTokens(storeId: string): Promise<XeroTokenSet | nul
 /**
  * Saves Xero tokens to Supabase Vault via the upsert_xero_token RPC function.
  * Creates a new vault secret on first save, updates in-place on subsequent calls.
- * Returns the vault secret ID.
+ *
+ * @param storeId - UUID of the store to save tokens for
+ * @param tokenSet - Xero OAuth token set including access_token, refresh_token, and expires_at
+ * @returns Vault secret ID (UUID string)
  */
 export async function saveXeroTokens(storeId: string, tokenSet: XeroTokenSet): Promise<string> {
   const supabase = createSupabaseAdminClient()
@@ -51,6 +57,9 @@ export async function saveXeroTokens(storeId: string, tokenSet: XeroTokenSet): P
 /**
  * Deletes Xero tokens from Supabase Vault and marks the connection as disconnected.
  * Called during explicit disconnect or after unrecoverable token refresh failure.
+ *
+ * @param storeId - UUID of the store whose Xero tokens to delete
+ * @returns Void — throws on failure
  */
 export async function deleteXeroTokens(storeId: string): Promise<void> {
   const supabase = createSupabaseAdminClient()

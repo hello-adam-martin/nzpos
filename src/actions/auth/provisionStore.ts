@@ -24,6 +24,9 @@ const ProvisionSchema = z.object({
  *
  * Email confirmation happens when the user clicks the verification link.
  * The callback route handles the cross-domain session creation.
+ *
+ * @param formData - Form data containing userId, email, storeName, and slug fields
+ * @returns { success: true } on success, or { error: Record<string, string[]> } with field-level errors
  */
 export async function provisionStore(
   formData: FormData

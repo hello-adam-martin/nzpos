@@ -5,6 +5,13 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 const secret = new TextEncoder().encode(process.env.STAFF_JWT_SECRET!)
 
+/**
+ * Resolves the authenticated user from either owner Supabase session or staff PIN JWT.
+ * Tries owner session first (Supabase Auth), falls back to staff JWT cookie.
+ * Uses middleware-injected x-store-id header for tenant context when available.
+ *
+ * @returns Object with store_id and staff_id if authenticated, or null if not authenticated
+ */
 export async function resolveAuth(): Promise<{ store_id: string; staff_id: string } | null> {
   // Try owner Supabase session first
   const supabase = await createSupabaseServerClient()
@@ -25,7 +32,13 @@ export async function resolveAuth(): Promise<{ store_id: string; staff_id: strin
   return resolveStaffAuth()
 }
 
-/** Staff-only auth: checks staff PIN JWT cookie only (no owner fallback) */
+/**
+ * Resolves staff-only authentication from the staff_session JWT cookie.
+ * Does not check owner Supabase session — staff PIN sessions only.
+ * Uses middleware-injected x-store-id header for tenant context when available.
+ *
+ * @returns Object with store_id, staff_id, and role if staff JWT is valid, or null if not authenticated
+ */
 export async function resolveStaffAuth(): Promise<{ store_id: string; staff_id: string; role: string } | null> {
   const cookieStore = await cookies()
   const token = cookieStore.get('staff_session')?.value

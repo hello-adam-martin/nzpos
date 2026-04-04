@@ -182,6 +182,13 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
 // calcCartTotals
 // ---------------------------------------------------------------------------
 
+/**
+ * Calculates cart totals from all line items.
+ * NZ tax-inclusive: total equals subtotal (GST is already inside prices).
+ *
+ * @param items - Array of cart items with pre-calculated line totals and GST
+ * @returns Object with subtotalCents, gstCents, and totalCents
+ */
 export function calcCartTotals(items: CartItem[]): {
   subtotalCents: number
   gstCents: number
@@ -197,6 +204,14 @@ export function calcCartTotals(items: CartItem[]): {
 // applyCartDiscount — distribute pro-rata by line total
 // ---------------------------------------------------------------------------
 
+/**
+ * Distributes a cart-level discount pro-rata across all line items.
+ * Last item absorbs any rounding remainder to ensure discount sums exactly.
+ *
+ * @param items - Current cart items
+ * @param cartDiscountCents - Total cart discount to distribute in cents
+ * @returns New array of cart items with discount applied and line totals recalculated
+ */
 export function applyCartDiscount(items: CartItem[], cartDiscountCents: number): CartItem[] {
   if (items.length === 0) return items
 
@@ -234,6 +249,13 @@ export function applyCartDiscount(items: CartItem[], cartDiscountCents: number):
 // calcChangeDue
 // ---------------------------------------------------------------------------
 
+/**
+ * Calculates change due to the customer for a cash transaction.
+ *
+ * @param totalCents - Order total in cents
+ * @param tenderedCents - Cash amount tendered by customer in cents
+ * @returns Change due in cents (may be negative if tendered < total)
+ */
 export function calcChangeDue(totalCents: number, tenderedCents: number): number {
   return tenderedCents - totalCents
 }

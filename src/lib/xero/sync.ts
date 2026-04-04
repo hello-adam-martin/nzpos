@@ -267,6 +267,10 @@ async function runSync(
 /**
  * Executes daily sync for the previous NZ calendar day.
  * Used by the automated cron job.
+ *
+ * @param storeId - UUID of the store to sync
+ * @param referenceDate - Optional reference date override (defaults to current date)
+ * @returns Result with success flag, message, and invoice number if created
  */
 export async function executeDailySync(
   storeId: string,
@@ -281,6 +285,9 @@ export async function executeDailySync(
  * Executes manual sync for today's sales (midnight NZST to now).
  * Used by the manual sync button in the admin Integrations page.
  * Re-syncing the same day updates the existing invoice per D-10.
+ *
+ * @param storeId - UUID of the store to sync
+ * @returns Result with success flag, message, and invoice number if created or updated
  */
 export async function executeManualSync(
   storeId: string
@@ -296,7 +303,10 @@ export async function executeManualSync(
  * Non-retryable failures (Xero not connected, account codes not configured)
  * return immediately without retrying.
  *
- * @param sleepFn - Optional sleep function override for testing (default: sleep)
+ * @param storeId - UUID of the store to sync
+ * @param referenceDate - Optional reference date override (defaults to current date)
+ * @param sleepFn - Optional sleep function override for testing (default: built-in sleep)
+ * @returns Result with success flag, message, invoice number, and number of attempts made
  */
 export async function executeDailySyncWithRetry(
   storeId: string,
