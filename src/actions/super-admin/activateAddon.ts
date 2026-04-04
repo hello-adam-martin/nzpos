@@ -8,7 +8,7 @@ import { revalidatePath } from 'next/cache'
 
 const ActivateAddonSchema = z.object({
   storeId: z.string().uuid(),
-  feature: z.enum(['xero', 'email_notifications', 'custom_domain']),
+  feature: z.enum(['xero', 'email_notifications', 'custom_domain', 'inventory']),
 })
 
 export async function activateAddon(
