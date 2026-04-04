@@ -349,6 +349,7 @@ export type Database = {
           name: string
           price_cents: number
           reorder_threshold: number
+          product_type: string
           sku: string | null
           slug: string | null
           stock_quantity: number
@@ -364,6 +365,7 @@ export type Database = {
           is_active?: boolean
           name: string
           price_cents: number
+          product_type?: string
           reorder_threshold?: number
           sku?: string | null
           slug?: string | null
@@ -380,6 +382,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           price_cents?: number
+          product_type?: string
           reorder_threshold?: number
           sku?: string | null
           slug?: string | null
@@ -629,6 +632,8 @@ export type Database = {
           has_custom_domain_manual_override: boolean
           has_email_notifications: boolean
           has_email_notifications_manual_override: boolean
+          has_inventory: boolean
+          has_inventory_manual_override: boolean
           has_xero: boolean
           has_xero_manual_override: boolean
           id: string
@@ -643,6 +648,8 @@ export type Database = {
           has_custom_domain_manual_override?: boolean
           has_email_notifications?: boolean
           has_email_notifications_manual_override?: boolean
+          has_inventory?: boolean
+          has_inventory_manual_override?: boolean
           has_xero?: boolean
           has_xero_manual_override?: boolean
           id?: string
@@ -657,6 +664,8 @@ export type Database = {
           has_custom_domain_manual_override?: boolean
           has_email_notifications?: boolean
           has_email_notifications_manual_override?: boolean
+          has_inventory?: boolean
+          has_inventory_manual_override?: boolean
           has_xero?: boolean
           has_xero_manual_override?: boolean
           id?: string

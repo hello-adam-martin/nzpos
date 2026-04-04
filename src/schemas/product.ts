@@ -1,11 +1,14 @@
 import { z } from 'zod'
 
+export const ProductTypeSchema = z.enum(['physical', 'service']).default('physical')
+
 export const CreateProductSchema = z.object({
   name: z.string().min(1).max(200),
   sku: z.string().max(50).optional(),
   barcode: z.string().max(50).optional(),
   price_cents: z.number().int().min(0),
   category_id: z.string().uuid().optional(),
+  product_type: ProductTypeSchema,
   stock_quantity: z.number().int().min(0).default(0),
   reorder_threshold: z.number().int().min(0).default(0),
   image_url: z.string().url().optional(),
@@ -13,5 +16,5 @@ export const CreateProductSchema = z.object({
 
 export const UpdateProductSchema = CreateProductSchema.partial()
 
-type CreateProductInput = z.infer<typeof CreateProductSchema>
-type UpdateProductInput = z.infer<typeof UpdateProductSchema>
+export type CreateProductInput = z.infer<typeof CreateProductSchema>
+export type UpdateProductInput = z.infer<typeof UpdateProductSchema>

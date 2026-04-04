@@ -1,12 +1,13 @@
 // Add-on configuration: centralized metadata, Price IDs, and feature flag mappings.
 // Price IDs are loaded from environment variables (D-02: never hardcode Price IDs).
 
-export type SubscriptionFeature = 'xero' | 'email_notifications' | 'custom_domain'
+export type SubscriptionFeature = 'xero' | 'email_notifications' | 'custom_domain' | 'inventory'
 
 interface FeatureFlags {
   has_xero: boolean
   has_email_notifications: boolean
   has_custom_domain: boolean
+  has_inventory: boolean
 }
 
 // Map: feature name -> Stripe Price ID (from env vars)
@@ -14,6 +15,7 @@ export const PRICE_ID_MAP: Record<SubscriptionFeature, string> = {
   xero: process.env.STRIPE_PRICE_XERO!,
   email_notifications: process.env.STRIPE_PRICE_EMAIL_NOTIFICATIONS!,
   custom_domain: process.env.STRIPE_PRICE_CUSTOM_DOMAIN!,
+  inventory: process.env.STRIPE_PRICE_INVENTORY ?? '',
 }
 
 // Reverse map: Stripe Price ID -> store_plans column name (for webhook handler)
@@ -21,6 +23,9 @@ export const PRICE_TO_FEATURE: Record<string, keyof FeatureFlags> = {
   [process.env.STRIPE_PRICE_XERO!]: 'has_xero',
   [process.env.STRIPE_PRICE_EMAIL_NOTIFICATIONS!]: 'has_email_notifications',
   [process.env.STRIPE_PRICE_CUSTOM_DOMAIN!]: 'has_custom_domain',
+  ...(process.env.STRIPE_PRICE_INVENTORY
+    ? { [process.env.STRIPE_PRICE_INVENTORY]: 'has_inventory' }
+    : {}),
 }
 
 // Map: feature name -> store_plans boolean column name
@@ -28,6 +33,7 @@ export const FEATURE_TO_COLUMN: Record<SubscriptionFeature, keyof FeatureFlags> 
   xero: 'has_xero',
   email_notifications: 'has_email_notifications',
   custom_domain: 'has_custom_domain',
+  inventory: 'has_inventory',
 }
 
 // Add-on display metadata for UI rendering
@@ -52,5 +58,12 @@ export const ADDONS = [
     benefitLine: 'Use your own domain (e.g. shop.yourbrand.co.nz) instead of your NZPOS subdomain.',
     gatedHeadline: 'Custom domains require an upgrade',
     gatedBody: 'Use your own domain for a fully branded storefront experience.',
+  },
+  {
+    feature: 'inventory' as SubscriptionFeature,
+    name: 'Inventory Management',
+    benefitLine: 'Track stock levels, run stocktakes, and get low-stock alerts.',
+    gatedHeadline: 'Inventory management requires an upgrade',
+    gatedBody: 'Track stock quantities, adjust inventory, and run stocktakes with variance reporting.',
   },
 ] as const

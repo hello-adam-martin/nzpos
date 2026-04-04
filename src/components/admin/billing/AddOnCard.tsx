@@ -1,8 +1,9 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import type { SubscriptionFeature } from '@/config/addons'
 
 interface AddOnCardProps {
-  feature: 'xero' | 'email_notifications' | 'custom_domain'
+  feature: SubscriptionFeature
   name: string
   benefitLine: string
   status: 'active' | 'trial' | 'inactive'
