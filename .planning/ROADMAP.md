@@ -125,6 +125,6 @@ Plans:
 | 18. Code Quality + Test Coverage | v2.1 | 4/4 | Complete | 2026-04-04 |
 | 19. Developer Documentation | v2.1 | 3/3 | Complete | 2026-04-04 |
 | 20. Deployment + User Documentation | v2.1 | 2/2 | Complete | 2026-04-04 |
-| 21. Service Product Type + Free-Tier Simplification | v3.0 | 3/3 | Complete   | 2026-04-04 |
+| 21. Service Product Type + Free-Tier Simplification | v3.0 | 3/3 | Complete    | 2026-04-04 |
 | 22. Inventory Add-on Core | v3.0 | 0/TBD | Not started | - |
 | 23. Feature Gating + POS/Storefront Integration | v3.0 | 0/TBD | Not started | - |
