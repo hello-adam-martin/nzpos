@@ -92,11 +92,43 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| STAFF-01 | Phase 24 | Pending |
+| STAFF-02 | Phase 24 | Pending |
+| STAFF-03 | Phase 24 | Pending |
+| STAFF-04 | Phase 24 | Pending |
+| STAFF-05 | Phase 24 | Pending |
+| STAFF-06 | Phase 24 | Pending |
+| CUST-01 | Phase 25 | Pending |
+| CUST-02 | Phase 25 | Pending |
+| CUST-03 | Phase 25 | Pending |
+| CUST-04 | Phase 25 | Pending |
+| PROMO-01 | Phase 25 | Pending |
+| PROMO-02 | Phase 25 | Pending |
+| SETTINGS-01 | Phase 25 | Pending |
+| SETTINGS-02 | Phase 25 | Pending |
+| SETTINGS-03 | Phase 25 | Pending |
+| DASH-01 | Phase 25 | Pending |
+| DASH-02 | Phase 25 | Pending |
+| DASH-03 | Phase 25 | Pending |
+| SA-DASH-01 | Phase 26 | Pending |
+| SA-DASH-02 | Phase 26 | Pending |
+| SA-DASH-03 | Phase 26 | Pending |
+| SA-BILL-01 | Phase 26 | Pending |
+| SA-BILL-02 | Phase 26 | Pending |
+| SA-BILL-03 | Phase 26 | Pending |
+| SA-USER-01 | Phase 26 | Pending |
+| SA-USER-02 | Phase 26 | Pending |
+| SA-USER-03 | Phase 26 | Pending |
+| SA-MRR-01 | Phase 27 | Pending |
+| SA-MRR-02 | Phase 27 | Pending |
+| SA-MRR-03 | Phase 27 | Pending |
+| SA-MRR-04 | Phase 27 | Pending |
+| SA-MRR-05 | Phase 27 | Pending |
 
 **Coverage:**
-- v4.0 requirements: 28 total
-- Mapped to phases: 0
-- Unmapped: 28
+- v4.0 requirements: 32 total
+- Mapped to phases: 32
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-05*

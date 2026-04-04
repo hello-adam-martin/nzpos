@@ -6,6 +6,7 @@
 - ✅ **v2.0 SaaS Platform** — Phases 7-16 (shipped 2026-04-03). [Archive](milestones/v2.0-ROADMAP.md)
 - ✅ **v2.1 Hardening & Documentation** — Phases 17-20 (shipped 2026-04-04). [Archive](milestones/v2.1-ROADMAP.md)
 - ✅ **v3.0 Inventory Management** — Phases 21-23 (shipped 2026-04-05). [Archive](milestones/v3.0-ROADMAP.md)
+- 🚧 **v4.0 Admin Platform** — Phases 24-27 (in progress)
 
 ## Phases
 
@@ -56,6 +57,70 @@
 
 </details>
 
+### 🚧 v4.0 Admin Platform (In Progress)
+
+**Milestone Goal:** Complete the admin and super-admin areas with staff management, customer management, role-based permissions, platform analytics, and merchant account management.
+
+- [ ] **Phase 24: Staff RBAC Foundation** - Manager role, shared role constants, staff management UI, and role-gated Server Action guards
+- [ ] **Phase 25: Admin Operational UI** - Customer management, promo edit/delete, store settings expansion, and admin dashboard charts
+- [ ] **Phase 26: Super-Admin Billing + User Management** - Platform overview metrics, per-tenant billing visibility, and merchant account management
+- [ ] **Phase 27: Super-Admin Analytics** - Materialised MRR/churn analytics with Stripe sync job and platform revenue breakdown
+
+## Phase Details
+
+### Phase 24: Staff RBAC Foundation
+**Goal**: Store owners can manage their staff roster and the system enforces role-based permissions so managers have appropriate access without owner-level control
+**Depends on**: Phase 23
+**Requirements**: STAFF-01, STAFF-02, STAFF-03, STAFF-04, STAFF-05, STAFF-06
+**Success Criteria** (what must be TRUE):
+  1. Admin can view, add, edit, deactivate, and reset PIN for any staff member from the staff management page
+  2. A deactivated staff member cannot log in to the POS — their PIN is rejected immediately
+  3. Manager role can process refunds and view reports but cannot access product management, staff management, or store settings
+  4. After a staff member's role is changed, the new permissions take effect on their next action (stale JWT role never authorises a write)
+  5. PIN reset shows the new PIN exactly once and confirms it is not recoverable after dismissal
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 25: Admin Operational UI
+**Goal**: Admins can manage customers and promos, view an enriched dashboard with trend charts, and configure all store settings including receipt text and compliance details
+**Depends on**: Phase 24
+**Requirements**: CUST-01, CUST-02, CUST-03, CUST-04, PROMO-01, PROMO-02, SETTINGS-01, SETTINGS-02, SETTINGS-03, DASH-01, DASH-02, DASH-03
+**Success Criteria** (what must be TRUE):
+  1. Admin can search for a customer by name or email and open their detail page showing full order history
+  2. Admin can disable a customer account so they cannot log in to the storefront
+  3. Admin can edit an existing promo code's discount, expiry, and limits, or soft-delete it so it stops working without losing historical data
+  4. Admin dashboard shows a 7-day or 30-day sales trend chart and a period-comparison row (today vs yesterday, this week vs last week)
+  5. Admin dashboard shows a recent orders widget with the last 5 orders and their statuses
+  6. Admin can save business address, phone, IRD/GST number, and receipt header/footer from the settings page
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 26: Super-Admin Billing + User Management
+**Goal**: Super-admin can see the health of the platform at a glance and drill into any tenant's billing status, payment failures, and account details without leaving the super-admin panel
+**Depends on**: Phase 24
+**Requirements**: SA-DASH-01, SA-DASH-02, SA-DASH-03, SA-BILL-01, SA-BILL-02, SA-BILL-03, SA-USER-01, SA-USER-02, SA-USER-03
+**Success Criteria** (what must be TRUE):
+  1. Super-admin dashboard shows total active tenants, suspended tenants, new signups this month, add-on adoption rates, and a 30-day signup trend chart
+  2. Super-admin can open any tenant detail page and see their active Stripe subscriptions, recent invoices with payment status, and any past-due payment failure alerts
+  3. Super-admin can see a merchant's owner email and signup date from the tenant detail page
+  4. Super-admin can trigger a password reset email for any merchant account from the tenant detail page
+  5. Super-admin can disable a merchant account, preventing the owner from logging in
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 27: Super-Admin Analytics
+**Goal**: Super-admin can track platform revenue health through an analytics page that shows accurate MRR, churn, and per-add-on revenue drawn from a materialised Stripe snapshot — not live API calls
+**Depends on**: Phase 26
+**Requirements**: SA-MRR-01, SA-MRR-02, SA-MRR-03, SA-MRR-04, SA-MRR-05
+**Success Criteria** (what must be TRUE):
+  1. Analytics page shows current MRR with annual plans correctly normalised to monthly amounts (a $120/year plan contributes $10/month)
+  2. Analytics page shows MRR trend over the last 6 months as a chart
+  3. Analytics page shows churn count (cancelled subscriptions this month) and revenue breakdown by add-on
+  4. Page data comes from a local Supabase snapshot table, not the live Stripe API — page loads in under 2 seconds
+  5. A daily sync job populates the snapshot table; an on-demand refresh button exists but is rate-limited to once per 5 minutes
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -83,3 +148,7 @@
 | 21. Service Product Type + Free-Tier Simplification | v3.0 | 3/3 | Complete | 2026-04-04 |
 | 22. Inventory Add-on Core | v3.0 | 5/5 | Complete | 2026-04-04 |
 | 23. Feature Gating + POS/Storefront Integration | v3.0 | 3/3 | Complete | 2026-04-04 |
+| 24. Staff RBAC Foundation | v4.0 | 0/TBD | Not started | - |
+| 25. Admin Operational UI | v4.0 | 0/TBD | Not started | - |
+| 26. Super-Admin Billing + User Management | v4.0 | 0/TBD | Not started | - |
+| 27. Super-Admin Analytics | v4.0 | 0/TBD | Not started | - |
