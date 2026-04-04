@@ -22,9 +22,9 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 
 **Shipped:** v1.0 MVP (2026-04-02), v2.0 SaaS Platform (2026-04-03)
 
-330 source files, 36,000+ LOC TypeScript, 434 tests passing. 18 phases shipped across 75 plans (33 v1.0, 33 v2.0, 9 v2.1).
+330 source files, 36,000+ LOC TypeScript, 434 tests passing. 19 phases shipped across 78 plans (33 v1.0, 33 v2.0, 12 v2.1).
 
-**Phase 18 complete:** Code quality & test coverage — CI green with 434 passing tests, 80%+ coverage on 8 critical paths (gst, money, resolveAuth, tenantCache, middleware, Stripe webhooks, billing, xero/sync), dead code removed (6 orphan files, 2 unused deps, 26 unexported symbols via knip), error handling standardized with `success: false` on all error returns, JSDoc on all lib exports, performance indexes migration added.
+**Phase 19 complete:** Developer documentation — docs/setup.md (7-step local dev guide with troubleshooting), docs/env-vars.md (all 24 env vars in grouped tables), docs/architecture.md (351-line overview with 5 Mermaid diagrams covering auth, tenancy, feature gating, billing), docs/server-actions.md (48 actions across 10 domains with schema summaries).
 
 **v2.0 delivered:** Multi-tenant infrastructure with wildcard subdomain routing and RLS isolation. Self-serve merchant signup with email verification. Store setup wizard and marketing landing page. Stripe billing with per-add-on subscriptions and feature gating. Super admin panel with tenant management, suspension enforcement, and audit trail. Barcode scanning, screen receipts, email notifications, customer accounts, and partial refunds.
 
@@ -65,6 +65,8 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - ✓ Super admin panel (tenant list, detail, suspend/unsuspend, add-on overrides, audit trail) — v2.0
 
 - ✓ Security audit (RLS, auth, webhooks, input validation, CSP, secrets, rate limiting, audit trail) — v2.1
+- ✓ Code quality & test coverage (434 tests, 80%+ coverage on critical paths, dead code removal, JSDoc) — v2.1
+- ✓ Developer documentation (setup guide, env vars, architecture overview, server action inventory) — v2.1
 
 ### Active
 
@@ -152,4 +154,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-04 after Phase 18 Code Quality & Test Coverage complete*
+*Last updated: 2026-04-04 after Phase 19 Developer Documentation complete*
