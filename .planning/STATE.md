@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Inventory Management
 status: executing
-stopped_at: Completed 23-00-PLAN.md
-last_updated: "2026-04-04T10:04:32.516Z"
+stopped_at: Completed 23-feature-gating-pos-storefront-integration-01-PLAN.md
+last_updated: "2026-04-04T10:05:18.836Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 ## Current Position
 
 Phase: 23 (feature-gating-pos-storefront-integration) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-04
 
@@ -68,6 +68,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 23]: InventoryUpgradeWall sources all content from ADDONS config (not hardcoded) and uses JWT fast path for page-level gate (not requireFeature DB check)
 - [Phase 23-feature-gating-pos-storefront-integration]: vi.mock CartContext at module level for AddToCartButton tests — avoids CartProvider wrapper complexity in each test
 - [Phase 23-feature-gating-pos-storefront-integration]: Wave 0 tests use real assertions (not .todo stubs) — Phase 21 already implements ProductCard and AddToCartButton with correct behavior
+- [Phase 23-01]: Used established ?subscribed= param convention (not ?success= per D-05) — checkout action already uses ?subscribed=
+- [Phase 23-01]: bannerShownRef provides defense-in-depth for same render cycle; router.replace() strips URL param to prevent refresh re-show
 
 ### Pending Todos
 
@@ -81,6 +83,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T10:04:32.513Z
-Stopped at: Completed 23-00-PLAN.md
+Last session: 2026-04-04T10:05:18.834Z
+Stopped at: Completed 23-feature-gating-pos-storefront-integration-01-PLAN.md
 Resume file: None

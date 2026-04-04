@@ -53,7 +53,7 @@
 
 - [x] **Phase 21: Service Product Type + Free-Tier Simplification** — Modify checkout-critical RPCs for service products; clean up free-tier stock clutter (completed 2026-04-04)
 - [x] **Phase 22: Inventory Add-on Core** — Manual stock adjustments with audit log, stocktake sessions with variance calculation (completed 2026-04-04)
-- [ ] **Phase 23: Feature Gating + POS/Storefront Integration** — Wire inventory billing gate, surface stock badges and sold-out states in POS and storefront
+- [x] **Phase 23: Feature Gating + POS/Storefront Integration** — Wire inventory billing gate, surface stock badges and sold-out states in POS and storefront (completed 2026-04-04)
 
 ## Phase Details
 
@@ -107,7 +107,7 @@ Plans:
 **Plans**: 3 plans
 Plans:
 - [x] 23-00-PLAN.md — Wave 0: Test scaffolds for POS ProductCard and storefront AddToCartButton
-- [ ] 23-01-PLAN.md — Billing checkout enum, super admin wiring, billing page query/flagMap, success banner
+- [x] 23-01-PLAN.md — Billing checkout enum, super admin wiring, billing page query/flagMap, success banner
 - [x] 23-02-PLAN.md — Inventory upgrade wall, page gate, POS/storefront/GATE-01 verification
 **UI hint**: yes
 
@@ -137,4 +137,4 @@ Plans:
 | 20. Deployment + User Documentation | v2.1 | 2/2 | Complete | 2026-04-04 |
 | 21. Service Product Type + Free-Tier Simplification | v3.0 | 3/3 | Complete    | 2026-04-04 |
 | 22. Inventory Add-on Core | v3.0 | 5/5 | Complete    | 2026-04-04 |
-| 23. Feature Gating + POS/Storefront Integration | v3.0 | 2/3 | In Progress|  |
+| 23. Feature Gating + POS/Storefront Integration | v3.0 | 3/3 | Complete   | 2026-04-04 |

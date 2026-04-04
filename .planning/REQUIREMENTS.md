@@ -39,10 +39,10 @@ Requirements for Inventory Management milestone. Each maps to roadmap phases.
 ### Feature Gating & Billing
 
 - [ ] **GATE-01**: `requireFeature('inventory')` gates all inventory management Server Actions using DB path for mutations
-- [ ] **GATE-02**: `store_plans` table has `has_inventory` and `has_inventory_manual_override` columns following existing add-on pattern
-- [ ] **GATE-03**: Stripe checkout flow for inventory add-on subscription (using `STRIPE_PRICE_INVENTORY`)
+- [x] **GATE-02**: `store_plans` table has `has_inventory` and `has_inventory_manual_override` columns following existing add-on pattern
+- [x] **GATE-03**: Stripe checkout flow for inventory add-on subscription (using `STRIPE_PRICE_INVENTORY`)
 - [ ] **GATE-04**: Auth hook injects `inventory` claim into JWT for fast-path UI rendering
-- [ ] **GATE-05**: Super admin can manually override inventory add-on status per store
+- [x] **GATE-05**: Super admin can manually override inventory add-on status per store
 
 ### POS & Storefront Integration
 
@@ -95,10 +95,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TAKE-04 | Phase 22 | Complete |
 | TAKE-05 | Phase 22 | Complete |
 | GATE-01 | Phase 23 | Pending |
-| GATE-02 | Phase 23 | Pending |
-| GATE-03 | Phase 23 | Pending |
+| GATE-02 | Phase 23 | Complete |
+| GATE-03 | Phase 23 | Complete |
 | GATE-04 | Phase 23 | Pending |
-| GATE-05 | Phase 23 | Pending |
+| GATE-05 | Phase 23 | Complete |
 | POS-01 | Phase 23 | Complete |
 | POS-02 | Phase 23 | Complete |
 | POS-03 | Phase 23 | Complete |
