@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Admin Platform
-status: executing
-stopped_at: Completed 24-02-PLAN.md
-last_updated: "2026-04-04T18:47:59.387Z"
+status: verifying
+stopped_at: Completed 24-03-PLAN.md tasks 1-2; Task 3 awaiting human verification
+last_updated: "2026-04-04T18:56:39.061Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 3
   percent: 33
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 
 Phase: 24 (staff-rbac-foundation) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-04
 
 Progress: [███░░░░░░░] 33%
@@ -46,6 +46,7 @@ Progress: [███░░░░░░░] 33%
 
 *Updated after each plan completion*
 | Phase 24-staff-rbac-foundation P02 | 15 min | 2 tasks | 12 files |
+| Phase 24-staff-rbac-foundation P03 | 20 | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,8 @@ Progress: [███░░░░░░░] 33%
 - Customer management routes use standard server client (RLS-enforced) — never admin client
 - [Phase 24-staff-rbac-foundation]: Admin layout wires role + staffName to AdminSidebar early — Plan 03 only needs to consume props, not add wiring
 - [Phase 24-staff-rbac-foundation]: Middleware manager JWT block placed after owner success path — preserves all existing owner logic including email verification, setup wizard, and customer block
+- [Phase 24-staff-rbac-foundation]: AddStaffModal uses Math.random() for client-side PIN generation — crypto.randomInt is Node-only, server hashes whatever PIN it receives
+- [Phase 24-staff-rbac-foundation]: Manager nav links removed from DOM in AdminSidebar (not CSS hidden) per D-09 security requirement
 
 ### Pending Todos
 
@@ -80,6 +83,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T18:47:59.385Z
-Stopped at: Completed 24-02-PLAN.md
+Last session: 2026-04-04T18:56:39.059Z
+Stopped at: Completed 24-03-PLAN.md tasks 1-2; Task 3 awaiting human verification
 Resume file: None

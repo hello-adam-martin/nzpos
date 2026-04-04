@@ -61,7 +61,7 @@
 
 **Milestone Goal:** Complete the admin and super-admin areas with staff management, customer management, role-based permissions, platform analytics, and merchant account management.
 
-- [ ] **Phase 24: Staff RBAC Foundation** - Manager role, shared role constants, staff management UI, and role-gated Server Action guards
+- [x] **Phase 24: Staff RBAC Foundation** - Manager role, shared role constants, staff management UI, and role-gated Server Action guards (completed 2026-04-04)
 - [ ] **Phase 25: Admin Operational UI** - Customer management, promo edit/delete, store settings expansion, and admin dashboard charts
 - [ ] **Phase 26: Super-Admin Billing + User Management** - Platform overview metrics, per-tenant billing visibility, and merchant account management
 - [ ] **Phase 27: Super-Admin Analytics** - Materialised MRR/churn analytics with Stripe sync job and platform revenue breakdown
@@ -81,8 +81,8 @@
 **Plans**: 3 plans
 Plans:
 - [x] 24-01-PLAN.md — Foundation: DB migration, roles constant, PIN utility, Zod schemas, resolveStaffAuthVerified
-- [ ] 24-02-PLAN.md — Server Actions + Middleware: staff CRUD actions, manager admin access, processPartialRefund extension
-- [ ] 24-03-PLAN.md — Admin UI: staff page, table, modals, AdminSidebar role filtering
+- [x] 24-02-PLAN.md — Server Actions + Middleware: staff CRUD actions, manager admin access, processPartialRefund extension
+- [x] 24-03-PLAN.md — Admin UI: staff page, table, modals, AdminSidebar role filtering
 **UI hint**: yes
 
 ### Phase 25: Admin Operational UI
@@ -152,7 +152,7 @@ Plans:
 | 21. Service Product Type + Free-Tier Simplification | v3.0 | 3/3 | Complete | 2026-04-04 |
 | 22. Inventory Add-on Core | v3.0 | 5/5 | Complete | 2026-04-04 |
 | 23. Feature Gating + POS/Storefront Integration | v3.0 | 3/3 | Complete | 2026-04-04 |
-| 24. Staff RBAC Foundation | v4.0 | 1/3 | In Progress|  |
+| 24. Staff RBAC Foundation | v4.0 | 3/3 | Complete   | 2026-04-04 |
 | 25. Admin Operational UI | v4.0 | 0/TBD | Not started | - |
 | 26. Super-Admin Billing + User Management | v4.0 | 0/TBD | Not started | - |
 | 27. Super-Admin Analytics | v4.0 | 0/TBD | Not started | - |
