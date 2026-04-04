@@ -22,9 +22,9 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 
 **Shipped:** v1.0 MVP (2026-04-02), v2.0 SaaS Platform (2026-04-03)
 
-336 source files, 36,329 LOC TypeScript, 365+ tests passing. 17 phases shipped across 71 plans (33 v1.0, 33 v2.0, 5 v2.1).
+330 source files, 36,000+ LOC TypeScript, 434 tests passing. 18 phases shipped across 75 plans (33 v1.0, 33 v2.0, 9 v2.1).
 
-**Phase 17 complete:** Full security audit — RLS verified on all tables, all 48 Server Actions have Zod validation + server-only guards, CSP headers on all routes, Stripe webhook signature verification confirmed, no secrets in source, staff PIN rate limiting added, IDOR in orders table closed.
+**Phase 18 complete:** Code quality & test coverage — CI green with 434 passing tests, 80%+ coverage on 8 critical paths (gst, money, resolveAuth, tenantCache, middleware, Stripe webhooks, billing, xero/sync), dead code removed (6 orphan files, 2 unused deps, 26 unexported symbols via knip), error handling standardized with `success: false` on all error returns, JSDoc on all lib exports, performance indexes migration added.
 
 **v2.0 delivered:** Multi-tenant infrastructure with wildcard subdomain routing and RLS isolation. Self-serve merchant signup with email verification. Store setup wizard and marketing landing page. Stripe billing with per-add-on subscriptions and feature gating. Super admin panel with tenant management, suspension enforcement, and audit trail. Barcode scanning, screen receipts, email notifications, customer accounts, and partial refunds.
 
@@ -152,4 +152,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-04 after Phase 17 Security Audit complete*
+*Last updated: 2026-04-04 after Phase 18 Code Quality & Test Coverage complete*
