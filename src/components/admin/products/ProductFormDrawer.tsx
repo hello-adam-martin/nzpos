@@ -7,6 +7,7 @@ import type { ProductWithCategory } from './ProductDataTable'
 import ProductImagePicker from './ProductImagePicker'
 import PriceInput from './PriceInput'
 import { StockAdjustDrawer } from '@/components/admin/inventory/StockAdjustDrawer'
+import { createCategory } from '@/actions/categories/createCategory'
 
 interface Category {
   id: string
@@ -53,6 +54,20 @@ export default function ProductFormDrawer({
   // New category inline
   const [isAddingCategory, setIsAddingCategory] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false)
+
+  async function handleCreateCategory() {
+    const trimmed = newCategoryName.trim()
+    if (!trimmed || isCreatingCategory) return
+    setIsCreatingCategory(true)
+    const result = await createCategory({ name: trimmed })
+    setIsCreatingCategory(false)
+    if ('category' in result && result.category) {
+      setCategoryId(result.category.id)
+      setIsAddingCategory(false)
+      setNewCategoryName('')
+    }
+  }
 
   // UI state
   const [isSaving, setIsSaving] = useState(false)
@@ -143,8 +158,10 @@ export default function ProductFormDrawer({
     formData.set('barcode', barcode.trim())
     formData.set('price_dollars', String(priceCents! / 100))
     if (categoryId) formData.set('category_id', categoryId)
-    formData.set('stock_quantity', String(stockQuantity))
-    formData.set('reorder_threshold', String(reorderThreshold))
+    if (hasInventory) {
+      formData.set('stock_quantity', String(stockQuantity))
+      formData.set('reorder_threshold', String(reorderThreshold))
+    }
     if (imageUrl) formData.set('image_url', imageUrl)
 
     let result
@@ -331,8 +348,20 @@ export default function ProductFormDrawer({
                       setIsAddingCategory(false)
                       setNewCategoryName('')
                     }
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleCreateCategory()
+                    }
                   }}
                 />
+                <button
+                  type="button"
+                  onClick={handleCreateCategory}
+                  disabled={!newCategoryName.trim() || isCreatingCategory}
+                  className="px-3 py-2 text-sm font-semibold font-sans bg-navy text-white rounded-[var(--radius-md)] hover:bg-navy-light transition-colors disabled:opacity-40"
+                >
+                  {isCreatingCategory ? '...' : 'Add'}
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -347,95 +376,99 @@ export default function ProductFormDrawer({
             )}
           </div>
 
-          {/* Stock Quantity */}
-          <div className="flex flex-col gap-1">
-            <label htmlFor="drawer-stock" className="text-sm font-semibold font-sans text-text">
-              Stock Quantity
-            </label>
-            {isStockManagedByInventory ? (
-              <>
+          {/* Stock Quantity — only shown when inventory add-on is active */}
+          {hasInventory && (
+            <div className="flex flex-col gap-1">
+              <label htmlFor="drawer-stock" className="text-sm font-semibold font-sans text-text">
+                Stock Quantity
+              </label>
+              {isStockManagedByInventory ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="drawer-stock"
+                      type="number"
+                      min={0}
+                      value={stockQuantity}
+                      readOnly
+                      className={[
+                        inputClass(!!errors.stock_quantity),
+                        'text-center w-24 cursor-not-allowed bg-surface',
+                      ].join(' ')}
+                      style={{ fontFeatureSettings: "'tnum' 1" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowAdjustDrawer(true)}
+                      className="border border-border bg-transparent text-sm font-bold text-navy hover:bg-surface rounded-[var(--radius-md)] px-3 py-1.5 transition-colors"
+                    >
+                      Adjust stock
+                    </button>
+                  </div>
+                  <p className="text-sm font-sans text-text-muted">
+                    Stock is managed through the inventory add-on.
+                  </p>
+                </>
+              ) : (
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setStockQuantity((v) => Math.max(0, v - 1))}
+                    className="w-9 h-9 flex items-center justify-center border border-border rounded-[var(--radius-md)] text-text-muted hover:text-text hover:bg-surface transition-colors"
+                    aria-label="Decrease stock"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                    </svg>
+                  </button>
                   <input
                     id="drawer-stock"
                     type="number"
                     min={0}
                     value={stockQuantity}
-                    readOnly
-                    className={[
-                      inputClass(!!errors.stock_quantity),
-                      'text-center w-24 cursor-not-allowed bg-surface',
-                    ].join(' ')}
-                    style={{ fontFeatureSettings: "'tnum' 1" }}
+                    onChange={(e) => setStockQuantity(Math.max(0, parseInt(e.target.value) || 0))}
+                    className={[inputClass(!!errors.stock_quantity), 'text-center w-24'].join(' ')}
                   />
                   <button
                     type="button"
-                    onClick={() => setShowAdjustDrawer(true)}
-                    className="border border-border bg-transparent text-sm font-bold text-navy hover:bg-surface rounded-[var(--radius-md)] px-3 py-1.5 transition-colors"
+                    onClick={() => setStockQuantity((v) => v + 1)}
+                    className="w-9 h-9 flex items-center justify-center border border-border rounded-[var(--radius-md)] text-text-muted hover:text-text hover:bg-surface transition-colors"
+                    aria-label="Increase stock"
                   >
-                    Adjust stock
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
                   </button>
                 </div>
-                <p className="text-sm font-sans text-text-muted">
-                  Stock is managed through the inventory add-on.
-                </p>
-              </>
-            ) : (
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setStockQuantity((v) => Math.max(0, v - 1))}
-                  className="w-9 h-9 flex items-center justify-center border border-border rounded-[var(--radius-md)] text-text-muted hover:text-text hover:bg-surface transition-colors"
-                  aria-label="Decrease stock"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                  </svg>
-                </button>
-                <input
-                  id="drawer-stock"
-                  type="number"
-                  min={0}
-                  value={stockQuantity}
-                  onChange={(e) => setStockQuantity(Math.max(0, parseInt(e.target.value) || 0))}
-                  className={[inputClass(!!errors.stock_quantity), 'text-center w-24'].join(' ')}
-                />
-                <button
-                  type="button"
-                  onClick={() => setStockQuantity((v) => v + 1)}
-                  className="w-9 h-9 flex items-center justify-center border border-border rounded-[var(--radius-md)] text-text-muted hover:text-text hover:bg-surface transition-colors"
-                  aria-label="Increase stock"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                  </svg>
-                </button>
-              </div>
-            )}
-            {errors.stock_quantity && (
-              <p className="text-sm font-sans text-error">{errors.stock_quantity[0]}</p>
-            )}
-          </div>
+              )}
+              {errors.stock_quantity && (
+                <p className="text-sm font-sans text-error">{errors.stock_quantity[0]}</p>
+              )}
+            </div>
+          )}
 
-          {/* Reorder Threshold */}
-          <div className="flex flex-col gap-1">
-            <label htmlFor="drawer-reorder" className="text-sm font-semibold font-sans text-text">
-              Reorder Threshold
-            </label>
-            <input
-              id="drawer-reorder"
-              type="number"
-              min={0}
-              value={reorderThreshold}
-              onChange={(e) => setReorderThreshold(Math.max(0, parseInt(e.target.value) || 0))}
-              className={inputClass(!!errors.reorder_threshold)}
-            />
-            <p className="text-sm font-sans text-text-muted">
-              Alert when stock falls below this number.
-            </p>
-            {errors.reorder_threshold && (
-              <p className="text-sm font-sans text-error">{errors.reorder_threshold[0]}</p>
-            )}
-          </div>
+          {/* Reorder Threshold — only shown when inventory add-on is active */}
+          {hasInventory && (
+            <div className="flex flex-col gap-1">
+              <label htmlFor="drawer-reorder" className="text-sm font-semibold font-sans text-text">
+                Reorder Threshold
+              </label>
+              <input
+                id="drawer-reorder"
+                type="number"
+                min={0}
+                value={reorderThreshold}
+                onChange={(e) => setReorderThreshold(Math.max(0, parseInt(e.target.value) || 0))}
+                className={inputClass(!!errors.reorder_threshold)}
+              />
+              <p className="text-sm font-sans text-text-muted">
+                Alert when stock falls below this number.
+              </p>
+              {errors.reorder_threshold && (
+                <p className="text-sm font-sans text-error">{errors.reorder_threshold[0]}</p>
+              )}
+            </div>
+          )}
 
           {/* Active toggle */}
           <div className="flex items-center justify-between">

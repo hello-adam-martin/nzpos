@@ -91,6 +91,7 @@ export default function ProductsPageClient({ products, categories, hasInventory 
           <ProductFilterBar
             categories={categories}
             onFilterChange={handleFilterChange}
+            hasInventory={hasInventory}
           />
         </div>
 

@@ -232,6 +232,25 @@ export async function middleware(request: NextRequest) {
   }
 
   // 9. Storefront routes — public, refresh session if present (PRESERVED)
+  // Rewrite root "/" on subdomains to the (store) route group's page.
+  // Without this, src/app/page.tsx (marketing) takes precedence over (store)/page.tsx.
+  if (pathname === '/') {
+    const storeUrl = new URL('/storefront', request.url)
+    storeUrl.search = request.nextUrl.search
+    const rewriteResponse = NextResponse.rewrite(storeUrl, {
+      request: { headers: requestHeaders },
+    })
+    rewriteResponse.headers.set('x-store-id', storeId)
+    rewriteResponse.headers.set('x-store-slug', slug)
+    // Refresh session for storefront visitors
+    const { response: sessionResponse } = await createSupabaseMiddlewareClient(request)
+    // Copy session cookies from the Supabase middleware response
+    for (const cookie of sessionResponse.cookies.getAll()) {
+      rewriteResponse.cookies.set(cookie)
+    }
+    return addSecurityHeaders(rewriteResponse)
+  }
+
   // Use response headers to pass tenant context downstream
   const { response } = await createSupabaseMiddlewareClient(request)
   response.headers.set('x-store-id', storeId)

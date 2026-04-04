@@ -53,9 +53,17 @@ export async function createProduct(formData: FormData) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
+  // Only include product_type in insert if explicitly provided by the form.
+  // When omitted, the DB column default ('physical') applies.
+  // This avoids PGRST204 if PostgREST schema cache hasn't refreshed yet.
+  const insertData: Record<string, unknown> = { ...parsed.data, store_id: storeId }
+  if (!productType) {
+    delete insertData.product_type
+  }
+
   const { error: dbError } = await supabase
     .from('products')
-    .insert({ ...parsed.data, store_id: storeId })
+    .insert(insertData)
 
   if (dbError) {
     // Unique constraint violation on SKU (PostgreSQL error code 23505)

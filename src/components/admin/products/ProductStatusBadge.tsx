@@ -2,6 +2,7 @@ interface ProductStatusBadgeProps {
   isActive: boolean
   stockQuantity: number
   reorderThreshold: number
+  hasInventory?: boolean
 }
 
 type BadgeVariant = 'active' | 'low-stock' | 'out-of-stock' | 'inactive'
@@ -9,11 +10,14 @@ type BadgeVariant = 'active' | 'low-stock' | 'out-of-stock' | 'inactive'
 function getBadgeVariant(
   isActive: boolean,
   stockQuantity: number,
-  reorderThreshold: number
+  reorderThreshold: number,
+  hasInventory?: boolean
 ): BadgeVariant {
   if (!isActive) return 'inactive'
-  if (stockQuantity === 0) return 'out-of-stock'
-  if (stockQuantity <= reorderThreshold) return 'low-stock'
+  if (hasInventory) {
+    if (stockQuantity === 0) return 'out-of-stock'
+    if (stockQuantity <= reorderThreshold) return 'low-stock'
+  }
   return 'active'
 }
 
@@ -35,8 +39,9 @@ export default function ProductStatusBadge({
   isActive,
   stockQuantity,
   reorderThreshold,
+  hasInventory,
 }: ProductStatusBadgeProps) {
-  const variant = getBadgeVariant(isActive, stockQuantity, reorderThreshold)
+  const variant = getBadgeVariant(isActive, stockQuantity, reorderThreshold, hasInventory)
 
   return (
     <span

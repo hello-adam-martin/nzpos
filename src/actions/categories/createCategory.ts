@@ -28,11 +28,19 @@ export async function createCategory(input: { name: string }) {
 
   const nextSortOrder = maxRow ? maxRow.sort_order + 1 : 0
 
+  // Generate slug from name (lowercase, hyphens for spaces, strip special chars)
+  const slug = parsed.data.name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+
   const { data: category, error: insertError } = await supabase
     .from('categories')
     .insert({
       store_id: storeId,
       name: parsed.data.name,
+      slug,
       sort_order: nextSortOrder,
     })
     .select()

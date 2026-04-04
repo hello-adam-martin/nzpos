@@ -284,6 +284,7 @@ export default function ProductDataTable({
                   isActive={product.is_active}
                   stockQuantity={product.stock_quantity}
                   reorderThreshold={product.reorder_threshold}
+                  hasInventory={hasInventory}
                 />
               </td>
             </tr>

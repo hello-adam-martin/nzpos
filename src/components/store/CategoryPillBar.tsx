@@ -3,18 +3,18 @@
 import { useRouter } from 'next/navigation'
 
 interface CategoryPillBarProps {
-  categories: { id: string; name: string }[]
+  categories: { id: string; name: string; slug: string }[]
   activeCategory: string | null
 }
 
 export function CategoryPillBar({ categories, activeCategory }: CategoryPillBarProps) {
   const router = useRouter()
 
-  function handlePillClick(categoryId: string | null) {
-    if (categoryId === null || categoryId === activeCategory) {
+  function handlePillClick(slug: string | null) {
+    if (slug === null || slug === activeCategory) {
       router.push('/')
     } else {
-      router.push(`/?category=${categoryId}`)
+      router.push(`/?category=${slug}`)
     }
   }
 
@@ -39,13 +39,13 @@ export function CategoryPillBar({ categories, activeCategory }: CategoryPillBarP
       </button>
 
       {categories.map((category) => {
-        const isActive = activeCategory === category.id
+        const isActive = activeCategory === category.slug
         return (
           <button
             key={category.id}
             role="radio"
             aria-checked={isActive}
-            onClick={() => handlePillClick(category.id)}
+            onClick={() => handlePillClick(category.slug)}
             className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors duration-150 whitespace-nowrap shrink-0 ${
               isActive
                 ? 'bg-navy text-white'

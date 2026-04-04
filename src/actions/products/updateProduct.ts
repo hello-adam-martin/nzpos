@@ -58,9 +58,16 @@ export async function updateProduct(id: string, formData: FormData) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
+  // Strip product_type if not explicitly sent — Zod's .default() injects it
+  // even via .partial(), causing PGRST204 if PostgREST schema cache is stale
+  const updateData: Record<string, unknown> = { ...parsed.data }
+  if (productType === null) {
+    delete updateData.product_type
+  }
+
   const { error: dbError } = await supabase
     .from('products')
-    .update(parsed.data)
+    .update(updateData)
     .eq('id', id)
 
   if (dbError) {

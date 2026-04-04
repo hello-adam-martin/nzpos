@@ -18,6 +18,7 @@ interface Category {
 interface ProductFilterBarProps {
   categories: Category[]
   onFilterChange: (filters: FilterState) => void
+  hasInventory?: boolean
 }
 
 const STOCK_OPTIONS: { value: StockStatus; label: string }[] = [
@@ -33,7 +34,7 @@ const ACTIVE_OPTIONS: { value: ActiveStatus; label: string }[] = [
   { value: 'inactive', label: 'Inactive' },
 ]
 
-export default function ProductFilterBar({ categories, onFilterChange }: ProductFilterBarProps) {
+export default function ProductFilterBar({ categories, onFilterChange, hasInventory }: ProductFilterBarProps) {
   const [categoryId, setCategoryId] = useState<string | null>(null)
   const [stockStatus, setStockStatus] = useState<StockStatus>('all')
   const [activeStatus, setActiveStatus] = useState<ActiveStatus>('all')
@@ -103,19 +104,21 @@ export default function ProductFilterBar({ categories, onFilterChange }: Product
           ))}
         </select>
 
-        {/* Stock status */}
-        <select
-          value={stockStatus}
-          onChange={handleStockChange}
-          className={selectClass}
-          aria-label="Filter by stock status"
-        >
-          {STOCK_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        {/* Stock status — only shown when inventory add-on is active */}
+        {hasInventory && (
+          <select
+            value={stockStatus}
+            onChange={handleStockChange}
+            className={selectClass}
+            aria-label="Filter by stock status"
+          >
+            {STOCK_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        )}
 
         {/* Active status */}
         <select
