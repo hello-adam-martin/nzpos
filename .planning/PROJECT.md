@@ -10,6 +10,17 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 - **v2.0 SaaS Platform** — Phases 7-16 (shipped 2026-04-03): Multi-tenant, self-serve signup, billing, super admin, barcode scanning, receipts, notifications, customer accounts, partial refunds
 - **v2.1 Hardening & Documentation** — Phases 17-20 (shipped 2026-04-04): Security audit, code quality, developer docs, deployment runbook, merchant onboarding
 
+## Current Milestone: v3.0 Inventory Management
+
+**Goal:** Add inventory management as a paid add-on (stock tracking, adjustments, stocktake) and introduce service-type products that skip stock checks. Without the add-on, merchants sell freely with no stock numbers shown.
+
+**Target features:**
+- Service product type — `physical` vs `service` field on products; services skip all stock logic
+- Free-tier simplification — remove stock tracking from default experience; products sell freely with no quantity shown
+- Inventory add-on (paid) — stock tracking (quantity on hand, low stock alerts, history), manual stock adjustments with reason codes, simple stocktake with variance calculation
+- Feature gating — wire inventory into existing requireFeature() / Stripe billing / store_plans infrastructure
+- POS + storefront integration — stock badges/warnings/blocking only when add-on active; services always sellable
+
 ## Current State
 
 **Shipped:** v1.0 MVP (2026-04-02), v2.0 SaaS Platform (2026-04-03), v2.1 Hardening & Documentation (2026-04-04)
@@ -60,7 +71,7 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 
 ### Active
 
-(No active milestone — all v2.1 work shipped. Run `/gsd:new-milestone` to start next.)
+(Milestone v3.0 — requirements pending definition)
 
 ### Out of Scope
 
@@ -153,4 +164,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-04 after v2.1 Hardening & Documentation milestone*
+*Last updated: 2026-04-04 after v3.0 Inventory Management milestone started*

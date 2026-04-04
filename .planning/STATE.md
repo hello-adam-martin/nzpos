@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: Hardening & Documentation
-status: verifying
-stopped_at: Completed 20-01-PLAN.md (production deployment runbook)
-last_updated: "2026-04-04T03:39:51.492Z"
+milestone: v3.0
+milestone_name: Inventory Management
+status: planning
+stopped_at: null
+last_updated: "2026-04-04T04:00:00.000Z"
 last_activity: 2026-04-04
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 14
-  completed_plans: 14
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 20 — deployment-user-documentation
+**Current focus:** Defining requirements for v3.0 Inventory Management
 
 ## Current Position
 
-Phase: 20
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-04
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-04 — Milestone v3.0 started
 
 Progress: [░░░░░░░░░░] 0%
 
