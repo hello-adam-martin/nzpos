@@ -25,9 +25,11 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 
 **Shipped:** v1.0 MVP (2026-04-02), v2.0 SaaS Platform (2026-04-03), v2.1 Hardening & Documentation (2026-04-04)
 
-989 source files, 89,000+ LOC TypeScript, 434 tests passing. 20 phases shipped across 80 plans. Production-ready with deployment runbook, merchant onboarding guide, and full developer documentation.
+989 source files, 89,000+ LOC TypeScript, 434 tests passing. 21 phases shipped across 83 plans. Production-ready with deployment runbook, merchant onboarding guide, and full developer documentation.
 
-**Next:** Deploy to production following docs/deploy.md, onboard first merchant using docs/merchant-guide.md.
+**Phase 21 complete (2026-04-04):** Service product type (`physical`/`service`) added with full stock skip in RPCs, server actions, and UI. Inventory feature gated behind `store_plans.has_inventory` — free-tier stores see zero stock noise. Auth hook injects inventory JWT claim.
+
+**Next:** Phase 22 — Inventory add-on core (stock tracking, adjustments, stocktake).
 
 ## Core Value
 
@@ -71,7 +73,9 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 
 ### Active
 
-(Milestone v3.0 — requirements pending definition)
+- ✓ Service product type — `physical`/`service` column, RPCs skip stock for services, UI radio group on product form — Phase 21
+- ✓ Free-tier simplification — stock UI gated behind `has_inventory`, zero stock noise for free-tier stores — Phase 21
+- Inventory add-on core — stock tracking, manual adjustments, stocktake with variance — Phase 22 (planned)
 
 ### Out of Scope
 
