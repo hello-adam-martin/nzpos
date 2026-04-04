@@ -4,31 +4,19 @@
 
 A multi-tenant SaaS POS + online store platform for NZ small businesses. Any merchant can sign up, get a working POS and storefront on a subdomain, and optionally subscribe to paid add-ons (Xero, email notifications). Runs on iPad for in-store checkout, public storefront for customers, admin dashboard for owners, and a super admin panel for platform operations. Built for the NZ market (GST, EFTPOS, NZD).
 
-## Current Milestone: v2.1 Hardening & Documentation
+## Milestones Shipped
 
-**Goal:** Comprehensive code review, security audit, and full documentation coverage to prepare for production deployment, merchant onboarding, and future developer contributions.
-
-**Target features:**
-- Security audit (OWASP top 10, RLS policy review, auth flow verification, input validation)
-- Code quality review (dead code removal, consistency, error handling, performance)
-- Test coverage gap analysis and filling
-- API & architecture documentation (Server Actions, Route Handlers, data flow)
-- Developer documentation (setup guide, architecture overview, env vars, contribution guide)
-- User-facing documentation (merchant onboarding guide, admin manual)
-- Deployment runbook (production Supabase, Stripe live, Vercel config, monitoring)
-- Inline documentation for complex business logic (GST, Xero sync, tenant provisioning)
+- **v1.0 MVP** — Phases 1-6 (shipped 2026-04-02): Foundation, product catalog, POS checkout, online store, admin & reporting, Xero integration
+- **v2.0 SaaS Platform** — Phases 7-16 (shipped 2026-04-03): Multi-tenant, self-serve signup, billing, super admin, barcode scanning, receipts, notifications, customer accounts, partial refunds
+- **v2.1 Hardening & Documentation** — Phases 17-20 (shipped 2026-04-04): Security audit, code quality, developer docs, deployment runbook, merchant onboarding
 
 ## Current State
 
-**Shipped:** v1.0 MVP (2026-04-02), v2.0 SaaS Platform (2026-04-03)
+**Shipped:** v1.0 MVP (2026-04-02), v2.0 SaaS Platform (2026-04-03), v2.1 Hardening & Documentation (2026-04-04)
 
-330 source files, 36,000+ LOC TypeScript, 434 tests passing. 20 phases shipped across 80 plans (33 v1.0, 33 v2.0, 14 v2.1).
+989 source files, 89,000+ LOC TypeScript, 434 tests passing. 20 phases shipped across 80 plans. Production-ready with deployment runbook, merchant onboarding guide, and full developer documentation.
 
-**Phase 20 complete:** Deployment + User Documentation — docs/deploy.md (333-line production deployment runbook: Supabase setup with 23 migrations, Stripe live keys with two webhook endpoints, Vercel wildcard DNS with NS delegation, 6-item smoke test checklist), docs/merchant-guide.md (180-line onboarding guide: signup through first sale, GST compliance with worked examples).
-
-**v2.1 shipped:** Security audit (OWASP, RLS, auth, webhooks, CSP), code quality + test coverage (434 tests), developer documentation (setup, env vars, architecture, server actions), deployment runbook, and merchant onboarding guide. All 20 phases complete across 80 plans.
-
-**v2.0 delivered:** Multi-tenant infrastructure with wildcard subdomain routing and RLS isolation. Self-serve merchant signup with email verification. Store setup wizard and marketing landing page. Stripe billing with per-add-on subscriptions and feature gating. Super admin panel with tenant management, suspension enforcement, and audit trail. Barcode scanning, screen receipts, email notifications, customer accounts, and partial refunds.
+**Next:** Deploy to production following docs/deploy.md, onboard first merchant using docs/merchant-guide.md.
 
 ## Core Value
 
@@ -72,7 +60,7 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 
 ### Active
 
-(Milestone v2.1 complete — all phases shipped)
+(No active milestone — all v2.1 work shipped. Run `/gsd:new-milestone` to start next.)
 
 ### Out of Scope
 
@@ -85,7 +73,7 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - Advanced analytics / charts — basic reporting sufficient
 - Integrated EFTPOS terminal — standalone terminal with manual entry, Windcave integration deferred
 - Physical receipt printer integration — screen receipt shipped, printer when hardware purchased
-- Custom domains — deferred to v2.1, infrastructure ready but UI/DNS verification not built
+- Custom domains — infrastructure ready (wildcard DNS) but UI/DNS verification not built
 - White-label / remove branding — no demand signal
 - Multi-plan tiers (Starter/Pro/Enterprise) — per-add-on billing is simpler
 - Supabase Realtime — polling sufficient for single terminal per store
@@ -99,9 +87,12 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - Design system shipped: deep navy (#1E293B) + amber (#E67E22), Satoshi + DM Sans typography (see DESIGN.md)
 - v1.0 shipped 2026-04-02 with 502 tests, 211 commits, 17,423 LOC TypeScript
 - v2.0 shipped 2026-04-03 with 365+ tests, 336 source files, 36,329 LOC TypeScript
+- v2.1 shipped 2026-04-04 with 434 tests, 989 files, 89,000+ LOC TypeScript
 - Platform is now multi-tenant SaaS — any NZ business can sign up at the root domain
 - Pricing: free core POS/storefront/admin, paid add-ons via Stripe (Xero, email notifications)
 - Super admin panel operational for platform management
+- Full documentation suite: setup guide, env vars, architecture, server actions, deployment runbook, merchant guide
+- CSP headers in Report-Only mode — switch to enforcing after production monitoring confirms no false positives
 
 ## Constraints
 
@@ -137,6 +128,12 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 | provision_store as SECURITY DEFINER RPC | Atomic tenant creation, service_role only, no client-side invocation | ✓ Good — clean separation |
 | requireFeature() JWT/DB dual-path | JWT fast path for reads, DB fallback for critical mutations | ✓ Good — low latency with correctness guarantee |
 | Super admin manual override booleans | has_xero_manual_override distinguishes admin comp from Stripe-paid | ✓ Good — clean billing separation |
+| CSP Report-Only first, enforce later | Avoids breaking production with false positives on day one | ✓ Good — report-only deployed, switch when ready |
+| IP-level PIN rate limiting via RPC | check_rate_limit SECURITY DEFINER RPC, not middleware | ✓ Good — works with serverless (no in-memory state) |
+| server-only guards on all 48 Server Actions | Prevents accidental client-side import of server code | ✓ Good — build-time error if misused |
+| Composite performance indexes for POS queries | product grid by store+category, orders by store+date | ✓ Good — measured improvement on large datasets |
+| Single deploy.md with linear flow | One doc, top-to-bottom, no cross-references to lose | ✓ Good — followable by non-DevOps founder |
+| NS delegation for wildcard DNS (not CNAME) | Vercel requires NS delegation for wildcard SSL cert | ✓ Good — documented prominently in deploy.md |
 
 ## Evolution
 
@@ -156,4 +153,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-04 after Phase 20 Deployment + User Documentation complete*
+*Last updated: 2026-04-04 after v2.1 Hardening & Documentation milestone*

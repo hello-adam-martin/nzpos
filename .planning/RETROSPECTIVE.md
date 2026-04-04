@@ -97,6 +97,51 @@
 
 ---
 
+## Milestone: v2.1 — Hardening & Documentation
+
+**Shipped:** 2026-04-04
+**Phases:** 4 | **Plans:** 14 | **Tests:** 434
+
+### What Was Built
+- Full security audit across 9 domains: 23 findings (2 Critical, 14 High, 7 Low), all resolved — IDOR, RLS gaps, missing Zod validation, error leaks
+- CSP Report-Only headers, server-only guards on all 48 Server Actions, IP-level PIN rate limiting
+- Code quality: dead code removal via knip, standardized error handling, JSDoc on 17 lib/action files, composite performance indexes
+- Test coverage: IRD GST specimens, resolveAuth, tenantCache, RLS v2.0 tables, Stripe billing lifecycle
+- Developer docs: setup guide, env vars reference, architecture overview with 5 Mermaid diagrams, 48-action Server Action inventory
+- Production deployment runbook: Supabase (23 migrations), Stripe live keys (two webhook endpoints), Vercel wildcard DNS (NS delegation), 6-item smoke test
+- Merchant onboarding guide: signup through first sale walkthrough, GST compliance with worked examples, legal disclaimer
+
+### What Worked
+- **Security audit as separate read-then-fix flow** — Phase 17 split into audit report (17-01) then fix waves by severity. Produced a referenceable findings doc and systematic remediation.
+- **Documentation-only phases execute fast** — Phases 19 and 20 (pure docs) completed in one wave each with parallel agents. No code conflicts, no test regressions.
+- **Regression gate between phases** — running prior phase tests before verification caught zero regressions across all 4 phases, validating that hardening changes were isolated.
+- **gsd-tools roadmap automation** — plan progress, phase completion, and requirement marking all handled by CLI. No more manual ROADMAP.md drift.
+
+### What Was Inefficient
+- **SUMMARY.md one-liner quality still inconsistent** — some summaries returned "One-liner:" placeholder or "Migration 021" instead of meaningful descriptions. Third milestone with this issue.
+- **Nyquist validation for docs phases** — VALIDATION.md was created for Phase 20 (docs-only) but all verification was grep-based file existence checks. The validation framework adds overhead without value for non-code phases.
+- **Phase 17 plan count** — started with 4 plans, needed a 5th gap-closure plan for remaining server-only guards and IDOR policy drop. The initial audit underestimated scope.
+
+### Patterns Established
+- Security audit → findings report → fix-by-severity → gap closure is the established remediation pattern
+- `check_rate_limit` SECURITY DEFINER RPC for serverless-compatible rate limiting (no in-memory state)
+- `docs/` folder with README.md index as the canonical documentation location
+- Deploy guide as single linear doc (no cross-references to lose)
+- NS delegation (not CNAME) for Vercel wildcard SSL — documented as Critical callout
+
+### Key Lessons
+1. **Documentation phases don't need Nyquist validation** — grep-based checks are sufficient. Consider auto-detecting doc-only phases and skipping VALIDATION.md.
+2. **Security audits always surface more than expected** — plan for gap-closure from the start. Budget 20% extra plans for hardening milestones.
+3. **Keep SUMMARY.md one-liners as the first field** — many extractors depend on it. Summaries without meaningful one-liners break milestone roll-up reports.
+4. **Two Stripe webhook endpoints need two secrets** — this was a v2.0 lesson that v2.1 docs made explicit. Documented in deploy.md with a Critical warning.
+
+### Cost Observations
+- Model mix: ~50% opus (orchestration + planning), ~50% sonnet (research/execution/verification)
+- Sessions: ~3 across the milestone
+- Notable: documentation phases had the fastest execution — no build/test cycles, just write + verify content
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -105,6 +150,7 @@
 |-----------|----------|--------|------------|
 | v1.0 | ~8 | 6 | First milestone. Established GSD workflow with wave-based execution. |
 | v2.0 | ~6 | 10 | Parallel worktree agents matured. TDD pattern solidified for all Server Actions. |
+| v2.1 | ~3 | 4 | Security-first hardening. Documentation-only phases execute fastest. gsd-tools automation eliminated drift. |
 
 ### Cumulative Quality
 
@@ -112,10 +158,13 @@
 |-----------|-------|-------------|-----|
 | v1.0 | 502 | 191 | 17,423 |
 | v2.0 | 365+ | 336 | 36,329 |
+| v2.1 | 434 | 989 | 89,000+ |
 
 ### Top Lessons (Verified Across Milestones)
 
 1. Integer cents for money eliminates an entire class of bugs. Never reconsider.
 2. Tailwind v4 semantic spacing tokens (`sm`, `md`, `lg`) do not mean what they meant in v3. Always check.
-3. Parallel worktree agents are the single biggest throughput multiplier — zero conflicts across 2 milestones, 16 phases.
-4. Keep planning artifacts (ROADMAP checkboxes, REQUIREMENTS traceability, STATE milestone version) in sync during execution, not retroactively.
+3. Parallel worktree agents are the single biggest throughput multiplier — zero conflicts across 3 milestones, 20 phases.
+4. Keep planning artifacts (ROADMAP checkboxes, REQUIREMENTS traceability, STATE milestone version) in sync during execution, not retroactively. gsd-tools automation in v2.1 largely solved this.
+5. Security audits always surface more than initial planning estimates — budget 20% extra for gap closure.
+6. Documentation-only phases are the fastest to execute — no build/test cycles, pure content creation with grep verification.

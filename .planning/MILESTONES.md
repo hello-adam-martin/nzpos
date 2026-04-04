@@ -1,5 +1,26 @@
 # Milestones
 
+## v2.1 Hardening & Documentation (Shipped: 2026-04-04)
+
+**Phases completed:** 4 phases, 14 plans, 20 tasks
+
+**Key accomplishments:**
+
+- Systematic security audit of 336-file NZPOS codebase producing 23 classified findings across 9 domains — 2 Critical, 14 High, 7 Low — with orders_public_read IDOR and 13 missing .env.example vars as top priorities
+- Migration 021
+- CSP Report-Only headers on all middleware responses, complete .env.example with 13 previously undocumented env vars, and server-only guards on three admin-client files
+- IP-level PIN rate limiting via check_rate_limit RPC plus server-only defense-in-depth on 46 Server Action files, completing all 14 SEC requirements
+- All 48 Server Action files now have server-only guards, anonymous order enumeration IDOR fully closed by dropping the RLS policy, and documentation corrected to 48 Server Actions
+- Database types updated
+- One-liner:
+- Value exports (export keyword removed, values still used internally):
+- Standardized error handling (zero error.message leaks), full JSDoc coverage on 17 lib/action files, and composite performance indexes for POS product grid and order queries
+- docs/setup.md (7-step clone-to-running guide with lvh.me, Stripe CLI, and 6-item troubleshooting) and docs/env-vars.md (all 24 env vars in 9 grouped tables) created from scratch
+- 48 Server Actions documented across 10 domains with name, auth requirement, Zod input schema summary, and one-line description in docs/server-actions.md
+- Conversational 8-section merchant guide covering signup, setup wizard, first product, POS sale, and online order, with IRD-compliant GST worked examples and legal disclaimer.
+
+---
+
 ## v2.0 SaaS Platform (Shipped: 2026-04-03)
 
 **Phases completed:** 10 phases, 33 plans, 44 tasks
