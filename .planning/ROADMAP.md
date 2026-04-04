@@ -152,7 +152,7 @@ Plans:
 | 21. Service Product Type + Free-Tier Simplification | v3.0 | 3/3 | Complete | 2026-04-04 |
 | 22. Inventory Add-on Core | v3.0 | 5/5 | Complete | 2026-04-04 |
 | 23. Feature Gating + POS/Storefront Integration | v3.0 | 3/3 | Complete | 2026-04-04 |
-| 24. Staff RBAC Foundation | v4.0 | 3/3 | Complete   | 2026-04-04 |
+| 24. Staff RBAC Foundation | v4.0 | 3/3 | Complete    | 2026-04-04 |
 | 25. Admin Operational UI | v4.0 | 0/TBD | Not started | - |
 | 26. Super-Admin Billing + User Management | v4.0 | 0/TBD | Not started | - |
 | 27. Super-Admin Analytics | v4.0 | 0/TBD | Not started | - |
