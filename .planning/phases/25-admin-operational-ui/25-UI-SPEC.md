@@ -22,7 +22,7 @@ created: 2026-04-05
 | Component library | none (custom Radix-free components) | Codebase scan |
 | Icon library | Inline SVG (heroicons-style, 24x24 stroke-1.5) | Existing component patterns |
 | Display font | Satoshi (Bunny Fonts CDN, weight 700/900) | DESIGN.md |
-| Body/UI font | DM Sans (Bunny Fonts CDN, weight 400/500/600/700) | DESIGN.md |
+| Body/UI font | DM Sans (Bunny Fonts CDN, weight 400/700) | DESIGN.md |
 | Mono font | Geist Mono (Bunny Fonts CDN) | DESIGN.md — order numbers, promo codes, SKUs |
 
 No shadcn. No third-party registry. All tokens defined in `src/app/globals.css` `@theme` block — use CSS custom properties via `var()` throughout.
@@ -55,18 +55,22 @@ Exceptions:
 
 All text uses `font-sans` (DM Sans) except page-level headings (`font-display` Satoshi) and data values. Source: DESIGN.md + confirmed in DashboardHeroCard, StaffPageClient.
 
+Two weights only: 400 (regular) and 700 (bold). All previous 600/semibold uses promoted to 700.
+
 | Role | Size | Weight | Font | Line Height | Usage |
 |------|------|--------|------|-------------|-------|
 | Page heading (h1) | 24px (text-2xl) | 700 (bold) | Satoshi (`font-display`) | 1.2 | Dashboard, Settings, Customers, Promos page titles |
-| Section heading (h2) | 18px (text-lg) | 600 (semibold) | DM Sans (`font-sans`) | 1.2 | Card section headers (e.g. "All Promo Codes", "Business Details") |
+| Section heading (h2) | 16px (text-base) | 700 (bold) | DM Sans (`font-sans`) | 1.2 | Card section headers (e.g. "All Promo Codes", "Business Details") — visual distinction from body via weight 700 |
 | Body / label | 16px (text-base) | 400 (normal) | DM Sans (`font-sans`) | 1.5 | Form labels, description text |
-| Small / table | 14px (text-sm) | 400 / 600 | DM Sans (`font-sans`) | 1.5 | Table cells (400), table headers (600), badge text, meta text |
+| Small / table | 14px (text-sm) | 400 / 700 | DM Sans (`font-sans`) | 1.5 | Table cells (400), table headers (700 + uppercase + tracking-wide), badge text, meta text, delta badge text |
 | Stat value | 30px (text-3xl) | 700 (bold) | Satoshi (`font-display`) | 1.0 | DashboardHeroCard primary metric value |
-| Mono / code | 14px (text-sm) | 400–600 | Geist Mono (`font-mono`) | 1.5 | Promo codes, order numbers, IRD/GST number field |
+| Mono / code | 14px (text-sm) | 400 | Geist Mono (`font-mono`) | 1.5 | Promo codes, order numbers, IRD/GST number field |
 
-Table column headers: 12px (text-xs) uppercase, tracking-wide, weight 600 — matches existing PromoList thead pattern.
+Table column headers: 14px (text-sm) uppercase, tracking-wide, weight 700 — distinct from data rows via uppercase + tracking-wide treatment (not a separate font size).
 
-Delta badge text: 12px (text-xs), weight 600.
+Delta badge text: 14px (text-sm), weight 700.
+
+**Size scale: 14px, 16px, 24px, 30px. Weight scale: 400, 700.**
 
 ---
 
@@ -98,6 +102,17 @@ All tokens defined in `globals.css @theme`. Use `var(--color-*)` or Tailwind uti
 - Down-delta badge: `--color-warning` with down-arrow icon
 
 **Border:** `--color-border` (#E7E5E4) for all card and table borders. `--color-border-light` (#F0EFED) for within-card dividers.
+
+---
+
+## Focal Points
+
+Primary focal point declarations for key screens — establishes visual hierarchy priority.
+
+| Screen | Primary Focal Point | Rationale |
+|--------|--------------------|-----------|
+| Customers page | Search bar at the top of the page | Operators arrive on this page to find a specific customer; the search bar is the primary action and should be the first visual anchor (prominent width, autofocused on mount) |
+| Enhanced Dashboard | Sales trend chart (SalesTrendChart AreaChart) | The chart communicates business health at a glance; it occupies the widest layout area and uses the amber accent color to draw the eye before stat cards or the orders widget |
 
 ---
 
@@ -136,15 +151,15 @@ All components that must be built or extended in this phase. Reference existing 
 
 ### Customer Table
 
-- **Search bar:** Top of page, full-width on mobile / max-w-sm on desktop, 300ms debounce. Placeholder: "Search by name or email..."
+- **Search bar:** Top of page, full-width on mobile / max-w-sm on desktop, 300ms debounce, autofocused on mount (supports focal point). Placeholder: "Search by name or email..."
 - **Pagination:** 20 rows per page. Show "Showing 1–20 of N customers" below table. Previous / Next buttons. Disabled when at bounds.
 - **Row click:** Entire row is clickable, navigates to `/admin/customers/[id]`. Hover: `bg-surface/50` (matches PromoList row hover pattern).
-- **Status column:** "Active" badge (success) or "Disabled" badge (error). Pill style: `rounded-full text-xs font-semibold px-2 py-0.5`.
+- **Status column:** "Active" badge (success) or "Disabled" badge (error). Pill style: `rounded-full text-xs font-bold px-2 py-0.5`.
 - **Empty search result:** Show inline empty state within table area (not full page replacement). Message: "No customers match your search."
 
 ### Customer Detail Page
 
-- **Profile header:** Name (text-xl semibold), email (text-sm text-muted), status badge, created date (text-sm text-muted). "Disable" button (navy, right-aligned) or "Enable" button (navy outline) depending on current state.
+- **Profile header:** Name (text-2xl font-bold font-display), email (text-sm text-muted), status badge, created date (text-sm text-muted). "Disable" button (navy, right-aligned) or "Enable" button (navy outline) depending on current state.
 - **Order history table:** Columns — Order #, Date, Total (NZD), Status. Order # in Geist Mono. 10 orders per page.
 - **Empty order history:** Inline empty state: "No orders yet." (no icon required — compact context).
 
@@ -153,7 +168,7 @@ All components that must be built or extended in this phase. Reference existing 
 - Trigger: "Disable" button on customer detail page header
 - Title: "Disable [Customer Name]?"
 - Body: "They won't be able to log in to the storefront."
-- Actions: "Disable Account" (amber/error button) + "Cancel" (ghost button)
+- Actions: "Disable Account" (amber/error button) + "Keep Account Active" (ghost button)
 - Re-enable flow: same page, button reads "Enable Account", no confirmation modal required (non-destructive action)
 - Loading: button shows "Disabling..." with `disabled` + `opacity-60` during `useTransition` pending
 
@@ -161,8 +176,8 @@ All components that must be built or extended in this phase. Reference existing 
 
 - Type: Recharts `AreaChart` (area fill, not bar — per D-04)
 - Dimensions: `width="100%"` `height={240}` inside `ResponsiveContainer`
-- X axis: date labels `MM-DD` format, `fontSize: 12`, `fontFamily: 'DM Sans'`, no axis line, no tick line
-- Y axis: `$N` formatter (divide cents by 100, round to 0 dp), `fontSize: 12`, `fontFamily: 'DM Sans'`, `width={60}`, no axis line, no tick line
+- X axis: date labels `MM-DD` format, `fontSize: 14`, `fontFamily: 'DM Sans'`, no axis line, no tick line
+- Y axis: `$N` formatter (divide cents by 100, round to 0 dp), `fontSize: 14`, `fontFamily: 'DM Sans'`, `width={60}`, no axis line, no tick line
 - Line stroke: `#1E293B` (navy), `strokeWidth={2}`
 - Area fill: gradient — `#E67E22` at opacity 0.15 (top) to opacity 0 (bottom). Use `<defs><linearGradient>`.
 - Grid: horizontal grid lines only, `stroke="#E7E5E4"` (border color), `strokeDasharray="4 4"`
@@ -174,7 +189,7 @@ All components that must be built or extended in this phase. Reference existing 
 
 - Position: top-right of chart card, same row as chart section heading
 - Style: two buttons in a `<div>` with shared rounded border (`rounded-full border border-[var(--color-border)]`)
-- Active state: `bg-amber text-white font-semibold`
+- Active state: `bg-amber text-white font-bold`
 - Inactive state: `bg-transparent text-text-muted font-normal hover:text-text`
 - Size: `px-3 py-1 text-sm` — compact, not full CTA size
 - State stored in `useState`, no URL param (dashboard is not deep-linkable per phase scope)
@@ -183,7 +198,7 @@ All components that must be built or extended in this phase. Reference existing 
 
 - Layout: same 3-column grid as existing DashboardHeroCard row (`grid grid-cols-1 md:grid-cols-3 gap-[var(--space-lg)]`)
 - Card structure: extends DashboardHeroCard — adds a delta badge below the primary value
-- Delta badge: inline-flex, rounded-full, `px-2 py-0.5 text-xs font-semibold`
+- Delta badge: inline-flex, rounded-full, `px-2 py-0.5 text-sm font-bold`
   - Positive delta: success/10 bg, success text, up-arrow SVG icon (16x16)
   - Negative delta: warning/10 bg, warning text, down-arrow SVG icon (16x16)
   - Zero/no data: text-muted, `—`
@@ -193,7 +208,7 @@ All components that must be built or extended in this phase. Reference existing 
 ### Recent Orders Widget
 
 - Layout: white card, same border/shadow as DashboardHeroCard
-- Title: "Recent Orders" (text-lg font-semibold font-sans, section heading level)
+- Title: "Recent Orders" (text-base font-bold font-sans, section heading level)
 - Format: compact table (not card list) — 5 rows, no pagination, "View all" link at footer pointing to `/admin/orders`
 - Columns: Order # (Geist Mono, text-sm), Date (text-sm text-muted, locale date `dd MMM`), Total (text-sm, `formatNZD`), Status badge
 - Status badges: same pill pattern as PromoList StatusBadge — `completed` → success, `pending_pickup`/`ready` → warning, `refunded` → error
@@ -204,9 +219,9 @@ All components that must be built or extended in this phase. Reference existing 
 - Trigger: "Edit" button on PromoList row (new action column, rightmost)
 - Style: same modal overlay pattern as staff modals (fixed inset-0 bg-black/50, centered white card, rounded-lg, `max-w-md w-full`)
 - Content: PromoForm reused with pre-filled values passed as props
-- Title: "Edit Promo Code" (text-xl font-semibold)
+- Title: "Edit Promo Code" (text-2xl font-bold)
 - CTA: "Save Changes" (amber button, full width)
-- Cancel: "Cancel" (ghost button, below or beside CTA)
+- Cancel: "Discard Changes" (ghost button, below or beside CTA)
 - Loading: "Saving..." during transition
 
 ### Soft-Delete Promo Modal (D-10)
@@ -214,7 +229,7 @@ All components that must be built or extended in this phase. Reference existing 
 - Trigger: "Delete" button on PromoList row
 - Title: "Delete [CODE]?"
 - Body: "It will stop working immediately but order history is preserved."
-- Actions: "Delete Promo" (error-colored button: `bg-error text-white`) + "Cancel" (ghost)
+- Actions: "Delete Promo" (error-colored button: `bg-error text-white`) + "Keep Promo" (ghost)
 - Loading: "Deleting..." during transition
 
 ### "Show Deleted" Toggle (D-09)
@@ -227,7 +242,7 @@ All components that must be built or extended in this phase. Reference existing 
 ### Settings Page — Section Cards (D-11)
 
 - Each section is a white card (`bg-card border border-border shadow-sm rounded-[var(--radius-lg)] p-[var(--space-xl)]`)
-- Section heading: h2, text-xl font-bold font-sans, bottom margin `var(--space-lg)` — matches BrandingForm heading
+- Section heading: h2, text-base font-bold font-sans, bottom margin `var(--space-lg)` — matches BrandingForm heading, visually distinct via weight 700
 - Field layout: label above input, `mb-[var(--space-md)]` between fields
 - Input style: matches existing BrandingForm inputs — `h-10 px-3 rounded-md border border-border bg-white text-sm focus:ring-2 focus:ring-navy/20 focus:border-navy/40`
 - Textarea (receipt header/footer): same border/radius/focus as input, `min-h-[80px] py-2 resize-y`
@@ -272,7 +287,7 @@ Use Tailwind's `animate-pulse` on `bg-surface` (`#F5F5F4`) blocks. No external s
 | Disable modal title | Disable [Name]? |
 | Disable modal body | They won't be able to log in to the storefront. |
 | Disable modal confirm | Disable Account |
-| Disable modal cancel | Cancel |
+| Disable modal cancel | Keep Account Active |
 | Load error | Couldn't load customers. Refresh the page to try again. |
 | Success toast — disabled | [Name] disabled. |
 | Success toast — enabled | [Name] re-enabled. |
@@ -298,11 +313,11 @@ Use Tailwind's `animate-pulse` on `bg-surface` (`#F5F5F4`) blocks. No external s
 |---------|------|
 | Edit modal title | Edit Promo Code |
 | Edit CTA | Save Changes |
-| Edit cancel | Cancel |
+| Edit modal cancel | Discard Changes |
 | Delete modal title | Delete [CODE]? |
 | Delete modal body | It will stop working immediately but order history is preserved. |
 | Delete modal confirm | Delete Promo |
-| Delete modal cancel | Cancel |
+| Delete modal cancel | Keep Promo |
 | Show deleted toggle label | Show deleted |
 | Deleted badge | Deleted |
 | Success toast — edit | Promo updated. |
