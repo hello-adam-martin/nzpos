@@ -323,7 +323,7 @@ describe('middleware admin route protection', () => {
     expect(location).not.toContain('/unauthorized')
   })
 
-  it('redirects non-owner non-customer role to /unauthorized', async () => {
+  it('falls through non-owner Supabase user to login redirect (no staff JWT)', async () => {
     const staffUser = {
       id: 'staff-uuid',
       email: 'staff@example.com',
@@ -347,7 +347,8 @@ describe('middleware admin route protection', () => {
 
     expect(res.status).toBe(307)
     const location = res.headers.get('location') ?? ''
-    expect(location).toContain('/unauthorized')
+    // Non-owner falls through to staff JWT check, then to login redirect (no staff_session cookie)
+    expect(location).toContain('/login')
   })
 })
 

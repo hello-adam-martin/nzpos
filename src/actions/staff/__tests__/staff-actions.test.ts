@@ -290,7 +290,8 @@ describe('resetStaffPin — returns plaintext PIN', () => {
     mockOwner()
     mockGeneratePin.mockReturnValue('7391')
 
-    const eqStoreId = vi.fn().mockResolvedValue({ data: null, error: null })
+    const selectMock = vi.fn().mockResolvedValue({ data: [{ id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' }], error: null })
+    const eqStoreId = vi.fn().mockReturnValue({ select: selectMock })
     const eqStaffId = vi.fn().mockReturnValue({ eq: eqStoreId })
     const updateMock = vi.fn().mockReturnValue({ eq: eqStaffId })
     mockAdminFrom.mockReturnValue({ update: updateMock })
