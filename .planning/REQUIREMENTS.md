@@ -11,8 +11,8 @@ Requirements for Inventory Management milestone. Each maps to roadmap phases.
 
 - [x] **PROD-01**: Admin can set a product as "physical" or "service" type when creating or editing
 - [x] **PROD-02**: Service products skip all stock decrement logic in POS and online sale RPCs
-- [ ] **PROD-03**: Service products skip stock restore logic in refund and partial refund actions
-- [ ] **PROD-04**: CSV import supports `product_type` column and never overwrites `stock_quantity` without explicit flag
+- [x] **PROD-03**: Service products skip stock restore logic in refund and partial refund actions
+- [x] **PROD-04**: CSV import supports `product_type` column and never overwrites `stock_quantity` without explicit flag
 
 ### Free-Tier Experience
 
@@ -79,8 +79,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | PROD-01 | Phase 21 | Complete |
 | PROD-02 | Phase 21 | Complete |
-| PROD-03 | Phase 21 | Pending |
-| PROD-04 | Phase 21 | Pending |
+| PROD-03 | Phase 21 | Complete |
+| PROD-04 | Phase 21 | Complete |
 | FREE-01 | Phase 21 | Pending |
 | FREE-02 | Phase 21 | Complete |
 | FREE-03 | Phase 21 | Complete |
