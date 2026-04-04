@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { getStocktakeSessions } from '@/actions/inventory/getStocktakeSessions'
 import { createStocktakeSession } from '@/actions/inventory/createStocktakeSession'
+import { getCategories } from '@/actions/categories/getCategories'
 
 type StocktakeSession = {
   id: string
@@ -72,13 +73,11 @@ export function StocktakesTab() {
 
   useEffect(() => {
     if (scope === 'category' && categories.length === 0) {
-      // Fetch categories inline
-      void fetch('/api/admin/categories')
-        .then((r) => r.json())
-        .then((data: Category[]) => setCategories(data))
-        .catch(() => {
-          // If API not available, categories stay empty
-        })
+      void getCategories().then((result) => {
+        if ('success' in result && result.success) {
+          setCategories(result.categories)
+        }
+      })
     }
   }, [scope, categories.length])
 
