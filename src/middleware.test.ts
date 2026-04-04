@@ -9,6 +9,7 @@ const {
   mockCreateMiddlewareAdminClient,
   mockGetCachedStoreId,
   mockSetCachedStoreId,
+  mockJwtVerify,
 } = vi.hoisted(() => {
   const mockGetUser = vi.fn()
   const mockGetSession = vi.fn()
@@ -16,6 +17,7 @@ const {
   const mockCreateMiddlewareAdminClient = vi.fn()
   const mockGetCachedStoreId = vi.fn()
   const mockSetCachedStoreId = vi.fn()
+  const mockJwtVerify = vi.fn().mockRejectedValue(new Error('Invalid token'))
   return {
     mockGetUser,
     mockGetSession,
@@ -23,6 +25,7 @@ const {
     mockCreateMiddlewareAdminClient,
     mockGetCachedStoreId,
     mockSetCachedStoreId,
+    mockJwtVerify,
   }
 })
 
@@ -40,7 +43,7 @@ vi.mock('@/lib/tenantCache', () => ({
 }))
 
 vi.mock('jose', () => ({
-  jwtVerify: vi.fn().mockRejectedValue(new Error('Invalid token')),
+  jwtVerify: mockJwtVerify,
 }))
 
 import { middleware } from './middleware'
@@ -77,6 +80,9 @@ function makeAdminMock(isActive = true) {
 beforeEach(() => {
   vi.clearAllMocks()
   process.env.ROOT_DOMAIN = ROOT_DOMAIN
+
+  // Default: jwtVerify rejects (invalid token)
+  mockJwtVerify.mockRejectedValue(new Error('Invalid token'))
 
   // Default: store found in cache + active (suspension check on cached path)
   mockGetCachedStoreId.mockReturnValue(STORE_ID)
@@ -458,5 +464,199 @@ describe('middleware email verification gate', () => {
 
     const location = res.headers.get('location') ?? ''
     expect(location).not.toContain('verify-email')
+  })
+})
+
+function makeRequestWithCookie(url: string, host: string, cookieName: string, cookieValue: string): NextRequest {
+  return new NextRequest(url, {
+    headers: { host, cookie: `${cookieName}=${cookieValue}` },
+  })
+}
+
+describe('middleware manager JWT admin access (D-02, D-03)', () => {
+  beforeEach(() => {
+    // No Supabase Auth user — manager path
+    mockGetUser.mockResolvedValue({ data: { user: null }, error: null })
+    mockCreateSupabaseMiddlewareClient.mockResolvedValue({
+      supabase: { auth: { getUser: mockGetUser, getSession: mockGetSession } },
+      response: NextResponse.next(),
+    })
+  })
+
+  it('allows manager JWT through to whitelisted admin route (/admin/dashboard)', async () => {
+    mockJwtVerify.mockResolvedValue({
+      payload: { role: 'manager', store_id: STORE_ID, store_slug: STORE_SLUG },
+    })
+
+    const req = makeRequestWithCookie(
+      `http://${STORE_SLUG}.${ROOT_DOMAIN}/admin/dashboard`,
+      `${STORE_SLUG}.${ROOT_DOMAIN}`,
+      'staff_session',
+      'valid-manager-token'
+    )
+    const res = await middleware(req)
+
+    // Should NOT redirect — manager is allowed on /admin/dashboard
+    expect(res.status).not.toBe(307)
+  })
+
+  it('allows manager JWT through to /admin/orders (whitelisted)', async () => {
+    mockJwtVerify.mockResolvedValue({
+      payload: { role: 'manager', store_id: STORE_ID, store_slug: STORE_SLUG },
+    })
+
+    const req = makeRequestWithCookie(
+      `http://${STORE_SLUG}.${ROOT_DOMAIN}/admin/orders`,
+      `${STORE_SLUG}.${ROOT_DOMAIN}`,
+      'staff_session',
+      'valid-manager-token'
+    )
+    const res = await middleware(req)
+
+    expect(res.status).not.toBe(307)
+  })
+
+  it('silently redirects manager from /admin/products to /admin/dashboard (D-03)', async () => {
+    mockJwtVerify.mockResolvedValue({
+      payload: { role: 'manager', store_id: STORE_ID, store_slug: STORE_SLUG },
+    })
+
+    const req = makeRequestWithCookie(
+      `http://${STORE_SLUG}.${ROOT_DOMAIN}/admin/products`,
+      `${STORE_SLUG}.${ROOT_DOMAIN}`,
+      'staff_session',
+      'valid-manager-token'
+    )
+    const res = await middleware(req)
+
+    expect(res.status).toBe(307)
+    const location = res.headers.get('location') ?? ''
+    expect(location).toContain('/admin/dashboard')
+  })
+
+  it('silently redirects manager from /admin/staff to /admin/dashboard (D-03)', async () => {
+    mockJwtVerify.mockResolvedValue({
+      payload: { role: 'manager', store_id: STORE_ID, store_slug: STORE_SLUG },
+    })
+
+    const req = makeRequestWithCookie(
+      `http://${STORE_SLUG}.${ROOT_DOMAIN}/admin/staff`,
+      `${STORE_SLUG}.${ROOT_DOMAIN}`,
+      'staff_session',
+      'valid-manager-token'
+    )
+    const res = await middleware(req)
+
+    expect(res.status).toBe(307)
+    const location = res.headers.get('location') ?? ''
+    expect(location).toContain('/admin/dashboard')
+  })
+
+  it('redirects to /login when no valid auth (no Supabase user, no staff cookie)', async () => {
+    const req = makeRequest(
+      `http://${STORE_SLUG}.${ROOT_DOMAIN}/admin/dashboard`,
+      `${STORE_SLUG}.${ROOT_DOMAIN}`
+    )
+    const res = await middleware(req)
+
+    expect(res.status).toBe(307)
+    const location = res.headers.get('location') ?? ''
+    expect(location).toContain('/login')
+    expect(location).toContain('redirect')
+  })
+
+  it('redirects to /login when staff JWT is invalid/expired', async () => {
+    mockJwtVerify.mockRejectedValue(new Error('Token expired'))
+
+    const req = makeRequestWithCookie(
+      `http://${STORE_SLUG}.${ROOT_DOMAIN}/admin/dashboard`,
+      `${STORE_SLUG}.${ROOT_DOMAIN}`,
+      'staff_session',
+      'expired-token'
+    )
+    const res = await middleware(req)
+
+    expect(res.status).toBe(307)
+    const location = res.headers.get('location') ?? ''
+    expect(location).toContain('/login')
+  })
+})
+
+describe('middleware owner path preserved (regression) — with manager JWT support', () => {
+  it('owner passes through /admin/products without redirection', async () => {
+    const verifiedOwner = {
+      id: 'owner-uuid',
+      email: 'owner@example.com',
+      email_confirmed_at: '2026-01-01T00:00:00Z',
+      app_metadata: { role: 'owner', store_id: STORE_ID },
+    }
+    mockGetUser.mockResolvedValue({ data: { user: verifiedOwner }, error: null })
+    mockGetSession.mockResolvedValue({
+      data: { session: { user: { app_metadata: { role: 'owner' } } } },
+    })
+    mockCreateSupabaseMiddlewareClient.mockResolvedValue({
+      supabase: { auth: { getUser: mockGetUser, getSession: mockGetSession } },
+      response: NextResponse.next(),
+    })
+    // Both suspension check (is_active) and setup wizard check (setup_wizard_dismissed)
+    // Return object satisfying both: active store, wizard already dismissed
+    const single = vi.fn().mockResolvedValue({
+      data: { is_active: true, setup_wizard_dismissed: true },
+      error: null,
+    })
+    const eq = vi.fn().mockReturnValue({ single })
+    const select = vi.fn().mockReturnValue({ eq })
+    const from = vi.fn().mockReturnValue({ select })
+    mockCreateMiddlewareAdminClient.mockReturnValue({ from })
+
+    const req = makeRequest(
+      `http://${STORE_SLUG}.${ROOT_DOMAIN}/admin/products`,
+      `${STORE_SLUG}.${ROOT_DOMAIN}`
+    )
+    const res = await middleware(req)
+
+    // Owner should NOT be redirected — passes through
+    const location = res.headers.get('location') ?? ''
+    expect(location).not.toContain('/admin/dashboard')
+    expect(location).not.toContain('/login')
+  })
+
+  it('setup wizard not broken — owner with setup_complete=false redirected to /admin/setup', async () => {
+    const verifiedOwner = {
+      id: 'owner-uuid',
+      email: 'owner@example.com',
+      email_confirmed_at: '2026-01-01T00:00:00Z',
+      app_metadata: { role: 'owner', store_id: STORE_ID },
+    }
+    mockGetUser.mockResolvedValue({ data: { user: verifiedOwner }, error: null })
+    mockGetSession.mockResolvedValue({
+      data: { session: { user: { app_metadata: { role: 'owner' } } } },
+    })
+    mockCreateSupabaseMiddlewareClient.mockResolvedValue({
+      supabase: { auth: { getUser: mockGetUser, getSession: mockGetSession } },
+      response: NextResponse.next(),
+    })
+    // Both suspension check (is_active) and setup wizard check (setup_wizard_dismissed)
+    // share the same mock chain. Return an object satisfying both:
+    // - is_active: true → store is not suspended
+    // - setup_wizard_dismissed: false → wizard not yet completed
+    const single = vi.fn().mockResolvedValue({
+      data: { is_active: true, setup_wizard_dismissed: false },
+      error: null,
+    })
+    const eq = vi.fn().mockReturnValue({ single })
+    const select = vi.fn().mockReturnValue({ eq })
+    const from = vi.fn().mockReturnValue({ select })
+    mockCreateMiddlewareAdminClient.mockReturnValue({ from })
+
+    const req = makeRequest(
+      `http://${STORE_SLUG}.${ROOT_DOMAIN}/admin/dashboard`,
+      `${STORE_SLUG}.${ROOT_DOMAIN}`
+    )
+    const res = await middleware(req)
+
+    expect(res.status).toBe(307)
+    const location = res.headers.get('location') ?? ''
+    expect(location).toContain('/admin/setup')
   })
 })

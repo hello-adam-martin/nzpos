@@ -3,6 +3,7 @@ import { createSupabaseMiddlewareClient } from '@/lib/supabase/middleware'
 import { createMiddlewareAdminClient } from '@/lib/supabase/middlewareAdmin'
 import { getCachedStoreId, setCachedStoreId } from '@/lib/tenantCache'
 import { jwtVerify } from 'jose'
+import { POS_ROLES, MANAGER_ADMIN_ROUTES } from '@/config/roles'
 
 const staffSecret = new TextEncoder().encode(process.env.STAFF_JWT_SECRET!)
 
@@ -111,73 +112,100 @@ export async function middleware(request: NextRequest) {
   requestHeaders.set('x-store-id', storeId)
   requestHeaders.set('x-store-slug', slug)
 
-  // 6. Admin routes — owner only (Supabase Auth) — PRESERVED from original
+  // 6. Admin routes — owner (Supabase Auth) or manager (staff JWT) — per D-02, D-03
   if (pathname.startsWith('/admin')) {
     const { supabase, response } = await createSupabaseMiddlewareClient(request)
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
-    if (!user) {
-      const loginUrl = new URL('/login', request.url)
-      loginUrl.searchParams.set('redirect', pathname)
-      return addSecurityHeaders(NextResponse.redirect(loginUrl))
+    if (user) {
+      // D-07: Email verification gate — unverified owners cannot access admin
+      const emailVerified = user.email_confirmed_at != null
+      if (!emailVerified) {
+        const rootDomain = process.env.ROOT_DOMAIN ?? 'lvh.me:3000'
+        const protocol =
+          rootDomain.includes('localhost') || rootDomain.includes('lvh.me') ? 'http' : 'https'
+        const verifyUrl = new URL(`${protocol}://${rootDomain}/signup/verify-email`)
+        verifyUrl.searchParams.set('email', user.email ?? '')
+        return addSecurityHeaders(NextResponse.redirect(verifyUrl))
+      }
+
+      let {
+        data: { session },
+      } = await supabase.auth.getSession()
+      let role = session?.user?.app_metadata?.role
+
+      // If role is missing from JWT, force a token refresh to pick up app_metadata
+      // set by ownerSignup (role + store_id). This handles the first admin visit
+      // after signup where the initial JWT predates the provisioning step.
+      if (!role && session) {
+        const { data: refreshed } = await supabase.auth.refreshSession()
+        if (refreshed.session) {
+          session = refreshed.session
+          role = session.user?.app_metadata?.role
+        }
+      }
+
+      // D-10: Block customer role from admin routes — silent redirect to storefront
+      if (role === 'customer') {
+        return addSecurityHeaders(NextResponse.redirect(new URL('/', request.url)))
+      }
+      if (role !== 'owner') {
+        return addSecurityHeaders(NextResponse.redirect(new URL('/unauthorized', request.url)))
+      }
+
+      // D-01: Setup wizard redirect — first admin visit goes to /admin/setup
+      // Excludes /admin/setup itself (loop prevention) and /admin/settings (accessible pre-wizard)
+      if (!pathname.startsWith('/admin/setup') && !pathname.startsWith('/admin/settings')) {
+        const adminClient = createMiddlewareAdminClient()
+        const { data: storeCheck } = await adminClient
+          .from('stores')
+          .select('setup_wizard_dismissed')
+          .eq('id', storeId)
+          .single()
+
+        if (storeCheck && !storeCheck.setup_wizard_dismissed) {
+          return addSecurityHeaders(NextResponse.redirect(new URL('/admin/setup', request.url)))
+        }
+      }
+
+      // Inject tenant headers into the response for downstream Server Components
+      response.headers.set('x-store-id', storeId)
+      response.headers.set('x-store-slug', slug)
+      return addSecurityHeaders(response)
     }
 
-    // D-07: Email verification gate — unverified owners cannot access admin
-    const emailVerified = user.email_confirmed_at != null
-    if (!emailVerified) {
-      const rootDomain = process.env.ROOT_DOMAIN ?? 'lvh.me:3000'
-      const protocol =
-        rootDomain.includes('localhost') || rootDomain.includes('lvh.me') ? 'http' : 'https'
-      const verifyUrl = new URL(`${protocol}://${rootDomain}/signup/verify-email`)
-      verifyUrl.searchParams.set('email', user.email ?? '')
-      return addSecurityHeaders(NextResponse.redirect(verifyUrl))
-    }
-
-    let {
-      data: { session },
-    } = await supabase.auth.getSession()
-    let role = session?.user?.app_metadata?.role
-
-    // If role is missing from JWT, force a token refresh to pick up app_metadata
-    // set by ownerSignup (role + store_id). This handles the first admin visit
-    // after signup where the initial JWT predates the provisioning step.
-    if (!role && session) {
-      const { data: refreshed } = await supabase.auth.refreshSession()
-      if (refreshed.session) {
-        session = refreshed.session
-        role = session.user?.app_metadata?.role
+    // No Supabase Auth user — try manager staff JWT (per D-02, D-03)
+    const staffToken = request.cookies.get('staff_session')?.value
+    if (staffToken) {
+      try {
+        const { payload } = await jwtVerify(staffToken, staffSecret)
+        if (payload.role === POS_ROLES.MANAGER) {
+          const storeIdFromJwt = payload.store_id as string
+          // D-03: Check if this route is manager-accessible
+          const isManagerRoute = MANAGER_ADMIN_ROUTES.some(
+            (route: string) => pathname === route || pathname.startsWith(route + '/')
+          )
+          if (!isManagerRoute) {
+            // D-03: silent redirect to dashboard — no error, no toast
+            return addSecurityHeaders(NextResponse.redirect(new URL('/admin/dashboard', request.url)))
+          }
+          // Allow through — inject tenant headers
+          const managerHeaders = new Headers(request.headers)
+          managerHeaders.set('x-store-id', storeIdFromJwt)
+          managerHeaders.set('x-store-slug', payload.store_slug as string || slug)
+          return addSecurityHeaders(NextResponse.next({ request: { headers: managerHeaders } }))
+        }
+      } catch {
+        // Expired/invalid JWT — fall through to login redirect
       }
     }
 
-    // D-10: Block customer role from admin routes — silent redirect to storefront
-    if (role === 'customer') {
-      return addSecurityHeaders(NextResponse.redirect(new URL('/', request.url)))
-    }
-    if (role !== 'owner') {
-      return addSecurityHeaders(NextResponse.redirect(new URL('/unauthorized', request.url)))
-    }
-
-    // D-01: Setup wizard redirect — first admin visit goes to /admin/setup
-    // Excludes /admin/setup itself (loop prevention) and /admin/settings (accessible pre-wizard)
-    if (!pathname.startsWith('/admin/setup') && !pathname.startsWith('/admin/settings')) {
-      const adminClient = createMiddlewareAdminClient()
-      const { data: storeCheck } = await adminClient
-        .from('stores')
-        .select('setup_wizard_dismissed')
-        .eq('id', storeId)
-        .single()
-
-      if (storeCheck && !storeCheck.setup_wizard_dismissed) {
-        return addSecurityHeaders(NextResponse.redirect(new URL('/admin/setup', request.url)))
-      }
-    }
-
-    // Inject tenant headers into the response for downstream Server Components
-    response.headers.set('x-store-id', storeId)
-    response.headers.set('x-store-slug', slug)
-    return addSecurityHeaders(response)
+    // No valid auth — redirect to login
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    return addSecurityHeaders(NextResponse.redirect(loginUrl))
   }
 
   // 7. POS login — pass through with tenant headers (PRESERVED)
@@ -202,7 +230,7 @@ export async function middleware(request: NextRequest) {
     if (staffToken) {
       try {
         const { payload } = await jwtVerify(staffToken, staffSecret)
-        if (payload.role === 'staff' || payload.role === 'owner') {
+        if (payload.role === 'staff' || payload.role === 'owner' || payload.role === 'manager') {
           return addSecurityHeaders(NextResponse.next({
             request: { headers: requestHeaders },
           }))

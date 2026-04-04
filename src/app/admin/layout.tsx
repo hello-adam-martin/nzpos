@@ -3,20 +3,50 @@ import XeroDisconnectBanner from '@/components/admin/integrations/XeroDisconnect
 import StripeTestModeBanner from '@/components/StripeTestModeBanner'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
+import { cookies } from 'next/headers'
+import { jwtVerify } from 'jose'
+
+const staffSecret = new TextEncoder().encode(process.env.STAFF_JWT_SECRET!)
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const userEmail = user?.email ?? null
-  const storeId = user?.app_metadata?.store_id as string | undefined
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const hasInventory = !!(user?.app_metadata as any)?.inventory
+
+  let userEmail: string | null = null
+  let hasInventory = false
+  let role: 'owner' | 'manager' = 'owner'
+  let staffName: string | null = null
+  let storeId: string | undefined
+
+  if (user) {
+    // Owner path — existing logic preserved
+    userEmail = user.email ?? null
+    storeId = user.app_metadata?.store_id as string | undefined
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    hasInventory = !!(user.app_metadata as any)?.inventory
+    role = 'owner'
+  } else {
+    // Manager path — check staff_session cookie for manager JWT
+    const cookieStore = await cookies()
+    const token = cookieStore.get('staff_session')?.value
+    if (token) {
+      try {
+        const { payload } = await jwtVerify(token, staffSecret)
+        role = 'manager'
+        storeId = payload.store_id as string
+        staffName = payload.staff_name as string ?? null
+        // Note: managers don't get inventory link — hasInventory stays false
+      } catch {
+        // Invalid token — middleware should have caught this, but be safe
+      }
+    }
+  }
 
   // Query xero_connections to determine banner state
   // Only show banner when Xero was previously connected but is now disconnected or expired (D-06)
-  // Null means never connected — NO banner in that case
+  // Only for owners — managers don't manage integrations
   let xeroStatus: 'connected' | 'disconnected' | 'token_expired' | null = null
-  if (storeId) {
+  if (storeId && role === 'owner') {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: xeroConn } = await (createSupabaseAdminClient() as any)
       .from('xero_connections')
@@ -28,10 +58,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="flex min-h-screen bg-bg">
-      <AdminSidebar userEmail={userEmail} hasInventory={hasInventory} />
+      <AdminSidebar userEmail={userEmail} hasInventory={hasInventory} role={role} staffName={staffName} />
       <div className="flex-1 flex flex-col overflow-auto">
         <StripeTestModeBanner />
-        {(xeroStatus === 'disconnected' || xeroStatus === 'token_expired') && (
+        {role === 'owner' && (xeroStatus === 'disconnected' || xeroStatus === 'token_expired') && (
           <XeroDisconnectBanner status={xeroStatus} />
         )}
         <main className="flex-1 p-4 pt-16 md:p-6 md:pt-6">

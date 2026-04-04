@@ -19,9 +19,11 @@ const BASE_NAV_LINKS = [
 interface AdminSidebarProps {
   userEmail?: string | null
   hasInventory?: boolean
+  role?: 'owner' | 'manager'
+  staffName?: string | null
 }
 
-export default function AdminSidebar({ userEmail, hasInventory }: AdminSidebarProps) {
+export default function AdminSidebar({ userEmail, hasInventory, role, staffName }: AdminSidebarProps) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
 

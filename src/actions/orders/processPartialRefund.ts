@@ -7,6 +7,8 @@ import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { buildCreditNote } from '@/lib/xero/buildInvoice'
 import { getAuthenticatedXeroClient } from '@/lib/xero/client'
+import { resolveStaffAuthVerified } from '@/lib/resolveAuth'
+import { POS_ROLES } from '@/config/roles'
 
 const REFUNDABLE_STATUSES = new Set([
   'completed',
@@ -31,12 +33,23 @@ function calculateItemRefundCents(
 export async function processPartialRefund(
   input: unknown
 ): Promise<{ success: true; refundId: string } | { error: string }> {
-  // 1. Auth: verify owner session via Supabase Auth
+  // 1. Auth: owner (Supabase Auth) or manager (staff JWT) — per STAFF-06
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
-  const storeId = user.app_metadata?.store_id as string | undefined
-  if (!storeId) return { error: 'No store context' }
+
+  let storeId: string | undefined
+
+  if (user?.app_metadata?.store_id) {
+    storeId = user.app_metadata.store_id as string
+  } else {
+    // Manager path — DB-verified role check
+    const staffAuth = await resolveStaffAuthVerified()
+    if (staffAuth && (staffAuth.role === POS_ROLES.OWNER || staffAuth.role === POS_ROLES.MANAGER)) {
+      storeId = staffAuth.store_id
+    }
+  }
+
+  if (!storeId) return { error: 'Not authenticated' }
 
   // 2. Validate input with Zod
   const parsed = PartialRefundSchema.safeParse(input)
@@ -138,7 +151,7 @@ export async function processPartialRefund(
       store_id: storeId,
       reason,
       total_cents: totalRefundCents,
-      created_by: user.id,
+      created_by: user?.id ?? null,
       customer_notified: false,
     })
     .select('id')
