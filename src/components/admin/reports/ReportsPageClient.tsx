@@ -46,6 +46,7 @@ interface ReportsPageClientProps {
   dailyTotals: DailyTotal[]
   topProducts: TopProduct[]
   stockLevels: StockLevel[]
+  hasInventory: boolean
   totalSalesCents: number
   totalGSTCents: number
   gstExclusiveCents: number
@@ -64,6 +65,7 @@ export function ReportsPageClient({
   dailyTotals,
   topProducts,
   stockLevels,
+  hasInventory,
   totalSalesCents,
   totalGSTCents,
   gstExclusiveCents,
@@ -93,12 +95,12 @@ export function ReportsPageClient({
     revenue_cents: p.totalRevenueCents,
   }))
 
-  const stockCSVData = stockLevels.map(s => ({
+  const stockCSVData = hasInventory ? stockLevels.map(s => ({
     product: s.name,
     sku: s.sku ?? '',
     stock_quantity: s.stock_quantity,
     reorder_threshold: s.reorder_threshold,
-  }))
+  })) : []
 
   const gstCSVData = gstLineDetail.map(d => ({
     order_id: d.order_id,
@@ -173,18 +175,20 @@ export function ReportsPageClient({
                 )}
               </section>
 
-              {/* Stock levels */}
-              <section>
-                <div className="flex items-center justify-between mb-[var(--space-sm)]">
-                  <h2 className="font-bold text-primary text-xl">Stock Levels</h2>
-                  <ExportCSVButton data={stockCSVData} filename="stock-levels" />
-                </div>
-                {stockLevels.length === 0 ? (
-                  <p className="text-muted text-sm">No active products found.</p>
-                ) : (
-                  <StockLevelsTable products={stockLevels} />
-                )}
-              </section>
+              {/* Stock levels — D-06: only shown when hasInventory is true */}
+              {hasInventory && (
+                <section>
+                  <div className="flex items-center justify-between mb-[var(--space-sm)]">
+                    <h2 className="font-bold text-primary text-xl">Stock Levels</h2>
+                    <ExportCSVButton data={stockCSVData} filename="stock-levels" />
+                  </div>
+                  {stockLevels.length === 0 ? (
+                    <p className="text-muted text-sm">No active products found.</p>
+                  ) : (
+                    <StockLevelsTable products={stockLevels} />
+                  )}
+                </section>
+              )}
             </>
           )}
         </div>

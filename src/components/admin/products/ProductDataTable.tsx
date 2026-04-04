@@ -29,6 +29,7 @@ interface ProductDataTableProps {
   stockStatus: StockStatus
   activeStatus: ActiveStatus
   onProductSelect: (product: ProductWithCategory) => void
+  hasInventory: boolean
 }
 
 function getStockVariant(product: ProductWithCategory): StockStatus {
@@ -44,6 +45,7 @@ export default function ProductDataTable({
   stockStatus,
   activeStatus,
   onProductSelect,
+  hasInventory,
 }: ProductDataTableProps) {
   const [sortColumn, setSortColumn] = useState<SortColumn | null>(null)
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
@@ -118,7 +120,7 @@ export default function ProductDataTable({
     { key: 'name', label: 'Name' },
     { key: 'sku', label: 'SKU' },
     { key: 'price_cents', label: 'Price' },
-    { key: 'stock_quantity', label: 'Stock' },
+    ...(hasInventory ? [{ key: 'stock_quantity' as SortColumn, label: 'Stock' }] : []),
   ]
 
   function SortIcon({ column }: { column: SortColumn }) {
@@ -257,15 +259,17 @@ export default function ProductDataTable({
                 </span>
               </td>
 
-              {/* Stock */}
-              <td className="px-3 py-2">
-                <span
-                  className="text-sm font-mono text-text"
-                  style={{ fontFeatureSettings: "'tnum' 1" }}
-                >
-                  {product.stock_quantity}
-                </span>
-              </td>
+              {/* Stock — D-07: hidden when hasInventory is false */}
+              {hasInventory && (
+                <td className="px-3 py-2">
+                  <span
+                    className="text-sm font-mono text-text"
+                    style={{ fontFeatureSettings: "'tnum' 1" }}
+                  >
+                    {product.stock_quantity}
+                  </span>
+                </td>
+              )}
 
               {/* Category */}
               <td className="px-3 py-2">

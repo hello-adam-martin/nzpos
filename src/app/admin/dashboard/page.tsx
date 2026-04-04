@@ -16,6 +16,7 @@ export default async function DashboardPage() {
   if (!storeId) {
     redirect('/admin/login')
   }
+  const hasInventory = (user?.app_metadata?.inventory as boolean | undefined) === true
 
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
@@ -39,9 +40,10 @@ export default async function DashboardPage() {
     .eq('store_id', storeId)
     .eq('is_active', true)
 
-  const lowStockProducts = (products ?? []).filter(
-    p => p.stock_quantity <= p.reorder_threshold
-  )
+  // Only compute low stock when inventory add-on is active (D-06)
+  const lowStockProducts = hasInventory
+    ? (products ?? []).filter(p => p.stock_quantity <= p.reorder_threshold)
+    : []
 
   // Checklist data
   const { data: storeData } = await supabase
@@ -86,7 +88,7 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <LowStockAlertList products={lowStockProducts} />
+      {hasInventory && <LowStockAlertList products={lowStockProducts} />}
     </div>
   )
 }

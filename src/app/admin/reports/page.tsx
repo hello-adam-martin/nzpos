@@ -70,6 +70,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   if (!storeId) {
     redirect('/admin/login')
   }
+  const hasInventory = (user?.app_metadata?.inventory as boolean | undefined) === true
 
   const params = await searchParams
   const preset = (params.preset ?? 'today') as DatePreset | 'custom'
@@ -125,13 +126,17 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   }
   const topProducts = aggregateTopProducts(topItemsRaw)
 
-  // Query 3: Stock levels snapshot
-  const { data: stockLevels } = await supabase
-    .from('products')
-    .select('name, sku, stock_quantity, reorder_threshold')
-    .eq('store_id', storeId)
-    .eq('is_active', true)
-    .order('stock_quantity', { ascending: true })
+  // Query 3: Stock levels snapshot — skip when hasInventory is false (D-06)
+  let stockLevels: Array<{ name: string; sku: string | null; stock_quantity: number; reorder_threshold: number }> = []
+  if (hasInventory) {
+    const { data } = await supabase
+      .from('products')
+      .select('name, sku, stock_quantity, reorder_threshold')
+      .eq('store_id', storeId)
+      .eq('is_active', true)
+      .order('stock_quantity', { ascending: true })
+    stockLevels = data ?? []
+  }
 
   // Query 4: GST summary (from orders table — not order_items to avoid double counting)
   const gstOrders = (orders ?? []).filter(o => o.status !== 'refunded')
@@ -169,7 +174,8 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       tab={tab}
       dailyTotals={dailyTotals}
       topProducts={topProducts}
-      stockLevels={stockLevels ?? []}
+      stockLevels={stockLevels}
+      hasInventory={hasInventory}
       totalSalesCents={totalSalesCents}
       totalGSTCents={totalGSTCents}
       gstExclusiveCents={gstExclusiveCents}
