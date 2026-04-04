@@ -34,7 +34,7 @@ export async function processRefund(input: unknown): Promise<
   const adminClient = createSupabaseAdminClient()
   const { data: order } = await adminClient
     .from('orders')
-    .select('*, order_items(*)')
+    .select('*, order_items(*, products(product_type))')
     .eq('id', orderId)
     .eq('store_id', storeId)
     .single()
@@ -87,6 +87,8 @@ export async function processRefund(input: unknown): Promise<
   // 7. Restore stock if requested (atomic increment via RPC)
   if (restoreStock && order.order_items) {
     for (const item of order.order_items) {
+      // PROD-03: service products skip stock restore
+      if ((item as any).products?.product_type === 'service') continue
       await adminClient.rpc('restore_stock', {
         p_product_id: item.product_id,
         p_quantity: item.quantity,

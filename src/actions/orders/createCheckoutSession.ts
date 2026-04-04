@@ -51,7 +51,7 @@ export async function createCheckoutSession(
   const productIds = items.map((i) => i.productId)
   const { data: products, error: productsError } = await supabase
     .from('products')
-    .select('id, name, price_cents, stock_quantity, is_active')
+    .select('id, name, price_cents, stock_quantity, product_type, is_active')
     .eq('store_id', storeId)
     .in('id', productIds)
     .eq('is_active', true)
@@ -68,10 +68,11 @@ export async function createCheckoutSession(
   for (const item of items) {
     const product = productMap.get(item.productId)
     if (!product) {
-      return { error: 'out_of_stock', productName: 'Unknown product' }
+      return { error: 'out_of_stock' as const, productName: 'Unknown product' }
     }
-    if (product.stock_quantity < item.quantity) {
-      return { error: 'out_of_stock', productName: product.name }
+    // POS-04/FREE-02: service products skip stock check — always sellable
+    if (product.product_type !== 'service' && product.stock_quantity < item.quantity) {
+      return { error: 'out_of_stock' as const, productName: product.name }
     }
   }
 

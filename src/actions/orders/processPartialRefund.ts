@@ -47,7 +47,7 @@ export async function processPartialRefund(
   const adminClient = createSupabaseAdminClient()
   const { data: order } = await adminClient
     .from('orders')
-    .select('*, order_items(*)')
+    .select('*, order_items(*, products(product_type))')
     .eq('id', orderId)
     .eq('store_id', storeId)
     .single()
@@ -166,8 +166,16 @@ export async function processPartialRefund(
     }
   }
 
+  // Build product_type lookup from fetched order items
+  const productTypeMap = new Map<string, string>()
+  for (const oi of (order.order_items ?? [])) {
+    productTypeMap.set(oi.product_id, (oi as any).products?.product_type ?? 'physical')
+  }
+
   // 12. Restore stock per selected item (atomic RPC)
   for (const item of itemRefundAmounts) {
+    // PROD-03: service products skip stock restore
+    if (productTypeMap.get(item.productId) === 'service') continue
     await adminClient.rpc('restore_stock', {
       p_product_id: item.productId,
       p_quantity: item.quantityToRefund,
