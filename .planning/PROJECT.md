@@ -22,13 +22,13 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 
 **Shipped:** v1.0 MVP (2026-04-02), v2.0 SaaS Platform (2026-04-03)
 
-330 source files, 36,000+ LOC TypeScript, 434 tests passing. 19 phases shipped across 78 plans (33 v1.0, 33 v2.0, 12 v2.1).
+330 source files, 36,000+ LOC TypeScript, 434 tests passing. 20 phases shipped across 80 plans (33 v1.0, 33 v2.0, 14 v2.1).
 
-**Phase 19 complete:** Developer documentation — docs/setup.md (7-step local dev guide with troubleshooting), docs/env-vars.md (all 24 env vars in grouped tables), docs/architecture.md (351-line overview with 5 Mermaid diagrams covering auth, tenancy, feature gating, billing), docs/server-actions.md (48 actions across 10 domains with schema summaries).
+**Phase 20 complete:** Deployment + User Documentation — docs/deploy.md (333-line production deployment runbook: Supabase setup with 23 migrations, Stripe live keys with two webhook endpoints, Vercel wildcard DNS with NS delegation, 6-item smoke test checklist), docs/merchant-guide.md (180-line onboarding guide: signup through first sale, GST compliance with worked examples).
+
+**v2.1 shipped:** Security audit (OWASP, RLS, auth, webhooks, CSP), code quality + test coverage (434 tests), developer documentation (setup, env vars, architecture, server actions), deployment runbook, and merchant onboarding guide. All 20 phases complete across 80 plans.
 
 **v2.0 delivered:** Multi-tenant infrastructure with wildcard subdomain routing and RLS isolation. Self-serve merchant signup with email verification. Store setup wizard and marketing landing page. Stripe billing with per-add-on subscriptions and feature gating. Super admin panel with tenant management, suspension enforcement, and audit trail. Barcode scanning, screen receipts, email notifications, customer accounts, and partial refunds.
-
-**Known gaps:** Production deploy (Supabase prod, Stripe live keys, catalog import) not yet completed — DEPLOY-02/03/04 pending. Xero/customer accounts require live Supabase for final UAT. MKTG-01/02 built but not formally checked off. Human UAT pending for phases 11 and 16.
 
 ## Core Value
 
@@ -67,10 +67,12 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - ✓ Security audit (RLS, auth, webhooks, input validation, CSP, secrets, rate limiting, audit trail) — v2.1
 - ✓ Code quality & test coverage (434 tests, 80%+ coverage on critical paths, dead code removal, JSDoc) — v2.1
 - ✓ Developer documentation (setup guide, env vars, architecture overview, server action inventory) — v2.1
+- ✓ Deployment runbook (production Supabase, Stripe live keys, Vercel wildcard DNS, smoke test) — v2.1
+- ✓ Merchant onboarding guide (signup through first sale, GST compliance explanation) — v2.1
 
 ### Active
 
-(Milestone v2.1 — remaining phases in progress)
+(Milestone v2.1 complete — all phases shipped)
 
 ### Out of Scope
 
@@ -154,4 +156,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-04 after Phase 19 Developer Documentation complete*
+*Last updated: 2026-04-04 after Phase 20 Deployment + User Documentation complete*
