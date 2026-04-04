@@ -11,7 +11,7 @@ interface AdjustmentRow {
   created_at: string
   product_id: string
   quantity_delta: number
-  new_quantity: number
+  quantity_after: number
   reason: string
   notes: string | null
   staff_id: string | null
@@ -222,7 +222,7 @@ export function InventoryHistoryTab() {
                         className="px-4 py-3 text-right font-mono text-text"
                         style={{ fontFeatureSettings: "'tnum' 1" }}
                       >
-                        {row.new_quantity}
+                        {row.quantity_after}
                       </td>
                       <td className="px-4 py-3 text-muted font-body max-w-[200px]">
                         {row.notes ? (
