@@ -1,0 +1,114 @@
+# Requirements: NZPOS v3.0
+
+**Defined:** 2026-04-04
+**Core Value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
+
+## v3.0 Requirements
+
+Requirements for Inventory Management milestone. Each maps to roadmap phases.
+
+### Product Types
+
+- [ ] **PROD-01**: Admin can set a product as "physical" or "service" type when creating or editing
+- [ ] **PROD-02**: Service products skip all stock decrement logic in POS and online sale RPCs
+- [ ] **PROD-03**: Service products skip stock restore logic in refund and partial refund actions
+- [ ] **PROD-04**: CSV import supports `product_type` column and never overwrites `stock_quantity` without explicit flag
+
+### Free-Tier Experience
+
+- [ ] **FREE-01**: Stores without inventory add-on see no stock quantities, badges, or alerts in admin/POS/storefront
+- [ ] **FREE-02**: Products sell freely (no out-of-stock blocking) when inventory add-on is inactive
+- [ ] **FREE-03**: Stock decrements continue silently in RPCs regardless of add-on status (data stays accurate)
+
+### Stock Management (Paid Add-on)
+
+- [ ] **STOCK-01**: Admin can manually adjust stock quantity for a physical product with a reason code and optional notes
+- [ ] **STOCK-02**: System records all stock mutations (sales, refunds, manual adjustments, stocktake) in an append-only history table
+- [ ] **STOCK-03**: Admin can view adjustment history filtered by product, date range, and reason code
+- [ ] **STOCK-04**: Low-stock alerts are visible only when inventory add-on is active
+- [ ] **STOCK-05**: Admin can view current stock levels for all physical products in a dedicated inventory page
+
+### Stocktake (Paid Add-on)
+
+- [ ] **TAKE-01**: Admin can create a stocktake session (full inventory or filtered by category)
+- [ ] **TAKE-02**: Admin can enter counted quantities for each product in the stocktake
+- [ ] **TAKE-03**: System calculates and displays variance (counted vs system quantity) for each product
+- [ ] **TAKE-04**: Admin can commit stocktake, atomically adjusting stock and recording adjustments with "stocktake" reason
+- [ ] **TAKE-05**: Barcode scanner can be used to look up products during stocktake count entry
+
+### Feature Gating & Billing
+
+- [ ] **GATE-01**: `requireFeature('inventory')` gates all inventory management Server Actions using DB path for mutations
+- [ ] **GATE-02**: `store_plans` table has `has_inventory` and `has_inventory_manual_override` columns following existing add-on pattern
+- [ ] **GATE-03**: Stripe checkout flow for inventory add-on subscription (using `STRIPE_PRICE_INVENTORY`)
+- [ ] **GATE-04**: Auth hook injects `inventory` claim into JWT for fast-path UI rendering
+- [ ] **GATE-05**: Super admin can manually override inventory add-on status per store
+
+### POS & Storefront Integration
+
+- [ ] **POS-01**: POS product grid shows stock badges (in-stock / low / out-of-stock) when inventory add-on is active
+- [ ] **POS-02**: POS blocks adding out-of-stock physical products to cart when inventory add-on is active
+- [ ] **POS-03**: Storefront shows "sold out" and disables add-to-cart for out-of-stock physical products when add-on is active
+- [ ] **POS-04**: Service products are always sellable in POS and storefront regardless of add-on status
+
+## Future Requirements (v3.1+)
+
+### Cost & Reporting
+
+- **COST-01**: Cost variance in stocktake (requires `cost_price` field)
+- **BULK-01**: Stock received bulk workflow
+- **HIST-01**: Per-product stock history timeline view
+- **RPT-01**: Stock movement reporting (shrinkage totals, reason breakdowns)
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Purchase orders / supplier management | Too complex for v3.0, separate domain |
+| Cost-of-goods tracking | Requires `cost_price` field not in current schema — defer to v3.1 |
+| Multi-location inventory | Single-store per tenant model — multi-location is future architecture |
+| Automatic reorder points | Requires supplier integration |
+| Stock transfer between stores | Multi-store not yet supported |
+| Real-time stock sync (WebSockets) | Refresh-on-transaction pattern sufficient for single terminal |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| PROD-01 | — | Pending |
+| PROD-02 | — | Pending |
+| PROD-03 | — | Pending |
+| PROD-04 | — | Pending |
+| FREE-01 | — | Pending |
+| FREE-02 | — | Pending |
+| FREE-03 | — | Pending |
+| STOCK-01 | — | Pending |
+| STOCK-02 | — | Pending |
+| STOCK-03 | — | Pending |
+| STOCK-04 | — | Pending |
+| STOCK-05 | — | Pending |
+| TAKE-01 | — | Pending |
+| TAKE-02 | — | Pending |
+| TAKE-03 | — | Pending |
+| TAKE-04 | — | Pending |
+| TAKE-05 | — | Pending |
+| GATE-01 | — | Pending |
+| GATE-02 | — | Pending |
+| GATE-03 | — | Pending |
+| GATE-04 | — | Pending |
+| GATE-05 | — | Pending |
+| POS-01 | — | Pending |
+| POS-02 | — | Pending |
+| POS-03 | — | Pending |
+| POS-04 | — | Pending |
+
+**Coverage:**
+- v3.0 requirements: 26 total
+- Mapped to phases: 0
+- Unmapped: 26
+
+---
+*Requirements defined: 2026-04-04*
+*Last updated: 2026-04-04 after initial definition*
