@@ -106,9 +106,9 @@ Plans:
   6. Super admin can manually override inventory add-on status per store from the super admin panel
 **Plans**: 3 plans
 Plans:
-- [ ] 23-00-PLAN.md — Wave 0: Test scaffolds for POS ProductCard and storefront AddToCartButton
+- [x] 23-00-PLAN.md — Wave 0: Test scaffolds for POS ProductCard and storefront AddToCartButton
 - [ ] 23-01-PLAN.md — Billing checkout enum, super admin wiring, billing page query/flagMap, success banner
-- [ ] 23-02-PLAN.md — Inventory upgrade wall, page gate, POS/storefront/GATE-01 verification
+- [x] 23-02-PLAN.md — Inventory upgrade wall, page gate, POS/storefront/GATE-01 verification
 **UI hint**: yes
 
 ## Progress
@@ -137,4 +137,4 @@ Plans:
 | 20. Deployment + User Documentation | v2.1 | 2/2 | Complete | 2026-04-04 |
 | 21. Service Product Type + Free-Tier Simplification | v3.0 | 3/3 | Complete    | 2026-04-04 |
 | 22. Inventory Add-on Core | v3.0 | 5/5 | Complete    | 2026-04-04 |
-| 23. Feature Gating + POS/Storefront Integration | v3.0 | 0/3 | Not started | - |
+| 23. Feature Gating + POS/Storefront Integration | v3.0 | 2/3 | In Progress|  |

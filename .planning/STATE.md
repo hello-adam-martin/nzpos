@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Inventory Management
 status: executing
-stopped_at: Phase 23 UI-SPEC approved
-last_updated: "2026-04-04T09:39:25.520Z"
+stopped_at: Completed 23-00-PLAN.md
+last_updated: "2026-04-04T10:04:32.516Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 11
+  completed_plans: 10
   percent: 0
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 22 — inventory-add-on-core
+**Current focus:** Phase 23 — feature-gating-pos-storefront-integration
 
 ## Current Position
 
-Phase: 23
-Plan: Not started
+Phase: 23 (feature-gating-pos-storefront-integration) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
 Last activity: 2026-04-04
 
@@ -65,6 +65,9 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 22-inventory-add-on-core]: Query actions (getStocktakeSession, getStocktakeSessions) skip requireFeature gate — sessions only exist if feature was active at creation
 - [Phase 22]: Commit confirmation uses inline strip (role=alert) not modal — in-context confirmation per UI-SPEC
 - [Phase 22]: StocktakeSessionPage uses useState tab switching (not URL-driven) — dedicated page makes URL param overkill
+- [Phase 23]: InventoryUpgradeWall sources all content from ADDONS config (not hardcoded) and uses JWT fast path for page-level gate (not requireFeature DB check)
+- [Phase 23-feature-gating-pos-storefront-integration]: vi.mock CartContext at module level for AddToCartButton tests — avoids CartProvider wrapper complexity in each test
+- [Phase 23-feature-gating-pos-storefront-integration]: Wave 0 tests use real assertions (not .todo stubs) — Phase 21 already implements ProductCard and AddToCartButton with correct behavior
 
 ### Pending Todos
 
@@ -78,6 +81,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T09:39:25.517Z
-Stopped at: Phase 23 UI-SPEC approved
-Resume file: .planning/phases/23-feature-gating-pos-storefront-integration/23-UI-SPEC.md
+Last session: 2026-04-04T10:04:32.513Z
+Stopped at: Completed 23-00-PLAN.md
+Resume file: None
