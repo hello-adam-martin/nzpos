@@ -49,5 +49,6 @@ export async function deactivateStaff(
   }
 
   revalidatePath('/admin/staff')
+  revalidatePath('/pos/login')
   return { success: true }
 }

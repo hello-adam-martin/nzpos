@@ -65,7 +65,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // 3. Root domain — marketing site (per D-05). Pass through with session refresh.
+  //    POS and admin routes are store-scoped — block on root domain.
   if (isRoot) {
+    if (pathname.startsWith('/pos') || pathname.startsWith('/admin')) {
+      return addSecurityHeaders(NextResponse.redirect(new URL('/', request.url)))
+    }
     const { response } = await createSupabaseMiddlewareClient(request)
     return addSecurityHeaders(response)
   }

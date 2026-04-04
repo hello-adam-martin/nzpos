@@ -50,5 +50,6 @@ export async function updateStaff(
   if (error) return { error: 'Failed to update staff member' }
 
   revalidatePath('/admin/staff')
+  revalidatePath('/pos/login')
   return { success: true }
 }

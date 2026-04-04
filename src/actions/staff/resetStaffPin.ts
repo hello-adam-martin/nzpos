@@ -37,15 +37,22 @@ export async function resetStaffPin(
 
   // 4. Update staff record with new hash and lock out current session
   const adminClient = createSupabaseAdminClient()
-  const { error } = await adminClient
+  const { data: updated, error } = await adminClient
     .from('staff')
-    .update({ pin_hash, pin_locked_until: new Date().toISOString() })
+    .update({
+      pin_hash,
+      pin_locked_until: new Date().toISOString(),
+      pin_attempts: 0,
+    })
     .eq('id', staffId)
     .eq('store_id', storeId)
+    .select('id')
 
   if (error) return { error: 'Failed to reset PIN' }
+  if (!updated || updated.length === 0) return { error: 'Staff member not found' }
 
   revalidatePath('/admin/staff')
+  revalidatePath('/pos/login')
   // Return plaintext PIN once — caller displays it and it is never stored again
   return { success: true, pin }
 }

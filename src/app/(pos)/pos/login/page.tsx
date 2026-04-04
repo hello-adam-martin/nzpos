@@ -1,4 +1,5 @@
 import 'server-only'
+import { headers } from 'next/headers'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { PinLoginForm } from '@/components/pos/PinLoginForm'
 
@@ -7,12 +8,20 @@ export const dynamic = 'force-dynamic'
 export default async function PosLoginPage() {
   const supabase = createSupabaseAdminClient()
 
-  // v1 single-store: fetch the first store
-  const { data: store } = await supabase
-    .from('stores')
-    .select('id, name')
-    .limit(1)
-    .single()
+  // Resolve store from middleware-injected tenant header (subdomain-based)
+  const headersList = await headers()
+  const storeId = headersList.get('x-store-id')
+
+  let store: { id: string; name: string } | null = null
+
+  if (storeId) {
+    const { data } = await supabase
+      .from('stores')
+      .select('id, name')
+      .eq('id', storeId)
+      .single()
+    store = data
+  }
 
   if (!store) {
     return (

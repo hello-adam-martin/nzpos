@@ -50,5 +50,6 @@ export async function createStaff(
   if (error || !data) return { error: 'Failed to create staff member' }
 
   revalidatePath('/admin/staff')
+  revalidatePath('/pos/login')
   return { success: true, staffId: (data as { id: string }).id }
 }
