@@ -77,38 +77,38 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PROD-01 | — | Pending |
-| PROD-02 | — | Pending |
-| PROD-03 | — | Pending |
-| PROD-04 | — | Pending |
-| FREE-01 | — | Pending |
-| FREE-02 | — | Pending |
-| FREE-03 | — | Pending |
-| STOCK-01 | — | Pending |
-| STOCK-02 | — | Pending |
-| STOCK-03 | — | Pending |
-| STOCK-04 | — | Pending |
-| STOCK-05 | — | Pending |
-| TAKE-01 | — | Pending |
-| TAKE-02 | — | Pending |
-| TAKE-03 | — | Pending |
-| TAKE-04 | — | Pending |
-| TAKE-05 | — | Pending |
-| GATE-01 | — | Pending |
-| GATE-02 | — | Pending |
-| GATE-03 | — | Pending |
-| GATE-04 | — | Pending |
-| GATE-05 | — | Pending |
-| POS-01 | — | Pending |
-| POS-02 | — | Pending |
-| POS-03 | — | Pending |
-| POS-04 | — | Pending |
+| PROD-01 | Phase 21 | Pending |
+| PROD-02 | Phase 21 | Pending |
+| PROD-03 | Phase 21 | Pending |
+| PROD-04 | Phase 21 | Pending |
+| FREE-01 | Phase 21 | Pending |
+| FREE-02 | Phase 21 | Pending |
+| FREE-03 | Phase 21 | Pending |
+| STOCK-01 | Phase 22 | Pending |
+| STOCK-02 | Phase 22 | Pending |
+| STOCK-03 | Phase 22 | Pending |
+| STOCK-04 | Phase 22 | Pending |
+| STOCK-05 | Phase 22 | Pending |
+| TAKE-01 | Phase 22 | Pending |
+| TAKE-02 | Phase 22 | Pending |
+| TAKE-03 | Phase 22 | Pending |
+| TAKE-04 | Phase 22 | Pending |
+| TAKE-05 | Phase 22 | Pending |
+| GATE-01 | Phase 23 | Pending |
+| GATE-02 | Phase 23 | Pending |
+| GATE-03 | Phase 23 | Pending |
+| GATE-04 | Phase 23 | Pending |
+| GATE-05 | Phase 23 | Pending |
+| POS-01 | Phase 23 | Pending |
+| POS-02 | Phase 23 | Pending |
+| POS-03 | Phase 23 | Pending |
+| POS-04 | Phase 21 | Pending |
 
 **Coverage:**
 - v3.0 requirements: 26 total
-- Mapped to phases: 0
-- Unmapped: 26
+- Mapped to phases: 26
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-04*
-*Last updated: 2026-04-04 after initial definition*
+*Last updated: 2026-04-04 after roadmap creation*
