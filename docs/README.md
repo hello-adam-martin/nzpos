@@ -10,6 +10,8 @@ Custom retail POS + online store for NZ small businesses.
 | [Environment Variables](env-vars.md) | All 24 env vars with purpose, source, and required status |
 | [Architecture Overview](architecture.md) | Multi-tenant request flow, data model, key design decisions |
 | [Server Action Reference](server-actions.md) | All 48 server actions grouped by domain |
+| [Production Deployment](deploy.md) | Supabase, Stripe, Vercel setup and post-deploy smoke test |
+| [Merchant Guide](merchant-guide.md) | Onboarding walkthrough and GST compliance explanation |
 
 ## Quick Start
 
