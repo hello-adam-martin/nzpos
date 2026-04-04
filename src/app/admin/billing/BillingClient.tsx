@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { AddOnCard } from '@/components/admin/billing/AddOnCard'
 import { createSubscriptionCheckoutSession } from '@/actions/billing/createSubscriptionCheckoutSession'
 import { createBillingPortalSession } from '@/actions/billing/createBillingPortalSession'
@@ -13,6 +13,7 @@ interface BillingClientProps {
     has_xero: boolean
     has_email_notifications: boolean
     has_custom_domain: boolean
+    has_inventory: boolean
   }
   stripeCustomerId: string | null
   subscriptionDetails: Array<{
@@ -74,6 +75,27 @@ export default function BillingClient({
     }
   }, [subscribedFeature])
 
+  const router = useRouter()
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false)
+  const bannerShownRef = useRef(false)
+
+  useEffect(() => {
+    if (subscribedFeature && !bannerShownRef.current) {
+      bannerShownRef.current = true
+      setShowSuccessBanner(true)
+
+      // Strip ?subscribed param to prevent banner re-showing on refresh
+      const url = new URL(window.location.href)
+      url.searchParams.delete('subscribed')
+      router.replace(url.pathname + url.search, { scroll: false })
+
+      const timeout = setTimeout(() => {
+        setShowSuccessBanner(false)
+      }, 4000)
+      return () => clearTimeout(timeout)
+    }
+  }, [subscribedFeature, router])
+
   // Helper: get subscription detail for a feature
   function getSubDetail(feature: string) {
     return subscriptionDetails.find((s) => s.feature === feature) ?? null
@@ -85,6 +107,7 @@ export default function BillingClient({
       xero: storePlans.has_xero,
       email_notifications: storePlans.has_email_notifications,
       custom_domain: storePlans.has_custom_domain,
+      inventory: storePlans.has_inventory,
     }
     if (!flagMap[feature]) return 'inactive'
     const sub = getSubDetail(feature)
@@ -131,6 +154,15 @@ export default function BillingClient({
 
   return (
     <div className="space-y-[var(--space-xl)]">
+      {showSuccessBanner && subscribedFeature && (
+        <div className="bg-[#ECFDF5] border border-[#059669]/20 rounded-[var(--radius-md)] p-3 mb-[var(--space-xl)]">
+          <p className="text-sm font-semibold text-[#059669]" role="alert">
+            {subscribedFeature === 'inventory'
+              ? 'Inventory add-on activated! Your store now has full stock management.'
+              : `${subscribedFeature.replace(/_/g, ' ')} add-on activated!`}
+          </p>
+        </div>
+      )}
       {/* Add-ons section */}
       <section>
         <h2 className="text-lg font-semibold font-sans text-[var(--color-text)] mb-[var(--space-lg)]">

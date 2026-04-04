@@ -30,7 +30,7 @@ export default async function BillingPage() {
   const [storePlansResult, storeResult] = await Promise.all([
     adminClient
       .from('store_plans')
-      .select('has_xero, has_email_notifications, has_custom_domain')
+      .select('has_xero, has_email_notifications, has_custom_domain, has_inventory')
       .eq('store_id', storeId)
       .single(),
     adminClient
@@ -44,6 +44,7 @@ export default async function BillingPage() {
     has_xero: false,
     has_email_notifications: false,
     has_custom_domain: false,
+    has_inventory: false,
   }
 
   const stripeCustomerId = storeResult.data?.stripe_customer_id ?? null
