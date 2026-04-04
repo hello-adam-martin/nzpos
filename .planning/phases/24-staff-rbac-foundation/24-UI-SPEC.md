@@ -36,7 +36,6 @@ Declared values from `globals.css` `--space-*` custom properties — all multipl
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| 2xs | 2px | Hairline gaps (inline badge padding) |
 | xs | 4px | Icon-to-label gaps, tight inline padding |
 | sm | 8px | Compact row padding, button icon gap |
 | md | 16px | Default cell padding, form field gap |
@@ -48,7 +47,7 @@ Declared values from `globals.css` `--space-*` custom properties — all multipl
 Exceptions:
 - Staff table row minimum height: 48px (comfortable click target for inline action buttons)
 - Modal action buttons: minimum 44px height (touch-accessible, consistent with admin pattern)
-- PIN display in PinDisplayModal: 64px font-size, centered — display-size exception for one-time visibility emphasis
+- PIN display in PinDisplayModal: 36px font-size, centered — display-size exception for one-time visibility emphasis
 
 Source: DESIGN.md spacing section + POS-specific touch target rule applied to admin table rows.
 
@@ -63,7 +62,7 @@ All fonts loaded from Bunny Fonts CDN. Source: DESIGN.md typography section + `g
 | Body | DM Sans | 14px (sm) | 400 | 1.5 | Table cell text, modal body copy, form labels |
 | Label | DM Sans | 14px (sm) | 600 | 1.4 | Table column headers, badge text, button labels |
 | Heading | DM Sans | 20px (xl) | 600 | 1.3 | Page heading ("Staff"), modal titles |
-| Display | DM Sans | 36px (4xl) | 700 | 1.1 | 4-digit PIN in PinDisplayModal (one-time reveal) |
+| Display | DM Sans | 36px (4xl) | 600 | 1.1 | 4-digit PIN in PinDisplayModal (one-time reveal) |
 
 Notes:
 - Use `font-feature-settings: 'tnum' 1` on the PIN display (monospaced digit alignment).
@@ -135,20 +134,20 @@ New components for this phase. All follow existing admin patterns — reference 
 
 - Structure: Centered modal overlay, `bg-card` panel, `radius-lg` (12px), `shadow-lg`.
 - Max width: 480px.
-- Header: Modal title (DM Sans 20px 600) + close button (X, inline SVG, `text-text-muted`).
+- Header: Modal title (DM Sans 20px 600) + close button (X, inline SVG, `text-text-muted`, `aria-label="Close"`).
 - Body padding: 24px (lg).
 - Fields:
   - Name: Text input, full width, `border-border`, `radius-md`, 16px padding, DM Sans 14px.
   - Role: Select/dropdown — Owner | Manager | Staff. Same styling as text input.
   - PIN section (AddStaffModal only): Toggle "Auto-generate PIN" (default on) / "Set manual PIN". When manual: 4-digit PIN input with monospaced digits (`font-mono`). Inline validation on blur.
-- Footer: Two buttons right-aligned — Cancel (ghost, navy border) + primary CTA (amber bg "Add Staff Member" / "Save Changes").
+- Footer: Two buttons right-aligned — dismiss button (ghost, navy border) + primary CTA (amber bg "Add Staff Member" / "Save Changes").
 - Animation: open 250ms ease-out, close 200ms ease-in. Source: DESIGN.md motion — medium duration for modals.
 
 ### PinDisplayModal
 
 - Structure: Same modal shell as above. Max width: 400px. Cannot be dismissed by clicking outside — must click "Done" button.
 - Content layout: Centered vertically.
-- PIN display: 4-digit PIN in DM Sans 36px weight 700, `font-feature-settings: 'tnum' 1`, `text-navy`, centered. Background: `bg-surface` pill with 16px padding, `radius-md`.
+- PIN display: 4-digit PIN in DM Sans 36px weight 600, `font-feature-settings: 'tnum' 1`, `text-navy`, centered. Background: `bg-surface` pill with 16px padding, `radius-md`.
 - "Copy" button: Amber CTA below PIN display, full width, 44px height. On copy: button label changes to "Copied!" for 2 seconds, then reverts. No toast — inline feedback.
 - Warning text: DM Sans 14px `text-error`, with warning icon (inline SVG triangle). Text: "Store this PIN somewhere safe — it won't be shown again."
 - "Done" button: Below warning, navy ghost button, full width. Dismisses modal.
@@ -157,19 +156,21 @@ New components for this phase. All follow existing admin patterns — reference 
 ### ConfirmRoleChangeModal
 
 - Structure: Same modal shell. Max width: 400px.
+- Header: Modal title (DM Sans 20px 600). No close (X) button — user must choose an action.
 - Title: "Change role?" (DM Sans 20px 600).
 - Body: "Change [Name] from [Current Role] to [New Role]? They'll be logged out and need to re-enter their PIN." (DM Sans 14px, `text-text`).
 - Roles in body text use RoleBadge inline components.
-- Footer: Cancel (ghost) + "Change Role" (navy primary, NOT amber — this is a neutral action, not a purchase/add action).
+- Footer: "Keep Current Role" (ghost, navy border) + "Change Role" (navy primary, NOT amber — this is a neutral action, not a purchase/add action).
 - No destructive styling — role change is a management action, not destructive.
 
 ### ConfirmDeactivateModal
 
 - Structure: Same modal shell. Max width: 400px.
+- Header: Modal title (DM Sans 20px 600). No close (X) button — user must choose an action.
 - Title: "Deactivate [Name]?" (DM Sans 20px 600).
 - Body: "They'll be immediately logged out and won't be able to use the POS." (DM Sans 14px `text-text`).
 - Warning block: `bg-error/10 border border-error/20 rounded-md p-3` — with warning icon + "This action can be reversed by reactivating them from the staff list." (DM Sans 13px `text-error`).
-- Footer: Cancel (ghost) + "Deactivate" button — `bg-error text-white` (destructive red, NOT amber).
+- Footer: "Keep Active" (ghost, navy border) + "Deactivate" button — `bg-error text-white` (destructive red, NOT amber).
 - The "Deactivate" button is the only red primary button used in this phase.
 
 ### Loading Skeleton (StaffTable)
@@ -203,7 +204,7 @@ New components for this phase. All follow existing admin patterns — reference 
 2. Clicks "Save Changes".
 3. If role has changed: ConfirmRoleChangeModal opens (EditStaffModal stays mounted behind overlay).
 4. Owner clicks "Change Role" → Server Action fires → modal closes → table revalidates → success toast.
-5. If owner clicks "Cancel" → ConfirmRoleChangeModal closes → EditStaffModal remains open with the changed value still selected (no implicit revert — owner must manually revert if they changed their mind).
+5. If owner clicks "Keep Current Role" → ConfirmRoleChangeModal closes → EditStaffModal remains open with the changed value still selected (no implicit revert — owner must manually revert if they changed their mind).
 
 ### PIN Copy Button
 
@@ -236,10 +237,13 @@ Source: CONTEXT.md decisions (D-04 through D-11) + Claude's Discretion (wording 
 | Role change modal title | "Change role?" |
 | Role change modal body | "Change [Name] from [Current] to [New]? They'll be logged out and need to re-enter their PIN." |
 | Role change confirm button | "Change Role" |
+| Role change dismiss button | "Keep Current Role" |
 | Deactivate modal title | "Deactivate [Name]?" |
 | Deactivate modal body | "They'll be immediately logged out and won't be able to use the POS." |
 | Deactivate modal warning | "This can be reversed — reactivate them from the staff list at any time." |
 | Deactivate confirm button | "Deactivate" |
+| Deactivate dismiss button | "Keep Active" |
+| Add/Edit modal dismiss button | "Go Back" |
 | PIN display modal title | "Save this PIN" |
 | PIN display warning | "Store this PIN somewhere safe — it won't be shown again." |
 | PIN copy button | "Copy PIN" → "Copied!" (2s) |
@@ -255,7 +259,6 @@ Source: CONTEXT.md decisions (D-04 through D-11) + Claude's Discretion (wording 
 | Success toast (role changed) | "[Name]'s role changed to [New Role]." |
 | Success toast (PIN reset) | "PIN reset for [Name]." |
 | Success toast (deactivated) | "[Name] deactivated." |
-| Cancel button | "Cancel" |
 | Save button | "Save Changes" |
 
 Tone notes (from Claude's Discretion): Short sentences. No exclamation marks except in confirmation success contexts. "They'll" not "They will". Use the person's name where available — makes actions feel personal and intentional, reducing accidental clicks.
