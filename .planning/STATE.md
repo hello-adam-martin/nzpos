@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Hardening & Documentation
 status: executing
-stopped_at: Completed 18-01-PLAN.md
-last_updated: "2026-04-04T01:51:25.117Z"
+stopped_at: Completed 18-03-PLAN.md
+last_updated: "2026-04-04T02:03:06.148Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 9
-  completed_plans: 6
+  completed_plans: 7
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 ## Current Position
 
 Phase: 18 (code-quality-test-coverage) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-04-04
 
@@ -67,6 +67,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 17-05]: ROADMAP.md Server Action count was already 48 — only REQUIREMENTS.md SEC-08 needed correction
 - [Phase 18]: Mock resolveStaffAuth at module level in tests (not next/headers+jose individually) — resolveAuth calls both cookies() and headers(), mocking only one was insufficient
 - [Phase 18]: Coverage thresholds set at per-file 80% for 8 critical paths; thresholds for resolveAuth, tenantCache, middleware expected to fail until Plan 02 writes those tests
+- [Phase 18]: tailwindcss and postcss added to knip ignoreDependencies — CSS directive imports not detected by knip static analysis
+- [Phase 18]: scripts/generate-icons.ts treated as entry point in knip.json — one-off CLI scripts must be entries, not project files
 
 ### Pending Todos
 
@@ -81,6 +83,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T01:51:25.114Z
-Stopped at: Completed 18-01-PLAN.md
+Last session: 2026-04-04T02:03:06.145Z
+Stopped at: Completed 18-03-PLAN.md
 Resume file: None

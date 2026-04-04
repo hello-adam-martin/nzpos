@@ -26,7 +26,7 @@ Requirements for the Hardening & Documentation milestone. Each maps to roadmap p
 
 ### Code Quality
 
-- [ ] **QUAL-01**: Dead code removed across all 336 source files using static analysis
+- [x] **QUAL-01**: Dead code removed across all 336 source files using static analysis
 - [ ] **QUAL-02**: Server Actions and Route Handlers have consistent error handling with no stack trace leaks
 - [x] **QUAL-03**: TypeScript strict mode passes with zero errors or documented suppressions
 - [ ] **QUAL-04**: Performance-critical paths reviewed (GST calculations, stock decrements, product queries have proper indexes)
@@ -115,7 +115,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEC-12 | Phase 17 | Complete |
 | SEC-13 | Phase 17 | Complete |
 | SEC-14 | Phase 17 | Complete |
-| QUAL-01 | Phase 18 | Pending |
+| QUAL-01 | Phase 18 | Complete |
 | QUAL-02 | Phase 18 | Pending |
 | QUAL-03 | Phase 18 | Complete |
 | QUAL-04 | Phase 18 | Pending |
