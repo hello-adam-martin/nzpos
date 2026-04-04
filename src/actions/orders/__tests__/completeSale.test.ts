@@ -116,13 +116,13 @@ describe('completeSale', () => {
   it('returns not-authenticated error when staff_session cookie is missing', async () => {
     mockResolveStaffAuth.mockResolvedValue(null)
     const result = await completeSale(validOrderInput)
-    expect(result).toEqual({ error: 'Not authenticated — please log in again' })
+    expect(result).toEqual({ success: false, error: 'Not authenticated — please log in again' })
   })
 
   it('returns not-authenticated error when JWT is invalid', async () => {
     mockResolveStaffAuth.mockResolvedValue(null)
     const result = await completeSale(validOrderInput)
-    expect(result).toEqual({ error: 'Not authenticated — please log in again' })
+    expect(result).toEqual({ success: false, error: 'Not authenticated — please log in again' })
   })
 
   it('returns invalid order data error when input is missing required fields', async () => {

@@ -10,12 +10,12 @@ import { calcChangeDue } from '@/lib/cart'
 export async function completeSale(input: unknown) {
   // 1. Verify staff JWT from staff_session cookie
   const staff = await resolveStaffAuth()
-  if (!staff) return { error: 'Not authenticated — please log in again' }
+  if (!staff) return { success: false as const, error: 'Not authenticated — please log in again' }
 
   // 2. Validate input with Zod
   const parsed = CreateOrderSchema.safeParse(input)
   if (!parsed.success) {
-    return { error: 'Invalid order data', details: parsed.error.flatten().fieldErrors }
+    return { success: false as const, error: 'Invalid order data', details: parsed.error.flatten().fieldErrors }
   }
 
   // 3. Query staff name and store details (for receipt)
@@ -61,6 +61,7 @@ export async function completeSale(input: unknown) {
       const parts = rpcPayload.split(':')
       const productId = parts[1]?.trim()
       return {
+        success: false as const,
         error: 'out_of_stock' as const,
         productId,
         message: 'This item is out of stock.',
@@ -69,12 +70,13 @@ export async function completeSale(input: unknown) {
     if (rpcPayload.includes('PRODUCT_NOT_FOUND')) {
       const productId = rpcPayload.split(':')[1]?.trim()
       return {
+        success: false as const,
         error: 'product_not_found' as const,
         productId,
       }
     }
     console.error('[completeSale] store_id=%s RPC error code=%s:', staff.store_id, rpcCode, error)
-    return { error: 'Sale could not be recorded. Please try again or note the order manually.' }
+    return { success: false as const, error: 'Sale could not be recorded. Please try again or note the order manually.' }
   }
 
   // 6. Build receipt data now that we have the order ID
