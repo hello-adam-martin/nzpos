@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Hardening & Documentation
 status: executing
-stopped_at: Completed 18-03-PLAN.md
-last_updated: "2026-04-04T02:03:06.148Z"
+stopped_at: Completed 18-02-PLAN.md
+last_updated: "2026-04-04T02:05:54.615Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 ## Current Position
 
 Phase: 18 (code-quality-test-coverage) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-04-04
 
@@ -69,6 +69,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 18]: Coverage thresholds set at per-file 80% for 8 critical paths; thresholds for resolveAuth, tenantCache, middleware expected to fail until Plan 02 writes those tests
 - [Phase 18]: tailwindcss and postcss added to knip ignoreDependencies — CSS directive imports not detected by knip static analysis
 - [Phase 18]: scripts/generate-icons.ts treated as entry point in knip.json — one-off CLI scripts must be entries, not project files
+- [Phase 18]: IRD specimen tests in separate gst.ird.test.ts to distinguish compliance from implementation tests
+- [Phase 18]: Middleware tests expanded in-plan (was at 50.94%) — added 17 tests covering webhook passthrough, tenant resolution, admin/POS protection
 
 ### Pending Todos
 
@@ -83,6 +85,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T02:03:06.145Z
-Stopped at: Completed 18-03-PLAN.md
+Last session: 2026-04-04T02:05:54.613Z
+Stopped at: Completed 18-02-PLAN.md
 Resume file: None

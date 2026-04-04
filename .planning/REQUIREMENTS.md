@@ -35,10 +35,10 @@ Requirements for the Hardening & Documentation milestone. Each maps to roadmap p
 ### Test Coverage
 
 - [x] **TEST-01**: Test coverage report generated with vitest --coverage showing per-file coverage
-- [ ] **TEST-02**: Critical paths (GST, money, auth, RLS) have 80%+ line coverage
-- [ ] **TEST-03**: RLS integration tests cover v2.0 tables (add_ons, subscriptions, audit_logs, store_plans)
-- [ ] **TEST-04**: Stripe webhook handlers tested for all subscription lifecycle events
-- [ ] **TEST-05**: GST calculations validated against IRD-published specimen examples
+- [x] **TEST-02**: Critical paths (GST, money, auth, RLS) have 80%+ line coverage
+- [x] **TEST-03**: RLS integration tests cover v2.0 tables (add_ons, subscriptions, audit_logs, store_plans)
+- [x] **TEST-04**: Stripe webhook handlers tested for all subscription lifecycle events
+- [x] **TEST-05**: GST calculations validated against IRD-published specimen examples
 
 ### Developer Documentation
 
@@ -121,10 +121,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QUAL-04 | Phase 18 | Pending |
 | QUAL-05 | Phase 18 | Pending |
 | TEST-01 | Phase 18 | Complete |
-| TEST-02 | Phase 18 | Pending |
-| TEST-03 | Phase 18 | Pending |
-| TEST-04 | Phase 18 | Pending |
-| TEST-05 | Phase 18 | Pending |
+| TEST-02 | Phase 18 | Complete |
+| TEST-03 | Phase 18 | Complete |
+| TEST-04 | Phase 18 | Complete |
+| TEST-05 | Phase 18 | Complete |
 | DOC-01 | Phase 19 | Pending |
 | DOC-02 | Phase 19 | Pending |
 | DOC-03 | Phase 19 | Pending |
