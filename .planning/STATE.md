@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Hardening & Documentation
-status: executing
-stopped_at: Completed 18-02-PLAN.md
-last_updated: "2026-04-04T02:05:54.615Z"
+status: verifying
+stopped_at: Completed 18-04-PLAN.md
+last_updated: "2026-04-04T02:16:01.741Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 
 Phase: 18 (code-quality-test-coverage) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-04
 
 Progress: [░░░░░░░░░░] 0%
@@ -71,6 +71,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 18]: scripts/generate-icons.ts treated as entry point in knip.json — one-off CLI scripts must be entries, not project files
 - [Phase 18]: IRD specimen tests in separate gst.ird.test.ts to distinguish compliance from implementation tests
 - [Phase 18]: Middleware tests expanded in-plan (was at 50.94%) — added 17 tests covering webhook passthrough, tenant resolution, admin/POS protection
+- [Phase 18]: RPC structured error parsing uses local alias variable to avoid error.message in return path while preserving OUT_OF_STOCK/PRODUCT_NOT_FOUND code detection in completeSale
+- [Phase 18]: customerSignup duplicate detection uses error.status === 422 (not error.message string match) — more robust against Supabase API changes
 
 ### Pending Todos
 
@@ -85,6 +87,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T02:05:54.613Z
-Stopped at: Completed 18-02-PLAN.md
+Last session: 2026-04-04T02:16:01.739Z
+Stopped at: Completed 18-04-PLAN.md
 Resume file: None

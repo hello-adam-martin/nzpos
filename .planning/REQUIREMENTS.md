@@ -27,10 +27,10 @@ Requirements for the Hardening & Documentation milestone. Each maps to roadmap p
 ### Code Quality
 
 - [x] **QUAL-01**: Dead code removed across all 336 source files using static analysis
-- [ ] **QUAL-02**: Server Actions and Route Handlers have consistent error handling with no stack trace leaks
+- [x] **QUAL-02**: Server Actions and Route Handlers have consistent error handling with no stack trace leaks
 - [x] **QUAL-03**: TypeScript strict mode passes with zero errors or documented suppressions
-- [ ] **QUAL-04**: Performance-critical paths reviewed (GST calculations, stock decrements, product queries have proper indexes)
-- [ ] **QUAL-05**: Complex business logic has inline JSDoc documentation (gst.ts, requireFeature.ts, tenantCache.ts, xero/sync.ts, provision_store)
+- [x] **QUAL-04**: Performance-critical paths reviewed (GST calculations, stock decrements, product queries have proper indexes)
+- [x] **QUAL-05**: Complex business logic has inline JSDoc documentation (gst.ts, requireFeature.ts, tenantCache.ts, xero/sync.ts, provision_store)
 
 ### Test Coverage
 
@@ -116,10 +116,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEC-13 | Phase 17 | Complete |
 | SEC-14 | Phase 17 | Complete |
 | QUAL-01 | Phase 18 | Complete |
-| QUAL-02 | Phase 18 | Pending |
+| QUAL-02 | Phase 18 | Complete |
 | QUAL-03 | Phase 18 | Complete |
-| QUAL-04 | Phase 18 | Pending |
-| QUAL-05 | Phase 18 | Pending |
+| QUAL-04 | Phase 18 | Complete |
+| QUAL-05 | Phase 18 | Complete |
 | TEST-01 | Phase 18 | Complete |
 | TEST-02 | Phase 18 | Complete |
 | TEST-03 | Phase 18 | Complete |

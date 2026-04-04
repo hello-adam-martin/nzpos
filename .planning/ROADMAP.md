@@ -41,7 +41,7 @@
 **Milestone Goal:** Comprehensive security audit, code quality review, test coverage gap-filling, and full documentation suite to prepare the platform for external merchant onboarding and production deployment.
 
 - [x] **Phase 17: Security Audit** — Verify tenant isolation, auth flows, webhook integrity, and input validation across the entire codebase (completed 2026-04-03)
-- [ ] **Phase 18: Code Quality + Test Coverage** — Remove dead code, enforce consistent error handling, fill test coverage gaps on critical paths
+- [x] **Phase 18: Code Quality + Test Coverage** — Remove dead code, enforce consistent error handling, fill test coverage gaps on critical paths (completed 2026-04-04)
 - [ ] **Phase 19: Developer Documentation** — Write setup guide, architecture overview, env var reference, and Server Action inventory
 - [ ] **Phase 20: Deployment + User Documentation** — Production runbook, merchant onboarding guide, and GST compliance explanation
 
@@ -75,12 +75,12 @@ Plans:
   3. GST calculations are validated against IRD-published specimen examples and all test assertions pass
   4. Dead code is removed across all source files, Server Actions and Route Handlers have consistent error handling with no stack trace leaks, and TypeScript strict mode passes with zero errors or documented suppressions
   5. Complex business logic (gst.ts, requireFeature.ts, tenantCache.ts, xero/sync.ts, provision_store) has inline JSDoc documentation and performance-critical paths have confirmed database indexes
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 Plans:
 - [x] 18-01-PLAN.md — Fix CI blockers (TS errors, failing tests) and install coverage infrastructure
 - [x] 18-02-PLAN.md — Write critical-path tests (resolveAuth, tenantCache, IRD GST, RLS v2.0, Stripe lifecycle)
 - [x] 18-03-PLAN.md — Dead code removal with knip (unused files, exports, dependencies)
-- [ ] 18-04-PLAN.md — Error handling standardization, JSDoc sweep, performance indexes
+- [x] 18-04-PLAN.md — Error handling standardization, JSDoc sweep, performance indexes
 
 ### Phase 19: Developer Documentation
 **Goal**: Any developer (including the founder returning after months away) can clone the repo, configure environment variables, and have the app running locally within 20 minutes, with complete reference for the architecture and all Server Actions
@@ -127,6 +127,6 @@ Plans:
 | 15. Stripe Billing + Feature Gating | v2.0 | 4/4 | Complete | 2026-04-03 |
 | 16. Super Admin Panel | v2.0 | 4/4 | Complete | 2026-04-03 |
 | 17. Security Audit | v2.1 | 5/5 | Complete    | 2026-04-03 |
-| 18. Code Quality + Test Coverage | v2.1 | 3/4 | In Progress|  |
+| 18. Code Quality + Test Coverage | v2.1 | 4/4 | Complete   | 2026-04-04 |
 | 19. Developer Documentation | v2.1 | 0/TBD | Not started | - |
 | 20. Deployment + User Documentation | v2.1 | 0/TBD | Not started | - |
