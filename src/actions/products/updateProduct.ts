@@ -50,6 +50,9 @@ export async function updateProduct(id: string, formData: FormData) {
   const imageUrl = formData.get('image_url') as string | null
   if (imageUrl !== null) raw.image_url = imageUrl || undefined
 
+  const productType = formData.get('product_type') as string | null
+  if (productType !== null) raw.product_type = productType
+
   const parsed = UpdateProductSchema.safeParse(raw)
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors }

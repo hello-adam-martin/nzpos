@@ -15,14 +15,11 @@ const ImportRowSchema = z.object({
   sku: z.string().max(50).optional(),
   barcode: z.string().max(50).optional(),
   price_cents: z.number().int().min(0),
+  product_type: z.enum(['physical', 'service']).default('physical'), // D-09: default physical
   stock_quantity: z.number().int().min(0).optional(),
   reorder_threshold: z.number().int().min(0).optional(),
   category_name: z.string().max(100).optional(),
   category_id: z.string().uuid().optional(),
-})
-
-const ImportSchema = z.object({
-  rows: z.array(ImportRowSchema).min(1).max(1000),
 })
 
 export type ImportRow = z.infer<typeof ImportRowSchema>
@@ -36,13 +33,32 @@ export interface ImportResult {
 export async function importProducts(
   rows: unknown
 ): Promise<ImportResult | { error: string }> {
-  // Validate all input before touching the database
-  const parsedInput = ImportSchema.safeParse({ rows })
-  if (!parsedInput.success) {
-    return { error: 'Invalid import data. Check that all rows have valid names and non-negative prices.' }
+  // Per-row validation for D-11: reject invalid product_type per row, not per chunk
+  const inputRows = rows as any[]
+  if (!Array.isArray(inputRows) || inputRows.length === 0 || inputRows.length > 1000) {
+    return { error: 'Invalid import data. Provide 1–1000 rows.' }
   }
 
-  const validatedRows = parsedInput.data.rows
+  const validatedRows: z.infer<typeof ImportRowSchema>[] = []
+  const errors: Array<{ row: number; message: string }> = []
+
+  for (let i = 0; i < inputRows.length; i++) {
+    const result = ImportRowSchema.safeParse(inputRows[i])
+    if (result.success) {
+      validatedRows.push(result.data)
+    } else {
+      const fieldErrors = result.error.flatten().fieldErrors
+      const msg = fieldErrors.product_type
+        ? "Invalid product type \u2014 must be 'physical' or 'service'. Row skipped."
+        : `Invalid data: ${result.error.issues.map(i => i.message).join(', ')}. Row skipped.`
+      errors.push({ row: i + 1, message: msg })
+    }
+  }
+
+  if (validatedRows.length === 0) {
+    return { error: 'No valid rows to import.' }
+  }
+
   const supabase = await createSupabaseServerClient()
 
   const {
@@ -119,14 +135,16 @@ export async function importProducts(
       category_id = categoryIdByName.get(row.category_name.toLowerCase())
     }
 
+    const isService = row.product_type === 'service'
     return {
       store_id: storeId,
       name: row.name,
       sku: row.sku ?? null,
       barcode: row.barcode ?? null,
       price_cents: row.price_cents,
-      stock_quantity: row.stock_quantity ?? 0,
-      reorder_threshold: row.reorder_threshold ?? 0,
+      product_type: row.product_type,
+      stock_quantity: isService ? 0 : (row.stock_quantity ?? 0),       // D-10
+      reorder_threshold: isService ? 0 : (row.reorder_threshold ?? 0), // D-10
       category_id: category_id ?? null,
       is_active: true,
     }
@@ -134,7 +152,6 @@ export async function importProducts(
 
   // Batch insert in chunks of CHUNK_SIZE
   let totalImported = 0
-  const errors: Array<{ row: number; message: string }> = []
 
   for (let i = 0; i < insertRows.length; i += CHUNK_SIZE) {
     const chunk = insertRows.slice(i, i + CHUNK_SIZE)
