@@ -403,6 +403,45 @@ describe('Billing Webhook Handler', () => {
     expect(updatedData).toMatchObject({ has_xero: true })
   })
 
+  test('handles unrecognized price ID gracefully (records event, no store_plans update)', async () => {
+    const subscription = makeSubscription({
+      status: 'active',
+      items: { data: [{ price: { id: 'price_unknown_xyz' } }] }, // not in PRICE_TO_FEATURE
+    })
+    const event = makeEvent('customer.subscription.created', subscription)
+    mockConstructEvent.mockReturnValue(event)
+
+    let storePlansUpdated = false
+    let stripeEventInserted = false
+
+    mockFrom.mockImplementation((table: string) => {
+      const chain: any = {
+        select: () => chain,
+        eq: () => chain,
+        is: () => chain,
+        maybeSingle: () => Promise.resolve({ data: null, error: null }),
+        single: () => Promise.resolve({ data: { stripe_customer_id: null }, error: null }),
+        insert: (_data: any) => {
+          if (table === 'stripe_events') stripeEventInserted = true
+          return Promise.resolve({ data: null, error: null })
+        },
+        update: (_data: any) => {
+          if (table === 'store_plans') storePlansUpdated = true
+          return chain
+        },
+        then: (resolve: any) => Promise.resolve({ data: null, error: null }).then(resolve),
+      }
+      return chain
+    })
+
+    const res = await POST(makeRequest())
+    expect(res.status).toBe(200)
+    // Unrecognized price: store_plans should NOT be updated
+    expect(storePlansUpdated).toBe(false)
+    // But the event SHOULD still be recorded for idempotency
+    expect(stripeEventInserted).toBe(true)
+  })
+
   test('falls back to stores table lookup when no store_id in metadata', async () => {
     const subscription = makeSubscription({
       status: 'active',

@@ -304,4 +304,64 @@ describe('Stripe Webhook Handler', () => {
     expect(res.status).toBe(200)
     expect(mockRpc).not.toHaveBeenCalled()
   })
+
+  test('sends email via fallback path when receipt_data is null (builds from order_items + store)', async () => {
+    mockConstructEvent.mockReturnValue(mockEvent)
+    mockSendEmail.mockResolvedValue({ data: null, error: null })
+
+    const fullItems = [
+      {
+        product_id: 'prod-1',
+        quantity: 2,
+        unit_price_cents: 2300,
+        line_total_cents: 4600,
+        discount_cents: 0,
+        products: { name: 'Widget' },
+      },
+    ]
+    const storeData = {
+      name: 'My Store',
+      address: '1 Queen St',
+      phone: '09 000 0000',
+      gst_number: '111-222-333',
+    }
+
+    let orderCallCount = 0
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'stripe_events') {
+        return createChain({ data: null, error: null })
+      }
+      if (table === 'order_items') {
+        // First call: complete_online_sale fetch (product_id, quantity)
+        // Second call: fallback email fetch (extended select)
+        orderCallCount++
+        if (orderCallCount === 1) {
+          return createChain({ data: [{ product_id: 'prod-1', quantity: 2 }], error: null })
+        }
+        return createChain({ data: fullItems, error: null })
+      }
+      if (table === 'orders') {
+        return createChain({
+          data: { promo_id: null, id: mockSession.metadata.order_id, total_cents: 4600, created_at: new Date().toISOString(), receipt_data: null },
+          error: null,
+        })
+      }
+      if (table === 'stores') {
+        return createChain({ data: storeData, error: null })
+      }
+      return createChain({ data: null, error: null })
+    })
+    mockRpc.mockResolvedValue({ error: null })
+
+    const res = await POST(makeRequest('raw-body'))
+    expect(res.status).toBe(200)
+    await Promise.resolve()
+    expect(mockSendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'test@example.com',
+        subject: expect.stringContaining('My Store'),
+      })
+    )
+  })
 })
