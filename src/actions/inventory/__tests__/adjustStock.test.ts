@@ -1,5 +1,29 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { AdjustStockSchema } from '@/schemas/inventory'
+
+// Mock server-only modules before importing the action
+vi.mock('server-only', () => ({}))
+vi.mock('@/lib/requireFeature', () => ({
+  requireFeature: vi.fn(),
+}))
+vi.mock('@/lib/resolveAuth', () => ({
+  resolveAuth: vi.fn(),
+}))
+vi.mock('@/lib/supabase/admin', () => ({
+  createSupabaseAdminClient: vi.fn(),
+}))
+
+import { requireFeature } from '@/lib/requireFeature'
+import { resolveAuth } from '@/lib/resolveAuth'
+import { createSupabaseAdminClient } from '@/lib/supabase/admin'
+import { adjustStock } from '../adjustStock'
+
+const VALID_UUID = '550e8400-e29b-41d4-a716-446655440000'
+const VALID_INPUT = {
+  product_id: VALID_UUID,
+  quantity_delta: 5,
+  reason: 'received' as const,
+}
 
 /**
  * Wave 0 scaffold for adjustStock server action tests.
@@ -67,10 +91,71 @@ describe('adjustStock', () => {
   })
 
   describe('server action', () => {
-    it.todo('calls requireFeature with inventory and requireDbCheck: true')
-    it.todo('calls adjust_stock RPC with correct parameters')
-    it.todo('returns new_quantity on success')
-    it.todo('returns error when feature not active')
-    it.todo('returns error when product not found')
+    const mockRequireFeature = vi.mocked(requireFeature)
+    const mockResolveAuth = vi.mocked(resolveAuth)
+    const mockCreateAdminClient = vi.mocked(createSupabaseAdminClient)
+
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('calls requireFeature with inventory and requireDbCheck: true', async () => {
+      mockRequireFeature.mockResolvedValue({ authorized: false, feature: 'inventory', upgradeUrl: '/admin/billing?upgrade=inventory' })
+
+      await adjustStock(VALID_INPUT)
+
+      expect(mockRequireFeature).toHaveBeenCalledWith('inventory', { requireDbCheck: true })
+    })
+
+    it('returns error when feature not active', async () => {
+      mockRequireFeature.mockResolvedValue({ authorized: false, feature: 'inventory', upgradeUrl: '/admin/billing?upgrade=inventory' })
+
+      const result = await adjustStock(VALID_INPUT)
+
+      expect(result).toEqual({ error: 'feature_not_active' })
+    })
+
+    it('calls adjust_stock RPC with correct parameters', async () => {
+      mockRequireFeature.mockResolvedValue({ authorized: true })
+      mockResolveAuth.mockResolvedValue({ store_id: 'store-123', staff_id: 'staff-456' })
+      const mockRpc = vi.fn().mockResolvedValue({ data: { new_quantity: 15 }, error: null })
+      mockCreateAdminClient.mockReturnValue({ rpc: mockRpc } as any)
+
+      await adjustStock(VALID_INPUT)
+
+      expect(mockRpc).toHaveBeenCalledWith('adjust_stock', {
+        p_store_id: 'store-123',
+        p_product_id: VALID_UUID,
+        p_quantity_delta: 5,
+        p_reason: 'received',
+        p_notes: null,
+        p_staff_id: 'staff-456',
+      })
+    })
+
+    it('returns new_quantity on success', async () => {
+      mockRequireFeature.mockResolvedValue({ authorized: true })
+      mockResolveAuth.mockResolvedValue({ store_id: 'store-123', staff_id: 'staff-456' })
+      const mockRpc = vi.fn().mockResolvedValue({ data: { new_quantity: 20 }, error: null })
+      mockCreateAdminClient.mockReturnValue({ rpc: mockRpc } as any)
+
+      const result = await adjustStock(VALID_INPUT)
+
+      expect(result).toEqual({ success: true, new_quantity: 20 })
+    })
+
+    it('returns error when product not found', async () => {
+      mockRequireFeature.mockResolvedValue({ authorized: true })
+      mockResolveAuth.mockResolvedValue({ store_id: 'store-123', staff_id: 'staff-456' })
+      const mockRpc = vi.fn().mockResolvedValue({
+        data: null,
+        error: { message: 'PRODUCT_NOT_FOUND: product does not exist' },
+      })
+      mockCreateAdminClient.mockReturnValue({ rpc: mockRpc } as any)
+
+      const result = await adjustStock(VALID_INPUT)
+
+      expect(result).toEqual({ error: 'product_not_found' })
+    })
   })
 })
