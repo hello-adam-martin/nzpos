@@ -2,12 +2,13 @@
 phase: 23
 slug: feature-gating-pos-storefront-integration
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-04-04
+updated: 2026-04-04
 ---
 
-# Phase 23 — Validation Strategy
+# Phase 23 -- Validation Strategy
 
 > Per-phase validation contract for feedback sampling during execution.
 
@@ -38,22 +39,28 @@ created: 2026-04-04
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 23-01-01 | 01 | 1 | GATE-01 | unit | `npx vitest run` | ✅ | ⬜ pending |
-| 23-01-02 | 01 | 1 | GATE-02 | unit | `npx vitest run` | ✅ | ⬜ pending |
-| 23-01-03 | 01 | 1 | GATE-03 | unit | `npx vitest run` | ✅ | ⬜ pending |
-| 23-02-01 | 02 | 1 | GATE-04 | unit | `npx vitest run` | ❌ W0 | ⬜ pending |
-| 23-02-02 | 02 | 1 | GATE-05 | unit | `npx vitest run` | ❌ W0 | ⬜ pending |
-| 23-03-01 | 03 | 2 | POS-01 | unit | `npx vitest run` | ❌ W0 | ⬜ pending |
-| 23-03-02 | 03 | 2 | POS-02 | unit | `npx vitest run` | ❌ W0 | ⬜ pending |
-| 23-03-03 | 03 | 2 | POS-03 | unit | `npx vitest run` | ❌ W0 | ⬜ pending |
+| 23-00-01 | 00 | 0 | POS-01, POS-02, POS-03 | scaffold | `npx vitest run src/components/pos/__tests__/ src/components/store/__tests__/` | Wave 0 creates | pending |
+| 23-01-01 | 01 | 1 | GATE-03, GATE-05 | unit | `npx vitest run` | Yes (billing + super-admin test files exist) | pending |
+| 23-01-02 | 01 | 1 | GATE-02 | unit | `npx vitest run` | Yes | pending |
+| 23-02-01 | 02 | 1 | GATE-01, GATE-04 | unit | `npx vitest run` | Yes | pending |
+| 23-02-02 | 02 | 1 | POS-01, POS-02, POS-03 | checkpoint | grep verification + `npx vitest run` | Yes (after Wave 0) | pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending / green / red / flaky*
 
 ---
 
 ## Wave 0 Requirements
 
-- Existing infrastructure covers all phase requirements. Vitest is installed and configured. Test files for billing/gating exist from Phase 15. New tests for inventory gating and POS stock behavior will be added alongside implementation.
+23-00-PLAN.md creates two test scaffold files:
+- [x] `src/actions/billing/__tests__/createSubscriptionCheckoutSession.test.ts` -- already exists from Phase 15
+- [x] `src/actions/super-admin/__tests__/activateAddon.test.ts` -- already exists from Phase 16
+- [x] `src/actions/super-admin/__tests__/deactivateAddon.test.ts` -- already exists from Phase 16
+- [ ] `src/components/pos/__tests__/ProductCard.test.tsx` -- created by 23-00 (covers POS-01, POS-02)
+- [ ] `src/components/store/__tests__/AddToCartButton.test.tsx` -- created by 23-00 (covers POS-03)
+
+**Note:** The billing and super-admin test files already exist from earlier phases and do not need Wave 0 scaffolding. Only the POS ProductCard and storefront AddToCartButton component tests need creation.
+
+After 23-00-PLAN.md executes successfully, set `wave_0_complete: true` in this frontmatter.
 
 ---
 
@@ -69,11 +76,11 @@ created: 2026-04-04
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 15s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 15s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved (revised 2026-04-04 to add Wave 0 plan and checkpoint verification)
