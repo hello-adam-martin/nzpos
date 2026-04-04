@@ -32,13 +32,13 @@ export async function validatePromoCode(
   }
 
   const { code, cartTotalCents } = parsed.data
-  const storeId = process.env.STORE_ID!
 
   // Use admin client — storefront has no authenticated session
   const supabase = createSupabaseAdminClient()
 
   // Rate limit: 10 validations per minute per IP (via Supabase RPC, persists across instances)
   const headersList = await headers()
+  const storeId = headersList.get('x-store-id') ?? process.env.STORE_ID!
   const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   const { data: allowed } = await supabase.rpc('check_rate_limit', {
     p_ip: ip,

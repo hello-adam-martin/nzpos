@@ -53,10 +53,30 @@ export async function createProduct(formData: FormData) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
+  // Generate slug from product name
+  const baseSlug = parsed.data.name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+  // Check for existing slug in this store and append suffix if needed
+  const { data: existing } = await supabase
+    .from('products')
+    .select('slug')
+    .eq('store_id', storeId)
+    .like('slug', `${baseSlug}%`)
+  const existingSlugs = new Set(existing?.map((p) => p.slug) ?? [])
+  let slug = baseSlug
+  if (existingSlugs.has(slug)) {
+    let counter = 2
+    while (existingSlugs.has(`${baseSlug}-${counter}`)) counter++
+    slug = `${baseSlug}-${counter}`
+  }
+
   // Only include product_type in insert if explicitly provided by the form.
   // When omitted, the DB column default ('physical') applies.
   // This avoids PGRST204 if PostgREST schema cache hasn't refreshed yet.
-  const insertData: Record<string, unknown> = { ...parsed.data, store_id: storeId }
+  const insertData: Record<string, unknown> = { ...parsed.data, store_id: storeId, slug }
   if (!productType) {
     delete insertData.product_type
   }

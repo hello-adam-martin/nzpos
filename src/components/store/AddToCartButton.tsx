@@ -24,6 +24,7 @@ export function AddToCartButton({ product, hasInventory }: AddToCartButtonProps)
 
   function handleAddToCart() {
     if (isSoldOut) return
+    const effectiveStock = hasInventory ? product.stock_quantity : 999999
     dispatch({
       type: 'ADD_ITEM',
       product: {
@@ -32,7 +33,7 @@ export function AddToCartButton({ product, hasInventory }: AddToCartButtonProps)
         priceCents: product.price_cents,
         imageUrl: product.image_url,
         slug: product.slug,
-        stockQuantity: product.stock_quantity,
+        stockQuantity: effectiveStock,
       },
     })
     dispatch({ type: 'OPEN_DRAWER' })

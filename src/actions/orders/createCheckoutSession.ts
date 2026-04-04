@@ -1,6 +1,7 @@
 'use server'
 import 'server-only'
 import { z } from 'zod'
+import { headers } from 'next/headers'
 import { stripe } from '@/lib/stripe'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { calcLineItem, calcOrderGST } from '@/lib/gst'
@@ -40,7 +41,8 @@ export async function createCheckoutSession(
     return { error: 'invalid_input' }
   }
 
-  const storeId = process.env.STORE_ID!
+  const headersList = await headers()
+  const storeId = headersList.get('x-store-id') ?? process.env.STORE_ID!
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL!
 
   const { items, promoId, promoDiscountCents = 0, promoDiscountType } = parsed.data
@@ -51,7 +53,7 @@ export async function createCheckoutSession(
   const productIds = items.map((i) => i.productId)
   const { data: products, error: productsError } = await supabase
     .from('products')
-    .select('id, name, price_cents, stock_quantity, product_type, is_active')
+    .select('id, name, price_cents, stock_quantity, is_active')
     .eq('store_id', storeId)
     .in('id', productIds)
     .eq('is_active', true)
@@ -60,6 +62,14 @@ export async function createCheckoutSession(
     console.error('[createCheckoutSession] Failed to fetch products:', productsError?.message)
     return { error: 'server_error' }
   }
+
+  // Check if this store has inventory tracking enabled
+  const { data: storePlan } = await supabase
+    .from('store_plans')
+    .select('has_inventory')
+    .eq('store_id', storeId)
+    .single()
+  const hasInventory = storePlan?.has_inventory === true
 
   // Build a lookup map
   const productMap = new Map(products.map((p) => [p.id, p]))
@@ -70,8 +80,8 @@ export async function createCheckoutSession(
     if (!product) {
       return { error: 'out_of_stock' as const, productName: 'Unknown product' }
     }
-    // POS-04/FREE-02: service products skip stock check — always sellable
-    if (product.product_type !== 'service' && product.stock_quantity < item.quantity) {
+    // Only check stock when inventory add-on is active
+    if (hasInventory && product.stock_quantity < item.quantity) {
       return { error: 'out_of_stock' as const, productName: product.name }
     }
   }

@@ -65,6 +65,32 @@ export async function updateProduct(id: string, formData: FormData) {
     delete updateData.product_type
   }
 
+  // Regenerate slug when name changes
+  if (name !== null && name !== '') {
+    const storeId = user.app_metadata?.store_id as string | undefined
+    const baseSlug = name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+    if (storeId) {
+      const { data: existing } = await supabase
+        .from('products')
+        .select('slug')
+        .eq('store_id', storeId)
+        .neq('id', id)
+        .like('slug', `${baseSlug}%`)
+      const existingSlugs = new Set(existing?.map((p) => p.slug) ?? [])
+      let slug = baseSlug
+      if (existingSlugs.has(slug)) {
+        let counter = 2
+        while (existingSlugs.has(`${baseSlug}-${counter}`)) counter++
+        slug = `${baseSlug}-${counter}`
+      }
+      updateData.slug = slug
+    }
+  }
+
   const { error: dbError } = await supabase
     .from('products')
     .update(updateData)

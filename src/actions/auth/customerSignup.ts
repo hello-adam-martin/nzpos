@@ -1,5 +1,6 @@
 'use server'
 import 'server-only'
+import { headers } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
@@ -46,7 +47,8 @@ export async function customerSignup(formData: FormData) {
   // Types are cast via untyped client until supabase gen types is re-run post-migration
   const admin = createSupabaseAdminClient()
   const untypedAdmin = admin as unknown as SupabaseClient
-  const storeId = process.env.STORE_ID!
+  const headersList = await headers()
+  const storeId = headersList.get('x-store-id') ?? process.env.STORE_ID!
   const { error: insertError } = await untypedAdmin.from('customers').insert({
     auth_user_id: data.user.id,
     store_id: storeId,

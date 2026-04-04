@@ -1,3 +1,4 @@
+Connecting to db 5432
 export type Json =
   | string
   | number
@@ -103,6 +104,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          slug: string
           sort_order: number
           store_id: string
           updated_at: string
@@ -111,6 +113,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          slug: string
           sort_order?: number
           store_id: string
           updated_at?: string
@@ -119,6 +122,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          slug?: string
           sort_order?: number
           store_id?: string
           updated_at?: string
@@ -348,8 +352,8 @@ export type Database = {
           is_active: boolean
           name: string
           price_cents: number
-          reorder_threshold: number
           product_type: string
+          reorder_threshold: number
           sku: string | null
           slug: string | null
           stock_quantity: number
@@ -625,6 +629,200 @@ export type Database = {
           },
         ]
       }
+      stock_adjustments: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          order_id: string | null
+          product_id: string
+          quantity_after: number
+          quantity_delta: number
+          reason: string
+          staff_id: string | null
+          stocktake_session_id: string | null
+          store_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          product_id: string
+          quantity_after: number
+          quantity_delta: number
+          reason: string
+          staff_id?: string | null
+          stocktake_session_id?: string | null
+          store_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          product_id?: string
+          quantity_after?: number
+          quantity_delta?: number
+          reason?: string
+          staff_id?: string | null
+          stocktake_session_id?: string | null
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_stocktake_session"
+            columns: ["stocktake_session_id"]
+            isOneToOne: false
+            referencedRelation: "stocktake_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_adjustments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_adjustments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_adjustments_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_adjustments_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stocktake_lines: {
+        Row: {
+          counted_quantity: number | null
+          created_at: string
+          id: string
+          product_id: string
+          stocktake_session_id: string
+          store_id: string
+          system_snapshot_quantity: number
+          updated_at: string
+        }
+        Insert: {
+          counted_quantity?: number | null
+          created_at?: string
+          id?: string
+          product_id: string
+          stocktake_session_id: string
+          store_id: string
+          system_snapshot_quantity: number
+          updated_at?: string
+        }
+        Update: {
+          counted_quantity?: number | null
+          created_at?: string
+          id?: string
+          product_id?: string
+          stocktake_session_id?: string
+          store_id?: string
+          system_snapshot_quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stocktake_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stocktake_lines_stocktake_session_id_fkey"
+            columns: ["stocktake_session_id"]
+            isOneToOne: false
+            referencedRelation: "stocktake_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stocktake_lines_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stocktake_sessions: {
+        Row: {
+          category_id: string | null
+          committed_at: string | null
+          created_at: string
+          created_by: string | null
+          discarded_at: string | null
+          id: string
+          scope: string
+          status: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          committed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          discarded_at?: string | null
+          id?: string
+          scope?: string
+          status?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          committed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          discarded_at?: string | null
+          id?: string
+          scope?: string
+          status?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stocktake_sessions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stocktake_sessions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stocktake_sessions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_plans: {
         Row: {
           created_at: string
@@ -750,6 +948,35 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_events: {
+        Row: {
+          id: string
+          processed_at: string
+          store_id: string
+          type: string
+        }
+        Insert: {
+          id: string
+          processed_at?: string
+          store_id: string
+          type: string
+        }
+        Update: {
+          id?: string
+          processed_at?: string
+          store_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_events_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       super_admin_actions: {
         Row: {
           action: string
@@ -778,229 +1005,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "super_admin_actions_store_id_fkey"
-            columns: ["store_id"]
-            isOneToOne: false
-            referencedRelation: "stores"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      stock_adjustments: {
-        Row: {
-          id: string
-          store_id: string
-          product_id: string
-          reason: string
-          quantity_delta: number
-          quantity_after: number
-          notes: string | null
-          order_id: string | null
-          stocktake_session_id: string | null
-          staff_id: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          store_id: string
-          product_id: string
-          reason: string
-          quantity_delta: number
-          quantity_after: number
-          notes?: string | null
-          order_id?: string | null
-          stocktake_session_id?: string | null
-          staff_id?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          store_id?: string
-          product_id?: string
-          reason?: string
-          quantity_delta?: number
-          quantity_after?: number
-          notes?: string | null
-          order_id?: string | null
-          stocktake_session_id?: string | null
-          staff_id?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stock_adjustments_store_id_fkey"
-            columns: ["store_id"]
-            isOneToOne: false
-            referencedRelation: "stores"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_adjustments_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_adjustments_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_stocktake_session"
-            columns: ["stocktake_session_id"]
-            isOneToOne: false
-            referencedRelation: "stocktake_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_adjustments_staff_id_fkey"
-            columns: ["staff_id"]
-            isOneToOne: false
-            referencedRelation: "staff"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      stocktake_sessions: {
-        Row: {
-          id: string
-          store_id: string
-          status: string
-          scope: string
-          category_id: string | null
-          created_by: string | null
-          committed_at: string | null
-          discarded_at: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          store_id: string
-          status?: string
-          scope?: string
-          category_id?: string | null
-          created_by?: string | null
-          committed_at?: string | null
-          discarded_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          store_id?: string
-          status?: string
-          scope?: string
-          category_id?: string | null
-          created_by?: string | null
-          committed_at?: string | null
-          discarded_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stocktake_sessions_store_id_fkey"
-            columns: ["store_id"]
-            isOneToOne: false
-            referencedRelation: "stores"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stocktake_sessions_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stocktake_sessions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "staff"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      stocktake_lines: {
-        Row: {
-          id: string
-          stocktake_session_id: string
-          store_id: string
-          product_id: string
-          system_snapshot_quantity: number
-          counted_quantity: number | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          stocktake_session_id: string
-          store_id: string
-          product_id: string
-          system_snapshot_quantity: number
-          counted_quantity?: number | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          stocktake_session_id?: string
-          store_id?: string
-          product_id?: string
-          system_snapshot_quantity?: number
-          counted_quantity?: number | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stocktake_lines_stocktake_session_id_fkey"
-            columns: ["stocktake_session_id"]
-            isOneToOne: false
-            referencedRelation: "stocktake_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stocktake_lines_store_id_fkey"
-            columns: ["store_id"]
-            isOneToOne: false
-            referencedRelation: "stores"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stocktake_lines_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      stripe_events: {
-        Row: {
-          id: string
-          processed_at: string
-          store_id: string
-          type: string
-        }
-        Insert: {
-          id: string
-          processed_at?: string
-          store_id: string
-          type: string
-        }
-        Update: {
-          id?: string
-          processed_at?: string
-          store_id?: string
-          type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stripe_events_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -1145,27 +1149,19 @@ export type Database = {
     Functions: {
       adjust_stock: {
         Args: {
-          p_store_id: string
+          p_notes?: string
+          p_order_id?: string
           p_product_id: string
           p_quantity_delta: number
           p_reason: string
-          p_notes?: string | null
-          p_staff_id?: string | null
-          p_order_id?: string | null
+          p_staff_id?: string
+          p_store_id: string
         }
         Returns: Json
       }
       check_rate_limit: {
         Args: { p_ip: string; p_max: number; p_window_seconds: number }
         Returns: boolean
-      }
-      complete_stocktake: {
-        Args: {
-          p_session_id: string
-          p_store_id: string
-          p_staff_id?: string | null
-        }
-        Returns: Json
       }
       complete_online_sale: {
         Args: {
@@ -1211,6 +1207,10 @@ export type Database = {
             }
             Returns: Json
           }
+      complete_stocktake: {
+        Args: { p_session_id: string; p_staff_id?: string; p_store_id: string }
+        Returns: Json
+      }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       delete_xero_tokens: { Args: { p_store_id: string }; Returns: undefined }
       get_xero_tokens: {

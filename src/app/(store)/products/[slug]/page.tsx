@@ -2,6 +2,7 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import type { Metadata } from 'next'
+import { headers } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { formatNZD } from '@/lib/money'
 import { SoldOutBadge } from '@/components/store/SoldOutBadge'
@@ -14,13 +15,19 @@ interface PageProps {
   params: Promise<{ slug: string }>
 }
 
+async function getStoreId() {
+  const headersList = await headers()
+  return headersList.get('x-store-id') ?? process.env.STORE_ID!
+}
+
 async function getProductBySlug(slug: string) {
+  const storeId = await getStoreId()
   const supabase = await createSupabaseServerClient()
   const { data } = await supabase
     .from('products')
     .select('*')
     .eq('slug', slug)
-    .eq('store_id', process.env.STORE_ID!)
+    .eq('store_id', storeId)
     .eq('is_active', true)
     .single()
   return data
@@ -49,11 +56,12 @@ export default async function ProductDetailPage({ params }: PageProps) {
   }
 
   // Query store_plans for hasInventory (storefront has no auth session)
+  const storeId = await getStoreId()
   const supabase = await createSupabaseServerClient()
   const { data: storePlan } = await supabase
     .from('store_plans')
     .select('has_inventory')
-    .eq('store_id', process.env.STORE_ID!)
+    .eq('store_id', storeId)
     .single()
   const hasInventory = storePlan?.has_inventory === true
 

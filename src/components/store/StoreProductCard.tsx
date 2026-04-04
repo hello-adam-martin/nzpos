@@ -35,6 +35,9 @@ export function StoreProductCard({ product, hasInventory }: StoreProductCardProp
 
   function handleAddToCart() {
     if (isSoldOut) return
+    // When inventory tracking is off, stock is unlimited — use a high cap
+    // so the cart reducer doesn't block the add (it rejects stockQuantity <= 0)
+    const effectiveStock = hasInventory ? product.stockQuantity : 999999
     dispatch({
       type: 'ADD_ITEM',
       product: {
@@ -43,7 +46,7 @@ export function StoreProductCard({ product, hasInventory }: StoreProductCardProp
         priceCents: product.priceCents,
         imageUrl: product.imageUrl,
         slug: product.slug,
-        stockQuantity: product.stockQuantity,
+        stockQuantity: effectiveStock,
       },
     })
     dispatch({ type: 'OPEN_DRAWER' })
