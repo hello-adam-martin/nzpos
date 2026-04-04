@@ -142,6 +142,51 @@
 
 ---
 
+## Milestone: v3.0 — Inventory Management
+
+**Shipped:** 2026-04-05
+**Phases:** 3 | **Plans:** 11
+
+### What Was Built
+- Service product type with `physical`/`service` column, stock-skip in checkout RPCs, refund guards, CSV import support
+- Free-tier simplification: all stock UI gated behind `has_inventory`, zero noise for non-subscribers
+- Inventory add-on core: append-only stock_adjustments audit table, adjust_stock and complete_stocktake SECURITY DEFINER RPCs, manual adjustments with reason codes
+- Stocktake workflow: session lifecycle (create/commit/discard), count entry with 800ms auto-save, barcode scan, variance review with semantic colors
+- Feature gating: Stripe billing checkout, `requireFeature('inventory', { requireDbCheck: true })` on all mutations, JWT fast-path for UI, super admin override
+- POS/Storefront integration: stock badges, out-of-stock cart blocking, sold-out states — all gated behind subscription
+
+### What Worked
+- **SECURITY DEFINER RPCs for stock mutations** — adjust_stock and complete_stocktake handle atomic operations at the DB layer, eliminating partial-state bugs
+- **Append-only audit table pattern** — INSERT+SELECT RLS only, no UPDATE/DELETE. Immutable stock history at the database level.
+- **Free-tier silent decrement** — add-on gates management UI, not the data pipeline. Stock stays accurate for when merchants upgrade.
+- **Wave-based execution with worktrees** — Phase 22's 5 plans ran in 3 waves with parallel agents. Zero conflicts despite shared schema.
+- **CHECK constraint over ENUM for product_type** — easy future extension without migration. Learned from Supabase ENUM pain in other projects.
+
+### What Was Inefficient
+- **SUMMARY.md one-liner quality STILL broken** — fourth milestone with garbage one-liners ("One-liner:", "adjustStock.ts"). The summary-extract tool depends on frontmatter format that summaries don't consistently follow.
+- **GATE-01 and GATE-04 not checked off** — both were fully implemented but marked "Pending" in REQUIREMENTS.md. Same drift issue seen in v1.0 and v2.0.
+- **Phase 22 worktree conflicts** — Wave 2/3 required a manual merge commit (4b5816a) to resolve conflicts between UI and server action worktrees touching shared files.
+
+### Patterns Established
+- `requireFeature('inventory', { requireDbCheck: true })` as first line in every inventory mutation action
+- Query-only actions skip feature gate (sessions only exist if feature was active at creation)
+- `resolveAuth()` returns snake_case `{ store_id, staff_id }` — all inventory actions follow this convention
+- InventoryUpgradeWall component sources content from ADDONS config, uses JWT fast-path (not DB check)
+- Inline commit confirmation strip (role=alert) instead of modal for destructive stocktake actions
+
+### Key Lessons
+1. **SUMMARY.md one-liner extraction is fundamentally broken** — needs tooling fix or format enforcement. Four milestones of garbage data in MILESTONES.md accomplishments.
+2. **Requirements should be checked off during plan execution, not retroactively** — GATE-01/GATE-04 drift proves this hasn't improved despite being flagged in v1.0, v2.0, and v2.1 retros.
+3. **Worktree conflicts are manageable but not zero** — when multiple plans touch the same DB types file or shared schema, conflicts happen. Ordering plans to minimize shared-file contention helps.
+4. **Append-only audit tables with RLS are powerful** — the stock_adjustments pattern (no UPDATE/DELETE policies) is a reusable pattern for any tamper-proof history requirement.
+
+### Cost Observations
+- Model mix: ~60% opus (orchestration + execution), ~40% sonnet (research/subagents/verification)
+- Sessions: ~3 across the milestone
+- Notable: smallest milestone yet (3 phases, 11 plans) but high code density — 10,628 LOC in 90 files
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -151,6 +196,7 @@
 | v1.0 | ~8 | 6 | First milestone. Established GSD workflow with wave-based execution. |
 | v2.0 | ~6 | 10 | Parallel worktree agents matured. TDD pattern solidified for all Server Actions. |
 | v2.1 | ~3 | 4 | Security-first hardening. Documentation-only phases execute fastest. gsd-tools automation eliminated drift. |
+| v3.0 | ~3 | 3 | Feature add-on pattern matured. SECURITY DEFINER RPCs for all stock mutations. Smallest milestone, highest LOC density. |
 
 ### Cumulative Quality
 
@@ -159,6 +205,7 @@
 | v1.0 | 502 | 191 | 17,423 |
 | v2.0 | 365+ | 336 | 36,329 |
 | v2.1 | 434 | 989 | 89,000+ |
+| v3.0 | 445+ | 1,000+ | 99,000+ |
 
 ### Top Lessons (Verified Across Milestones)
 
@@ -168,3 +215,5 @@
 4. Keep planning artifacts (ROADMAP checkboxes, REQUIREMENTS traceability, STATE milestone version) in sync during execution, not retroactively. gsd-tools automation in v2.1 largely solved this.
 5. Security audits always surface more than initial planning estimates — budget 20% extra for gap closure.
 6. Documentation-only phases are the fastest to execute — no build/test cycles, pure content creation with grep verification.
+7. SUMMARY.md one-liner extraction is broken across all 4 milestones — needs tooling fix before v4.0.
+8. Append-only audit tables with INSERT+SELECT-only RLS are a reusable pattern for tamper-proof history.

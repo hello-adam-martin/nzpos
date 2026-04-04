@@ -9,29 +9,15 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 - **v1.0 MVP** — Phases 1-6 (shipped 2026-04-02): Foundation, product catalog, POS checkout, online store, admin & reporting, Xero integration
 - **v2.0 SaaS Platform** — Phases 7-16 (shipped 2026-04-03): Multi-tenant, self-serve signup, billing, super admin, barcode scanning, receipts, notifications, customer accounts, partial refunds
 - **v2.1 Hardening & Documentation** — Phases 17-20 (shipped 2026-04-04): Security audit, code quality, developer docs, deployment runbook, merchant onboarding
-
-## Current Milestone: v3.0 Inventory Management
-
-**Goal:** Add inventory management as a paid add-on (stock tracking, adjustments, stocktake) and introduce service-type products that skip stock checks. Without the add-on, merchants sell freely with no stock numbers shown.
-
-**Target features:**
-- Service product type — `physical` vs `service` field on products; services skip all stock logic
-- Free-tier simplification — remove stock tracking from default experience; products sell freely with no quantity shown
-- Inventory add-on (paid) — stock tracking (quantity on hand, low stock alerts, history), manual stock adjustments with reason codes, simple stocktake with variance calculation
-- Feature gating — wire inventory into existing requireFeature() / Stripe billing / store_plans infrastructure
-- POS + storefront integration — stock badges/warnings/blocking only when add-on active; services always sellable
+- **v3.0 Inventory Management** — Phases 21-23 (shipped 2026-04-05): Service product type, free-tier simplification, stock adjustments, stocktake, feature gating, POS/storefront integration
 
 ## Current State
 
-**Shipped:** v1.0 MVP (2026-04-02), v2.0 SaaS Platform (2026-04-03), v2.1 Hardening & Documentation (2026-04-04)
+**Shipped:** v1.0 through v3.0 (2026-04-02 → 2026-04-05)
 
-989 source files, 89,000+ LOC TypeScript, 434 tests passing. 21 phases shipped across 83 plans. Production-ready with deployment runbook, merchant onboarding guide, and full developer documentation.
+1,000+ source files, 99,000+ LOC TypeScript, 23 phases shipped across 94 plans. Production-ready multi-tenant SaaS POS with inventory management as a paid add-on. Service products sell without stock checks, free-tier stores see zero stock noise, paid subscribers get full stock tracking, manual adjustments, and stocktake workflows.
 
-**Phase 21 complete (2026-04-04):** Service product type (`physical`/`service`) added with full stock skip in RPCs, server actions, and UI. Inventory feature gated behind `store_plans.has_inventory` — free-tier stores see zero stock noise. Auth hook injects inventory JWT claim.
-
-**Phase 22 complete (2026-04-04):** Inventory add-on core shipped — migration 025 with stock_adjustments (append-only audit), stocktake_sessions/lines tables, adjust_stock and complete_stocktake RPCs. 9 server actions, /admin/inventory page with Stock Levels, Adjustment drawer, History, and full Stocktake flow (count entry with auto-save, variance review, commit/discard). 72 tests passing. Human UAT pending.
-
-**Next:** Phase 23 — Feature gating + POS/storefront integration.
+**Next milestone:** Not yet planned. Run `/gsd:new-milestone` to start.
 
 ## Core Value
 
@@ -73,11 +59,15 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - ✓ Deployment runbook (production Supabase, Stripe live keys, Vercel wildcard DNS, smoke test) — v2.1
 - ✓ Merchant onboarding guide (signup through first sale, GST compliance explanation) — v2.1
 
+- ✓ Service product type — `physical`/`service` column, RPCs skip stock for services, UI radio group on product form — v3.0
+- ✓ Free-tier simplification — stock UI gated behind `has_inventory`, zero stock noise for free-tier stores — v3.0
+- ✓ Inventory add-on core — stock tracking, manual adjustments with reason codes, stocktake with variance calculation — v3.0
+- ✓ Feature gating — Stripe billing for inventory add-on, requireFeature() DB-path on mutations, JWT fast-path for UI — v3.0
+- ✓ POS/Storefront stock integration — stock badges, out-of-stock blocking, sold-out states, all gated behind subscription — v3.0
+
 ### Active
 
-- ✓ Service product type — `physical`/`service` column, RPCs skip stock for services, UI radio group on product form — Phase 21
-- ✓ Free-tier simplification — stock UI gated behind `has_inventory`, zero stock noise for free-tier stores — Phase 21
-- Inventory add-on core — stock tracking, manual adjustments, stocktake with variance — Phase 22 (planned)
+(None — run `/gsd:new-milestone` to define next milestone requirements)
 
 ### Out of Scope
 
@@ -105,8 +95,9 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - v1.0 shipped 2026-04-02 with 502 tests, 211 commits, 17,423 LOC TypeScript
 - v2.0 shipped 2026-04-03 with 365+ tests, 336 source files, 36,329 LOC TypeScript
 - v2.1 shipped 2026-04-04 with 434 tests, 989 files, 89,000+ LOC TypeScript
+- v3.0 shipped 2026-04-05 with inventory management add-on, service products, and stocktake workflows
 - Platform is now multi-tenant SaaS — any NZ business can sign up at the root domain
-- Pricing: free core POS/storefront/admin, paid add-ons via Stripe (Xero, email notifications)
+- Pricing: free core POS/storefront/admin, paid add-ons via Stripe (Xero, email notifications, inventory management)
 - Super admin panel operational for platform management
 - Full documentation suite: setup guide, env vars, architecture, server actions, deployment runbook, merchant guide
 - CSP headers in Report-Only mode — switch to enforcing after production monitoring confirms no false positives
@@ -147,6 +138,11 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 | Super admin manual override booleans | has_xero_manual_override distinguishes admin comp from Stripe-paid | ✓ Good — clean billing separation |
 | CSP Report-Only first, enforce later | Avoids breaking production with false positives on day one | ✓ Good — report-only deployed, switch when ready |
 | IP-level PIN rate limiting via RPC | check_rate_limit SECURITY DEFINER RPC, not middleware | ✓ Good — works with serverless (no in-memory state) |
+| CHECK constraint for product_type (not ENUM) | Allows easy future extension without migration | ✓ Good — simple ALTER for new types |
+| Stock skip in RPCs, not UI | complete_pos_sale/complete_online_sale skip stock for services; UI is defense-in-depth | ✓ Good — single source of truth at DB layer |
+| Append-only stock_adjustments table | INSERT+SELECT RLS only, no UPDATE/DELETE — immutable audit log | ✓ Good — tamper-proof history |
+| SECURITY DEFINER RPCs for stock mutations | adjust_stock and complete_stocktake avoid app-layer loops | ✓ Good — atomic operations, no partial states |
+| Free-tier silent stock decrement | Add-on gates management UI, not data pipeline — stock stays accurate | ✓ Good — data integrity preserved |
 | server-only guards on all 48 Server Actions | Prevents accidental client-side import of server code | ✓ Good — build-time error if misused |
 | Composite performance indexes for POS queries | product grid by store+category, orders by store+date | ✓ Good — measured improvement on large datasets |
 | Single deploy.md with linear flow | One doc, top-to-bottom, no cross-references to lose | ✓ Good — followable by non-DevOps founder |
@@ -170,4 +166,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-04 after Phase 22 Inventory Add-on Core completed*
+*Last updated: 2026-04-05 after v3.0 Inventory Management milestone*

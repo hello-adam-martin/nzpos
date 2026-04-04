@@ -1,5 +1,21 @@
 # Milestones
 
+## v3.0 Inventory Management (Shipped: 2026-04-05)
+
+**Phases completed:** 3 phases, 11 plans, 13 tasks
+**Timeline:** 2026-04-01 to 2026-04-05 (61 commits, 90 files changed, 10,628 LOC added)
+
+**Key accomplishments:**
+
+1. **Service product type** — `physical`/`service` column with CHECK constraint, stock-skip in complete_pos_sale/complete_online_sale RPCs, refund guards, and CSV import support
+2. **Free-tier simplification** — all stock UI (quantities, badges, alerts, out-of-stock blocking) gated behind `has_inventory`; free-tier stores sell freely with zero stock noise
+3. **Inventory add-on core** — append-only stock_adjustments audit table, adjust_stock and complete_stocktake SECURITY DEFINER RPCs, manual adjustments with reason codes, stock levels view with filtering
+4. **Stocktake workflow** — session lifecycle (create/commit/discard), count entry with 800ms auto-save and barcode scan, variance review with semantic colors, inline commit confirmation strip
+5. **Feature gating** — Stripe billing checkout for inventory add-on, `requireFeature('inventory', { requireDbCheck: true })` on all mutations, JWT fast-path for UI, super admin manual override
+6. **POS/Storefront integration** — stock badges (in-stock/low/out-of-stock) on POS product grid, out-of-stock cart blocking, storefront sold-out states — all gated behind subscription
+
+---
+
 ## v2.1 Hardening & Documentation (Shipped: 2026-04-04)
 
 **Phases completed:** 4 phases, 14 plans, 20 tasks
