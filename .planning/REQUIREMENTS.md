@@ -44,7 +44,7 @@ Requirements for the Hardening & Documentation milestone. Each maps to roadmap p
 
 - [ ] **DOC-01**: Local development setup guide (clone to running app in under 20 minutes)
 - [ ] **DOC-02**: Environment variable reference table (name, purpose, source, required/optional)
-- [ ] **DOC-03**: Architecture overview document (auth systems, tenant isolation, feature gating, data flows)
+- [x] **DOC-03**: Architecture overview document (auth systems, tenant isolation, feature gating, data flows)
 - [ ] **DOC-04**: Server Action inventory (all actions: name, input schema, auth requirement, description)
 
 ### Deployment & Operations
@@ -127,7 +127,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-05 | Phase 18 | Complete |
 | DOC-01 | Phase 19 | Pending |
 | DOC-02 | Phase 19 | Pending |
-| DOC-03 | Phase 19 | Pending |
+| DOC-03 | Phase 19 | Complete |
 | DOC-04 | Phase 19 | Pending |
 | DEPLOY-01 | Phase 20 | Pending |
 | DEPLOY-02 | Phase 20 | Pending |
