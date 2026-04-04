@@ -51,7 +51,7 @@
 
 **Milestone Goal:** Add inventory management as a paid add-on (stock tracking, adjustments, stocktake) and introduce service-type products that skip stock checks. Without the add-on, merchants sell freely with no stock numbers shown.
 
-- [ ] **Phase 21: Service Product Type + Free-Tier Simplification** — Modify checkout-critical RPCs for service products; clean up free-tier stock clutter
+- [x] **Phase 21: Service Product Type + Free-Tier Simplification** — Modify checkout-critical RPCs for service products; clean up free-tier stock clutter (completed 2026-04-04)
 - [ ] **Phase 22: Inventory Add-on Core** — Manual stock adjustments with audit log, stocktake sessions with variance calculation
 - [ ] **Phase 23: Feature Gating + POS/Storefront Integration** — Wire inventory billing gate, surface stock badges and sold-out states in POS and storefront
 
@@ -71,7 +71,7 @@
 Plans:
 - [x] 21-01-PLAN.md — Database migration + TypeScript types + addon config (foundation)
 - [x] 21-02-PLAN.md — Server actions: product CRUD, CSV import, refund guards, checkout stock check
-- [ ] 21-03-PLAN.md — UI gating: admin form, data table, dashboard, reports, POS, storefront
+- [x] 21-03-PLAN.md — UI gating: admin form, data table, dashboard, reports, POS, storefront
 **UI hint**: yes
 
 ### Phase 22: Inventory Add-on Core
@@ -125,6 +125,6 @@ Plans:
 | 18. Code Quality + Test Coverage | v2.1 | 4/4 | Complete | 2026-04-04 |
 | 19. Developer Documentation | v2.1 | 3/3 | Complete | 2026-04-04 |
 | 20. Deployment + User Documentation | v2.1 | 2/2 | Complete | 2026-04-04 |
-| 21. Service Product Type + Free-Tier Simplification | v3.0 | 2/3 | In Progress|  |
+| 21. Service Product Type + Free-Tier Simplification | v3.0 | 3/3 | Complete   | 2026-04-04 |
 | 22. Inventory Add-on Core | v3.0 | 0/TBD | Not started | - |
 | 23. Feature Gating + POS/Storefront Integration | v3.0 | 0/TBD | Not started | - |

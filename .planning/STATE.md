@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Inventory Management
-status: executing
-stopped_at: Completed 21-02-PLAN.md
-last_updated: "2026-04-04T06:51:37.445Z"
+status: verifying
+stopped_at: Completed 21-03-PLAN.md
+last_updated: "2026-04-04T06:55:35.885Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 
 Phase: 21 (service-product-type-free-tier-simplification) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-04
 
 Progress: [░░░░░░░░░░] 0%
@@ -55,6 +55,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 21-01]: AddOnCard.tsx updated to use SubscriptionFeature type — prevents type divergence as features grow
 - [Phase 21-02]: Used (item as any).products?.product_type cast in refund actions — Supabase generated types don't model nested FK join, cast is safe because the join is explicitly declared in the select string
 - [Phase 21-02]: createCheckoutSession uses \!== 'service' guard (not === 'physical') — future product types default to physical behavior without code change
+- [Phase 21]: ProductGrid added as intermediate hasInventory carrier in POS component chain
+- [Phase 21]: StoreProductCard uses hasInventory === true (strict) to avoid false truthy on undefined for free-tier
 
 ### Pending Todos
 
@@ -68,6 +70,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T06:51:37.442Z
-Stopped at: Completed 21-02-PLAN.md
+Last session: 2026-04-04T06:55:35.883Z
+Stopped at: Completed 21-03-PLAN.md
 Resume file: None
