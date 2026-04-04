@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Admin Platform
 status: executing
-stopped_at: Completed 24-01-PLAN.md
-last_updated: "2026-04-04T18:34:16Z"
-last_activity: 2026-04-05 -- Phase 24 Plan 01 completed
+stopped_at: Completed 24-02-PLAN.md
+last_updated: "2026-04-04T18:47:59.387Z"
+last_activity: 2026-04-04
 progress:
   total_phases: 4
   completed_phases: 0
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 ## Current Position
 
 Phase: 24 (staff-rbac-foundation) — EXECUTING
-Plan: 2 of 3
-Status: Executing Phase 24 (Plan 01 complete)
-Last activity: 2026-04-05 -- Phase 24 Plan 01 completed
+Plan: 3 of 3
+Status: Ready to execute
+Last activity: 2026-04-04
 
 Progress: [███░░░░░░░] 33%
 
@@ -45,6 +45,7 @@ Progress: [███░░░░░░░] 33%
 | 24-01 | 10 min | 2 | 7 |
 
 *Updated after each plan completion*
+| Phase 24-staff-rbac-foundation P02 | 15 min | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,8 @@ Progress: [███░░░░░░░] 33%
 - Stripe analytics materialised via platform_analytics_snapshots table — never fetch live Stripe API on page load
 - Annual plan MRR normalised by dividing amount by 12 in sync job — unit test required
 - Customer management routes use standard server client (RLS-enforced) — never admin client
+- [Phase 24-staff-rbac-foundation]: Admin layout wires role + staffName to AdminSidebar early — Plan 03 only needs to consume props, not add wiring
+- [Phase 24-staff-rbac-foundation]: Middleware manager JWT block placed after owner success path — preserves all existing owner logic including email verification, setup wizard, and customer block
 
 ### Pending Todos
 
@@ -77,6 +80,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T18:34:16Z
-Stopped at: Completed 24-01-PLAN.md
-Resume file: .planning/phases/24-staff-rbac-foundation/24-02-PLAN.md
+Last session: 2026-04-04T18:47:59.385Z
+Stopped at: Completed 24-02-PLAN.md
+Resume file: None

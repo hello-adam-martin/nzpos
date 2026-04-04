@@ -9,12 +9,12 @@ Requirements for Admin Platform milestone. Each maps to roadmap phases.
 
 ### Staff Management
 
-- [ ] **STAFF-01**: Admin can view a list of all staff members with name, role, and active status
-- [ ] **STAFF-02**: Admin can add a new staff member with name and auto-generated or manual PIN
-- [ ] **STAFF-03**: Admin can edit a staff member's name and role (Owner/Manager/Staff)
-- [ ] **STAFF-04**: Admin can deactivate a staff member, preventing them from logging into POS
-- [ ] **STAFF-05**: Admin can reset a staff member's PIN, generating a new one shown once
-- [ ] **STAFF-06**: Manager role can process refunds and view reports but cannot manage products, staff, or settings
+- [x] **STAFF-01**: Admin can view a list of all staff members with name, role, and active status
+- [x] **STAFF-02**: Admin can add a new staff member with name and auto-generated or manual PIN
+- [x] **STAFF-03**: Admin can edit a staff member's name and role (Owner/Manager/Staff)
+- [x] **STAFF-04**: Admin can deactivate a staff member, preventing them from logging into POS
+- [x] **STAFF-05**: Admin can reset a staff member's PIN, generating a new one shown once
+- [x] **STAFF-06**: Manager role can process refunds and view reports but cannot manage products, staff, or settings
 
 ### Customer Management
 
@@ -92,12 +92,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| STAFF-01 | Phase 24 | Pending |
-| STAFF-02 | Phase 24 | Pending |
-| STAFF-03 | Phase 24 | Pending |
-| STAFF-04 | Phase 24 | Pending |
-| STAFF-05 | Phase 24 | Pending |
-| STAFF-06 | Phase 24 | Pending |
+| STAFF-01 | Phase 24 | Complete |
+| STAFF-02 | Phase 24 | Complete |
+| STAFF-03 | Phase 24 | Complete |
+| STAFF-04 | Phase 24 | Complete |
+| STAFF-05 | Phase 24 | Complete |
+| STAFF-06 | Phase 24 | Complete |
 | CUST-01 | Phase 25 | Pending |
 | CUST-02 | Phase 25 | Pending |
 | CUST-03 | Phase 25 | Pending |
