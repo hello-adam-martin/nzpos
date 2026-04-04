@@ -785,6 +785,200 @@ export type Database = {
           },
         ]
       }
+      stock_adjustments: {
+        Row: {
+          id: string
+          store_id: string
+          product_id: string
+          reason: string
+          quantity_delta: number
+          quantity_after: number
+          notes: string | null
+          order_id: string | null
+          stocktake_session_id: string | null
+          staff_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          store_id: string
+          product_id: string
+          reason: string
+          quantity_delta: number
+          quantity_after: number
+          notes?: string | null
+          order_id?: string | null
+          stocktake_session_id?: string | null
+          staff_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          store_id?: string
+          product_id?: string
+          reason?: string
+          quantity_delta?: number
+          quantity_after?: number
+          notes?: string | null
+          order_id?: string | null
+          stocktake_session_id?: string | null
+          staff_id?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_adjustments_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_adjustments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_adjustments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_stocktake_session"
+            columns: ["stocktake_session_id"]
+            isOneToOne: false
+            referencedRelation: "stocktake_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_adjustments_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stocktake_sessions: {
+        Row: {
+          id: string
+          store_id: string
+          status: string
+          scope: string
+          category_id: string | null
+          created_by: string | null
+          committed_at: string | null
+          discarded_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          store_id: string
+          status?: string
+          scope?: string
+          category_id?: string | null
+          created_by?: string | null
+          committed_at?: string | null
+          discarded_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          store_id?: string
+          status?: string
+          scope?: string
+          category_id?: string | null
+          created_by?: string | null
+          committed_at?: string | null
+          discarded_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stocktake_sessions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stocktake_sessions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stocktake_sessions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stocktake_lines: {
+        Row: {
+          id: string
+          stocktake_session_id: string
+          store_id: string
+          product_id: string
+          system_snapshot_quantity: number
+          counted_quantity: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          stocktake_session_id: string
+          store_id: string
+          product_id: string
+          system_snapshot_quantity: number
+          counted_quantity?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          stocktake_session_id?: string
+          store_id?: string
+          product_id?: string
+          system_snapshot_quantity?: number
+          counted_quantity?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stocktake_lines_stocktake_session_id_fkey"
+            columns: ["stocktake_session_id"]
+            isOneToOne: false
+            referencedRelation: "stocktake_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stocktake_lines_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stocktake_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stripe_events: {
         Row: {
           id: string
@@ -949,9 +1143,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      adjust_stock: {
+        Args: {
+          p_store_id: string
+          p_product_id: string
+          p_quantity_delta: number
+          p_reason: string
+          p_notes?: string | null
+          p_staff_id?: string | null
+          p_order_id?: string | null
+        }
+        Returns: Json
+      }
       check_rate_limit: {
         Args: { p_ip: string; p_max: number; p_window_seconds: number }
         Returns: boolean
+      }
+      complete_stocktake: {
+        Args: {
+          p_session_id: string
+          p_store_id: string
+          p_staff_id?: string | null
+        }
+        Returns: Json
       }
       complete_online_sale: {
         Args: {
