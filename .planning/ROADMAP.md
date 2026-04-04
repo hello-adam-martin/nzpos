@@ -78,7 +78,11 @@
   3. Manager role can process refunds and view reports but cannot access product management, staff management, or store settings
   4. After a staff member's role is changed, the new permissions take effect on their next action (stale JWT role never authorises a write)
   5. PIN reset shows the new PIN exactly once and confirms it is not recoverable after dismissal
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 24-01-PLAN.md — Foundation: DB migration, roles constant, PIN utility, Zod schemas, resolveStaffAuthVerified
+- [ ] 24-02-PLAN.md — Server Actions + Middleware: staff CRUD actions, manager admin access, processPartialRefund extension
+- [ ] 24-03-PLAN.md — Admin UI: staff page, table, modals, AdminSidebar role filtering
 **UI hint**: yes
 
 ### Phase 25: Admin Operational UI
@@ -148,7 +152,7 @@
 | 21. Service Product Type + Free-Tier Simplification | v3.0 | 3/3 | Complete | 2026-04-04 |
 | 22. Inventory Add-on Core | v3.0 | 5/5 | Complete | 2026-04-04 |
 | 23. Feature Gating + POS/Storefront Integration | v3.0 | 3/3 | Complete | 2026-04-04 |
-| 24. Staff RBAC Foundation | v4.0 | 0/TBD | Not started | - |
+| 24. Staff RBAC Foundation | v4.0 | 0/3 | Not started | - |
 | 25. Admin Operational UI | v4.0 | 0/TBD | Not started | - |
 | 26. Super-Admin Billing + User Management | v4.0 | 0/TBD | Not started | - |
 | 27. Super-Admin Analytics | v4.0 | 0/TBD | Not started | - |
