@@ -1,5 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('server-only', () => ({}))
+
 // ---------------------------------------------------------------------------
 // Hoisted mocks (available inside vi.mock factories)
 // ---------------------------------------------------------------------------

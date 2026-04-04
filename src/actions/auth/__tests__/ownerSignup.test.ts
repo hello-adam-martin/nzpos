@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('server-only', () => ({}))
+
 // ---- Hoisted mocks (avoid temporal dead zone with vi.mock hoisting) ----
 const {
   mockCheckRateLimit,
@@ -94,7 +96,12 @@ beforeEach(() => {
   mockDeleteUser.mockResolvedValue({ error: null })
   mockCreateSupabaseAdminClient.mockReturnValue({
     rpc: mockRpc,
-    auth: { admin: { deleteUser: mockDeleteUser } },
+    auth: {
+      admin: {
+        deleteUser: mockDeleteUser,
+        updateUserById: vi.fn().mockResolvedValue({ data: {}, error: null }),
+      },
+    },
   })
 })
 

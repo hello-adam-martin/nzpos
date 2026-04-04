@@ -24,6 +24,15 @@ vi.mock('jose', () => ({
   jwtVerify: (...args: unknown[]) => mockJwtVerify(...args),
 }))
 
+// Mock resolveAuth so tests control auth state without live JWT/cookie machinery
+const { mockResolveStaffAuth } = vi.hoisted(() => ({
+  mockResolveStaffAuth: vi.fn(),
+}))
+vi.mock('@/lib/resolveAuth', () => ({
+  resolveStaffAuth: mockResolveStaffAuth,
+  resolveAuth: mockResolveStaffAuth,
+}))
+
 // Mock Supabase admin client
 const mockRpc = vi.fn()
 const mockFromResult = vi.fn()
@@ -91,6 +100,12 @@ const validOrderInput = {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  // Default: authenticated as staff for tests that need auth
+  mockResolveStaffAuth.mockResolvedValue({
+    store_id: 'store-1',
+    staff_id: 'staff-1',
+    role: 'staff',
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -99,23 +114,18 @@ beforeEach(() => {
 
 describe('completeSale', () => {
   it('returns not-authenticated error when staff_session cookie is missing', async () => {
-    mockGet.mockReturnValue(undefined)
+    mockResolveStaffAuth.mockResolvedValue(null)
     const result = await completeSale(validOrderInput)
     expect(result).toEqual({ error: 'Not authenticated — please log in again' })
   })
 
   it('returns not-authenticated error when JWT is invalid', async () => {
-    mockGet.mockReturnValue({ value: 'bad-token' })
-    mockJwtVerify.mockRejectedValue(new Error('Invalid JWT'))
+    mockResolveStaffAuth.mockResolvedValue(null)
     const result = await completeSale(validOrderInput)
     expect(result).toEqual({ error: 'Not authenticated — please log in again' })
   })
 
   it('returns invalid order data error when input is missing required fields', async () => {
-    mockGet.mockReturnValue({ value: 'valid-token' })
-    mockJwtVerify.mockResolvedValue({
-      payload: { role: 'staff', store_id: 'store-1', staff_id: 'staff-1' },
-    })
     // Missing 'items' field — Zod should reject
     const result = await completeSale({ channel: 'pos', status: 'completed', subtotal_cents: 1000, gst_cents: 130, total_cents: 1000 })
     expect(result).toHaveProperty('error', 'Invalid order data')
@@ -123,10 +133,6 @@ describe('completeSale', () => {
   })
 
   it('returns success with orderId when RPC succeeds', async () => {
-    mockGet.mockReturnValue({ value: 'valid-token' })
-    mockJwtVerify.mockResolvedValue({
-      payload: { role: 'staff', store_id: 'store-1', staff_id: 'staff-1' },
-    })
     mockRpc.mockResolvedValue({ data: { order_id: 'order-123' }, error: null })
 
     const result = await completeSale(validOrderInput)
@@ -136,10 +142,6 @@ describe('completeSale', () => {
   })
 
   it('returns out_of_stock error when RPC raises OUT_OF_STOCK', async () => {
-    mockGet.mockReturnValue({ value: 'valid-token' })
-    mockJwtVerify.mockResolvedValue({
-      payload: { role: 'staff', store_id: 'store-1', staff_id: 'staff-1' },
-    })
     mockRpc.mockResolvedValue({
       data: null,
       error: { message: 'OUT_OF_STOCK:prod-abc:Widget has only 2 units' },
@@ -152,10 +154,6 @@ describe('completeSale', () => {
   })
 
   it('returns product_not_found error when RPC raises PRODUCT_NOT_FOUND', async () => {
-    mockGet.mockReturnValue({ value: 'valid-token' })
-    mockJwtVerify.mockResolvedValue({
-      payload: { role: 'staff', store_id: 'store-1', staff_id: 'staff-1' },
-    })
     mockRpc.mockResolvedValue({
       data: null,
       error: { message: 'PRODUCT_NOT_FOUND:prod-xyz' },
@@ -167,10 +165,6 @@ describe('completeSale', () => {
   })
 
   it('returns generic user-friendly error for unrecognised RPC errors', async () => {
-    mockGet.mockReturnValue({ value: 'valid-token' })
-    mockJwtVerify.mockResolvedValue({
-      payload: { role: 'staff', store_id: 'store-1', staff_id: 'staff-1' },
-    })
     mockRpc.mockResolvedValue({
       data: null,
       error: { message: 'some random database error' },

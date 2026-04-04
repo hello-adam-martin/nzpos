@@ -10,16 +10,13 @@ vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }))
 
-// Mock next/headers
-const mockGet = vi.fn()
-vi.mock('next/headers', () => ({
-  cookies: vi.fn(() => Promise.resolve({ get: mockGet })),
+// Mock resolveAuth so tests control auth state without live JWT/cookie machinery
+const { mockResolveStaffAuth } = vi.hoisted(() => ({
+  mockResolveStaffAuth: vi.fn(),
 }))
-
-// Mock jose jwtVerify
-const mockJwtVerify = vi.fn()
-vi.mock('jose', () => ({
-  jwtVerify: (...args: unknown[]) => mockJwtVerify(...args),
+vi.mock('@/lib/resolveAuth', () => ({
+  resolveStaffAuth: mockResolveStaffAuth,
+  resolveAuth: mockResolveStaffAuth,
 }))
 
 // Mock sendEmail
@@ -78,14 +75,11 @@ const VALID_EMAIL = 'customer@example.com'
 const STORE_ID = 'store-uuid-1234'
 
 function mockStaffAuth() {
-  mockGet.mockReturnValue({ value: 'valid-staff-token' })
-  mockJwtVerify.mockResolvedValue({
-    payload: { store_id: STORE_ID, staff_id: 'staff-1', role: 'staff' },
-  })
+  mockResolveStaffAuth.mockResolvedValue({ store_id: STORE_ID, staff_id: 'staff-1', role: 'staff' })
 }
 
 function mockNoAuth() {
-  mockGet.mockReturnValue(undefined)
+  mockResolveStaffAuth.mockResolvedValue(null)
 }
 
 const sampleReceipt = {

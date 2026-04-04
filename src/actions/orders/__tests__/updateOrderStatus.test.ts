@@ -10,16 +10,13 @@ vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }))
 
-// Mock next/headers
-const mockGet = vi.fn()
-vi.mock('next/headers', () => ({
-  cookies: vi.fn(() => Promise.resolve({ get: mockGet })),
+// Mock resolveAuth so tests control auth state without live JWT/cookie machinery
+const { mockResolveStaffAuth } = vi.hoisted(() => ({
+  mockResolveStaffAuth: vi.fn(),
 }))
-
-// Mock jose jwtVerify
-const mockJwtVerify = vi.fn()
-vi.mock('jose', () => ({
-  jwtVerify: (...args: unknown[]) => mockJwtVerify(...args),
+vi.mock('@/lib/resolveAuth', () => ({
+  resolveStaffAuth: mockResolveStaffAuth,
+  resolveAuth: mockResolveStaffAuth,
 }))
 
 // Mock sendEmail
@@ -86,10 +83,7 @@ const ORDER_ID = 'a1b2c3d4-e5f6-4890-abcd-ef1234567890'
 const STORE_ID = 'store-uuid-1234'
 
 function mockStaffAuth(storeId = STORE_ID) {
-  mockGet.mockReturnValue({ value: 'valid-staff-token' })
-  mockJwtVerify.mockResolvedValue({
-    payload: { store_id: storeId, staff_id: 'staff-1', role: 'staff' },
-  })
+  mockResolveStaffAuth.mockResolvedValue({ store_id: storeId, staff_id: 'staff-1', role: 'staff' })
 }
 
 // Helper: push a result for a from() call whose chain ends in .single()
@@ -102,6 +96,8 @@ beforeEach(() => {
   fromCallIdx = 0
   mockFromSequence.length = 0
   mockSendEmail.mockResolvedValue({ success: true })
+  // Default: authenticated as staff; tests that need unauthenticated state override this
+  mockResolveStaffAuth.mockResolvedValue({ store_id: STORE_ID, staff_id: 'staff-1', role: 'staff' })
 })
 
 // ---------------------------------------------------------------------------
@@ -181,7 +177,7 @@ describe('updateOrderStatus — pickup-ready email (NOTIF-03)', () => {
   })
 
   it('returns error when not authenticated', async () => {
-    mockGet.mockReturnValue(undefined)
+    mockResolveStaffAuth.mockResolvedValue(null)
 
     const result = await updateOrderStatus({ orderId: ORDER_ID, newStatus: 'ready' })
 

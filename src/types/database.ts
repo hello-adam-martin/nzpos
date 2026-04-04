@@ -626,8 +626,11 @@ export type Database = {
         Row: {
           created_at: string
           has_custom_domain: boolean
+          has_custom_domain_manual_override: boolean
           has_email_notifications: boolean
+          has_email_notifications_manual_override: boolean
           has_xero: boolean
+          has_xero_manual_override: boolean
           id: string
           store_id: string
           stripe_customer_id: string | null
@@ -637,8 +640,11 @@ export type Database = {
         Insert: {
           created_at?: string
           has_custom_domain?: boolean
+          has_custom_domain_manual_override?: boolean
           has_email_notifications?: boolean
+          has_email_notifications_manual_override?: boolean
           has_xero?: boolean
+          has_xero_manual_override?: boolean
           id?: string
           store_id: string
           stripe_customer_id?: string | null
@@ -648,8 +654,11 @@ export type Database = {
         Update: {
           created_at?: string
           has_custom_domain?: boolean
+          has_custom_domain_manual_override?: boolean
           has_email_notifications?: boolean
+          has_email_notifications_manual_override?: boolean
           has_xero?: boolean
+          has_xero_manual_override?: boolean
           id?: string
           store_id?: string
           stripe_customer_id?: string | null
@@ -684,6 +693,8 @@ export type Database = {
           slug: string
           store_description: string | null
           stripe_customer_id: string | null
+          suspended_at: string | null
+          suspension_reason: string | null
           updated_at: string
         }
         Insert: {
@@ -703,6 +714,8 @@ export type Database = {
           slug: string
           store_description?: string | null
           stripe_customer_id?: string | null
+          suspended_at?: string | null
+          suspension_reason?: string | null
           updated_at?: string
         }
         Update: {
@@ -722,9 +735,46 @@ export type Database = {
           slug?: string
           store_description?: string | null
           stripe_customer_id?: string | null
+          suspended_at?: string | null
+          suspension_reason?: string | null
           updated_at?: string
         }
         Relationships: []
+      }
+      super_admin_actions: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          note: string | null
+          store_id: string
+          super_admin_user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          store_id: string
+          super_admin_user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          store_id?: string
+          super_admin_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "super_admin_actions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stripe_events: {
         Row: {
