@@ -20,7 +20,8 @@ export async function reorderCategories(input: {
       .eq('id', id)
 
     if (error) {
-      return { error: { _form: [error.message] } }
+      console.error('[reorderCategories] Update error for id=%s:', id, error)
+      return { error: { _form: ['Failed to reorder categories. Please try again.'] } }
     }
   }
 

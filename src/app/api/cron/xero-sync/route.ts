@@ -23,8 +23,8 @@ export async function GET(req: NextRequest) {
     .eq('status', 'connected')
 
   if (error) {
-    console.error('[xero-sync cron] Failed to query connected stores:', error.message)
-    return Response.json({ error: error.message }, { status: 500 })
+    console.error('[xero-sync cron] Failed to query connected stores:', error)
+    return Response.json({ error: 'Failed to query connected stores' }, { status: 500 })
   }
 
   const storeIds: string[] = (connections ?? []).map((c: { store_id: string }) => c.store_id)
@@ -41,7 +41,6 @@ export async function GET(req: NextRequest) {
     message: string
     invoiceNumber?: string
     attempts: number
-    error?: string
   }> = []
 
   // Sync each store independently — one failure does not block others
@@ -63,14 +62,12 @@ export async function GET(req: NextRequest) {
       })
     } catch (err) {
       failed++
-      const message = err instanceof Error ? err.message : String(err)
-      console.error(`[xero-sync cron] Unhandled error for store ${storeId}:`, message)
+      console.error(`[xero-sync cron] Unhandled error for store ${storeId}:`, err)
       results.push({
         storeId,
         success: false,
         message: 'Unhandled error',
         attempts: 0,
-        error: message,
       })
     }
   }

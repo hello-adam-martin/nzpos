@@ -30,9 +30,11 @@ export async function customerSignup(formData: FormData) {
   })
 
   if (error) {
-    if (error.message.includes('already registered')) {
+    // Supabase returns status 422 for duplicate email signup attempts
+    if (error.status === 422) {
       return { error: 'An account with this email already exists.', existingUser: true }
     }
+    console.error('[customerSignup] Signup error:', error)
     return { error: 'Could not create account. Please try again.' }
   }
 

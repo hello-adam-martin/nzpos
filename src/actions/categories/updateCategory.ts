@@ -16,7 +16,8 @@ export async function updateCategory(input: { id: string; name: string }) {
     .eq('id', parsed.data.id)
 
   if (error) {
-    return { error: { _form: [error.message] } }
+    console.error('[updateCategory] Update error:', error)
+    return { error: { _form: ['Failed to update category. Please try again.'] } }
   }
 
   revalidatePath('/admin/products')

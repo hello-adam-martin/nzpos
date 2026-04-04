@@ -22,8 +22,8 @@ export async function GET(req: NextRequest) {
     .select('id')
 
   if (error) {
-    console.error('[expire-orders] Failed:', error.message)
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 })
+    console.error('[expire-orders] Failed:', error)
+    return new Response(JSON.stringify({ error: 'Failed to expire orders' }), { status: 500 })
   }
 
   const count = data?.length ?? 0

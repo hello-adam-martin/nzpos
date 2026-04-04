@@ -51,22 +51,29 @@ export async function completeSale(input: unknown) {
   })
 
   // 5. Handle RPC errors with structured codes
+  // RPC uses structured error codes: OUT_OF_STOCK:<product_id>:<msg> and PRODUCT_NOT_FOUND:<product_id>
   if (error) {
-    if (error.message.includes('OUT_OF_STOCK')) {
-      const parts = error.message.split(':')
+    const rpcCode = error.code ?? ''
+    // Extract structured RPC error code — RPC raises EXCEPTION with OUT_OF_STOCK:<id> or PRODUCT_NOT_FOUND:<id>
+    // Supabase surfaces this in the PostgreSQL error object. Cast to read the payload safely.
+    const rpcPayload: string = (error as { message?: string }).message ?? ''
+    if (rpcPayload.includes('OUT_OF_STOCK')) {
+      const parts = rpcPayload.split(':')
+      const productId = parts[1]?.trim()
       return {
-        error: 'out_of_stock',
-        productId: parts[1]?.trim(),
-        message: parts.slice(2).join(':').trim(),
+        error: 'out_of_stock' as const,
+        productId,
+        message: 'This item is out of stock.',
       }
     }
-    if (error.message.includes('PRODUCT_NOT_FOUND')) {
+    if (rpcPayload.includes('PRODUCT_NOT_FOUND')) {
+      const productId = rpcPayload.split(':')[1]?.trim()
       return {
-        error: 'product_not_found',
-        productId: error.message.split(':')[1]?.trim(),
+        error: 'product_not_found' as const,
+        productId,
       }
     }
-    console.error('[completeSale] RPC error:', error.message, error.code, error.details)
+    console.error('[completeSale] store_id=%s RPC error code=%s:', staff.store_id, rpcCode, error)
     return { error: 'Sale could not be recorded. Please try again or note the order manually.' }
   }
 

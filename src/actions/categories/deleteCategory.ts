@@ -17,7 +17,8 @@ export async function deleteCategory(input: { id: string }) {
     .eq('category_id', parsed.data.id)
 
   if (countError) {
-    return { error: { _form: [countError.message] } }
+    console.error('[deleteCategory] Count error:', countError)
+    return { error: { _form: ['Could not check category products. Please try again.'] } }
   }
 
   if (count && count > 0) {
@@ -30,7 +31,8 @@ export async function deleteCategory(input: { id: string }) {
     .eq('id', parsed.data.id)
 
   if (error) {
-    return { error: { _form: [error.message] } }
+    console.error('[deleteCategory] Delete error:', error)
+    return { error: { _form: ['Failed to delete category. Please try again.'] } }
   }
 
   revalidatePath('/admin/products')
