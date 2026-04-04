@@ -55,12 +55,15 @@ Source: DESIGN.md spacing section + `src/app/globals.css` `:root` custom propert
 | Role | Size | Weight | Line Height | Font | Notes |
 |------|------|--------|-------------|------|-------|
 | Body | 16px (base) | 400 (regular) | 1.5 | DM Sans | Form descriptions, help text |
-| Label | 14px (sm) | 500 (medium) | 1.4 | DM Sans | Form field labels, radio labels, table headers |
+| Label | 14px (sm) | 600 (semibold) | 1.4 | DM Sans | Form field labels, radio labels, table headers |
 | Heading | 20px (xl) | 600 (semibold) | 1.2 | DM Sans | Drawer section headings, "Product type" fieldset legend |
-| Display | 24px (2xl) | 700 (bold) | 1.2 | Satoshi | Page-level headings (unchanged by this phase) |
 | Mono | 14px (sm) | 400 (regular) | 1.4 | Geist Mono | SKU values, import row error line numbers |
 
-Source: DESIGN.md typography section. Phase uses exactly 4 sizes (14, 16, 20, 24) and 3 weights (400, 500/medium, 600/semibold — body, label, heading). Display (Satoshi 700) is unchanged from existing pages.
+Declared weights: 400 (regular) + 600 (semibold). Exactly 2 weights.
+
+Note: Display-level page headings (Satoshi 700, 24px) are outside this phase's scope. They follow the project-wide contract in DESIGN.md and are unchanged by this phase.
+
+Source: DESIGN.md typography section. Phase uses exactly 4 sizes (14, 16, 20 — DM Sans; 14 — Geist Mono) and 2 weights.
 
 ---
 
@@ -103,7 +106,7 @@ Components modified by this phase. Executor must match existing visual patterns 
 - Two radio buttons: "Physical" (left) and "Service" (right)
 - Layout: horizontal flex, gap-sm (8px) between options
 - Each option: white card (`--color-card`), border (`--color-border`), radius-md (8px), padding sm/md (8px 16px)
-- Selected state: amber ring 2px (`--color-amber`), white background, label weight 500
+- Selected state: amber ring 2px (`--color-amber`), white background, label weight 600
 - Unselected state: surface background (`--color-surface`), border only
 - "Physical" is pre-selected by default (D-02)
 - Touch target: minimum 44px height on each option (iPad compliance)
