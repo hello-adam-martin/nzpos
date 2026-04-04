@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Hardening & Documentation
 status: executing
-stopped_at: Phase 18 context gathered
-last_updated: "2026-04-03T22:15:04.457Z"
-last_activity: 2026-04-03
+stopped_at: Completed 18-01-PLAN.md
+last_updated: "2026-04-04T01:51:25.117Z"
+last_activity: 2026-04-04
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 9
+  completed_plans: 6
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 17 — security-audit
+**Current focus:** Phase 18 — code-quality-test-coverage
 
 ## Current Position
 
-Phase: 18
-Plan: Not started
+Phase: 18 (code-quality-test-coverage) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-04-03
+Last activity: 2026-04-04
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -65,6 +65,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 17-04]: All Server Action files (46 total) have direct server-only import — defense-in-depth against accidental client bundling
 - [Phase 17-05]: Drop orders_public_read_by_token RLS policy — admin client bypasses RLS, anon policy was enumeration vector with no legitimate use
 - [Phase 17-05]: ROADMAP.md Server Action count was already 48 — only REQUIREMENTS.md SEC-08 needed correction
+- [Phase 18]: Mock resolveStaffAuth at module level in tests (not next/headers+jose individually) — resolveAuth calls both cookies() and headers(), mocking only one was insufficient
+- [Phase 18]: Coverage thresholds set at per-file 80% for 8 critical paths; thresholds for resolveAuth, tenantCache, middleware expected to fail until Plan 02 writes those tests
 
 ### Pending Todos
 
@@ -79,6 +81,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-03T22:15:04.454Z
-Stopped at: Phase 18 context gathered
-Resume file: .planning/phases/18-code-quality-test-coverage/18-CONTEXT.md
+Last session: 2026-04-04T01:51:25.114Z
+Stopped at: Completed 18-01-PLAN.md
+Resume file: None

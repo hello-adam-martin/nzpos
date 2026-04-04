@@ -28,13 +28,13 @@ Requirements for the Hardening & Documentation milestone. Each maps to roadmap p
 
 - [ ] **QUAL-01**: Dead code removed across all 336 source files using static analysis
 - [ ] **QUAL-02**: Server Actions and Route Handlers have consistent error handling with no stack trace leaks
-- [ ] **QUAL-03**: TypeScript strict mode passes with zero errors or documented suppressions
+- [x] **QUAL-03**: TypeScript strict mode passes with zero errors or documented suppressions
 - [ ] **QUAL-04**: Performance-critical paths reviewed (GST calculations, stock decrements, product queries have proper indexes)
 - [ ] **QUAL-05**: Complex business logic has inline JSDoc documentation (gst.ts, requireFeature.ts, tenantCache.ts, xero/sync.ts, provision_store)
 
 ### Test Coverage
 
-- [ ] **TEST-01**: Test coverage report generated with vitest --coverage showing per-file coverage
+- [x] **TEST-01**: Test coverage report generated with vitest --coverage showing per-file coverage
 - [ ] **TEST-02**: Critical paths (GST, money, auth, RLS) have 80%+ line coverage
 - [ ] **TEST-03**: RLS integration tests cover v2.0 tables (add_ons, subscriptions, audit_logs, store_plans)
 - [ ] **TEST-04**: Stripe webhook handlers tested for all subscription lifecycle events
@@ -117,10 +117,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEC-14 | Phase 17 | Complete |
 | QUAL-01 | Phase 18 | Pending |
 | QUAL-02 | Phase 18 | Pending |
-| QUAL-03 | Phase 18 | Pending |
+| QUAL-03 | Phase 18 | Complete |
 | QUAL-04 | Phase 18 | Pending |
 | QUAL-05 | Phase 18 | Pending |
-| TEST-01 | Phase 18 | Pending |
+| TEST-01 | Phase 18 | Complete |
 | TEST-02 | Phase 18 | Pending |
 | TEST-03 | Phase 18 | Pending |
 | TEST-04 | Phase 18 | Pending |
