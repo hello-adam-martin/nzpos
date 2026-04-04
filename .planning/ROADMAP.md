@@ -88,7 +88,7 @@ Plans:
 Plans:
 - [x] 22-01-PLAN.md — Database migration + Zod schemas + TypeScript types + Wave 0 test scaffolds
 - [x] 22-02-PLAN.md — Server actions: stock adjustment, history, stock levels
-- [ ] 22-03-PLAN.md — Server actions: stocktake session lifecycle (create, update, commit, discard)
+- [x] 22-03-PLAN.md — Server actions: stocktake session lifecycle (create, update, commit, discard)
 - [ ] 22-04-PLAN.md — UI: Inventory page, Stock Levels tab, Adjustment drawer, History tab, sidebar + product form updates
 - [ ] 22-05-PLAN.md — UI: Stocktakes tab, stocktake session page (Count + Review), barcode integration
 **UI hint**: yes
@@ -132,5 +132,5 @@ Plans:
 | 19. Developer Documentation | v2.1 | 3/3 | Complete | 2026-04-04 |
 | 20. Deployment + User Documentation | v2.1 | 2/2 | Complete | 2026-04-04 |
 | 21. Service Product Type + Free-Tier Simplification | v3.0 | 3/3 | Complete    | 2026-04-04 |
-| 22. Inventory Add-on Core | v3.0 | 2/5 | In Progress|  |
+| 22. Inventory Add-on Core | v3.0 | 3/5 | In Progress|  |
 | 23. Feature Gating + POS/Storefront Integration | v3.0 | 0/TBD | Not started | - |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Inventory Management
 status: executing
-stopped_at: Completed 22-02-PLAN.md
-last_updated: "2026-04-04T08:21:12.376Z"
+stopped_at: Completed 22-03-PLAN.md
+last_updated: "2026-04-04T08:24:52.542Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 8
-  completed_plans: 5
+  completed_plans: 6
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 ## Current Position
 
 Phase: 22 (inventory-add-on-core) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-04-04
 
@@ -61,6 +61,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 22]: restore_stock upgraded from sql to plpgsql language to INSERT stock_adjustments on refund — service_role-only GRANT from migration 021 preserved
 - [Phase 22]: resolveAuth returns snake_case keys (store_id/staff_id), not camelCase — corrected in all inventory server actions
 - [Phase 22]: requireFeature('inventory', { requireDbCheck: true }) used on all inventory mutations — JWT path only for UI rendering
+- [Phase 22-inventory-add-on-core]: resolveAuth() returns snake_case { store_id, staff_id } — plan pseudocode used camelCase storeId/staffId which was corrected to match actual implementation
+- [Phase 22-inventory-add-on-core]: Query actions (getStocktakeSession, getStocktakeSessions) skip requireFeature gate — sessions only exist if feature was active at creation
 
 ### Pending Todos
 
@@ -74,6 +76,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T08:21:12.373Z
-Stopped at: Completed 22-02-PLAN.md
+Last session: 2026-04-04T08:24:52.539Z
+Stopped at: Completed 22-03-PLAN.md
 Resume file: None
