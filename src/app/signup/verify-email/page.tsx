@@ -17,9 +17,6 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 
   return (
     <AuthCard>
-      <p className="font-display text-3xl font-semibold text-[var(--color-navy)] mb-6 text-center">
-        NZPOS
-      </p>
       <VerifyEmailCard email={email} />
     </AuthCard>
   )

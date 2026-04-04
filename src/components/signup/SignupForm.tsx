@@ -235,7 +235,7 @@ export default function SignupForm() {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-md bg-[var(--color-amber)] px-4 font-sans text-sm font-semibold text-white min-h-[44px] hover:bg-[var(--color-amber-hover)] disabled:opacity-50 transition-colors duration-150 flex items-center justify-center gap-2"
+        className="w-full rounded-[var(--radius-md)] bg-[var(--color-amber)] px-4 font-sans text-sm font-semibold text-white min-h-[44px] hover:bg-[var(--color-amber-hover)] disabled:opacity-50 transition-colors duration-150 flex items-center justify-center gap-2"
       >
         {pending ? (
           <>

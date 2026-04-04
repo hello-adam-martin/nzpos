@@ -9,12 +9,9 @@ import SignupForm from '@/components/signup/SignupForm'
 export default function SignupPage() {
   return (
     <AuthCard>
-      <h1 className="font-display text-3xl font-semibold text-[var(--color-navy)] mb-1">
-        NZPOS
-      </h1>
-      <h2 className="font-display text-2xl font-semibold text-[var(--color-navy)] mb-1">
+      <h1 className="font-display text-2xl font-semibold text-[var(--color-navy)] mb-1">
         Start your free store
-      </h2>
+      </h1>
       <p className="font-sans text-sm text-[var(--color-text-muted)] mb-6">
         Your POS and online store, ready in minutes.
       </p>
