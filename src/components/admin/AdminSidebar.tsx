@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from '@/actions/auth/signOut'
 
-const navLinks = [
+const BASE_NAV_LINKS = [
   { href: '/admin/dashboard', label: 'Dashboard' },
   { href: '/admin/products', label: 'Products' },
   { href: '/admin/promos', label: 'Promos' },
@@ -18,11 +18,22 @@ const navLinks = [
 
 interface AdminSidebarProps {
   userEmail?: string | null
+  hasInventory?: boolean
 }
 
-export default function AdminSidebar({ userEmail }: AdminSidebarProps) {
+export default function AdminSidebar({ userEmail, hasInventory }: AdminSidebarProps) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  // Build nav links — insert Inventory after Products when add-on is active
+  const navLinks = hasInventory === true
+    ? [
+        BASE_NAV_LINKS[0], // Dashboard
+        BASE_NAV_LINKS[1], // Products
+        { href: '/admin/inventory', label: 'Inventory' },
+        ...BASE_NAV_LINKS.slice(2), // Promos, Orders, Reports, Cash-Up, Integrations, Settings, Billing
+      ]
+    : BASE_NAV_LINKS
 
   const sidebarContent = (
     <>
