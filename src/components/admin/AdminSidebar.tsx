@@ -9,6 +9,7 @@ const BASE_NAV_LINKS = [
   { href: '/admin/products', label: 'Products' },
   { href: '/admin/promos', label: 'Promos' },
   { href: '/admin/orders', label: 'Orders' },
+  { href: '/admin/customers', label: 'Customers' },
   { href: '/admin/reports', label: 'Reports' },
   { href: '/admin/cash-up', label: 'Cash-Up' },
   { href: '/admin/staff', label: 'Staff' },
