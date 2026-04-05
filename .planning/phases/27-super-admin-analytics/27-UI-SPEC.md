@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: false
 preset: none
 created: 2026-04-06
+revised: 2026-04-06
 ---
 
 # Phase 27 — UI Design Contract
@@ -52,16 +53,19 @@ Exceptions: Stat card grid uses `gap-4` (16px) between cards at all breakpoints.
 
 All roles use CSS custom property variables already defined in globals.css.
 
+Two weights only: 400 (normal) and 600 (semibold). This matches the declared DM Sans weight set in the Design System table above.
+
 | Role | Size | Weight | Line Height | Font | Usage |
 |------|------|--------|-------------|------|-------|
 | Page heading | 20px (text-xl) | 600 (semibold) | 1.2 | Satoshi (`font-display`) | "Analytics" page title — matches existing super-admin pages |
-| Section label | 16px (text-base) | 700 (bold) | 1.2 | DM Sans (`font-sans`) | Chart card headings ("MRR Trend", "Revenue by Add-on") |
-| Stat card label | 14px (text-sm) | 700 (bold) | 1.4 | DM Sans (`font-sans`) | "Current MRR", "Monthly Churn" labels |
-| Stat card value | 30px (text-3xl) | 700 (bold) | 1.2 | Satoshi (`font-display`) | "$1,240", "3", "47" — tabular-nums enabled |
-| Body / sub-label | 14px (text-sm) | 400 (normal) | 1.5 | DM Sans (`font-sans`) | "Last synced: 2 hours ago", chart axis labels, descriptions |
-| Countdown timer | 14px (text-sm) | 500 (medium) | 1.4 | DM Sans (`font-sans`) | "Available in 4:32" disabled button text |
+| Section label | 16px (text-base) | 600 (semibold) | 1.2 | DM Sans (`font-sans`) | Chart card headings ("MRR Trend", "Revenue by Add-on") |
+| Stat card label | 14px (text-sm) | 600 (semibold) | 1.4 | DM Sans (`font-sans`) | "Current MRR", "Monthly Churn" labels |
+| Stat card value | 30px (text-3xl) | 600 (semibold) | 1.2 | Satoshi (`font-display`) | "$1,240", "3", "47" — tabular-nums enabled |
+| Body / sub-label | 14px (text-sm) | 400 (normal) | 1.5 | DM Sans (`font-sans`) | "Last synced: 2 hours ago", chart axis labels, descriptions, countdown timer |
 | Chart axis | 14px | 400 | — | DM Sans | XAxis/YAxis ticks — matches SignupTrendChart `fontSize={14}` |
-| Tooltip value | 14px | 700 | — | DM Sans + mono | Currency values in chart tooltips — Geist Mono for NZD amounts |
+| Tooltip value | 14px | 400 | — | DM Sans + mono | Currency values in chart tooltips — Geist Mono for NZD amounts |
+
+Note: The countdown timer ("Available in 4:32") uses the body/sub-label row (400 normal). It is disabled button text — it does not warrant a distinct weight.
 
 ---
 
@@ -113,14 +117,16 @@ Components to build for this phase, with canonical references.
 
 Page layout for `/super-admin/analytics`. Follows existing super-admin page patterns.
 
+Primary focal point: the three stat cards row (Current MRR, Monthly Churn, Active Subscriptions) — this is the first element the eye lands on after the page heading, and it carries the highest-density signal on the page.
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │ "Analytics"                    Last synced: 2h ago  │  ← Row: heading left, sync controls right
 │                                [Refresh Data]        │
 ├─────────────────────────────────────────────────────┤
-│ [Current MRR] [Monthly Churn] [Active Subscriptions] │  ← 3-col grid, md:grid-cols-3, gap-4
-│  $1,240        3               47                    │     DashboardHeroCard × 3
-│  Annual ÷12    Cancelled now   Active subs           │
+│ [Current MRR] [Monthly Churn] [Active Subscriptions] │  ← PRIMARY FOCAL POINT
+│  $1,240        3               47                    │     3-col grid, md:grid-cols-3, gap-4
+│  Annual ÷12    Cancelled now   Active subs           │     DashboardHeroCard × 3
 ├─────────────────────────────────────────────────────┤
 │  MRR Trend — Last 6 Months                           │  ← Full-width card (MrrTrendChart)
 │  [AreaChart — 6 monthly data points]                 │     height: 240px
@@ -286,6 +292,15 @@ No third-party component registries are used in this phase. All components are h
 | Page dimming during sync | CONTEXT.md D-12 — "page data stays visible but dimmed" |
 | Inline success banner | RESEARCH.md + existing DisableAccountModal/SuspendModal pattern |
 | Font features for numbers | DashboardHeroCard.tsx — `font-feature-settings: 'tnum' 1` |
+
+---
+
+## Revision Log
+
+| Date | Change | Reason |
+|------|--------|--------|
+| 2026-04-06 | Typography: removed weight 500 and 700; merged down to 400 and 600 respectively | Checker BLOCK — exceeds 2-weight maximum; aligned with DM Sans (400, 600) declaration in Design System table |
+| 2026-04-06 | Layout Contract: added explicit focal point declaration for stat cards row | Checker FLAG — Dimension 2 Visuals recommended naming the primary focal point for implementer clarity |
 
 ---
 
