@@ -42,9 +42,9 @@ Requirements for Admin Platform milestone. Each maps to roadmap phases.
 
 ### Super-Admin Platform Overview
 
-- [ ] **SA-DASH-01**: Super-admin dashboard shows total active tenants, suspended tenants, and new signups this month
-- [ ] **SA-DASH-02**: Super-admin dashboard shows add-on adoption rates (% of tenants with each add-on)
-- [ ] **SA-DASH-03**: Super-admin dashboard shows a signup trend chart (last 30 days)
+- [x] **SA-DASH-01**: Super-admin dashboard shows total active tenants, suspended tenants, and new signups this month
+- [x] **SA-DASH-02**: Super-admin dashboard shows add-on adoption rates (% of tenants with each add-on)
+- [x] **SA-DASH-03**: Super-admin dashboard shows a signup trend chart (last 30 days)
 
 ### Super-Admin Billing Visibility
 
@@ -110,9 +110,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DASH-01 | Phase 25 | Pending |
 | DASH-02 | Phase 25 | Pending |
 | DASH-03 | Phase 25 | Pending |
-| SA-DASH-01 | Phase 26 | Pending |
-| SA-DASH-02 | Phase 26 | Pending |
-| SA-DASH-03 | Phase 26 | Pending |
+| SA-DASH-01 | Phase 26 | Complete |
+| SA-DASH-02 | Phase 26 | Complete |
+| SA-DASH-03 | Phase 26 | Complete |
 | SA-BILL-01 | Phase 26 | Complete |
 | SA-BILL-02 | Phase 26 | Complete |
 | SA-BILL-03 | Phase 26 | Complete |
