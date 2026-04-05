@@ -13,9 +13,9 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 
 ## Current State
 
-**Shipped:** v1.0 through v3.0 (2026-04-02 → 2026-04-05)
+**Shipped:** v1.0 through v3.0, plus v4.0 phases 24-25 (2026-04-02 → 2026-04-05)
 
-1,000+ source files, 99,000+ LOC TypeScript, 23 phases shipped across 94 plans. Production-ready multi-tenant SaaS POS with inventory management as a paid add-on. Service products sell without stock checks, free-tier stores see zero stock noise, paid subscribers get full stock tracking, manual adjustments, and stocktake workflows.
+1,000+ source files, 99,000+ LOC TypeScript, 25 phases shipped across 100+ plans. Production-ready multi-tenant SaaS POS with inventory management as a paid add-on. Phase 25 complete — customer management, promo edit/delete, store settings expansion, and enriched dashboard with trend charts.
 
 ## Current Milestone: v4.0 Admin Platform
 
@@ -179,4 +179,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-05 after v4.0 Admin Platform milestone started*
+*Last updated: 2026-04-05 after Phase 25 Admin Operational UI completed*
