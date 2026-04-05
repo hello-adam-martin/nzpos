@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Admin Platform
 status: executing
-stopped_at: Phase 25 UI-SPEC approved
-last_updated: "2026-04-05T03:16:19.707Z"
-last_activity: 2026-04-05 -- Phase 25 execution started
+stopped_at: Completed 25-admin-operational-ui Plan 01
+last_updated: "2026-04-05T03:23:22.800Z"
+last_activity: 2026-04-05
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 6
-  completed_plans: 2
+  completed_plans: 4
   percent: 33
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 ## Current Position
 
 Phase: 25 (admin-operational-ui) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 25
-Last activity: 2026-04-05 -- Phase 25 execution started
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-04-05
 
 Progress: [███░░░░░░░] 33%
 
@@ -47,6 +47,7 @@ Progress: [███░░░░░░░] 33%
 *Updated after each plan completion*
 | Phase 24-staff-rbac-foundation P02 | 15 min | 2 tasks | 12 files |
 | Phase 24-staff-rbac-foundation P03 | 20 | 2 tasks | 12 files |
+| Phase 25-admin-operational-ui P01 | 25 | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,8 @@ Progress: [███░░░░░░░] 33%
 - [Phase 24-staff-rbac-foundation]: Middleware manager JWT block placed after owner success path — preserves all existing owner logic including email verification, setup wizard, and customer block
 - [Phase 24-staff-rbac-foundation]: AddStaffModal uses Math.random() for client-side PIN generation — crypto.randomInt is Node-only, server hashes whatever PIN it receives
 - [Phase 24-staff-rbac-foundation]: Manager nav links removed from DOM in AdminSidebar (not CSS hidden) per D-09 security requirement
+- [Phase 25-admin-operational-ui]: Soft-delete uses is_active=false with optimistic lock on promo_codes to prevent race conditions
+- [Phase 25-admin-operational-ui]: PromoList converted to use client component to support modal state for edit/delete
 
 ### Pending Todos
 
@@ -83,6 +86,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T20:22:49.030Z
-Stopped at: Phase 25 UI-SPEC approved
-Resume file: .planning/phases/25-admin-operational-ui/25-UI-SPEC.md
+Last session: 2026-04-05T03:23:22.798Z
+Stopped at: Completed 25-admin-operational-ui Plan 01
+Resume file: None

@@ -25,14 +25,14 @@ Requirements for Admin Platform milestone. Each maps to roadmap phases.
 
 ### Promo Management
 
-- [ ] **PROMO-01**: Admin can edit an existing promo code's discount amount, min order, max uses, and expiry date
-- [ ] **PROMO-02**: Admin can soft-delete a promo code, removing it from active use but preserving history
+- [x] **PROMO-01**: Admin can edit an existing promo code's discount amount, min order, max uses, and expiry date
+- [x] **PROMO-02**: Admin can soft-delete a promo code, removing it from active use but preserving history
 
 ### Store Settings
 
-- [ ] **SETTINGS-01**: Admin can edit store business address and phone number from settings
-- [ ] **SETTINGS-02**: Admin can edit receipt header and footer text from settings
-- [ ] **SETTINGS-03**: Admin can view and edit the store's IRD/GST number from settings
+- [x] **SETTINGS-01**: Admin can edit store business address and phone number from settings
+- [x] **SETTINGS-02**: Admin can edit receipt header and footer text from settings
+- [x] **SETTINGS-03**: Admin can view and edit the store's IRD/GST number from settings
 
 ### Admin Dashboard
 
@@ -102,11 +102,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CUST-02 | Phase 25 | Pending |
 | CUST-03 | Phase 25 | Pending |
 | CUST-04 | Phase 25 | Pending |
-| PROMO-01 | Phase 25 | Pending |
-| PROMO-02 | Phase 25 | Pending |
-| SETTINGS-01 | Phase 25 | Pending |
-| SETTINGS-02 | Phase 25 | Pending |
-| SETTINGS-03 | Phase 25 | Pending |
+| PROMO-01 | Phase 25 | Complete |
+| PROMO-02 | Phase 25 | Complete |
+| SETTINGS-01 | Phase 25 | Complete |
+| SETTINGS-02 | Phase 25 | Complete |
+| SETTINGS-03 | Phase 25 | Complete |
 | DASH-01 | Phase 25 | Pending |
 | DASH-02 | Phase 25 | Pending |
 | DASH-03 | Phase 25 | Pending |

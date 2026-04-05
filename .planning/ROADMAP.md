@@ -98,8 +98,8 @@ Plans:
   6. Admin can save business address, phone, IRD/GST number, and receipt header/footer from the settings page
 **Plans**: 3 plans
 Plans:
-- [ ] 25-01-PLAN.md — Migration, store settings forms, promo edit/delete, AdminSidebar Customers link
-- [ ] 25-02-PLAN.md — Dashboard enhancement: sales trend chart, comparison cards, recent orders widget
+- [x] 25-01-PLAN.md — Migration, store settings forms, promo edit/delete, AdminSidebar Customers link
+- [x] 25-02-PLAN.md — Dashboard enhancement: sales trend chart, comparison cards, recent orders widget
 - [ ] 25-03-PLAN.md — Customer management: list, search, detail page, disable/enable accounts
 **UI hint**: yes
 
@@ -157,6 +157,6 @@ Plans:
 | 22. Inventory Add-on Core | v3.0 | 5/5 | Complete | 2026-04-04 |
 | 23. Feature Gating + POS/Storefront Integration | v3.0 | 3/3 | Complete | 2026-04-04 |
 | 24. Staff RBAC Foundation | v4.0 | 3/3 | Complete    | 2026-04-04 |
-| 25. Admin Operational UI | v4.0 | 0/3 | Not started | - |
+| 25. Admin Operational UI | v4.0 | 2/3 | In Progress|  |
 | 26. Super-Admin Billing + User Management | v4.0 | 0/TBD | Not started | - |
 | 27. Super-Admin Analytics | v4.0 | 0/TBD | Not started | - |
