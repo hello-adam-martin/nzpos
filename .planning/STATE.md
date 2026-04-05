@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Admin Platform
-status: verifying
-stopped_at: Phase 25 context gathered
-last_updated: "2026-04-04T20:05:59.108Z"
-last_activity: 2026-04-04
+status: executing
+stopped_at: Phase 25 UI-SPEC approved
+last_updated: "2026-04-05T03:16:19.707Z"
+last_activity: 2026-04-05 -- Phase 25 execution started
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 3
+  total_plans: 6
   completed_plans: 2
   percent: 33
 ---
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 24 — staff-rbac-foundation
+**Current focus:** Phase 25 — admin-operational-ui
 
 ## Current Position
 
-Phase: 25
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-04
+Phase: 25 (admin-operational-ui) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 25
+Last activity: 2026-04-05 -- Phase 25 execution started
 
 Progress: [███░░░░░░░] 33%
 
@@ -83,6 +83,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T20:05:59.105Z
-Stopped at: Phase 25 context gathered
-Resume file: .planning/phases/25-admin-operational-ui/25-CONTEXT.md
+Last session: 2026-04-04T20:22:49.030Z
+Stopped at: Phase 25 UI-SPEC approved
+Resume file: .planning/phases/25-admin-operational-ui/25-UI-SPEC.md
