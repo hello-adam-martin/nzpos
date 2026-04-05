@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: false
 preset: none
 created: 2026-04-05
+revised: 2026-04-05
 ---
 
 # Phase 26 — UI Design Contract
@@ -23,7 +24,7 @@ created: 2026-04-05
 | Component library | none (custom Radix-free components) | Existing codebase |
 | Icon library | Inline SVG (hand-authored) | Existing pattern in SuperAdminSidebar, TenantDetailPage |
 | Font — Display | Satoshi 700 (font-display class) | DESIGN.md |
-| Font — Body/UI | DM Sans 400/500/600 (font-sans class) | DESIGN.md |
+| Font — Body/UI | DM Sans 400/600 (font-sans class) | DESIGN.md |
 | Font — Mono | Geist Mono (font-mono class) | DESIGN.md — SKUs, order refs, slugs |
 
 ---
@@ -34,7 +35,7 @@ Declared values (all multiples of 4 — using CSS custom properties matching exi
 
 | Token | Value | CSS Var | Usage |
 |-------|-------|---------|-------|
-| 2xs | 2px | — | Micro gaps within inline elements |
+| 2xs | 2px | — | Micro gaps within inline elements (e.g. badge icon-to-text gap) |
 | xs | 4px | `--space-xs` | Icon gaps, tight inline padding |
 | sm | 8px | `--space-sm` | Compact element spacing, badge padding |
 | md | 16px | `--space-md` | Default element spacing, card internal padding |
@@ -45,9 +46,10 @@ Declared values (all multiples of 4 — using CSS custom properties matching exi
 
 Exceptions:
 
-- Payment failure warning banner uses `py-3 px-4` (12px / 16px) — compact alert, not a card
-- Action button minimum touch target: 36px height on desktop super-admin UI (not POS, no 44px rule)
-- Sidebar nav links: `px-3 py-3` (matches existing SuperAdminSidebar pattern exactly)
+- **2px (2xs) token:** Included as a standard token per DESIGN.md spacing scale (`2xs(2) xs(4) sm(8) md(16) lg(24) xl(32) 2xl(48) 3xl(64)`). Not an ad-hoc value — DESIGN.md explicitly defines it as the minimum scale step for micro gaps within inline elements such as badge icon-to-text spacing.
+- Payment failure warning banner uses `py-4 px-4` (16px both axes) — standard `md` token, no exception required.
+- Action button minimum touch target: 36px height on desktop super-admin UI (not POS, no 44px rule).
+- Sidebar nav links: `px-3 py-3` (matches existing SuperAdminSidebar pattern exactly).
 
 ---
 
@@ -56,13 +58,13 @@ Exceptions:
 | Role | Size | Weight | Font | Line Height | Source |
 |------|------|--------|------|-------------|--------|
 | Body | 16px (text-base) | 400 (font-normal) | DM Sans | 1.5 | DESIGN.md |
-| Label / UI | 14px (text-sm) | 600 (font-semibold) | DM Sans | 1.4 | Existing component pattern |
-| Card heading | 20px (text-xl) | 600 (font-semibold) | Satoshi | 1.2 | Tenant detail page `h2` pattern |
-| Page heading | 24px (text-2xl) | 600 (font-semibold) | Satoshi | 1.2 | Tenant detail page `h1` pattern |
-| Stat value | 30px (text-3xl) | 700 (font-bold) | Satoshi | 1.1 | DashboardHeroCard `font-bold text-3xl` |
-| Mono / refs | 14px (text-sm) | 400 (font-normal) | Geist Mono | 1.4 | Tenant detail slug display |
+| Label / UI / Mono | 14px (text-sm) | 400 (font-normal) or 600 (font-semibold) | DM Sans / Geist Mono | 1.4 | Existing component pattern |
+| Card / section heading | 20px (text-xl) | 600 (font-semibold) | Satoshi | 1.2 | Tenant detail page heading pattern |
+| Stat value | 30px (text-3xl) | 600 (font-semibold) | Satoshi | 1.1 | DashboardHeroCard pattern |
 
-**Rule:** Exactly 4 semantic sizes in use — sm (14px), base (16px), xl (20px), 3xl (30px). Stat display only uses 3xl. No other sizes introduced.
+**Rule:** Exactly 4 semantic sizes in use — sm (14px), base (16px), xl (20px), 3xl (30px). No `text-2xl` (24px) introduced — page headings and card headings both use `text-xl`. Stat values use `font-semibold` (600); the larger size provides sufficient visual distinction without needing `font-bold` (700).
+
+**Weights in use:** `font-normal` (400) for body/muted text and mono references; `font-semibold` (600) for all headings, labels, buttons, and CTAs. `font-bold` (700) is not used in this phase.
 
 ---
 
@@ -99,19 +101,19 @@ All values from DESIGN.md. No new colors introduced for this phase.
 
 The phase introduces or extends these surfaces:
 
-| Surface | Type | Layout | Source decision |
-|---------|------|---------|-----------------|
-| `/super-admin` — Platform Dashboard | New page | Full-width under sidebar | D-01 |
-| `/super-admin/tenants/[id]` — Tenant Detail | Extended page | Existing 3-col grid (col-span-2 + col-span-1) | D-06 |
-| `/super-admin/analytics` — Analytics placeholder | New page stub | Simple centered "coming soon" | D-11 |
-| SuperAdminSidebar | Extended component | 240px fixed left | D-11 |
-| Payment failure warning banner | New component | Full-width at top of tenant detail, above first card | D-07 |
-| Stripe Subscriptions section | New card | Left column (col-span-2) on tenant detail | D-06 |
-| Stripe Invoices section | New card | Left column (col-span-2) on tenant detail | D-06 |
-| User Management actions | Extended component | Right column actions card (TenantDetailActions) | D-10 |
-| Password Reset modal | New modal | Centered overlay, max-w-md | D-08 |
-| Disable Account modal | New modal | Centered overlay, max-w-md | D-09 |
-| Add-on adoption stat cards | New card variant | Dashboard grid | D-04 |
+| Surface | Type | Layout | Focal Point | Source decision |
+|---------|------|---------|-------------|-----------------|
+| `/super-admin` — Platform Dashboard | New page | Full-width under sidebar | Stat card row (top of page) — active/suspended tenant counts are the primary data signal; signup trend chart is secondary | D-01 |
+| `/super-admin/tenants/[id]` — Tenant Detail | Extended page | Existing 3-col grid (col-span-2 + col-span-1) | Payment failure warning banner (when present); otherwise Actions card in right column | D-06 |
+| `/super-admin/analytics` — Analytics placeholder | New page stub | Simple centered "coming soon" | Single card with Phase 27 preview text | D-11 |
+| SuperAdminSidebar | Extended component | 240px fixed left | — | D-11 |
+| Payment failure warning banner | New component | Full-width at top of tenant detail, above first card | Warning banner is intentionally the most prominent element on the page when a past-due invoice exists | D-07 |
+| Stripe Subscriptions section | New card | Left column (col-span-2) on tenant detail | — | D-06 |
+| Stripe Invoices section | New card | Left column (col-span-2) on tenant detail | — | D-06 |
+| User Management actions | Extended component | Right column actions card (TenantDetailActions) | — | D-10 |
+| Password Reset modal | New modal | Centered overlay, max-w-md | Info box with recipient email address | D-08 |
+| Disable Account modal | New modal | Centered overlay, max-w-md | Destructive confirm button — visually distinct red | D-09 |
+| Add-on adoption stat cards | New card variant | Dashboard grid | — | D-04 |
 
 ---
 
@@ -121,8 +123,8 @@ The phase introduces or extends these surfaces:
 
 Reuse `DashboardHeroCard` pattern exactly:
 - Container: `bg-white border border-[var(--color-border)] shadow-sm rounded-lg p-[var(--space-md)] min-h-[96px] flex flex-col justify-between`
-- Label: `font-sans font-bold text-sm text-[var(--color-text-muted)]`
-- Value: `font-display font-bold text-3xl text-[var(--color-navy)]` with `fontFeatureSettings: "'tnum' 1"`
+- Label: `font-sans font-semibold text-sm text-[var(--color-text-muted)]`
+- Value: `font-display font-semibold text-3xl text-[var(--color-navy)]` with `fontFeatureSettings: "'tnum' 1"`
 - Sub-label: `font-sans font-normal text-sm text-[var(--color-text-muted)] mt-1`
 
 Grid layout for stat cards: `grid grid-cols-2 gap-4 md:grid-cols-4` — 4 cards on desktop (active tenants, suspended tenants, new signups this month, and one card per add-on showing adoption %).
@@ -148,7 +150,7 @@ Chart card container: `bg-card border border-[var(--color-border)] shadow-sm rou
 Shown at the very top of the tenant detail page body when any invoice has `status: past_due` or `status: open` AND the invoice is overdue.
 
 ```
-bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 rounded-[var(--radius-md)] p-4 mb-6
+bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 rounded-[var(--radius-md)] py-4 px-4 mb-6
 ```
 
 Structure: icon (warning triangle, 16x16, `text-[var(--color-warning)]`) + text inline.
@@ -206,7 +208,7 @@ Reuse SuspendModal structure exactly:
 - Info box (not warning): `bg-[var(--color-info)]/10 border border-[var(--color-info)]/30 rounded-[var(--radius-md)] p-4 mb-4` — "A password reset email will be sent to [email]. The owner will receive a link to set a new password."
 - No form input required — action is immediate on confirmation
 - Confirm button: navy primary — `bg-[var(--color-navy)] text-white text-sm font-semibold px-4 py-2 rounded-[var(--radius-md)] hover:bg-[var(--color-navy)]/90`
-- Cancel: ghost text button — `text-sm font-semibold font-sans text-[var(--color-text-muted)] hover:text-[var(--color-text)]`
+- Cancel button: ghost text — `text-sm font-semibold font-sans text-[var(--color-text-muted)] hover:text-[var(--color-text)]` — label: "Don't Send"
 - Pending state: spinner + "Sending…" label (matches SuspendModal ConfirmButton pattern)
 
 ### Disable Account Modal (D-09)
@@ -216,6 +218,7 @@ Reuse SuspendModal structure exactly:
 - Warning box: amber (`bg-[var(--color-amber)]/10 border border-[var(--color-amber)]/30`) — "This will ban the owner from logging in and suspend the store. The storefront and POS will become inaccessible."
 - Confirm button: destructive — `bg-[var(--color-error)] text-white` (matches SuspendModal ConfirmButton exactly)
 - Label: "Disable Account"
+- Cancel button: ghost text — `text-sm font-semibold font-sans text-[var(--color-text-muted)] hover:text-[var(--color-text)]` — label: "Keep Active"
 - No reason field required (unlike suspend which requires reason text)
 - Pending state: spinner + "Disabling…"
 
@@ -224,6 +227,7 @@ Re-enable modal (reverse flow):
 - Info box (blue): "This will restore login access and unsuspend the store."
 - Confirm button: navy primary (not destructive)
 - Label: "Re-enable Account"
+- Cancel button: ghost text — label: "Leave Disabled"
 
 ### Updated Sidebar Nav (D-11)
 
@@ -239,7 +243,7 @@ Sidebar active state logic: use `pathname === href || pathname.startsWith(href +
 ### Analytics Placeholder Page
 
 Minimal stub page at `/super-admin/analytics`:
-- Page heading: `font-display text-2xl font-semibold text-[var(--color-text)]` — "Analytics"
+- Page heading: `font-display text-xl font-semibold text-[var(--color-text)]` — "Analytics"
 - Single card: `bg-white border border-[var(--color-border)] shadow-sm rounded-lg p-8 text-center`
 - Content: `text-sm font-sans text-[var(--color-text-muted)]` — "Platform analytics are coming in Phase 27. MRR, churn, and revenue breakdown will appear here."
 
@@ -249,9 +253,9 @@ Minimal stub page at `/super-admin/analytics`:
 
 | Element | Copy | Notes |
 |---------|------|-------|
-| Page title — Dashboard | "Platform Overview" | h1, Satoshi 24px |
+| Page title — Dashboard | "Platform Overview" | h1, Satoshi 20px semibold |
 | Page title — Tenant detail | "{StoreName}" | h1, existing pattern |
-| Page title — Analytics stub | "Analytics" | h1 |
+| Page title — Analytics stub | "Analytics" | h1, Satoshi 20px semibold |
 | Sidebar label — Dashboard | "Dashboard" | nav link |
 | Sidebar label — Analytics | "Analytics" | nav link |
 | Primary CTA — Password Reset button | "Send Password Reset" | Button in TenantDetailActions |
@@ -259,10 +263,13 @@ Minimal stub page at `/super-admin/analytics`:
 | Primary CTA — Re-enable button | "Re-enable Account" | Button in TenantDetailActions |
 | Modal confirm — Password reset | "Send password reset email to [email]?" | Modal heading/info box |
 | Modal confirm button — Password reset | "Send Reset Email" | Navy button |
+| Modal cancel button — Password reset | "Don't Send" | Ghost text button |
 | Modal confirm — Disable | "Disable [StoreName]?" | Modal heading |
 | Modal confirm button — Disable | "Confirm Disable" | Destructive button |
+| Modal cancel button — Disable | "Keep Active" | Ghost text button |
 | Modal confirm — Re-enable | "Re-enable [StoreName]?" | Modal heading |
 | Modal confirm button — Re-enable | "Re-enable Account" | Navy button |
+| Modal cancel button — Re-enable | "Leave Disabled" | Ghost text button |
 | Empty state — No subscriptions | "No active subscriptions found for this tenant." | Inline below section header |
 | Empty state — No invoices | "No invoices found for this tenant." | Inline in table area |
 | Empty state — Signup chart | "No signups in the last 30 days." | Centered in chart area |
@@ -293,8 +300,8 @@ Minimal stub page at `/super-admin/analytics`:
 | Invoice table | standard rows | no row hover (read-only) | skeleton 5 rows | error text | empty state text |
 | Warning banner | visible when past-due | — | — | — | hidden (not rendered) |
 | "Send Password Reset" button | navy, enabled | navy/90 | disabled + spinner | inline error | — |
-| "Disable Account" button | navy outline or ghost, enabled | hover tint | disabled + spinner | inline error | — |
-| "Re-enable Account" button | navy outline or ghost | hover tint | disabled + spinner | inline error | — |
+| "Disable Account" button | navy outline (`border border-[var(--color-navy)] text-[var(--color-navy)] bg-transparent`), enabled | `hover:bg-[var(--color-navy)]/5` | disabled + spinner | inline error | — |
+| "Re-enable Account" button | navy outline (`border border-[var(--color-navy)] text-[var(--color-navy)] bg-transparent`) | `hover:bg-[var(--color-navy)]/5` | disabled + spinner | inline error | — |
 | Modal overlay | visible | click outside closes | — | inline error in panel | — |
 
 Loading skeleton pattern: `animate-pulse bg-[var(--color-border)] rounded` — matches project convention. Duration uses Tailwind default (1.5s). No spinner at section level — skeletons only.
