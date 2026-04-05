@@ -4,7 +4,9 @@ import { usePathname } from 'next/navigation'
 import { signOut } from '@/actions/auth/signOut'
 
 const navLinks = [
-  { href: '/super-admin/tenants', label: 'Tenants' },
+  { href: '/super-admin', label: 'Dashboard', exactMatch: true },
+  { href: '/super-admin/tenants', label: 'Tenants', exactMatch: false },
+  { href: '/super-admin/analytics', label: 'Analytics', exactMatch: false },
 ]
 
 interface SuperAdminSidebarProps {
@@ -24,8 +26,10 @@ export default function SuperAdminSidebar({ userEmail }: SuperAdminSidebarProps)
 
       {/* Nav links */}
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {navLinks.map(({ href, label }) => {
-          const isActive = pathname === href || pathname.startsWith(href + '/')
+        {navLinks.map(({ href, label, exactMatch }) => {
+          const isActive = exactMatch
+            ? pathname === href
+            : pathname === href || pathname.startsWith(href + '/')
           return (
             <Link
               key={href}
