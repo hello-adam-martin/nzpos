@@ -13,9 +13,9 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 
 ## Current State
 
-**Shipped:** v1.0 through v3.0, plus v4.0 phases 24-25 (2026-04-02 → 2026-04-05)
+**Shipped:** v1.0 through v3.0, plus v4.0 phases 24-26 (2026-04-02 → 2026-04-05)
 
-1,000+ source files, 99,000+ LOC TypeScript, 25 phases shipped across 100+ plans. Production-ready multi-tenant SaaS POS with inventory management as a paid add-on. Phase 25 complete — customer management, promo edit/delete, store settings expansion, and enriched dashboard with trend charts.
+1,000+ source files, 99,000+ LOC TypeScript, 26 phases shipped across 100+ plans. Production-ready multi-tenant SaaS POS with inventory management as a paid add-on. Phase 26 complete — super-admin platform dashboard with tenant/adoption stats and signup trend chart, Stripe billing visibility on tenant detail (subscriptions, invoices, payment alerts), and user management actions (password reset, account disable/enable).
 
 ## Current Milestone: v4.0 Admin Platform
 
