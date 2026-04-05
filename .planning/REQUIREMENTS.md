@@ -63,8 +63,8 @@ Requirements for Admin Platform milestone. Each maps to roadmap phases.
 ### Super-Admin User Management
 
 - [x] **SA-USER-01**: Super-admin can view a tenant's owner email and signup date from tenant detail
-- [ ] **SA-USER-02**: Super-admin can trigger a password reset email for a merchant account
-- [ ] **SA-USER-03**: Super-admin can disable a merchant account, preventing login
+- [x] **SA-USER-02**: Super-admin can trigger a password reset email for a merchant account
+- [x] **SA-USER-03**: Super-admin can disable a merchant account, preventing login
 
 ## Future Requirements (v4.1+)
 
@@ -117,8 +117,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SA-BILL-02 | Phase 26 | Complete |
 | SA-BILL-03 | Phase 26 | Complete |
 | SA-USER-01 | Phase 26 | Complete |
-| SA-USER-02 | Phase 26 | Pending |
-| SA-USER-03 | Phase 26 | Pending |
+| SA-USER-02 | Phase 26 | Complete |
+| SA-USER-03 | Phase 26 | Complete |
 | SA-MRR-01 | Phase 27 | Pending |
 | SA-MRR-02 | Phase 27 | Pending |
 | SA-MRR-03 | Phase 27 | Pending |

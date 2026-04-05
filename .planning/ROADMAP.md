@@ -63,7 +63,7 @@
 
 - [x] **Phase 24: Staff RBAC Foundation** - Manager role, shared role constants, staff management UI, and role-gated Server Action guards (completed 2026-04-04)
 - [x] **Phase 25: Admin Operational UI** - Customer management, promo edit/delete, store settings expansion, and admin dashboard charts (completed 2026-04-05)
-- [ ] **Phase 26: Super-Admin Billing + User Management** - Platform overview metrics, per-tenant billing visibility, and merchant account management
+- [x] **Phase 26: Super-Admin Billing + User Management** - Platform overview metrics, per-tenant billing visibility, and merchant account management (completed 2026-04-05)
 - [ ] **Phase 27: Super-Admin Analytics** - Materialised MRR/churn analytics with Stripe sync job and platform revenue breakdown
 
 ## Phase Details
@@ -117,7 +117,7 @@ Plans:
 Plans:
 - [x] 26-01-PLAN.md — Migration, platform dashboard (stat cards + signup trend chart), sidebar nav, analytics stub
 - [x] 26-02-PLAN.md — Tenant detail: Stripe billing sections (subscriptions, invoices, payment failure banner), owner info
-- [ ] 26-03-PLAN.md — User management: password reset + disable/enable account actions, modals, extended TenantDetailActions
+- [x] 26-03-PLAN.md — User management: password reset + disable/enable account actions, modals, extended TenantDetailActions
 **UI hint**: yes
 
 ### Phase 27: Super-Admin Analytics
