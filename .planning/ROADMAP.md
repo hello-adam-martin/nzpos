@@ -115,8 +115,8 @@ Plans:
   5. Super-admin can disable a merchant account, preventing the owner from logging in
 **Plans**: 3 plans
 Plans:
-- [ ] 26-01-PLAN.md — Migration, platform dashboard (stat cards + signup trend chart), sidebar nav, analytics stub
-- [ ] 26-02-PLAN.md — Tenant detail: Stripe billing sections (subscriptions, invoices, payment failure banner), owner info
+- [x] 26-01-PLAN.md — Migration, platform dashboard (stat cards + signup trend chart), sidebar nav, analytics stub
+- [x] 26-02-PLAN.md — Tenant detail: Stripe billing sections (subscriptions, invoices, payment failure banner), owner info
 - [ ] 26-03-PLAN.md — User management: password reset + disable/enable account actions, modals, extended TenantDetailActions
 **UI hint**: yes
 
@@ -162,5 +162,5 @@ Plans:
 | 23. Feature Gating + POS/Storefront Integration | v3.0 | 3/3 | Complete | 2026-04-04 |
 | 24. Staff RBAC Foundation | v4.0 | 3/3 | Complete    | 2026-04-04 |
 | 25. Admin Operational UI | v4.0 | 3/3 | Complete    | 2026-04-05 |
-| 26. Super-Admin Billing + User Management | v4.0 | 0/3 | Not started | - |
+| 26. Super-Admin Billing + User Management | v4.0 | 2/3 | In Progress|  |
 | 27. Super-Admin Analytics | v4.0 | 0/TBD | Not started | - |

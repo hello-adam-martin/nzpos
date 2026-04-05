@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Admin Platform
 status: executing
-stopped_at: Phase 26 context gathered
-last_updated: "2026-04-05T03:45:38.747Z"
+stopped_at: Completed 26-02-PLAN.md
+last_updated: "2026-04-05T10:53:55.297Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 6
-  completed_plans: 5
+  total_plans: 9
+  completed_plans: 7
   percent: 33
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 25 — admin-operational-ui
+**Current focus:** Phase 26 — super-admin-billing-user-management
 
 ## Current Position
 
-Phase: 26
-Plan: Not started
+Phase: 26 (super-admin-billing-user-management) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
 Last activity: 2026-04-05
 
@@ -49,6 +49,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 24-staff-rbac-foundation P03 | 20 | 2 tasks | 12 files |
 | Phase 25-admin-operational-ui P01 | 25 | 2 tasks | 12 files |
 | Phase 25-admin-operational-ui P03 | 15 min | 2 tasks | 9 files |
+| Phase 26-super-admin-billing-user-management P02 | 15 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,9 @@ Progress: [███░░░░░░░] 33%
 - [Phase 25-admin-operational-ui]: PromoList converted to use client component to support modal state for edit/delete
 - [Phase 25]: Customer detail page uses 'use client' — enables immediate UI update after disable/enable without full page navigation
 - [Phase 25]: orders.order_number column absent from schema — short UUID (first 8 chars) used as order reference in font-mono
+- [Phase 26-super-admin-billing-user-management]: Use Promise.allSettled for Stripe + owner fetches — partial failure acceptable, show error inline rather than crashing page
+- [Phase 26-super-admin-billing-user-management]: hasPastDue checks subscription status for past_due/unpaid + invoice open+overdue — Invoice.Status has no past_due value in Stripe SDK v17
+- [Phase 26-super-admin-billing-user-management]: billing_cycle_anchor used for renewal date display — Stripe SDK v17 Subscription type has no current_period_end field
 
 ### Pending Todos
 
@@ -89,6 +93,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-05T03:45:38.738Z
-Stopped at: Phase 26 context gathered
-Resume file: .planning/phases/26-super-admin-billing-user-management/26-CONTEXT.md
+Last session: 2026-04-05T10:53:55.292Z
+Stopped at: Completed 26-02-PLAN.md
+Resume file: None

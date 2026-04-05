@@ -48,9 +48,9 @@ Requirements for Admin Platform milestone. Each maps to roadmap phases.
 
 ### Super-Admin Billing Visibility
 
-- [ ] **SA-BILL-01**: Super-admin can view a tenant's active Stripe subscriptions from the tenant detail page
-- [ ] **SA-BILL-02**: Super-admin can view a tenant's recent invoices and payment status from the tenant detail page
-- [ ] **SA-BILL-03**: Super-admin can see payment failure alerts for tenants with past-due invoices
+- [x] **SA-BILL-01**: Super-admin can view a tenant's active Stripe subscriptions from the tenant detail page
+- [x] **SA-BILL-02**: Super-admin can view a tenant's recent invoices and payment status from the tenant detail page
+- [x] **SA-BILL-03**: Super-admin can see payment failure alerts for tenants with past-due invoices
 
 ### Super-Admin Analytics (MRR/Churn)
 
@@ -62,7 +62,7 @@ Requirements for Admin Platform milestone. Each maps to roadmap phases.
 
 ### Super-Admin User Management
 
-- [ ] **SA-USER-01**: Super-admin can view a tenant's owner email and signup date from tenant detail
+- [x] **SA-USER-01**: Super-admin can view a tenant's owner email and signup date from tenant detail
 - [ ] **SA-USER-02**: Super-admin can trigger a password reset email for a merchant account
 - [ ] **SA-USER-03**: Super-admin can disable a merchant account, preventing login
 
@@ -113,10 +113,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SA-DASH-01 | Phase 26 | Pending |
 | SA-DASH-02 | Phase 26 | Pending |
 | SA-DASH-03 | Phase 26 | Pending |
-| SA-BILL-01 | Phase 26 | Pending |
-| SA-BILL-02 | Phase 26 | Pending |
-| SA-BILL-03 | Phase 26 | Pending |
-| SA-USER-01 | Phase 26 | Pending |
+| SA-BILL-01 | Phase 26 | Complete |
+| SA-BILL-02 | Phase 26 | Complete |
+| SA-BILL-03 | Phase 26 | Complete |
+| SA-USER-01 | Phase 26 | Complete |
 | SA-USER-02 | Phase 26 | Pending |
 | SA-USER-03 | Phase 26 | Pending |
 | SA-MRR-01 | Phase 27 | Pending |
