@@ -18,10 +18,10 @@ Requirements for Admin Platform milestone. Each maps to roadmap phases.
 
 ### Customer Management
 
-- [ ] **CUST-01**: Admin can view a paginated list of customers with name, email, and order count
-- [ ] **CUST-02**: Admin can search customers by name or email
-- [ ] **CUST-03**: Admin can view a customer's order history from the customer detail page
-- [ ] **CUST-04**: Admin can disable a customer account, preventing them from logging into the storefront
+- [x] **CUST-01**: Admin can view a paginated list of customers with name, email, and order count
+- [x] **CUST-02**: Admin can search customers by name or email
+- [x] **CUST-03**: Admin can view a customer's order history from the customer detail page
+- [x] **CUST-04**: Admin can disable a customer account, preventing them from logging into the storefront
 
 ### Promo Management
 
@@ -98,10 +98,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STAFF-04 | Phase 24 | Complete |
 | STAFF-05 | Phase 24 | Complete |
 | STAFF-06 | Phase 24 | Complete |
-| CUST-01 | Phase 25 | Pending |
-| CUST-02 | Phase 25 | Pending |
-| CUST-03 | Phase 25 | Pending |
-| CUST-04 | Phase 25 | Pending |
+| CUST-01 | Phase 25 | Complete |
+| CUST-02 | Phase 25 | Complete |
+| CUST-03 | Phase 25 | Complete |
+| CUST-04 | Phase 25 | Complete |
 | PROMO-01 | Phase 25 | Complete |
 | PROMO-02 | Phase 25 | Complete |
 | SETTINGS-01 | Phase 25 | Complete |

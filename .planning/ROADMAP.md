@@ -62,7 +62,7 @@
 **Milestone Goal:** Complete the admin and super-admin areas with staff management, customer management, role-based permissions, platform analytics, and merchant account management.
 
 - [x] **Phase 24: Staff RBAC Foundation** - Manager role, shared role constants, staff management UI, and role-gated Server Action guards (completed 2026-04-04)
-- [ ] **Phase 25: Admin Operational UI** - Customer management, promo edit/delete, store settings expansion, and admin dashboard charts
+- [x] **Phase 25: Admin Operational UI** - Customer management, promo edit/delete, store settings expansion, and admin dashboard charts (completed 2026-04-05)
 - [ ] **Phase 26: Super-Admin Billing + User Management** - Platform overview metrics, per-tenant billing visibility, and merchant account management
 - [ ] **Phase 27: Super-Admin Analytics** - Materialised MRR/churn analytics with Stripe sync job and platform revenue breakdown
 
@@ -100,7 +100,7 @@ Plans:
 Plans:
 - [x] 25-01-PLAN.md — Migration, store settings forms, promo edit/delete, AdminSidebar Customers link
 - [x] 25-02-PLAN.md — Dashboard enhancement: sales trend chart, comparison cards, recent orders widget
-- [ ] 25-03-PLAN.md — Customer management: list, search, detail page, disable/enable accounts
+- [x] 25-03-PLAN.md — Customer management: list, search, detail page, disable/enable accounts
 **UI hint**: yes
 
 ### Phase 26: Super-Admin Billing + User Management
@@ -157,6 +157,6 @@ Plans:
 | 22. Inventory Add-on Core | v3.0 | 5/5 | Complete | 2026-04-04 |
 | 23. Feature Gating + POS/Storefront Integration | v3.0 | 3/3 | Complete | 2026-04-04 |
 | 24. Staff RBAC Foundation | v4.0 | 3/3 | Complete    | 2026-04-04 |
-| 25. Admin Operational UI | v4.0 | 2/3 | In Progress|  |
+| 25. Admin Operational UI | v4.0 | 3/3 | Complete   | 2026-04-05 |
 | 26. Super-Admin Billing + User Management | v4.0 | 0/TBD | Not started | - |
 | 27. Super-Admin Analytics | v4.0 | 0/TBD | Not started | - |

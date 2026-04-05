@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Admin Platform
 status: executing
-stopped_at: Completed 25-admin-operational-ui Plan 01
-last_updated: "2026-04-05T03:23:22.800Z"
+stopped_at: Completed 25-admin-operational-ui Plan 03
+last_updated: "2026-04-05T03:30:52.481Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
   percent: 33
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 ## Current Position
 
 Phase: 25 (admin-operational-ui) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-05
 
@@ -48,6 +48,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 24-staff-rbac-foundation P02 | 15 min | 2 tasks | 12 files |
 | Phase 24-staff-rbac-foundation P03 | 20 | 2 tasks | 12 files |
 | Phase 25-admin-operational-ui P01 | 25 | 2 tasks | 12 files |
+| Phase 25-admin-operational-ui P03 | 15 min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Progress: [███░░░░░░░] 33%
 - [Phase 24-staff-rbac-foundation]: Manager nav links removed from DOM in AdminSidebar (not CSS hidden) per D-09 security requirement
 - [Phase 25-admin-operational-ui]: Soft-delete uses is_active=false with optimistic lock on promo_codes to prevent race conditions
 - [Phase 25-admin-operational-ui]: PromoList converted to use client component to support modal state for edit/delete
+- [Phase 25]: Customer detail page uses 'use client' — enables immediate UI update after disable/enable without full page navigation
+- [Phase 25]: orders.order_number column absent from schema — short UUID (first 8 chars) used as order reference in font-mono
 
 ### Pending Todos
 
@@ -86,6 +89,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-05T03:23:22.798Z
-Stopped at: Completed 25-admin-operational-ui Plan 01
+Last session: 2026-04-05T03:30:52.479Z
+Stopped at: Completed 25-admin-operational-ui Plan 03
 Resume file: None
