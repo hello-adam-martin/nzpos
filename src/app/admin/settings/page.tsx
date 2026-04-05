@@ -1,12 +1,13 @@
 import { redirect } from 'next/navigation'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { BrandingForm } from './BrandingForm'
+import { BusinessDetailsForm } from './BusinessDetailsForm'
+import { ReceiptForm } from './ReceiptForm'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * /admin/settings — post-wizard branding settings.
- * Allows editing store name, logo, and primary color after wizard.
+ * /admin/settings — post-wizard branding settings, business details, and receipt customization.
  */
 export default async function SettingsPage() {
   const supabase = await createSupabaseServerClient()
@@ -22,7 +23,7 @@ export default async function SettingsPage() {
 
   const { data: store } = await supabase
     .from('stores')
-    .select('name, slug, logo_url, primary_color')
+    .select('name, slug, logo_url, primary_color, business_address, phone, ird_gst_number, receipt_header, receipt_footer')
     .eq('id', storeId)
     .single()
 
@@ -39,6 +40,17 @@ export default async function SettingsPage() {
         slug={store.slug}
         logoUrl={store.logo_url}
         primaryColor={store.primary_color}
+      />
+
+      <BusinessDetailsForm
+        businessAddress={store.business_address ?? ''}
+        phone={store.phone ?? ''}
+        irdGstNumber={store.ird_gst_number ?? ''}
+      />
+
+      <ReceiptForm
+        receiptHeader={store.receipt_header ?? ''}
+        receiptFooter={store.receipt_footer ?? ''}
       />
     </div>
   )

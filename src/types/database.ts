@@ -1,4 +1,3 @@
-Connecting to db 5432
 export type Json =
   | string
   | number
@@ -143,6 +142,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          is_active: boolean
           name: string | null
           preferences: Json
           store_id: string
@@ -153,6 +153,7 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          is_active?: boolean
           name?: string | null
           preferences?: Json
           store_id: string
@@ -163,6 +164,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          is_active?: boolean
           name?: string | null
           preferences?: Json
           store_id?: string
@@ -885,9 +887,11 @@ export type Database = {
       stores: {
         Row: {
           address: string | null
+          business_address: string | null
           created_at: string
           gst_number: string | null
           id: string
+          ird_gst_number: string | null
           is_active: boolean
           logo_url: string | null
           name: string
@@ -895,6 +899,8 @@ export type Database = {
           owner_auth_id: string
           phone: string | null
           primary_color: string | null
+          receipt_footer: string | null
+          receipt_header: string | null
           setup_completed_steps: number
           setup_wizard_dismissed: boolean
           slug: string
@@ -906,9 +912,11 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          business_address?: string | null
           created_at?: string
           gst_number?: string | null
           id?: string
+          ird_gst_number?: string | null
           is_active?: boolean
           logo_url?: string | null
           name: string
@@ -916,6 +924,8 @@ export type Database = {
           owner_auth_id: string
           phone?: string | null
           primary_color?: string | null
+          receipt_footer?: string | null
+          receipt_header?: string | null
           setup_completed_steps?: number
           setup_wizard_dismissed?: boolean
           slug: string
@@ -927,9 +937,11 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          business_address?: string | null
           created_at?: string
           gst_number?: string | null
           id?: string
+          ird_gst_number?: string | null
           is_active?: boolean
           logo_url?: string | null
           name?: string
@@ -937,6 +949,8 @@ export type Database = {
           owner_auth_id?: string
           phone?: string | null
           primary_color?: string | null
+          receipt_footer?: string | null
+          receipt_header?: string | null
           setup_completed_steps?: number
           setup_wizard_dismissed?: boolean
           slug?: string
