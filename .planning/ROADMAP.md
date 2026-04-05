@@ -130,7 +130,10 @@ Plans:
   3. Analytics page shows churn count (cancelled subscriptions this month) and revenue breakdown by add-on
   4. Page data comes from a local Supabase snapshot table, not the live Stripe API — page loads in under 2 seconds
   5. A daily sync job populates the snapshot table; an on-demand refresh button exists but is rate-limited to once per 5 minutes
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 27-01-PLAN.md — Stripe snapshot sync: migration, sync function, cron route, server action with rate limiting
+- [ ] 27-02-PLAN.md — Analytics page UI: stat cards, MRR trend chart, add-on revenue chart, sync controls
 **UI hint**: yes
 
 ## Progress
@@ -163,4 +166,4 @@ Plans:
 | 24. Staff RBAC Foundation | v4.0 | 3/3 | Complete    | 2026-04-04 |
 | 25. Admin Operational UI | v4.0 | 3/3 | Complete    | 2026-04-05 |
 | 26. Super-Admin Billing + User Management | v4.0 | 2/3 | Complete    | 2026-04-05 |
-| 27. Super-Admin Analytics | v4.0 | 0/TBD | Not started | - |
+| 27. Super-Admin Analytics | v4.0 | 0/2 | Not started | - |
