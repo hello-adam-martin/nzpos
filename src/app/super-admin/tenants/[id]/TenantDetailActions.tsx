@@ -7,6 +7,8 @@ interface TenantDetailActionsProps {
   storeId: string
   storeName: string
   isActive: boolean
+  ownerEmail?: string | null
+  ownerAuthId?: string | null
 }
 
 export default function TenantDetailActions({ storeId, storeName, isActive }: TenantDetailActionsProps) {
