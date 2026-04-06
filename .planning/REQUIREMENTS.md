@@ -33,9 +33,9 @@ Requirements for POS Demo milestone. Each maps to roadmap phases.
 
 ### Signup Conversion
 
-- [ ] **CONV-01**: After completing a demo sale, visitor sees a signup CTA overlay/banner
-- [ ] **CONV-02**: CTA links to the merchant signup page
-- [ ] **CONV-03**: Visitor can dismiss the CTA and start a new demo sale
+- [x] **CONV-01**: After completing a demo sale, visitor sees a signup CTA overlay/banner
+- [x] **CONV-02**: CTA links to the merchant signup page
+- [x] **CONV-03**: Visitor can dismiss the CTA and start a new demo sale
 
 ### Landing Page
 
@@ -86,9 +86,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DCHK-05 | Phase 33 | Complete |
 | DCHK-06 | Phase 33 | Complete |
 | DCHK-07 | Phase 33 | Complete |
-| CONV-01 | Phase 34 | Pending |
-| CONV-02 | Phase 34 | Pending |
-| CONV-03 | Phase 34 | Pending |
+| CONV-01 | Phase 34 | Complete |
+| CONV-02 | Phase 34 | Complete |
+| CONV-03 | Phase 34 | Complete |
 | LAND-01 | Phase 34 | Complete |
 | LAND-02 | Phase 34 | Complete |
 

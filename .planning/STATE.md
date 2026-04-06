@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: POS Demo
-status: executing
-stopped_at: Completed 34-02-PLAN.md
-last_updated: "2026-04-06T09:56:18.635Z"
+status: verifying
+stopped_at: Completed 34-01-PLAN.md
+last_updated: "2026-04-06T09:57:21.772Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 
 Phase: 34 (signup-conversion-landing-page) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-06
 
 [==========          ] 0% — 0/3 phases complete
@@ -59,6 +59,8 @@ Last activity: 2026-04-06
 - [Phase 33-demo-pos-route-checkout]: demoMode prop uses hook override pattern (call unconditionally, override return values), not conditional hook calls
 - [Phase 33-demo-pos-route-checkout]: Demo sale intercept returns early before completeSale, no router.refresh() in demo path
 - [Phase 34]: Ghost button uses border-white/70 on navy for secondary CTA per DESIGN.md D-08 ghost button pattern
+- [Phase 34-signup-conversion-landing-page]: CTA placed between store info footer and email capture sections in ReceiptScreen for maximum prominence
+- [Phase 34-signup-conversion-landing-page]: Dismiss action in demo receipt CTA reuses existing onNewSale callback — no new prop needed
 
 ### Pending Todos
 
@@ -70,6 +72,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T09:56:18.621Z
-Stopped at: Completed 34-02-PLAN.md
+Last session: 2026-04-06T09:57:21.769Z
+Stopped at: Completed 34-01-PLAN.md
 Resume file: None

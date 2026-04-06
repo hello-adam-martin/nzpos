@@ -90,7 +90,7 @@
 
 - [x] **Phase 32: Demo Store Seed** - Pre-seeded NZ retail store with ~20 products, categories, and placeholder images in the database (completed 2026-04-06)
 - [x] **Phase 33: Demo POS Route & Checkout** - Unauthenticated `/demo/pos` running real POS code with simulated sale completion (completed 2026-04-06)
-- [ ] **Phase 34: Signup Conversion & Landing Page** - Post-sale CTA overlay and "Try POS Demo" entry point on the landing page
+- [x] **Phase 34: Signup Conversion & Landing Page** - Post-sale CTA overlay and "Try POS Demo" entry point on the landing page (completed 2026-04-06)
 
 ## Phase Details
 
@@ -133,9 +133,9 @@ Plans:
   2. Clicking the CTA navigates to the merchant signup page
   3. Dismissing the CTA returns to a fresh demo session with an empty cart
   4. The landing page has a clearly visible "Try POS Demo" button that navigates to `/demo/pos`
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
-- [ ] 34-01-PLAN.md — ReceiptScreen demo signup CTA with dismiss action
+- [x] 34-01-PLAN.md — ReceiptScreen demo signup CTA with dismiss action
 - [x] 34-02-PLAN.md — Landing page "Try POS Demo" ghost button + bottom CTA link
 
 **UI hint**: yes
@@ -177,4 +177,4 @@ Plans:
 | 31. Marketing Pages | v6.0 | 2/2 | Complete | 2026-04-06 |
 | 32. Demo Store Seed | v7.0 | 1/1 | Complete    | 2026-04-06 |
 | 33. Demo POS Route & Checkout | v7.0 | 2/2 | Complete    | 2026-04-06 |
-| 34. Signup Conversion & Landing Page | v7.0 | 1/2 | In Progress|  |
+| 34. Signup Conversion & Landing Page | v7.0 | 2/2 | Complete   | 2026-04-06 |
