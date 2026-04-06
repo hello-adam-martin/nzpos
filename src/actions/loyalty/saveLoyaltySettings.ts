@@ -51,7 +51,7 @@ export async function saveLoyaltySettings(
   // 2. Validate input
   const parsed = saveLoyaltySettingsSchema.safeParse(input)
   if (!parsed.success) {
-    return { error: parsed.error.errors[0]?.message ?? 'Invalid input' }
+    return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
   }
 
   const { earn_rate_cents, redeem_rate_cents, is_active } = parsed.data
