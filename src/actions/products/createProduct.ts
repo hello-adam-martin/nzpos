@@ -35,6 +35,7 @@ export async function createProduct(formData: FormData) {
   const reorderThreshold = formData.get('reorder_threshold')
   const imageUrl = formData.get('image_url') as string | null
   const productType = formData.get('product_type') as string | null
+  const rawCostPriceCents = formData.get('cost_price_cents')
 
   const raw = {
     name: formData.get('name') as string,
@@ -46,6 +47,7 @@ export async function createProduct(formData: FormData) {
     stock_quantity: stockQuantity ? Number(stockQuantity) : undefined,
     reorder_threshold: reorderThreshold ? Number(reorderThreshold) : undefined,
     image_url: imageUrl || undefined,
+    cost_price_cents: rawCostPriceCents !== null && rawCostPriceCents !== '' ? Number(rawCostPriceCents) : null,
   }
 
   const parsed = CreateProductSchema.safeParse(raw)

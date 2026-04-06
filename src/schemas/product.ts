@@ -12,6 +12,7 @@ export const CreateProductSchema = z.object({
   stock_quantity: z.number().int().min(0).default(0),
   reorder_threshold: z.number().int().min(0).default(0),
   image_url: z.string().url().optional(),
+  cost_price_cents: z.number().int().min(0).nullable().optional(),
 })
 
 export const UpdateProductSchema = CreateProductSchema.partial()

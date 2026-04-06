@@ -53,6 +53,11 @@ export async function updateProduct(id: string, formData: FormData) {
   const productType = formData.get('product_type') as string | null
   if (productType !== null) raw.product_type = productType
 
+  const rawCostPriceCents = formData.get('cost_price_cents')
+  if (rawCostPriceCents !== null) {
+    raw.cost_price_cents = rawCostPriceCents !== '' ? Number(rawCostPriceCents) : null
+  }
+
   const parsed = UpdateProductSchema.safeParse(raw)
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors }
