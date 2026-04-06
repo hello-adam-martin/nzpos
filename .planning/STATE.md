@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: Free Email Notifications
-status: completed
-stopped_at: Phase 31 context gathered
-last_updated: "2026-04-06T07:23:23.538Z"
+status: verifying
+stopped_at: Completed 31-02-PLAN.md
+last_updated: "2026-04-06T07:35:18.241Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 8
-  completed_phases: 6
-  total_plans: 18
-  completed_plans: 17
+  completed_phases: 7
+  total_plans: 20
+  completed_plans: 19
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 30 — admin-ui-super-admin
+**Current focus:** Phase 31 — marketing-pages
 
 ## Current Position
 
-Phase: 31
-Plan: Not started
-Status: Phase complete
+Phase: 31 (marketing-pages) — EXECUTING
+Plan: 2 of 2
+Status: Phase complete — ready for verification
 Last activity: 2026-04-06
 
 Progress: [░░░░░░░░░░] 0%
@@ -58,6 +58,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 30-admin-ui-super-admin]: UpgradePrompt feature type aligned with SubscriptionFeature: xero | custom_domain | inventory — email_notifications removed from UI
 
 - [Phase 30-02]: Super admin dashboard shows 3 adoption cards (Xero, Domain, Inventory), analytics has 3 ADDON_DISPLAY_NAMES, tenant pages select only active add-on columns
+- [Phase 31-marketing-pages]: Email Notifications removed from add-ons hub: now free for all stores (not a paid add-on)
+- [Phase 31-marketing-pages]: Add-ons hub grid changed from 3-column to 2-column with max-w-3xl centering to match 2-add-on layout
 
 ### Pending Todos
 
@@ -69,6 +71,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T07:23:23.534Z
-Stopped at: Phase 31 context gathered
-Resume file: .planning/phases/31-marketing-pages/31-CONTEXT.md
+Last session: 2026-04-06T07:35:09.763Z
+Stopped at: Completed 31-02-PLAN.md
+Resume file: None

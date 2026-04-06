@@ -30,9 +30,9 @@ Requirements for Free Email Notifications milestone. Move email notifications fr
 
 - [ ] **MKT-01**: Landing pricing section shows only 2 add-on cards (Xero, Inventory)
 - [ ] **MKT-02**: /add-ons/email-notifications detail page removed
-- [ ] **MKT-03**: Add-ons hub page shows only 2 add-ons
+- [x] **MKT-03**: Add-ons hub page shows only 2 add-ons
 - [ ] **MKT-04**: Free tier checklist on landing pricing includes "Email notifications"
-- [ ] **MKT-05**: Add-on grid updated to 2-column layout on landing and hub pages
+- [x] **MKT-05**: Add-on grid updated to 2-column layout on landing and hub pages
 
 ### Tests
 
