@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { CheckCircle } from 'lucide-react'
 import type { ReceiptData } from '@/lib/receipt'
 import { formatNZD } from '@/lib/money'
@@ -10,6 +11,7 @@ type ReceiptScreenProps = {
   onNewSale?: () => void
   onEmailCapture?: (email: string) => void
   mode?: 'pos' | 'admin'
+  demoMode?: boolean
 }
 
 function paymentLabel(method: string): string {
@@ -24,6 +26,7 @@ export function ReceiptScreen({
   onNewSale,
   onEmailCapture,
   mode = 'pos',
+  demoMode = false,
 }: ReceiptScreenProps) {
   const [emailInput, setEmailInput] = useState('')
   const [emailSent, setEmailSent] = useState(false)
@@ -156,6 +159,33 @@ export function ReceiptScreen({
           )}
           {receiptData.gstNumber && (
             <p className="text-sm text-text-muted">GST No: {receiptData.gstNumber}</p>
+          )}
+        </div>
+      )}
+
+      {/* Demo signup CTA — per D-01: inline banner, per D-03: demoMode only */}
+      {demoMode && (
+        <div className="px-4 pb-4 pt-4 border-t border-border-light">
+          <p className="text-sm font-bold text-text text-center">
+            Ready to set up your own store?
+          </p>
+          <p className="text-xs text-text-muted text-center mt-1">
+            Get your POS and online store live in minutes.
+          </p>
+          <Link
+            href="/signup"
+            className="mt-3 w-full min-h-[44px] inline-flex items-center justify-center bg-[var(--color-navy)] text-white text-sm font-bold rounded-lg hover:opacity-90 transition-opacity duration-150"
+          >
+            Create your free store
+          </Link>
+          {onNewSale && (
+            <button
+              onClick={onNewSale}
+              className="w-full text-sm text-text-muted mt-2 hover:text-text transition-colors duration-150"
+              type="button"
+            >
+              or start a new sale
+            </button>
           )}
         </div>
       )}
