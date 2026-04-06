@@ -50,7 +50,7 @@ export default async function SuperAdminDashboardPage() {
       .gte('created_at', startOfMonth.toISOString()),
     admin
       .from('store_plans')
-      .select('has_xero, has_email_notifications, has_custom_domain, has_inventory'),
+      .select('has_xero, has_custom_domain, has_inventory'),
     admin
       .from('stores')
       .select('created_at')
@@ -63,9 +63,6 @@ export default async function SuperAdminDashboardPage() {
   const totalPlans = plans.length || 1 // avoid division by zero
   const adoptionRates = {
     xero: Math.round((plans.filter((p) => p.has_xero).length / totalPlans) * 100),
-    email_notifications: Math.round(
-      (plans.filter((p) => p.has_email_notifications).length / totalPlans) * 100
-    ),
     custom_domain: Math.round(
       (plans.filter((p) => p.has_custom_domain).length / totalPlans) * 100
     ),
@@ -90,16 +87,11 @@ export default async function SuperAdminDashboardPage() {
       </div>
 
       {/* Add-on adoption cards */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 mb-6">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 mb-6">
         <DashboardHeroCard
           label="Xero Adoption"
           value={adoptionRates.xero + '%'}
           subLabel={adoptionRates.xero + '% of tenants'}
-        />
-        <DashboardHeroCard
-          label="Email Adoption"
-          value={adoptionRates.email_notifications + '%'}
-          subLabel={adoptionRates.email_notifications + '% of tenants'}
         />
         <DashboardHeroCard
           label="Domain Adoption"

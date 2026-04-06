@@ -7,7 +7,6 @@ export const dynamic = 'force-dynamic'
 const ADDON_DISPLAY_NAMES: Record<string, string> = {
   xero: 'Xero',
   inventory: 'Inventory',
-  email_notifications: 'Email Notifications',
   custom_domain: 'Custom Domain',
 }
 
