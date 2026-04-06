@@ -6,6 +6,7 @@ import { triggerStripeSync } from '@/actions/super-admin/triggerStripeSync'
 
 interface AnalyticsSyncControlsProps {
   lastSyncedAt: string | null
+  onSyncStart?: () => void
   onSyncComplete: () => void
 }
 
@@ -27,6 +28,7 @@ function computeRetrySeconds(lastSyncedAt: string | null): number | null {
 
 export default function AnalyticsSyncControls({
   lastSyncedAt,
+  onSyncStart,
   onSyncComplete,
 }: AnalyticsSyncControlsProps) {
   const [status, setStatus] = useState<SyncStatus>('idle')
@@ -54,6 +56,7 @@ export default function AnalyticsSyncControls({
     if (status === 'loading' || retrySeconds !== null) return
     setStatus('loading')
     setErrorMsg(null)
+    onSyncStart?.()
 
     const result = await triggerStripeSync()
 
