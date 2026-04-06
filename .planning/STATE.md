@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v7.0
-milestone_name: POS Demo
-status: verifying
-stopped_at: Completed 34-01-PLAN.md
-last_updated: "2026-04-06T10:04:55.327Z"
+milestone: v8.0
+milestone_name: Add-On Catalog Expansion
+status: defining
+stopped_at: null
+last_updated: "2026-04-06"
 last_activity: 2026-04-06
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 5
-  completed_plans: 5
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
@@ -20,22 +20,20 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 34 — signup-conversion-landing-page
+**Current focus:** Defining requirements for v8.0 Add-On Catalog Expansion
 
 ## Current Position
 
-Phase: 34
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-06
-
-[==========          ] 0% — 0/3 phases complete
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-06 — Milestone v8.0 started
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0 (v7.0)
+- Total plans completed: 0 (v8.0)
 - Average duration: ~15 min (based on prior history)
 - Total execution time: 0 min
 
@@ -49,18 +47,8 @@ Last activity: 2026-04-06
 - has_email_notifications column kept (always true) for backwards compatibility
 - Add-on pricing post-v6.0: Xero $9/mo, Inventory Management $9/mo (2 paid add-ons)
 - Design system: deep navy (#1E293B) + amber (#E67E22), Satoshi + DM Sans
-- Demo approach: real demo store in DB, real POS code, completeSale intercepted in demo mode
-- Session isolation via client-side cart (already useReducer), no DB writes in demo mode
-- Demo seed script must be idempotent (re-runnable without duplicates)
-- Barcode scanner, new-order polling, and receipt email disabled in demo mode (DPOS-04)
-- [Phase 32-demo-store-seed]: Synthetic auth.users row with matching UUID satisfies owner_auth_id FK without real login account
-- [Phase 32-demo-store-seed]: DEMO_STORE_ID constant in src/lib/constants.ts for zero-query demo store identification
-- [Phase 33]: Middleware passthrough for /demo/** placed at position 1.5 before host resolution — skips all auth and tenant logic for demo visitors
-- [Phase 33-demo-pos-route-checkout]: demoMode prop uses hook override pattern (call unconditionally, override return values), not conditional hook calls
-- [Phase 33-demo-pos-route-checkout]: Demo sale intercept returns early before completeSale, no router.refresh() in demo path
-- [Phase 34]: Ghost button uses border-white/70 on navy for secondary CTA per DESIGN.md D-08 ghost button pattern
-- [Phase 34-signup-conversion-landing-page]: CTA placed between store info footer and email capture sections in ReceiptScreen for maximum prominence
-- [Phase 34-signup-conversion-landing-page]: Dismiss action in demo receipt CTA reuses existing onNewSale callback — no new prop needed
+- Email notifications free for all stores (moved from paid add-on in v6.0)
+- Demo POS live at `/demo/pos` with signup CTA conversion funnel (v7.0)
 
 ### Pending Todos
 
@@ -72,6 +60,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T09:57:21.769Z
-Stopped at: Completed 34-01-PLAN.md
+Last session: 2026-04-06
+Stopped at: Milestone v8.0 initialization
 Resume file: None

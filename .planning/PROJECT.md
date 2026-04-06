@@ -87,7 +87,14 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 
 ### Active
 
-(No active requirements — planning next milestone)
+#### Current Milestone: v8.0 Add-On Catalog Expansion
+
+**Goal:** Research, identify, and build new paid add-ons that NZ small retail merchants would pay for, expanding revenue per merchant.
+
+**Target features:**
+- Research the NZ small retail POS add-on landscape (competitor offerings, merchant willingness to pay)
+- Identify strongest add-on candidates based on merchant value, build complexity, and revenue potential
+- Build selected add-ons with full billing integration (Stripe subscriptions, feature gating, admin UI, marketing pages)
 
 ### Out of Scope
 
@@ -190,4 +197,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-06 after v7.0 POS Demo milestone*
+*Last updated: 2026-04-06 after v8.0 Add-On Catalog Expansion milestone started*
