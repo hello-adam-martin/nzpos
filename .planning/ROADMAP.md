@@ -136,10 +136,10 @@ Plans:
   3. Merchant can generate a COGS report for a chosen date range showing revenue, cost, and margin per product
   4. Merchant can view a profit breakdown grouped by product category
   5. Merchant can export COGS report data as a CSV file
-**Plans:** 2/4 plans executed
+**Plans:** 3/4 plans executed
 Plans:
 - [x] 36-00-PLAN.md — Wave 0 test stubs (billing webhook + cost price persistence)
-- [ ] 36-01-PLAN.md — DB migration, billing pipeline, cost price in product form/list
+- [x] 36-01-PLAN.md — DB migration, billing pipeline, cost price in product form/list
 - [x] 36-02-PLAN.md — COGS calculation library with TDD tests
 - [ ] 36-03-PLAN.md — Profit & Margin tab UI (summary cards, product table, category breakdown, CSV export)
 **UI hint**: yes
@@ -196,5 +196,5 @@ Plans:
 | 33. Demo POS Route & Checkout | v7.0 | 2/2 | Complete | 2026-04-06 |
 | 34. Signup Conversion & Landing Page | v7.0 | 2/2 | Complete | 2026-04-06 |
 | 35. Gift Cards Add-On | v8.0 | 7/7 | Complete    | 2026-04-06 |
-| 36. Advanced Reporting / COGS Add-On | v8.0 | 2/4 | In Progress|  |
+| 36. Advanced Reporting / COGS Add-On | v8.0 | 3/4 | In Progress|  |
 | 37. Loyalty Points Add-On | v8.0 | 0/TBD | Not started | - |

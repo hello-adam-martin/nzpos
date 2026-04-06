@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: Add-On Catalog Expansion
 status: executing
-stopped_at: Completed 36-02-PLAN.md
-last_updated: "2026-04-06T19:03:08.686Z"
+stopped_at: Completed 36-advanced-reporting-cogs-add-on/36-01-PLAN.md
+last_updated: "2026-04-06T19:08:47.917Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 11
-  completed_plans: 9
+  completed_plans: 10
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 ## Current Position
 
 Phase: 36 (advanced-reporting-cogs-add-on) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-04-06
 
@@ -64,6 +64,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 35]: Full-cover gift card in createCheckoutSession: placeholder stripe_session_id='gift_card_{order.id}' for complete_online_sale RPC call
 - [Phase 36]: Wave 0 RED stubs use nested describe block for has_advanced_reporting, matching existing xero test style; costPrice.test.ts validates schema-level acceptance with pure Zod parsing
 - [Phase 36]: aggregateCOGS sets sku=null since OrderItem shape does not include SKU column; plan 03 can hydrate from product cost data
+- [Phase 36-advanced-reporting-cogs-add-on]: cost_price_cents is GST-exclusive (supplier cost before tax) — enforced by UI label (excl. GST)
+- [Phase 36-advanced-reporting-cogs-add-on]: NULL cost_price_cents means not entered yet — margin shows --- in the product table
 
 ### Pending Todos
 
@@ -76,6 +78,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T19:03:08.683Z
-Stopped at: Completed 36-02-PLAN.md
+Last session: 2026-04-06T19:08:47.915Z
+Stopped at: Completed 36-advanced-reporting-cogs-add-on/36-01-PLAN.md
 Resume file: None

@@ -25,7 +25,7 @@ Requirements for v8.0 Add-On Catalog Expansion. Each maps to roadmap phases.
 
 - [x] **COGS-01**: Merchant can enable the Advanced Reporting add-on ($9/mo) via Stripe subscription
 - [x] **COGS-02**: Merchant can set cost price per product in the product admin form
-- [ ] **COGS-03**: Merchant can view profit margin percentage per product in the product list
+- [x] **COGS-03**: Merchant can view profit margin percentage per product in the product list
 - [x] **COGS-04**: Merchant can generate a COGS report by date range showing revenue, cost, and margin
 - [x] **COGS-05**: Merchant can view a profit-by-category breakdown report
 - [x] **COGS-06**: Merchant can export COGS reports as CSV
@@ -87,7 +87,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GIFT-11 | Phase 35 | Complete |
 | COGS-01 | Phase 36 | Complete |
 | COGS-02 | Phase 36 | Complete |
-| COGS-03 | Phase 36 | Pending |
+| COGS-03 | Phase 36 | Complete |
 | COGS-04 | Phase 36 | Complete |
 | COGS-05 | Phase 36 | Complete |
 | COGS-06 | Phase 36 | Complete |
