@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A multi-tenant SaaS POS + online store platform for NZ small businesses. Any merchant can sign up, get a working POS and storefront on a subdomain, and optionally subscribe to paid add-ons (Xero, email notifications). Runs on iPad for in-store checkout, public storefront for customers, admin dashboard for owners, and a super admin panel for platform operations. Built for the NZ market (GST, EFTPOS, NZD).
+A multi-tenant SaaS POS + online store platform for NZ small businesses. Any merchant can sign up, get a working POS and storefront on a subdomain, with email notifications included free and optional paid add-ons (Xero, inventory management). Runs on iPad for in-store checkout, public storefront for customers, admin dashboard for owners, and a super admin panel for platform operations. Built for the NZ market (GST, EFTPOS, NZD).
 
 ## Milestones Shipped
 
@@ -10,21 +10,26 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 - **v2.0 SaaS Platform** — Phases 7-16 (shipped 2026-04-03): Multi-tenant, self-serve signup, billing, super admin, barcode scanning, receipts, notifications, customer accounts, partial refunds
 - **v2.1 Hardening & Documentation** — Phases 17-20 (shipped 2026-04-04): Security audit, code quality, developer docs, deployment runbook, merchant onboarding
 - **v3.0 Inventory Management** — Phases 21-23 (shipped 2026-04-05): Service product type, free-tier simplification, stock adjustments, stocktake, feature gating, POS/storefront integration
+- **v4.0 Platform Analytics** — Phases 24-27 (shipped 2026-04-06): Staff RBAC, promo code admin, click-and-collect flow, Stripe analytics snapshots
+- **v5.0 Marketing & Landing Page** — Phase 28 (shipped 2026-04-06): Hero/CTA copy rewrite, 15-feature showcase, NZ trust badges, corrected pricing, add-on detail pages
 
 ## Current State
 
-**Shipped:** v1.0 through v3.0, plus v4.0 phases 24-27 (2026-04-02 → 2026-04-06)
+**Shipped:** v1.0 through v5.0 (2026-04-02 → 2026-04-06)
 
-1,000+ source files, 99,000+ LOC TypeScript, 27 phases shipped across 100+ plans. Production-ready multi-tenant SaaS POS with inventory management as a paid add-on. Phase 27 complete — Stripe snapshot sync pipeline (daily cron + on-demand refresh) populates local analytics table; super-admin analytics page shows MRR, churn, active subscriptions, 6-month MRR trend chart, and add-on revenue breakdown. All data from snapshot table, not live Stripe API.
+1,000+ source files, 99,000+ LOC TypeScript, 28 phases shipped across 100+ plans. Production-ready multi-tenant SaaS POS with inventory management and Xero as paid add-ons, email notifications as paid add-on (moving to free in v6.0). Marketing landing page updated with 15-feature showcase, add-on detail pages, and NZ trust signals.
 
-## Current Milestone: v5.0 Marketing & Landing Page
+## Current Milestone: v6.0 Free Email Notifications
 
-**Goal:** Update the marketing landing page to accurately reflect all shipped features across v1.0-v4.0, showcase all available add-ons, and present a compelling picture of the platform.
+**Goal:** Move email notifications from paid add-on to free tier so every store gets order confirmations, pickup alerts, and daily summaries out of the box.
 
 **Target features:**
-- Expanded features section covering all shipped capabilities (barcode scanning, customer accounts, staff management, admin dashboard, receipts, partial refunds, promo codes, etc.)
-- Complete add-on pricing including Inventory Management alongside Xero and Email Notifications
-- Improved marketing page structure and content reflecting a mature SaaS product
+- Remove email_notifications feature gate from all server actions and UI
+- Remove email_notifications from Stripe billing/subscription flow
+- Enable email notifications for all existing stores via migration
+- Update marketing pages (landing pricing, add-ons hub, remove email detail page)
+- Update free tier feature list to include email notifications
+- Update admin billing/add-ons UI to show only 2 paid add-ons (Xero, Inventory)
 
 ## Core Value
 
@@ -104,7 +109,7 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - v2.1 shipped 2026-04-04 with 434 tests, 989 files, 89,000+ LOC TypeScript
 - v3.0 shipped 2026-04-05 with inventory management add-on, service products, and stocktake workflows
 - Platform is now multi-tenant SaaS — any NZ business can sign up at the root domain
-- Pricing: free core POS/storefront/admin, paid add-ons via Stripe (Xero, email notifications, inventory management)
+- Pricing: free core POS/storefront/admin + email notifications, paid add-ons via Stripe (Xero, inventory management). Email notifications moving from paid to free in v6.0.
 - Super admin panel operational for platform management
 - Full documentation suite: setup guide, env vars, architecture, server actions, deployment runbook, merchant guide
 - CSP headers in Report-Only mode — switch to enforcing after production monitoring confirms no false positives
@@ -173,4 +178,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-06 — Milestone v5.0 Marketing & Landing Page started*
+*Last updated: 2026-04-06 — Milestone v6.0 Free Email Notifications started*
