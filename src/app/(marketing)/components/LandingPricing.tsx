@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 export default function LandingPricing() {
   return (
     <section id="pricing" className="bg-[var(--color-surface)]">
@@ -48,10 +50,16 @@ export default function LandingPricing() {
           </ul>
         </div>
 
-        {/* Add-on pills */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-lg)] mt-[var(--space-lg)]">
+        {/* Optional add-ons */}
+        <h3 className="font-sans text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wide text-center mt-[var(--space-2xl)]">
+          Optional add-ons
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-lg)] mt-[var(--space-md)]">
           {/* Xero Integration */}
-          <div className="bg-white border border-[var(--color-border)] rounded-lg p-[var(--space-xl)]">
+          <Link
+            href="/add-ons/xero"
+            className="group bg-white border border-[var(--color-border)] rounded-lg p-[var(--space-xl)] hover:border-[var(--color-amber)] transition-colors duration-150"
+          >
             <h3 className="font-sans text-sm font-bold text-[var(--color-text)]">
               Xero Integration
             </h3>
@@ -70,10 +78,16 @@ export default function LandingPricing() {
                 </li>
               ))}
             </ul>
-          </div>
+            <span className="inline-block font-sans text-sm font-bold text-[var(--color-amber)] mt-[var(--space-md)] group-hover:underline">
+              Learn more →
+            </span>
+          </Link>
 
           {/* Email Notifications */}
-          <div className="bg-white border border-[var(--color-border)] rounded-lg p-[var(--space-xl)]">
+          <Link
+            href="/add-ons/email-notifications"
+            className="group bg-white border border-[var(--color-border)] rounded-lg p-[var(--space-xl)] hover:border-[var(--color-amber)] transition-colors duration-150"
+          >
             <h3 className="font-sans text-sm font-bold text-[var(--color-text)]">
               Email Notifications
             </h3>
@@ -92,10 +106,16 @@ export default function LandingPricing() {
                 </li>
               ))}
             </ul>
-          </div>
+            <span className="inline-block font-sans text-sm font-bold text-[var(--color-amber)] mt-[var(--space-md)] group-hover:underline">
+              Learn more →
+            </span>
+          </Link>
 
           {/* Inventory Management */}
-          <div className="bg-white border border-[var(--color-border)] rounded-lg p-[var(--space-xl)]">
+          <Link
+            href="/add-ons/inventory"
+            className="group bg-white border border-[var(--color-border)] rounded-lg p-[var(--space-xl)] hover:border-[var(--color-amber)] transition-colors duration-150"
+          >
             <h3 className="font-sans text-sm font-bold text-[var(--color-text)]">
               Inventory Management
             </h3>
@@ -114,7 +134,10 @@ export default function LandingPricing() {
                 </li>
               ))}
             </ul>
-          </div>
+            <span className="inline-block font-sans text-sm font-bold text-[var(--color-amber)] mt-[var(--space-md)] group-hover:underline">
+              Learn more →
+            </span>
+          </Link>
         </div>
 
         <p className="font-sans text-sm text-[var(--color-text-muted)] text-center mt-[var(--space-lg)]">

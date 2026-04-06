@@ -17,6 +17,7 @@ export default function LandingNav() {
         <nav className="hidden md:flex items-center gap-[var(--space-sm)]" aria-label="Main navigation">
           <a href="#features" className="font-sans text-sm text-white/70 hover:text-white transition-colors duration-150">Features</a>
           <a href="#pricing" className="font-sans text-sm text-white/70 hover:text-white transition-colors duration-150">Pricing</a>
+          <Link href="/add-ons" className="font-sans text-sm text-white/70 hover:text-white transition-colors duration-150">Add-ons</Link>
           <Link
             href="/login"
             className="border border-white/50 text-white px-4 py-2 rounded-md text-sm hover:bg-white/10 transition-colors duration-150"
@@ -56,6 +57,7 @@ export default function LandingNav() {
           <div className="fixed inset-0 top-[52px] bg-[var(--color-navy)] z-50 flex flex-col items-center justify-center gap-[var(--space-lg)]">
             <a href="#features" className="font-sans text-base text-white/70 hover:text-white transition-colors duration-150">Features</a>
             <a href="#pricing" className="font-sans text-base text-white/70 hover:text-white transition-colors duration-150">Pricing</a>
+            <Link href="/add-ons" className="font-sans text-base text-white/70 hover:text-white transition-colors duration-150">Add-ons</Link>
             <Link
               href="/login"
               className="border border-white/50 text-white px-8 py-3 rounded-md text-base hover:bg-white/10 transition-colors duration-150"
