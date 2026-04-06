@@ -20,13 +20,29 @@ export type CustomerOrder = {
   status: string
 }
 
+export type LoyaltyTransaction = {
+  id: string
+  points_delta: number
+  balance_after: number
+  transaction_type: string
+  order_id: string | null
+  channel: string | null
+  staff_id: string | null
+  created_at: string
+}
+
+export type CustomerLoyalty = {
+  pointsBalance: number
+  transactions: LoyaltyTransaction[]
+}
+
 /**
  * Returns customer profile and order history for the given customer ID.
  * Owner-only.
  */
 export async function getCustomerDetail(
   customerId: string
-): Promise<{ data: { customer: CustomerDetail; orders: CustomerOrder[] } } | { error: string }> {
+): Promise<{ data: { customer: CustomerDetail; orders: CustomerOrder[]; loyalty: CustomerLoyalty; hasLoyaltyPoints: boolean } } | { error: string }> {
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
@@ -55,10 +71,43 @@ export async function getCustomerDetail(
 
   if (ordersError) return { error: 'Failed to load order history' }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const anyClient = adminClient as any
+
+  // Check loyalty add-on subscription
+  const { data: storePlan } = await anyClient
+    .from('store_plans')
+    .select('has_loyalty_points')
+    .eq('store_id', storeId)
+    .maybeSingle() as { data: { has_loyalty_points: boolean } | null }
+  const hasLoyaltyPoints = storePlan?.has_loyalty_points === true
+
+  // Fetch loyalty balance
+  const { data: loyaltyRow } = await anyClient
+    .from('loyalty_points')
+    .select('points_balance')
+    .eq('store_id', storeId)
+    .eq('customer_id', customerId)
+    .maybeSingle() as { data: { points_balance: number } | null }
+
+  // Fetch loyalty transactions (most recent 50)
+  const { data: loyaltyTransactions } = await anyClient
+    .from('loyalty_transactions')
+    .select('id, points_delta, balance_after, transaction_type, order_id, channel, staff_id, created_at')
+    .eq('store_id', storeId)
+    .eq('customer_id', customerId)
+    .order('created_at', { ascending: false })
+    .limit(50) as { data: LoyaltyTransaction[] | null }
+
   return {
     data: {
       customer,
       orders: (orders ?? []) as CustomerOrder[],
+      loyalty: {
+        pointsBalance: loyaltyRow?.points_balance ?? 0,
+        transactions: loyaltyTransactions ?? [],
+      },
+      hasLoyaltyPoints,
     },
   }
 }

@@ -2,12 +2,13 @@
 import { useState, useTransition } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { getCustomerDetail } from '@/actions/customers/getCustomerDetail'
-import type { CustomerDetail, CustomerOrder } from '@/actions/customers/getCustomerDetail'
+import type { CustomerDetail, CustomerOrder, CustomerLoyalty, LoyaltyTransaction } from '@/actions/customers/getCustomerDetail'
 import { disableCustomer } from '@/actions/customers/disableCustomer'
 import { enableCustomer } from '@/actions/customers/enableCustomer'
 import { formatNZD } from '@/lib/money'
 import DisableCustomerModal from '@/components/admin/customers/DisableCustomerModal'
 import { useEffect } from 'react'
+import { format, parseISO } from 'date-fns'
 
 const ORDER_PAGE_SIZE = 10
 
@@ -124,6 +125,113 @@ function OrderTable({ orders }: { orders: CustomerOrder[] }) {
   )
 }
 
+function formatTxDate(dateStr: string): string {
+  try {
+    return format(parseISO(dateStr), 'dd MMM yyyy HH:mm')
+  } catch {
+    return dateStr
+  }
+}
+
+function txTypeLabel(type: string): string {
+  if (type === 'earn') return 'Earned'
+  if (type === 'redeem') return 'Redeemed'
+  if (type === 'adjustment') return 'Adjustment'
+  return type
+}
+
+function ChannelBadge({ channel }: { channel: string | null }) {
+  if (!channel) return null
+  const label = channel === 'pos' ? 'POS' : channel === 'online' ? 'Online' : channel
+  return (
+    <span className="inline-flex items-center bg-[var(--color-surface)] text-[var(--color-text-muted)] rounded-full text-xs font-bold px-2 py-0.5 font-sans">
+      {label}
+    </span>
+  )
+}
+
+function LoyaltySection({ loyalty, hasLoyaltyPoints }: { loyalty: CustomerLoyalty; hasLoyaltyPoints: boolean }) {
+  if (!hasLoyaltyPoints) return null
+
+  return (
+    <div className="bg-[var(--color-card)] rounded-[var(--radius-lg)] border border-[var(--color-border)] p-[var(--space-xl)]">
+      <div className="flex items-center justify-between mb-[var(--space-lg)]">
+        <h2 className="text-base font-bold font-sans text-[var(--color-text)]">Loyalty Points</h2>
+        <span className="text-2xl font-bold font-display text-[var(--color-text)] tabular-nums">
+          {loyalty.pointsBalance} pts
+        </span>
+      </div>
+
+      {loyalty.transactions.length === 0 ? (
+        <div className="py-8 text-center">
+          <p className="text-sm text-[var(--color-text-muted)]">No loyalty transactions yet.</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-[var(--color-border)]">
+                <th className="text-left text-sm uppercase tracking-wide font-bold text-[var(--color-text-muted)] py-2 pr-4">
+                  Date
+                </th>
+                <th className="text-left text-sm uppercase tracking-wide font-bold text-[var(--color-text-muted)] py-2 pr-4">
+                  Type
+                </th>
+                <th className="text-right text-sm uppercase tracking-wide font-bold text-[var(--color-text-muted)] py-2 pr-4">
+                  Points
+                </th>
+                <th className="text-right text-sm uppercase tracking-wide font-bold text-[var(--color-text-muted)] py-2 pr-4">
+                  Balance After
+                </th>
+                <th className="text-left text-sm uppercase tracking-wide font-bold text-[var(--color-text-muted)] py-2 pr-4">
+                  Order
+                </th>
+                <th className="text-left text-sm uppercase tracking-wide font-bold text-[var(--color-text-muted)] py-2">
+                  Channel
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {loyalty.transactions.map((tx: LoyaltyTransaction) => (
+                <tr key={tx.id} className="border-b border-[var(--color-border)]">
+                  <td className="py-2.5 pr-4 text-sm text-[var(--color-text-muted)] font-sans">
+                    {formatTxDate(tx.created_at)}
+                  </td>
+                  <td className="py-2.5 pr-4 text-sm text-[var(--color-text)] font-sans">
+                    {txTypeLabel(tx.transaction_type)}
+                  </td>
+                  <td className={`py-2.5 pr-4 text-sm text-right font-sans tabular-nums font-bold ${tx.points_delta >= 0 ? 'text-[#059669]' : 'text-[#E67E22]'}`}>
+                    {tx.points_delta >= 0 ? '+' : ''}{tx.points_delta}
+                  </td>
+                  <td className="py-2.5 pr-4 text-sm text-right text-[var(--color-text)] font-sans tabular-nums">
+                    {tx.balance_after}
+                  </td>
+                  <td className="py-2.5 pr-4">
+                    {tx.order_id ? (
+                      <a
+                        href={`/admin/orders/${tx.order_id}`}
+                        className="text-sm font-[family-name:var(--font-geist-mono),monospace] text-[var(--color-navy)] hover:underline"
+                        style={{ fontFamily: 'Geist Mono, monospace', fontSize: '14px', fontWeight: 400 }}
+                      >
+                        #{tx.order_id.slice(0, 8).toUpperCase()}
+                      </a>
+                    ) : (
+                      <span className="text-sm text-[var(--color-text-muted)] font-sans">—</span>
+                    )}
+                  </td>
+                  <td className="py-2.5">
+                    <ChannelBadge channel={tx.channel} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function CustomerDetailHeader({
   customer,
   onDisableSuccess,
@@ -214,6 +322,8 @@ export default function CustomerDetailPage() {
 
   const [customer, setCustomer] = useState<CustomerDetail | null>(null)
   const [orders, setOrders] = useState<CustomerOrder[]>([])
+  const [loyalty, setLoyalty] = useState<CustomerLoyalty>({ pointsBalance: 0, transactions: [] })
+  const [hasLoyaltyPoints, setHasLoyaltyPoints] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -227,6 +337,8 @@ export default function CustomerDetailPage() {
     }
     setCustomer(result.data.customer)
     setOrders(result.data.orders)
+    setLoyalty(result.data.loyalty)
+    setHasLoyaltyPoints(result.data.hasLoyaltyPoints)
   }
 
   useEffect(() => {
@@ -288,6 +400,9 @@ export default function CustomerDetailPage() {
         </h2>
         <OrderTable orders={orders} />
       </div>
+
+      {/* Loyalty transaction history — only shown when loyalty add-on is active */}
+      <LoyaltySection loyalty={loyalty} hasLoyaltyPoints={hasLoyaltyPoints} />
     </div>
   )
 }
