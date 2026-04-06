@@ -5,6 +5,7 @@ import { CartDrawer } from '@/components/store/CartDrawer'
 import { VerificationBanner } from '@/components/store/VerificationBanner'
 import StripeTestModeBanner from '@/components/StripeTestModeBanner'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
 export const metadata = {
   title: 'Shop | NZPOS',
@@ -27,6 +28,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   const storeId = headersList.get('x-store-id')
 
   let branding: { storeName: string | null; logoUrl: string | null; primaryColor: string | null } | null = null
+  let hasGiftCards = false
 
   if (storeId) {
     const { data: store } = await supabase
@@ -42,13 +44,24 @@ export default async function StoreLayout({ children }: { children: React.ReactN
         primaryColor: store.primary_color,
       }
     }
+
+    // Fetch gift cards feature flag via admin client (avoids RLS auth requirement)
+    const adminClient = createSupabaseAdminClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: storePlan } = await (adminClient as any)
+      .from('store_plans')
+      .select('has_gift_cards')
+      .eq('store_id', storeId)
+      .single() as { data: { has_gift_cards: boolean } | null }
+
+    hasGiftCards = storePlan?.has_gift_cards ?? false
   }
 
   return (
     <CartProvider>
       <div className="min-h-screen bg-bg">
         <StripeTestModeBanner />
-        <StorefrontHeader customer={customer} branding={branding} />
+        <StorefrontHeader customer={customer} branding={branding} hasGiftCards={hasGiftCards} />
         {customer && !customer.emailVerified && (
           <VerificationBanner email={customer.email} />
         )}

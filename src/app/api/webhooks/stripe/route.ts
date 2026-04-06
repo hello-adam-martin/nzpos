@@ -4,7 +4,10 @@ import Stripe from 'stripe'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email'
 import { OnlineReceiptEmail } from '@/emails/OnlineReceiptEmail'
+import { GiftCardEmail } from '@/emails/GiftCardEmail'
+import React from 'react'
 import type { ReceiptData } from '@/lib/receipt'
+import { generateGiftCardCode, formatGiftCardCode } from '@/lib/gift-card-utils'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
@@ -50,10 +53,9 @@ async function handleCheckoutComplete(
 ): Promise<void> {
   const supabase = createSupabaseAdminClient()
   const storeId = session.metadata?.store_id
-  const orderId = session.metadata?.order_id
 
-  if (!storeId || !orderId) {
-    console.error('[stripe-webhook] Missing metadata on session:', session.id)
+  if (!storeId) {
+    console.error('[stripe-webhook] Missing store_id metadata on session:', session.id)
     return
   }
 
@@ -67,6 +69,24 @@ async function handleCheckoutComplete(
 
   if (existingEvent) {
     // Already processed successfully — skip
+    return
+  }
+
+  // ---------------------------------------------------------------------------
+  // Gift card purchase path (D-04 online): type === 'gift_card' in metadata
+  // ---------------------------------------------------------------------------
+  if (session.metadata?.type === 'gift_card') {
+    await handleGiftCardCheckoutComplete(eventId, session, supabase, storeId)
+    return
+  }
+
+  // ---------------------------------------------------------------------------
+  // Normal product order path — requires order_id in metadata
+  // ---------------------------------------------------------------------------
+  const orderId = session.metadata?.order_id
+
+  if (!orderId) {
+    console.error('[stripe-webhook] Missing order_id metadata on session:', session.id)
     return
   }
 
@@ -178,4 +198,110 @@ async function handleCheckoutComplete(
   if (orderRow?.promo_id) {
     await supabase.rpc('increment_promo_uses', { p_promo_id: orderRow.promo_id })
   }
+}
+
+// ---------------------------------------------------------------------------
+// Gift card specific handler
+// ---------------------------------------------------------------------------
+
+/**
+ * Handles checkout.session.completed for gift card purchases.
+ *
+ * - Generates unique code (same algorithm as issueGiftCard)
+ * - Calls issue_gift_card RPC with channel='online' and stripe_session_id
+ * - Sends GiftCardEmail delivery (fire-and-forget)
+ * - Marks event as processed for idempotency
+ * - Never touches orders table (GIFT-09)
+ */
+async function handleGiftCardCheckoutComplete(
+  eventId: string,
+  session: Stripe.Checkout.Session,
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  storeId: string
+): Promise<void> {
+  const { denomination_cents, buyer_email } = session.metadata ?? {}
+
+  if (!denomination_cents || !buyer_email) {
+    console.error('[stripe-webhook] Gift card session missing denomination_cents or buyer_email:', session.id)
+    return
+  }
+
+  const denominationCents = Number(denomination_cents)
+  if (isNaN(denominationCents) || denominationCents <= 0) {
+    console.error('[stripe-webhook] Gift card denomination_cents invalid:', denomination_cents)
+    return
+  }
+
+  // Generate unique 8-digit code (retry up to 10 times on collision)
+  let code: string | null = null
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const candidate = generateGiftCardCode()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: existing } = await (supabase as any)
+      .from('gift_cards')
+      .select('id')
+      .eq('store_id', storeId)
+      .eq('code', candidate)
+      .maybeSingle()
+    if (!existing) {
+      code = candidate
+      break
+    }
+  }
+
+  if (!code) {
+    console.error('[stripe-webhook] Gift card: failed to generate unique code after 10 attempts, session:', session.id)
+    throw new Error('Gift card code generation failed')
+  }
+
+  // Call issue_gift_card RPC (SECURITY DEFINER, sets 3-year expiry, inserts gift_cards row)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: rpcResult, error: rpcError } = await (supabase as any).rpc('issue_gift_card', {
+    p_store_id: storeId,
+    p_code: code,
+    p_value_cents: denominationCents,
+    p_channel: 'online',
+    p_buyer_email: buyer_email,
+    p_stripe_session_id: session.id,
+  })
+
+  if (rpcError) {
+    console.error('[stripe-webhook] issue_gift_card RPC error store_id=%s:', storeId, rpcError)
+    throw rpcError
+  }
+
+  const result = rpcResult as unknown as { gift_card_id: string; expires_at: string }
+  const expiresAt = result.expires_at
+
+  // Fetch store name for email
+  const { data: store } = await supabase
+    .from('stores')
+    .select('name')
+    .eq('id', storeId)
+    .single()
+
+  const storeName = store?.name ?? 'Store'
+
+  // Send gift card delivery email (fire-and-forget per D-05)
+  void sendEmail({
+    to: buyer_email,
+    subject: `Your gift card from ${storeName}`,
+    react: React.createElement(GiftCardEmail, {
+      code,
+      balanceCents: denominationCents,
+      expiresAt,
+      storeName,
+    }),
+  })
+
+  // Mark event as processed AFTER successful RPC — retries will work if RPC fails
+  const { error: dedupError } = await supabase
+    .from('stripe_events')
+    .insert({ id: eventId, store_id: storeId, type: 'checkout.session.completed' })
+
+  if (dedupError && dedupError.code !== '23505') {
+    console.error('[stripe-webhook] Gift card: failed to record event dedup:', dedupError.message)
+  }
+
+  console.log('[stripe-webhook] Gift card issued: code=%s store_id=%s', formatGiftCardCode(code), storeId)
 }

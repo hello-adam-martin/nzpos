@@ -21,6 +21,7 @@ type BrandingInfo = {
 type Props = {
   customer?: CustomerInfo | null
   branding?: BrandingInfo | null
+  hasGiftCards?: boolean
 }
 
 /**
@@ -35,7 +36,7 @@ function isDarkColor(hex: string): boolean {
   return luminance < 0.5
 }
 
-export function StorefrontHeader({ customer, branding }: Props) {
+export function StorefrontHeader({ customer, branding, hasGiftCards }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { itemCount, dispatch } = useCart()
@@ -102,6 +103,16 @@ export function StorefrontHeader({ customer, branding }: Props) {
             </span>
           )}
         </Link>
+
+        {/* Gift Cards nav link — only when store has gift cards enabled (D-10) */}
+        {hasGiftCards && (
+          <Link
+            href="/gift-cards"
+            className={`shrink-0 text-sm font-medium transition-opacity duration-150 hover:opacity-80 ${textColorClass}`}
+          >
+            Gift Cards
+          </Link>
+        )}
 
         {/* Search input */}
         <div className="flex-1 flex justify-center">
