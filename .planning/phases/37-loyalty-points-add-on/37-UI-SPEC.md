@@ -21,7 +21,7 @@ created: 2026-04-07
 | Preset | not applicable |
 | Component library | none — hand-rolled components following project patterns |
 | Icon library | lucide-react (already installed; use `Star` or `Award` for loyalty add-on card) |
-| Font | Satoshi (display/headings, weight 700) + DM Sans (body/UI, weight 400–600) via Bunny Fonts CDN |
+| Font | Satoshi (display/headings, weight 700) + DM Sans (body/UI, weight 400) via Bunny Fonts CDN |
 
 Source: DESIGN.md, RESEARCH.md
 
