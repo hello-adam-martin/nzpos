@@ -17,19 +17,19 @@ Requirements for POS Demo milestone. Each maps to roadmap phases.
 ### Demo POS Route
 
 - [x] **DPOS-01**: Visitor can access `/demo/pos` without any authentication
-- [ ] **DPOS-02**: Demo POS loads real POS UI components (ProductGrid, Cart, checkout flow)
+- [x] **DPOS-02**: Demo POS loads real POS UI components (ProductGrid, Cart, checkout flow)
 - [x] **DPOS-03**: Demo POS fetches products from the seeded demo store in the database
-- [ ] **DPOS-04**: Demo POS disables features that require real auth (barcode scanner, new-order polling, receipt email)
+- [x] **DPOS-04**: Demo POS disables features that require real auth (barcode scanner, new-order polling, receipt email)
 
 ### Demo Checkout
 
-- [ ] **DCHK-01**: Visitor can add products to cart, adjust quantities, and remove items
-- [ ] **DCHK-02**: Visitor can apply line-item and cart-level discounts
-- [ ] **DCHK-03**: GST calculations display correctly on all cart operations
-- [ ] **DCHK-04**: Visitor can select EFTPOS payment and see the "Terminal approved?" confirmation screen
-- [ ] **DCHK-05**: Clicking "Yes" on EFTPOS confirmation completes the sale with simulated success (no DB write)
-- [ ] **DCHK-06**: Visitor can select Cash payment and enter tendered amount with change calculation
-- [ ] **DCHK-07**: Receipt screen displays after simulated sale completion with full line-item detail
+- [x] **DCHK-01**: Visitor can add products to cart, adjust quantities, and remove items
+- [x] **DCHK-02**: Visitor can apply line-item and cart-level discounts
+- [x] **DCHK-03**: GST calculations display correctly on all cart operations
+- [x] **DCHK-04**: Visitor can select EFTPOS payment and see the "Terminal approved?" confirmation screen
+- [x] **DCHK-05**: Clicking "Yes" on EFTPOS confirmation completes the sale with simulated success (no DB write)
+- [x] **DCHK-06**: Visitor can select Cash payment and enter tendered amount with change calculation
+- [x] **DCHK-07**: Receipt screen displays after simulated sale completion with full line-item detail
 
 ### Signup Conversion
 
@@ -76,16 +76,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DEMO-03 | Phase 32 | Complete |
 | DEMO-04 | Phase 32 | Complete |
 | DPOS-01 | Phase 33 | Complete |
-| DPOS-02 | Phase 33 | Pending |
+| DPOS-02 | Phase 33 | Complete |
 | DPOS-03 | Phase 33 | Complete |
-| DPOS-04 | Phase 33 | Pending |
-| DCHK-01 | Phase 33 | Pending |
-| DCHK-02 | Phase 33 | Pending |
-| DCHK-03 | Phase 33 | Pending |
-| DCHK-04 | Phase 33 | Pending |
-| DCHK-05 | Phase 33 | Pending |
-| DCHK-06 | Phase 33 | Pending |
-| DCHK-07 | Phase 33 | Pending |
+| DPOS-04 | Phase 33 | Complete |
+| DCHK-01 | Phase 33 | Complete |
+| DCHK-02 | Phase 33 | Complete |
+| DCHK-03 | Phase 33 | Complete |
+| DCHK-04 | Phase 33 | Complete |
+| DCHK-05 | Phase 33 | Complete |
+| DCHK-06 | Phase 33 | Complete |
+| DCHK-07 | Phase 33 | Complete |
 | CONV-01 | Phase 34 | Pending |
 | CONV-02 | Phase 34 | Pending |
 | CONV-03 | Phase 34 | Pending |
