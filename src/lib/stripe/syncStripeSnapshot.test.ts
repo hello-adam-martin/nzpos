@@ -33,7 +33,6 @@ vi.mock('@/config/addons', () => ({
   PRICE_TO_FEATURE: {
     price_xero_monthly: 'has_xero',
     price_inventory_monthly: 'has_inventory',
-    price_email_monthly: 'has_email_notifications',
   },
 }))
 
@@ -280,55 +279,6 @@ describe('syncStripeSnapshot', () => {
     const row = capturedRows[0] as Record<string, unknown>
     expect(row.status).toBe('trialing')
     expect(row.mrr_cents).toBe(0) // trials contribute $0
-  })
-
-  it('resolves addon_type for email_notifications price ID', async () => {
-    const mockSub = {
-      id: 'sub_email',
-      status: 'active',
-      canceled_at: null,
-      discounts: [],
-      items: {
-        data: [
-          {
-            current_period_start: 1746230400,
-            current_period_end: 1748822400,
-            price: {
-              id: 'price_email_monthly',
-              recurring: { interval: 'month' },
-              unit_amount: 1500,
-            },
-          },
-        ],
-      },
-    }
-
-    mockSubscriptionsList.mockResolvedValue({ data: [mockSub] })
-
-    const capturedRows: unknown[] = []
-    mockFrom.mockImplementation((table: string) => {
-      if (table === 'stores') {
-        return makeChain({
-          data: [{ id: 'store-uuid-4', stripe_customer_id: 'cus_jkl' }],
-          error: null,
-        })
-      }
-      if (table === 'platform_analytics_snapshots') {
-        const chain = makeChain({ data: null, error: null })
-        ;(chain.insert as ReturnType<typeof vi.fn>).mockImplementation((rows: unknown) => {
-          capturedRows.push(...(rows as unknown[]))
-          return makeChain({ data: null, error: null })
-        })
-        return chain
-      }
-      if (table === 'analytics_sync_metadata') return makeChain({ data: null, error: null })
-      return makeChain({ data: null, error: null })
-    })
-
-    await syncStripeSnapshot()
-
-    const row = capturedRows[0] as Record<string, unknown>
-    expect(row.addon_type).toBe('email_notifications')
   })
 
   it('sets addon_type to null for unknown price IDs', async () => {

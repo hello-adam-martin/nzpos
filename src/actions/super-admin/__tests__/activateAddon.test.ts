@@ -104,8 +104,6 @@ beforeEach(() => {
   setupAdminClient({
     has_xero: false,
     has_xero_manual_override: false,
-    has_email_notifications: false,
-    has_email_notifications_manual_override: false,
     has_custom_domain: false,
     has_custom_domain_manual_override: false,
   })

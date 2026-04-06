@@ -56,7 +56,6 @@ vi.mock('@/lib/supabase/admin', () => ({
 vi.mock('@/config/addons', () => ({
   PRICE_ID_MAP: {
     xero: 'price_xero_test',
-    email_notifications: 'price_email_test',
     custom_domain: 'price_domain_test',
   },
 }))
@@ -180,10 +179,10 @@ describe('createSubscriptionCheckoutSession', () => {
   })
 
   it('uses correct price ID for the feature', async () => {
-    await createSubscriptionCheckoutSession('email_notifications')
+    await createSubscriptionCheckoutSession('custom_domain')
 
     const call = mockCheckoutSessionCreate.mock.calls[0][0]
     const priceId = call.line_items[0].price
-    expect(priceId).toBe('price_email_test')
+    expect(priceId).toBe('price_domain_test')
   })
 })

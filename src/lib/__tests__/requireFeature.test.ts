@@ -75,21 +75,6 @@ describe('requireFeature (JWT fast path)', () => {
     })
   })
 
-  it('Test 3: returns correct upgradeUrl for email_notifications feature', async () => {
-    const user = {
-      id: 'user-123',
-      app_metadata: { store_id: 'store-abc', email_notifications: false },
-    }
-    mockCreateSupabaseServerClient.mockResolvedValue(makeServerClient(user))
-
-    const result = await requireFeature('email_notifications')
-    expect(result).toEqual({
-      authorized: false,
-      feature: 'email_notifications',
-      upgradeUrl: '/admin/billing?upgrade=email_notifications',
-    })
-  })
-
   it('Test 5: returns authorized: false when user has no store_id in app_metadata', async () => {
     const user = {
       id: 'user-123',

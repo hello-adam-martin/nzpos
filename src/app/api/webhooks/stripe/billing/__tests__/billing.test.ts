@@ -60,7 +60,6 @@ vi.mock('@/lib/supabase/admin', () => ({
 vi.mock('@/config/addons', () => ({
   PRICE_TO_FEATURE: {
     price_xero_test: 'has_xero',
-    price_email_test: 'has_email_notifications',
     price_domain_test: 'has_custom_domain',
   },
 }))

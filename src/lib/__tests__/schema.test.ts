@@ -38,9 +38,9 @@ describe('Multi-tenant schema validation (TENANT-02)', () => {
     expect(error).toBeNull()
     expect(data).not.toBeNull()
     expect(data!.length).toBeGreaterThanOrEqual(1)
-    // Verify boolean defaults
+    // Verify boolean defaults (has_email_notifications is true — email notifications are now free)
     expect(data![0].has_xero).toBe(false)
-    expect(data![0].has_email_notifications).toBe(false)
+    expect(data![0].has_email_notifications).toBe(true)
     expect(data![0].has_custom_domain).toBe(false)
   })
 
