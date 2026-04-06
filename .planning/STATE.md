@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: Hardening & Documentation
-status: verifying
-stopped_at: Completed 20-01-PLAN.md (production deployment runbook)
-last_updated: "2026-04-04T03:39:51.492Z"
-last_activity: 2026-04-04
+milestone: v5.0
+milestone_name: Marketing & Landing Page
+status: executing
+stopped_at: Completed 28-01-PLAN.md
+last_updated: "2026-04-06T03:05:30Z"
+last_activity: 2026-04-06
 progress:
-  total_phases: 4
-  completed_phases: 4
+  total_phases: 5
+  completed_phases: 3
   total_plans: 14
-  completed_plans: 14
+  completed_plans: 11
   percent: 0
 ---
 
@@ -18,27 +18,27 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-04)
+See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 20 — deployment-user-documentation
+**Current focus:** Phase 28 — marketing-landing-page
 
 ## Current Position
 
-Phase: 20
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-04
+Phase: 28 (marketing-landing-page) — EXECUTING
+Plan: 2 of 3
+Status: Executing Phase 28
+Last activity: 2026-04-06
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [###-------] 33%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0 (v2.1)
-- Average duration: — min
-- Total execution time: — hours
+- Total plans completed: 1 (v5.0)
+- Average duration: 3 min
+- Total execution time: 3 min
 
 *Updated after each plan completion*
 
@@ -46,40 +46,19 @@ Progress: [░░░░░░░░░░] 0%
 
 ### Decisions
 
-- [v2.0]: Per-add-on billing model (not plan tiers) — avoids upgrade cliffs, NZ market expects no-card signup
-- [v2.0]: Custom domains deferred to v2.1 — too complex, lowest immediate demand
-- [Phase 15]: requireFeature never throws — returns structured { authorized, feature, upgradeUrl } for redirect-friendly caller pattern
-- [Phase 15]: Billing webhook uses STRIPE_BILLING_WEBHOOK_SECRET (not STRIPE_WEBHOOK_SECRET) — separate endpoint, separate signing secret
-- [Phase 16]: Cached-path suspension check adds one indexed DB lookup per request — accepted for correctness across serverless instances
-- [Phase 16]: super admin check runs before staff/customer in auth hook (cross-tenant, no store_id required)
-- [Phase 17-01]: orders_public_read RLS policy is IDOR — any anon user can enumerate all online orders; Critical fix required
-- [Phase 17-01]: 13 env vars missing from .env.example including all Stripe price IDs, Xero OAuth vars, Resend keys — Critical deployment blocker
-- [Phase 17-01]: increment_promo_uses and restore_stock SECURITY DEFINER RPCs have no GRANT/REVOKE — any authenticated user can call them
-- [Phase 17-03]: CSP set as Report-Only — allows violation monitoring before switching to enforcing in production
-- [Phase 17-03]: addSecurityHeaders() helper pattern in middleware — single function wraps all return points, DRY and maintainable
-- [Phase 17-03]: server-only placed after 'use server' in Server Actions — 'use server' must be first statement per Next.js spec
-- [Phase 17]: orders_public_read policy changed to require lookup_token IS NOT NULL as DB-layer defense in depth (application layer enforces token via .eq() filter)
-- [Phase 17]: SECURITY DEFINER RPCs (increment_promo_uses, restore_stock, check_rate_limit, complete_pos_sale, complete_online_sale) restricted to service_role via REVOKE/GRANT in migration 021
-- [Phase 17]: All 9 modified Server Actions now log real errors server-side with console.error before returning generic client messages — no PostgreSQL error details exposed to clients
-- [Phase 17-04]: IP rate limit threshold for PIN login set at 20/5min (not 10) — allows multiple staff shift-changes on shared iPad; check_rate_limit RPC used (not in-memory) for cold-start survival
-- [Phase 17-04]: All Server Action files (46 total) have direct server-only import — defense-in-depth against accidental client bundling
-- [Phase 17-05]: Drop orders_public_read_by_token RLS policy — admin client bypasses RLS, anon policy was enumeration vector with no legitimate use
-- [Phase 17-05]: ROADMAP.md Server Action count was already 48 — only REQUIREMENTS.md SEC-08 needed correction
-- [Phase 18]: Mock resolveStaffAuth at module level in tests (not next/headers+jose individually) — resolveAuth calls both cookies() and headers(), mocking only one was insufficient
-- [Phase 18]: Coverage thresholds set at per-file 80% for 8 critical paths; thresholds for resolveAuth, tenantCache, middleware expected to fail until Plan 02 writes those tests
-- [Phase 18]: tailwindcss and postcss added to knip ignoreDependencies — CSS directive imports not detected by knip static analysis
-- [Phase 18]: scripts/generate-icons.ts treated as entry point in knip.json — one-off CLI scripts must be entries, not project files
-- [Phase 18]: IRD specimen tests in separate gst.ird.test.ts to distinguish compliance from implementation tests
-- [Phase 18]: Middleware tests expanded in-plan (was at 50.94%) — added 17 tests covering webhook passthrough, tenant resolution, admin/POS protection
-- [Phase 18]: RPC structured error parsing uses local alias variable to avoid error.message in return path while preserving OUT_OF_STOCK/PRODUCT_NOT_FOUND code detection in completeSale
-- [Phase 18]: customerSignup duplicate detection uses error.status === 422 (not error.message string match) — more robust against Supabase API changes
-- [Phase 19]: Tenant cache is per-serverless-instance; cold starts hit DB — documented as accepted trade-off for architecture doc
-- [Phase 19]: Server Action docs use inline Zod field summaries (not just schema names) so callers see contract without opening source files
-- [Phase 19-01]: seed.ts already had 5 categories + 25 products — no extension needed for DOC-01
-- [Phase 20]: Merchant guide uses conversational tone distinct from developer docs — numbered steps with expected outcomes per D-09
-- [Phase 20]: GST worked examples in plain-text code blocks (no language tag) — merchant audience, not developer docs
-- [Phase 20]: NS delegation (not CNAME) required for Vercel wildcard SSL — documented with Critical callout in deploy.md
-- [Phase 20]: Two Stripe webhook endpoints with separate signing secrets (STRIPE_WEBHOOK_SECRET and STRIPE_BILLING_WEBHOOK_SECRET) — swapping causes 400 on all webhook requests
+(Carried from v4.0)
+
+- requireFeature() JWT/DB dual-path pattern established for all add-on gating
+- Stripe analytics materialised via platform_analytics_snapshots — never fetch live Stripe API on page load
+- resolveAuth() returns snake_case { store_id, staff_id }
+
+(v5.0 scope)
+
+- Phase 28 is a single-phase milestone — all 9 requirements are tightly coupled UI work on one page
+- Components live in src/app/(marketing)/components/: LandingNav, LandingHero, LandingFeatures, LandingPricing, LandingCTA, LandingFooter
+- Add-on pricing: Xero $9/mo, Email Notifications $5/mo, Inventory Management $9/mo
+- Design system applies: deep navy (#1E293B) + amber (#E67E22), Satoshi + DM Sans
+- [28-01]: Copy-only changes to hero/CTA/nav — zero structural modifications to components
 
 ### Pending Todos
 
@@ -87,13 +66,10 @@ None.
 
 ### Blockers/Concerns
 
-- Wildcard SSL requires Vercel nameserver delegation (NS delegation, not CNAME) — must be resolved before production deploy (Phase 20)
-- Supabase free tier limits (500MB DB, 50K MAU) — validate before onboarding >20 merchants; plan Pro upgrade timing
-- Phase 17 priority: verify JWT claims source from raw_app_meta_data not user_metadata — potential complete RLS bypass if incorrect
-- Phase 17 priority: storage.objects policies may not exist in migrations (configured via dashboard) — must run SELECT * FROM storage.policies explicitly
+None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T03:30:27.798Z
-Stopped at: Completed 20-01-PLAN.md (production deployment runbook)
+Last session: 2026-04-06T03:05:30Z
+Stopped at: Completed 28-01-PLAN.md
 Resume file: None
