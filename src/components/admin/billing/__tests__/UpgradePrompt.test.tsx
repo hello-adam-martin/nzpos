@@ -40,15 +40,15 @@ describe('UpgradePrompt', () => {
     expect(svg).toBeInTheDocument()
   })
 
-  it('uses correct feature in href for email_notifications', () => {
+  it('uses correct feature in href for inventory', () => {
     render(
       <UpgradePrompt
-        feature="email_notifications"
-        headline="Email notifications require an upgrade"
-        body="Automatically email customers when orders are confirmed, ready, or shipped."
+        feature="inventory"
+        headline="Inventory management requires an upgrade"
+        body="Track stock quantities, adjust inventory, and run stocktakes with variance reporting."
       />
     )
     const link = screen.getByRole('link', { name: 'Upgrade to unlock' })
-    expect(link).toHaveAttribute('href', '/admin/billing?upgrade=email_notifications')
+    expect(link).toHaveAttribute('href', '/admin/billing?upgrade=inventory')
   })
 })
