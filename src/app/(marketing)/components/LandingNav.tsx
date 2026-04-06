@@ -15,18 +15,18 @@ export default function LandingNav() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-[var(--space-sm)]" aria-label="Main navigation">
-          <a href="#features" className="font-sans text-sm text-white/70 hover:text-white transition-colors duration-150">Features</a>
-          <a href="#pricing" className="font-sans text-sm text-white/70 hover:text-white transition-colors duration-150">Pricing</a>
-          <Link href="/add-ons" className="font-sans text-sm text-white/70 hover:text-white transition-colors duration-150">Add-ons</Link>
+          <a href="#features" className="font-sans text-sm text-white/70 hover:text-white transition-colors duration-150 py-2">Features</a>
+          <a href="#pricing" className="font-sans text-sm text-white/70 hover:text-white transition-colors duration-150 py-2">Pricing</a>
+          <Link href="/add-ons" className="font-sans text-sm text-white/70 hover:text-white transition-colors duration-150 py-2">Add-ons</Link>
           <Link
             href="/login"
-            className="border border-white/50 text-white px-4 py-2 rounded-md text-sm hover:bg-white/10 transition-colors duration-150"
+            className="border border-white/50 text-white px-4 py-3 rounded-md text-sm hover:bg-white/10 transition-colors duration-150"
           >
             Sign in
           </Link>
           <Link
             href="/signup"
-            className="bg-[var(--color-amber)] text-white px-4 py-2 rounded-md text-sm font-bold hover:opacity-90 transition-opacity duration-150"
+            className="bg-[var(--color-amber)] text-white px-4 py-3 rounded-md text-sm font-bold hover:opacity-90 transition-opacity duration-150"
           >
             Get started
           </Link>
