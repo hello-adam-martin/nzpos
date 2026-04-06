@@ -2,8 +2,8 @@
 phase: 36
 slug: advanced-reporting-cogs-add-on
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-04-07
 ---
 
@@ -38,12 +38,13 @@ created: 2026-04-07
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 36-01-01 | 01 | 1 | COGS-01 | unit | `npx vitest run` | ❌ W0 | ⬜ pending |
-| 36-01-02 | 01 | 1 | COGS-02 | unit | `npx vitest run` | ❌ W0 | ⬜ pending |
-| 36-02-01 | 02 | 1 | COGS-03 | unit | `npx vitest run` | ❌ W0 | ⬜ pending |
-| 36-02-02 | 02 | 1 | COGS-04 | unit | `npx vitest run` | ❌ W0 | ⬜ pending |
-| 36-03-01 | 03 | 2 | COGS-05 | unit | `npx vitest run` | ❌ W0 | ⬜ pending |
-| 36-03-02 | 03 | 2 | COGS-06 | unit | `npx vitest run` | ❌ W0 | ⬜ pending |
+| 36-00-01 | 00 | 0 | COGS-01, COGS-02 | unit | `npx vitest run` | Wave 0 creates | ⬜ pending |
+| 36-01-01 | 01 | 1 | COGS-01 | unit | `npx vitest run src/app/api/webhooks/stripe/billing/__tests__/billing.test.ts` | ✅ (extended by 36-00) | ⬜ pending |
+| 36-01-02 | 01 | 1 | COGS-02 | unit | `npx vitest run src/actions/products/__tests__/costPrice.test.ts` | ✅ (created by 36-00) | ⬜ pending |
+| 36-01-03 | 01 | 1 | COGS-03 | grep | `grep -q "hasAdvancedReporting" src/components/admin/products/ProductDataTable.tsx` | N/A | ⬜ pending |
+| 36-02-01 | 02 | 1 | COGS-03, COGS-04, COGS-05, COGS-06 | unit | `npx vitest run src/lib/cogs.test.ts` | ✅ (created by 36-02 TDD) | ⬜ pending |
+| 36-03-01 | 03 | 2 | COGS-04 | grep | `grep -q "aggregateCOGS" src/app/admin/reports/page.tsx` | N/A | ⬜ pending |
+| 36-03-02 | 03 | 2 | COGS-05, COGS-06 | grep+tsc | `grep -q "calculateMarginPercent" src/components/admin/reports/ReportsPageClient.tsx && npx tsc --noEmit` | N/A | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -51,11 +52,11 @@ created: 2026-04-07
 
 ## Wave 0 Requirements
 
-- [ ] Test stubs for COGS calculation logic (margin, revenue, cost aggregation)
-- [ ] Test stubs for CSV export data formatting
-- [ ] Test stubs for feature gating (advanced_reporting flag)
+- [x] `src/app/api/webhooks/stripe/billing/__tests__/billing.test.ts` — extend with `has_advanced_reporting` test case (Plan 36-00)
+- [x] `src/actions/products/__tests__/costPrice.test.ts` — create with cost_price_cents schema validation tests (Plan 36-00)
+- [x] `src/lib/cogs.test.ts` — created by Plan 36-02 (TDD plan, tests written first)
 
-*Existing vitest infrastructure covers framework needs.*
+*All Wave 0 gaps addressed by Plan 36-00 (test scaffolds) and Plan 36-02 (TDD tests-first).*
 
 ---
 
@@ -71,11 +72,11 @@ created: 2026-04-07
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 30s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** ready
