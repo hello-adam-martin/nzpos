@@ -166,4 +166,4 @@ Plans:
 | 24. Staff RBAC Foundation | v4.0 | 3/3 | Complete    | 2026-04-04 |
 | 25. Admin Operational UI | v4.0 | 3/3 | Complete    | 2026-04-05 |
 | 26. Super-Admin Billing + User Management | v4.0 | 2/3 | Complete    | 2026-04-05 |
-| 27. Super-Admin Analytics | v4.0 | 2/2 | Complete   | 2026-04-06 |
+| 27. Super-Admin Analytics | v4.0 | 2/2 | Complete    | 2026-04-06 |
