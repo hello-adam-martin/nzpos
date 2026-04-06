@@ -1,5 +1,7 @@
 import { getCustomers } from '@/actions/customers/getCustomers'
 import CustomersPageClient from '@/components/admin/customers/CustomersPageClient'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,5 +22,25 @@ export default async function CustomersPage() {
     )
   }
 
-  return <CustomersPageClient customers={result.data} />
+  // Query store_plans to determine loyalty feature flag for the Points column
+  let hasLoyaltyPoints = false
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    const storeId = user?.app_metadata?.store_id as string | undefined
+    if (storeId) {
+      const adminClient = createSupabaseAdminClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: storePlan } = await (adminClient as any)
+        .from('store_plans')
+        .select('has_loyalty_points')
+        .eq('store_id', storeId)
+        .maybeSingle()
+      hasLoyaltyPoints = storePlan?.has_loyalty_points === true
+    }
+  } catch {
+    // Non-fatal — Points column simply stays hidden
+  }
+
+  return <CustomersPageClient customers={result.data} hasLoyaltyPoints={hasLoyaltyPoints} />
 }

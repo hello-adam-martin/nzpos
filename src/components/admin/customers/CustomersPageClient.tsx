@@ -7,9 +7,10 @@ const PAGE_SIZE = 20
 
 interface CustomersPageClientProps {
   customers: CustomerListItem[]
+  hasLoyaltyPoints?: boolean
 }
 
-export default function CustomersPageClient({ customers }: CustomersPageClientProps) {
+export default function CustomersPageClient({ customers, hasLoyaltyPoints = false }: CustomersPageClientProps) {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(0)
@@ -67,7 +68,7 @@ export default function CustomersPageClient({ customers }: CustomersPageClientPr
         <>
           {/* Table */}
           <div className="bg-[var(--color-card)] rounded-[var(--radius-md)] border border-[var(--color-border)]">
-            <CustomerTable customers={paged} />
+            <CustomerTable customers={paged} hasLoyaltyPoints={hasLoyaltyPoints} />
           </div>
 
           {/* Pagination footer */}

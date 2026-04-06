@@ -4,9 +4,10 @@ import type { CustomerListItem } from '@/actions/customers/getCustomers'
 
 interface CustomerTableProps {
   customers: CustomerListItem[]
+  hasLoyaltyPoints?: boolean
 }
 
-export default function CustomerTable({ customers }: CustomerTableProps) {
+export default function CustomerTable({ customers, hasLoyaltyPoints = false }: CustomerTableProps) {
   const router = useRouter()
 
   if (customers.length === 0) {
@@ -31,6 +32,11 @@ export default function CustomerTable({ customers }: CustomerTableProps) {
             <th className="text-left text-sm uppercase tracking-wide font-bold text-[var(--color-text-muted)] py-2 pr-4">
               Orders
             </th>
+            {hasLoyaltyPoints && (
+              <th className="text-right text-sm uppercase tracking-wide font-bold text-[var(--color-text-muted)] py-2 pr-4">
+                Points
+              </th>
+            )}
             <th className="text-left text-sm uppercase tracking-wide font-bold text-[var(--color-text-muted)] py-2">
               Status
             </th>
@@ -52,6 +58,11 @@ export default function CustomerTable({ customers }: CustomerTableProps) {
               <td className="py-2.5 pr-4 text-sm text-[var(--color-text)] font-sans">
                 {customer.orderCount}
               </td>
+              {hasLoyaltyPoints && (
+                <td className="py-2.5 pr-4 text-sm text-right text-[var(--color-text)] font-sans tabular-nums">
+                  {customer.points_balance}
+                </td>
+              )}
               <td className="py-2.5">
                 {customer.is_active ? (
                   <span className="inline-flex items-center bg-[var(--color-success)]/10 text-[var(--color-success)] rounded-full text-xs font-bold px-2 py-0.5">
