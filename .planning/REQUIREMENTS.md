@@ -33,16 +33,16 @@ Requirements for v8.0 Add-On Catalog Expansion. Each maps to roadmap phases.
 ### Loyalty Points
 
 - [ ] **LOYAL-01**: Merchant can enable the Loyalty Points add-on ($15/mo) via Stripe subscription
-- [ ] **LOYAL-02**: Merchant can configure points-per-dollar earn rate in loyalty settings
-- [ ] **LOYAL-03**: Merchant can configure points-to-dollar redemption rate in loyalty settings
-- [ ] **LOYAL-04**: Staff can look up a customer by name or email during POS checkout (optional step)
+- [x] **LOYAL-02**: Merchant can configure points-per-dollar earn rate in loyalty settings
+- [x] **LOYAL-03**: Merchant can configure points-to-dollar redemption rate in loyalty settings
+- [x] **LOYAL-04**: Staff can look up a customer by name or email during POS checkout (optional step)
 - [ ] **LOYAL-05**: Customer earns loyalty points automatically on completed POS sales when identified
 - [ ] **LOYAL-06**: Customer earns loyalty points automatically on completed online orders when logged in
 - [ ] **LOYAL-07**: Customer can view their points balance on their account profile page
 - [ ] **LOYAL-08**: Customer can redeem points as a discount during online checkout
-- [ ] **LOYAL-09**: Staff can apply a customer's points as a discount during POS checkout
+- [x] **LOYAL-09**: Staff can apply a customer's points as a discount during POS checkout
 - [ ] **LOYAL-10**: Merchant can view customer loyalty balances and transaction history in admin
-- [ ] **LOYAL-11**: Privacy notice is displayed to customers before loyalty enrollment
+- [x] **LOYAL-11**: Privacy notice is displayed to customers before loyalty enrollment
 
 ## Future Requirements
 
@@ -92,16 +92,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COGS-05 | Phase 36 | Complete |
 | COGS-06 | Phase 36 | Complete |
 | LOYAL-01 | Phase 37 | Pending |
-| LOYAL-02 | Phase 37 | Pending |
-| LOYAL-03 | Phase 37 | Pending |
-| LOYAL-04 | Phase 37 | Pending |
+| LOYAL-02 | Phase 37 | Complete |
+| LOYAL-03 | Phase 37 | Complete |
+| LOYAL-04 | Phase 37 | Complete |
 | LOYAL-05 | Phase 37 | Pending |
 | LOYAL-06 | Phase 37 | Pending |
 | LOYAL-07 | Phase 37 | Pending |
 | LOYAL-08 | Phase 37 | Pending |
-| LOYAL-09 | Phase 37 | Pending |
+| LOYAL-09 | Phase 37 | Complete |
 | LOYAL-10 | Phase 37 | Pending |
-| LOYAL-11 | Phase 37 | Pending |
+| LOYAL-11 | Phase 37 | Complete |
 
 **Coverage:**
 - v8.0 requirements: 28 total

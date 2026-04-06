@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: Add-On Catalog Expansion
-status: verifying
-stopped_at: Phase 37 context gathered
-last_updated: "2026-04-06T19:40:42.072Z"
+status: executing
+stopped_at: Completed 37-00-PLAN.md
+last_updated: "2026-04-06T20:30:39.867Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 18
+  completed_plans: 12
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 36 — advanced-reporting-cogs-add-on
+**Current focus:** Phase 37 — loyalty-points-add-on
 
 ## Current Position
 
-Phase: 37
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 37 (loyalty-points-add-on) — EXECUTING
+Plan: 2 of 7
+Status: Ready to execute
 Last activity: 2026-04-06
 
 Progress: [░░░░░░░░░░] 0%
@@ -68,6 +68,7 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 36-advanced-reporting-cogs-add-on]: NULL cost_price_cents means not entered yet — margin shows --- in the product table
 - [Phase 36-advanced-reporting-cogs-add-on]: overallMarginPercent uses calculateMarginPercent(cogsWithCostRevenue, totalCostCents) — same denominator as CogsReportTable tfoot for consistency
 - [Phase 36-advanced-reporting-cogs-add-on]: COGS queries gated by hasAdvancedReporting && tab=profit — no unnecessary DB queries for non-subscribers
+- [Phase 37-loyalty-points-add-on]: Wave 0 RED stubs use expect(true).toBe(false) pattern — matches Phase 35/36 Wave 0 convention across 5 files, 32 stubs
 
 ### Pending Todos
 
@@ -80,6 +81,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T19:40:42.069Z
-Stopped at: Phase 37 context gathered
-Resume file: .planning/phases/37-loyalty-points-add-on/37-CONTEXT.md
+Last session: 2026-04-06T20:30:39.864Z
+Stopped at: Completed 37-00-PLAN.md
+Resume file: None
