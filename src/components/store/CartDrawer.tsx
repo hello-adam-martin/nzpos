@@ -7,8 +7,11 @@ import { CartLineItem } from './CartLineItem'
 import { CartSummary } from './CartSummary'
 import { PromoCodeInput } from './PromoCodeInput'
 import { GiftCardInput, type AppliedGiftCard } from './GiftCardInput'
+import { LoyaltyRedeemControl } from './LoyaltyRedeemControl'
 import { createCheckoutSession } from '@/actions/orders/createCheckoutSession'
+import { getCustomerLoyaltyForCheckout } from '@/actions/loyalty/getCustomerLoyalty'
 import { formatNZD } from '@/lib/money'
+import { calculateRedemptionDiscount } from '@/lib/loyalty-utils'
 
 // ---------------------------------------------------------------------------
 // Props
@@ -17,9 +20,10 @@ import { formatNZD } from '@/lib/money'
 interface CartDrawerProps {
   storeId: string
   hasGiftCards?: boolean
+  isAuthenticated?: boolean
 }
 
-export function CartDrawer({ storeId, hasGiftCards = false }: CartDrawerProps) {
+export function CartDrawer({ storeId, hasGiftCards = false, isAuthenticated = false }: CartDrawerProps) {
   const { state, dispatch, itemCount, totalCents } = useCart()
   const [isPending, startTransition] = useTransition()
   const drawerRef = useRef<HTMLDivElement>(null)
@@ -27,6 +31,14 @@ export function CartDrawer({ storeId, hasGiftCards = false }: CartDrawerProps) {
 
   // Gift card state (local — not persisted to cart context)
   const [appliedGiftCard, setAppliedGiftCard] = useState<AppliedGiftCard | null>(null)
+
+  // Loyalty state
+  const [loyaltyPointsToRedeem, setLoyaltyPointsToRedeem] = useState(0)
+  const [loyaltyData, setLoyaltyData] = useState<{
+    pointsBalance: number
+    redeemRateCents: number
+    isActive: boolean
+  } | null>(null)
 
   const { isDrawerOpen, items, promoCode } = state
 
@@ -36,6 +48,31 @@ export function CartDrawer({ storeId, hasGiftCards = false }: CartDrawerProps) {
       setAppliedGiftCard(null)
     }
   }, [isDrawerOpen])
+
+  // Reset loyalty when drawer closes
+  useEffect(() => {
+    if (!isDrawerOpen) {
+      setLoyaltyPointsToRedeem(0)
+    }
+  }, [isDrawerOpen])
+
+  // Fetch loyalty data for authenticated customers when drawer opens
+  useEffect(() => {
+    if (!isDrawerOpen || !isAuthenticated) return
+
+    async function fetchLoyalty() {
+      try {
+        const result = await getCustomerLoyaltyForCheckout()
+        if ('data' in result) {
+          setLoyaltyData(result.data)
+        }
+      } catch {
+        // Non-fatal — loyalty section simply won't show
+      }
+    }
+
+    fetchLoyalty()
+  }, [isDrawerOpen, isAuthenticated])
 
   // Reset gift card if cart items change (to avoid stale coverage math)
   useEffect(() => {
@@ -90,12 +127,22 @@ export function CartDrawer({ storeId, hasGiftCards = false }: CartDrawerProps) {
   }, [isDrawerOpen, dispatch])
 
   // ---------------------------------------------------------------------------
-  // Computed: effective total after gift card (for Stripe charge)
+  // Computed: effective total after gift card and loyalty points
   // ---------------------------------------------------------------------------
 
   const giftCardAmountCents = appliedGiftCard?.giftCardAmountCents ?? 0
   const remainingAfterGiftCard = Math.max(0, totalCents - giftCardAmountCents)
   const isFullyCoveredByGiftCard = appliedGiftCard !== null && remainingAfterGiftCard === 0
+
+  // Loyalty discount display (mirrors gift card pattern)
+  const loyaltyDiscountCents = loyaltyData && loyaltyPointsToRedeem > 0
+    ? Math.min(
+        calculateRedemptionDiscount(loyaltyPointsToRedeem, loyaltyData.redeemRateCents),
+        remainingAfterGiftCard
+      )
+    : 0
+  const remainingAfterLoyalty = Math.max(0, remainingAfterGiftCard - loyaltyDiscountCents)
+  const isFullyCoveredByLoyalty = loyaltyPointsToRedeem > 0 && remainingAfterLoyalty === 0 && !appliedGiftCard
 
   // ---------------------------------------------------------------------------
   // Checkout handler
@@ -116,6 +163,8 @@ export function CartDrawer({ storeId, hasGiftCards = false }: CartDrawerProps) {
         // Gift card fields (optional — only when applied)
         giftCardCode: appliedGiftCard?.code,
         giftCardAmountCents: appliedGiftCard?.giftCardAmountCents,
+        // Loyalty points redemption (optional — LOYAL-08)
+        ...(loyaltyPointsToRedeem > 0 ? { loyalty_points_to_redeem: loyaltyPointsToRedeem } : {}),
       })
 
       if ('url' in result && result.url) {
@@ -266,9 +315,40 @@ export function CartDrawer({ storeId, hasGiftCards = false }: CartDrawerProps) {
                       -{formatNZD(giftCardAmountCents)}
                     </span>
                   </div>
+                  {loyaltyDiscountCents === 0 && (
+                    <div className="flex justify-between text-base font-semibold text-[var(--color-text)] pt-1">
+                      <span>Remaining to pay</span>
+                      <span className="tabular-nums">{formatNZD(remainingAfterGiftCard)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Loyalty points section — shown for authenticated customers with balance */}
+              {loyaltyData && (
+                <>
+                  <div className="border-t border-[var(--color-border)]" />
+                  <LoyaltyRedeemControl
+                    pointsBalance={loyaltyData.pointsBalance}
+                    redeemRateCents={loyaltyData.redeemRateCents}
+                    isActive={loyaltyData.isActive}
+                    onRedeemChange={setLoyaltyPointsToRedeem}
+                  />
+                </>
+              )}
+
+              {/* Loyalty discount line — shown when loyalty points applied */}
+              {loyaltyDiscountCents > 0 && (
+                <div className="py-2 border-t border-[var(--color-border)]">
+                  <div className="flex justify-between text-sm text-[var(--color-text-muted)]">
+                    <span>Loyalty points</span>
+                    <span className="tabular-nums text-[var(--color-success)]">
+                      -{formatNZD(loyaltyDiscountCents)}
+                    </span>
+                  </div>
                   <div className="flex justify-between text-base font-semibold text-[var(--color-text)] pt-1">
                     <span>Remaining to pay</span>
-                    <span className="tabular-nums">{formatNZD(remainingAfterGiftCard)}</span>
+                    <span className="tabular-nums">{formatNZD(remainingAfterLoyalty)}</span>
                   </div>
                 </div>
               )}
@@ -276,7 +356,7 @@ export function CartDrawer({ storeId, hasGiftCards = false }: CartDrawerProps) {
 
             {/* Footer CTA */}
             <div className="px-4 py-4 border-t border-[var(--color-border)] shrink-0">
-              {isFullyCoveredByGiftCard ? (
+              {isFullyCoveredByGiftCard || isFullyCoveredByLoyalty ? (
                 /* Full cover: "Complete Order" — no Stripe, no logo */
                 <button
                   type="button"
