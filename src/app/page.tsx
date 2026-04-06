@@ -4,14 +4,15 @@ import LandingHero from './(marketing)/components/LandingHero'
 import LandingFeatures from './(marketing)/components/LandingFeatures'
 import LandingPricing from './(marketing)/components/LandingPricing'
 import LandingCTA from './(marketing)/components/LandingCTA'
+import LandingNZCallout from './(marketing)/components/LandingNZCallout'
 import LandingFooter from './(marketing)/components/LandingFooter'
 
 export const dynamic = 'force-static'
 
 export const metadata: Metadata = {
-  title: 'NZPOS — The POS built for Kiwi retailers',
+  title: 'NZPOS — The retail platform built for Kiwi businesses',
   description:
-    'Ring up sales in-store, take orders online, and get GST handled correctly — all from one dashboard. Free to start.',
+    'Sell in-store and online from one dashboard. GST handled correctly on every transaction. Free to start.',
 }
 
 export default function LandingPage() {
@@ -20,6 +21,7 @@ export default function LandingPage() {
       <LandingNav />
       <LandingHero />
       <LandingFeatures />
+      <LandingNZCallout />
       <LandingPricing />
       <LandingCTA />
       <LandingFooter />
