@@ -82,9 +82,32 @@ export async function completeSale(input: unknown) {
   // 6. Build receipt data now that we have the order ID
   const orderId = (data as { order_id: string }).order_id
 
+  // 6a. Gift card redemption (atomic — after order creation)
+  let giftCardRemainingCents: number | undefined
+  if (parsed.data.gift_card_code && parsed.data.gift_card_amount_cents) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: redemptionData, error: redemptionError } = await (supabase as any).rpc('redeem_gift_card', {
+      p_store_id: staff.store_id,
+      p_code: parsed.data.gift_card_code,
+      p_amount_cents: parsed.data.gift_card_amount_cents,
+      p_channel: 'pos',
+      p_order_id: orderId,
+      p_staff_id: staff.staff_id,
+    })
+    if (redemptionError) {
+      console.warn('[completeSale] Gift card redemption warning store_id=%s orderId=%s:', staff.store_id, orderId, redemptionError)
+      // Order is already created — log warning but don't fail the sale
+    } else if (redemptionData) {
+      const redemptionResult = redemptionData as unknown as { balance_after_cents: number }
+      giftCardRemainingCents = redemptionResult.balance_after_cents
+    }
+  }
+
   const changeDueCents = parsed.data.cash_tendered_cents
     ? calcChangeDue(parsed.data.total_cents, parsed.data.cash_tendered_cents)
     : undefined
+
+  const isGiftCardPayment = parsed.data.gift_card_code !== undefined
 
   const receiptData = buildReceiptData({
     orderId,
@@ -104,10 +127,15 @@ export async function completeSale(input: unknown) {
       gstCents: parsed.data.gst_cents,
       totalCents: parsed.data.total_cents,
     },
-    paymentMethod: (parsed.data.payment_method ?? 'eftpos') as 'eftpos' | 'cash' | 'split',
+    paymentMethod: isGiftCardPayment
+      ? (parsed.data.split_remainder_method ? (parsed.data.split_remainder_method === 'eftpos' ? 'eftpos' : 'cash') : 'gift_card')
+      : ((parsed.data.payment_method ?? 'eftpos') as 'eftpos' | 'cash' | 'split'),
     cashTenderedCents: parsed.data.cash_tendered_cents,
     changeDueCents: changeDueCents && changeDueCents > 0 ? changeDueCents : undefined,
     customerEmail: parsed.data.customer_email,
+    giftCardCodeLast4: parsed.data.gift_card_code?.slice(-4),
+    giftCardAmountCents: parsed.data.gift_card_amount_cents,
+    giftCardRemainingCents,
   })
 
   // 7. Update the order with receipt_data

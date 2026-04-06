@@ -18,6 +18,7 @@ import { CartPanel } from './CartPanel'
 import { DiscountSheet } from './DiscountSheet'
 import { EftposConfirmScreen } from './EftposConfirmScreen'
 import { CashEntryScreen } from './CashEntryScreen'
+import { GiftCardCodeEntryScreen } from './GiftCardCodeEntryScreen'
 import { OutOfStockDialog } from './OutOfStockDialog'
 import { ReceiptScreen } from './ReceiptScreen'
 import type { ReceiptData } from '@/lib/receipt'
@@ -41,6 +42,7 @@ type POSClientShellProps = {
   storeId: string
   staffList: StaffRow[]
   hasInventory: boolean
+  hasGiftCards?: boolean
   demoMode?: boolean
   demoStore?: { name: string; address: string | null; phone: string | null; gst_number: string | null }
 }
@@ -54,6 +56,7 @@ export function POSClientShell({
   storeId,
   staffList,
   hasInventory,
+  hasGiftCards = false,
   demoMode = false,
   demoStore,
 }: POSClientShellProps) {
@@ -213,7 +216,8 @@ export function POSClientShell({
         .map(b => b.toString(16).padStart(2, '0'))
         .join('')
 
-      let demoPaymentMethod: 'eftpos' | 'cash' | 'split' = cart.paymentMethod ?? 'eftpos'
+      const rawDemoMethod = cart.paymentMethod === 'gift_card' ? 'eftpos' : (cart.paymentMethod ?? 'eftpos')
+      let demoPaymentMethod: 'eftpos' | 'cash' | 'split' = rawDemoMethod
       if (splitCash != null && splitCash > 0) {
         demoPaymentMethod = 'split'
       }
@@ -248,7 +252,8 @@ export function POSClientShell({
     setIsProcessing(true)
     setSaleError(null)
 
-    let paymentMethod: 'eftpos' | 'cash' | 'split' = cart.paymentMethod ?? 'eftpos'
+    const rawMethod = cart.paymentMethod === 'gift_card' ? 'eftpos' : (cart.paymentMethod ?? 'eftpos')
+    let paymentMethod: 'eftpos' | 'cash' | 'split' = rawMethod
     let notes: string | undefined
 
     if (splitCash != null && splitCash > 0) {
@@ -343,6 +348,90 @@ export function POSClientShell({
   }
 
   // ---------------------------------------------------------------------------
+  // Gift card flow handlers
+  // ---------------------------------------------------------------------------
+
+  function handleGiftCardValidated(data: {
+    balanceCents: number
+    expiresAt: string
+    giftCardAmountCents: number
+    splitRemainderMethod?: 'eftpos' | 'cash'
+  }) {
+    dispatch({
+      type: 'GIFT_CARD_VALIDATED',
+      balanceCents: data.balanceCents,
+      expiresAt: data.expiresAt,
+    })
+    if (data.splitRemainderMethod) {
+      dispatch({ type: 'SET_SPLIT_REMAINDER_METHOD', method: data.splitRemainderMethod })
+    }
+  }
+
+  function handleGiftCardCancel() {
+    dispatch({ type: 'VOID_SALE' })
+  }
+
+  function handleGiftCardConfirmedComplete() {
+    handleCompleteSaleWithGiftCard()
+  }
+
+  async function handleCompleteSaleWithGiftCard() {
+    if (!cart.giftCardCode || cart.giftCardAmountCents === null) return
+
+    setIsProcessing(true)
+    setSaleError(null)
+
+    // Determine payment method for the RPC:
+    // If gift card fully covers: 'gift_card'
+    // If split: use the split_remainder_method ('eftpos' or 'cash')
+    const effectivePaymentMethod = cart.splitRemainderMethod ?? 'gift_card'
+
+    const result = await completeSale({
+      channel: 'pos',
+      status: 'completed',
+      items: cart.items.map((item) => ({
+        product_id: item.productId,
+        product_name: item.productName,
+        unit_price_cents: item.unitPriceCents,
+        quantity: item.quantity,
+        discount_cents: item.discountCents,
+        line_total_cents: item.lineTotalCents,
+        gst_cents: item.gstCents,
+      })),
+      subtotal_cents: totals.subtotalCents,
+      gst_cents: totals.gstCents,
+      total_cents: totals.totalCents,
+      discount_cents: cart.items.reduce((s, i) => s + i.discountCents, 0),
+      payment_method: effectivePaymentMethod,
+      gift_card_code: cart.giftCardCode,
+      gift_card_amount_cents: cart.giftCardAmountCents,
+      split_remainder_method: cart.splitRemainderMethod ?? undefined,
+    })
+
+    setIsProcessing(false)
+
+    if ('error' in result) {
+      if (result.error === 'out_of_stock') {
+        setSaleError(`Out of stock — ${result.message ?? 'item was just sold'}. Please void this sale.`)
+      } else {
+        setSaleError(
+          typeof result.error === 'string'
+            ? result.error
+            : 'Sale could not be recorded. Please try again or note the order manually.'
+        )
+      }
+      dispatch({ type: 'VOID_SALE' })
+      return
+    }
+
+    if ('receiptData' in result && result.receiptData) {
+      setLastReceiptData(result.receiptData as ReceiptData)
+    }
+    dispatch({ type: 'SALE_COMPLETE', orderId: result.orderId })
+    router.refresh()
+  }
+
+  // ---------------------------------------------------------------------------
   // Logout
   // ---------------------------------------------------------------------------
 
@@ -402,6 +491,7 @@ export function POSClientShell({
         dispatch={dispatch}
         staffRole={staffRole}
         onOpenDiscount={(productId) => setDiscountTarget(productId)}
+        showGiftCard={hasGiftCards}
       />
 
       {/* ── Overlays ──────────────────────────────────────────────── */}
@@ -466,6 +556,71 @@ export function POSClientShell({
           onSplit={handleCashSplit}
           onCancel={handleCashCancel}
         />
+      )}
+
+      {/* Gift card code entry */}
+      {cart.phase === 'gift_card_entry' && (
+        <GiftCardCodeEntryScreen
+          storeId={storeId}
+          totalCents={totals.totalCents}
+          onValidated={handleGiftCardValidated}
+          onCancel={handleGiftCardCancel}
+        />
+      )}
+
+      {/* Gift card confirmed — show summary and complete sale button */}
+      {cart.phase === 'gift_card_confirmed' && cart.giftCardCode && (
+        <div
+          className="fixed inset-0 z-50 bg-card flex flex-col items-center justify-center px-4 animate-[fadeIn_150ms_ease-out]"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Gift card confirmed"
+        >
+          <div className="w-full max-w-sm">
+            <p className="text-sm text-text-muted text-center mb-4">Gift card applied</p>
+            <div className="rounded-lg border border-border bg-surface p-4 mb-4 space-y-1">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-semibold text-text">
+                  Gift Card ****{cart.giftCardCode.slice(-4)}
+                </span>
+                <span className="text-sm font-bold text-success">
+                  -{cart.giftCardAmountCents !== null ? formatNZD(cart.giftCardAmountCents) : ''}
+                </span>
+              </div>
+              {cart.giftCardRemainingAfterCents !== null && (
+                <p className="text-xs text-text-muted">
+                  Remaining balance on card: {formatNZD(cart.giftCardRemainingAfterCents)}
+                </p>
+              )}
+              {cart.splitRemainderMethod && cart.giftCardAmountCents !== null && (
+                <p className="text-xs text-text-muted">
+                  {formatNZD(totals.totalCents - cart.giftCardAmountCents)} due via{' '}
+                  {cart.splitRemainderMethod === 'eftpos' ? 'EFTPOS' : 'Cash'}
+                </p>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGiftCardConfirmedComplete}
+              disabled={isProcessing}
+              className={[
+                'w-full min-h-[56px] bg-success text-white text-base font-bold rounded-lg mb-3 transition-opacity',
+                isProcessing ? 'opacity-50 pointer-events-none' : 'hover:opacity-90',
+              ].join(' ')}
+            >
+              {isProcessing ? 'Processing…' : 'Complete Sale'}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleGiftCardCancel}
+              className="w-full min-h-[44px] border border-border text-navy text-base font-bold rounded-lg hover:bg-surface transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Receipt screen (replaces SaleSummaryScreen) */}

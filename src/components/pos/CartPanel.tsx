@@ -12,9 +12,10 @@ type CartPanelProps = {
   dispatch: React.Dispatch<CartAction>
   staffRole: 'owner' | 'staff'
   onOpenDiscount: (productId: string) => void
+  showGiftCard?: boolean
 }
 
-export function CartPanel({ cart, dispatch, onOpenDiscount }: CartPanelProps) {
+export function CartPanel({ cart, dispatch, onOpenDiscount, showGiftCard }: CartPanelProps) {
   const itemCount = cart.items.reduce((sum, i) => sum + i.quantity, 0)
   const totals = calcCartTotals(cart.items)
 
@@ -58,6 +59,7 @@ export function CartPanel({ cart, dispatch, onOpenDiscount }: CartPanelProps) {
             <PaymentMethodToggle
               selected={cart.paymentMethod}
               onSelect={(method) => dispatch({ type: 'SET_PAYMENT_METHOD', method })}
+              showGiftCard={showGiftCard}
             />
             <PayButton
               totalCents={totals.totalCents}
