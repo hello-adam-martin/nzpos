@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: POS Demo
-status: verifying
-stopped_at: Phase 34 context gathered
-last_updated: "2026-04-06T09:41:31.569Z"
+status: executing
+stopped_at: Completed 34-02-PLAN.md
+last_updated: "2026-04-06T09:56:18.635Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 5
+  completed_plans: 4
 ---
 
 # Project State
@@ -20,13 +20,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 33 — demo-pos-route-checkout
+**Current focus:** Phase 34 — signup-conversion-landing-page
 
 ## Current Position
 
-Phase: 34
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 34 (signup-conversion-landing-page) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-06
 
 [==========          ] 0% — 0/3 phases complete
@@ -58,6 +58,7 @@ Last activity: 2026-04-06
 - [Phase 33]: Middleware passthrough for /demo/** placed at position 1.5 before host resolution — skips all auth and tenant logic for demo visitors
 - [Phase 33-demo-pos-route-checkout]: demoMode prop uses hook override pattern (call unconditionally, override return values), not conditional hook calls
 - [Phase 33-demo-pos-route-checkout]: Demo sale intercept returns early before completeSale, no router.refresh() in demo path
+- [Phase 34]: Ghost button uses border-white/70 on navy for secondary CTA per DESIGN.md D-08 ghost button pattern
 
 ### Pending Todos
 
@@ -69,6 +70,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T09:41:31.565Z
-Stopped at: Phase 34 context gathered
-Resume file: .planning/phases/34-signup-conversion-landing-page/34-CONTEXT.md
+Last session: 2026-04-06T09:56:18.621Z
+Stopped at: Completed 34-02-PLAN.md
+Resume file: None

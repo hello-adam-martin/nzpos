@@ -39,8 +39,8 @@ Requirements for POS Demo milestone. Each maps to roadmap phases.
 
 ### Landing Page
 
-- [ ] **LAND-01**: Landing page has a visible "Try POS Demo" button
-- [ ] **LAND-02**: Button navigates to `/demo/pos`
+- [x] **LAND-01**: Landing page has a visible "Try POS Demo" button
+- [x] **LAND-02**: Button navigates to `/demo/pos`
 
 ## Future Requirements
 
@@ -89,8 +89,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONV-01 | Phase 34 | Pending |
 | CONV-02 | Phase 34 | Pending |
 | CONV-03 | Phase 34 | Pending |
-| LAND-01 | Phase 34 | Pending |
-| LAND-02 | Phase 34 | Pending |
+| LAND-01 | Phase 34 | Complete |
+| LAND-02 | Phase 34 | Complete |
 
 **Coverage:**
 - v7.0 requirements: 20 total
