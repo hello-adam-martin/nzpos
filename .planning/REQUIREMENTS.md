@@ -9,10 +9,10 @@ Requirements for POS Demo milestone. Each maps to roadmap phases.
 
 ### Demo Store Data
 
-- [ ] **DEMO-01**: Demo store exists in DB with store name, logo, and NZ business details
-- [ ] **DEMO-02**: Demo store has ~20 products across 4+ categories with realistic NZD prices (tax-inclusive)
-- [ ] **DEMO-03**: Demo store products have placeholder images and valid SKUs
-- [ ] **DEMO-04**: Demo store has seed migration or script that is idempotent (re-runnable)
+- [x] **DEMO-01**: Demo store exists in DB with store name, logo, and NZ business details
+- [x] **DEMO-02**: Demo store has ~20 products across 4+ categories with realistic NZD prices (tax-inclusive)
+- [x] **DEMO-03**: Demo store products have placeholder images and valid SKUs
+- [x] **DEMO-04**: Demo store has seed migration or script that is idempotent (re-runnable)
 
 ### Demo POS Route
 
@@ -71,10 +71,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DEMO-01 | Phase 32 | Pending |
-| DEMO-02 | Phase 32 | Pending |
-| DEMO-03 | Phase 32 | Pending |
-| DEMO-04 | Phase 32 | Pending |
+| DEMO-01 | Phase 32 | Complete |
+| DEMO-02 | Phase 32 | Complete |
+| DEMO-03 | Phase 32 | Complete |
+| DEMO-04 | Phase 32 | Complete |
 | DPOS-01 | Phase 33 | Pending |
 | DPOS-02 | Phase 33 | Pending |
 | DPOS-03 | Phase 33 | Pending |

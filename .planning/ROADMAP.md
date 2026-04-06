@@ -88,7 +88,7 @@
 
 ### v7.0 POS Demo
 
-- [ ] **Phase 32: Demo Store Seed** - Pre-seeded NZ retail store with ~20 products, categories, and placeholder images in the database
+- [x] **Phase 32: Demo Store Seed** - Pre-seeded NZ retail store with ~20 products, categories, and placeholder images in the database (completed 2026-04-06)
 - [ ] **Phase 33: Demo POS Route & Checkout** - Unauthenticated `/demo/pos` running real POS code with simulated sale completion
 - [ ] **Phase 34: Signup Conversion & Landing Page** - Post-sale CTA overlay and "Try POS Demo" entry point on the landing page
 
@@ -103,9 +103,9 @@
   2. The store has ~20 products spread across at least 4 categories with NZD tax-inclusive prices
   3. Every product has a placeholder image URL and a valid SKU
   4. Running the seed script twice produces the same result with no duplicate records
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 32-01-PLAN.md — SQL migration + constants + SVG placeholders for demo store seed
+- [x] 32-01-PLAN.md — SQL migration + constants + SVG placeholders for demo store seed
 
 ### Phase 33: Demo POS Route & Checkout
 **Goal**: Visitors can use the real POS interface at `/demo/pos` — add products, apply discounts, complete a simulated EFTPOS or cash sale, and see a receipt — without creating an account or writing to the database
@@ -172,6 +172,6 @@ Plans:
 | 29. Backend & Billing Cleanup | v6.0 | 2/2 | Complete | 2026-04-06 |
 | 30. Admin UI & Super Admin | v6.0 | 2/2 | Complete | 2026-04-06 |
 | 31. Marketing Pages | v6.0 | 2/2 | Complete | 2026-04-06 |
-| 32. Demo Store Seed | v7.0 | 0/1 | Planned | - |
+| 32. Demo Store Seed | v7.0 | 1/1 | Complete   | 2026-04-06 |
 | 33. Demo POS Route & Checkout | v7.0 | 0/? | Not started | - |
 | 34. Signup Conversion & Landing Page | v7.0 | 0/? | Not started | - |

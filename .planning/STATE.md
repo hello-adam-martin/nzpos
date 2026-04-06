@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: POS Demo
-status: planning
-stopped_at: Phase 32 context gathered
-last_updated: "2026-04-06T08:30:39.217Z"
-last_activity: 2026-04-06 — Roadmap created for v7.0
+status: verifying
+stopped_at: Completed 32-01-PLAN.md
+last_updated: "2026-04-06T08:48:21.579Z"
+last_activity: 2026-04-06
 progress:
   total_phases: 3
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
 ---
 
 # Project State
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** v7.0 POS Demo — roadmap defined, ready to plan Phase 32
+**Current focus:** Phase 32 — demo-store-seed
 
 ## Current Position
 
-Phase: 32 (Demo Store Seed) — not started
-Plan: —
-Status: Roadmap approved, ready for phase planning
-Last activity: 2026-04-06 — Roadmap created for v7.0
+Phase: 32 (demo-store-seed) — EXECUTING
+Plan: 1 of 1
+Status: Phase complete — ready for verification
+Last activity: 2026-04-06
 
 [==========          ] 0% — 0/3 phases complete
 
@@ -53,6 +53,8 @@ Last activity: 2026-04-06 — Roadmap created for v7.0
 - Session isolation via client-side cart (already useReducer), no DB writes in demo mode
 - Demo seed script must be idempotent (re-runnable without duplicates)
 - Barcode scanner, new-order polling, and receipt email disabled in demo mode (DPOS-04)
+- [Phase 32-demo-store-seed]: Synthetic auth.users row with matching UUID satisfies owner_auth_id FK without real login account
+- [Phase 32-demo-store-seed]: DEMO_STORE_ID constant in src/lib/constants.ts for zero-query demo store identification
 
 ### Pending Todos
 
@@ -64,6 +66,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T08:30:39.214Z
-Stopped at: Phase 32 context gathered
-Resume file: .planning/phases/32-demo-store-seed/32-CONTEXT.md
+Last session: 2026-04-06T08:48:21.577Z
+Stopped at: Completed 32-01-PLAN.md
+Resume file: None
