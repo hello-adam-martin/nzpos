@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Admin Platform
-status: completed
-stopped_at: Phase 27 context gathered
-last_updated: "2026-04-05T13:03:15.382Z"
-last_activity: 2026-04-05
+status: executing
+stopped_at: Completed 27-super-admin-analytics plan 01
+last_updated: "2026-04-06T01:50:56.370Z"
+last_activity: 2026-04-06
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 9
-  completed_plans: 8
+  total_plans: 11
+  completed_plans: 9
   percent: 89
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 26 — super-admin-billing-user-management
+**Current focus:** Phase 27 — super-admin-analytics
 
 ## Current Position
 
-Phase: 27
-Plan: Not started
-Status: Phase complete — ready for next phase
-Last activity: 2026-04-05
+Phase: 27 (super-admin-analytics) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-04-06
 
 Progress: [█████████░] 89%
 
@@ -52,6 +52,7 @@ Progress: [█████████░] 89%
 | Phase 26-super-admin-billing-user-management P02 | 15 | 1 tasks | 2 files |
 | Phase 26-super-admin-billing-user-management P01 | 8 | 2 tasks | 5 files |
 | Phase 26-super-admin-billing-user-management P03 | 10 min | 2 tasks | 6 files |
+| Phase 27-super-admin-analytics P01 | 18 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,9 @@ Progress: [█████████░] 89%
 - [Phase 26-super-admin-billing-user-management]: Use admin.auth.resetPasswordForEmail (not admin.auth.admin variant) for password reset — per RESEARCH.md Pitfall 4
 - [Phase 26-super-admin-billing-user-management]: DisableAccountModal uses mode prop for disable/enable — single component handles both flows
 - [Phase 26-super-admin-billing-user-management]: ban_duration '876600h' for effective permanent ban; 'none' to unban via Supabase Auth admin API
+- [Phase 27-super-admin-analytics]: maxDuration=60 on stripe-snapshot-sync cron route (Hobby plan serverless limit)
+- [Phase 27-super-admin-analytics]: Shared syncStripeSnapshot function called by both cron and server action — single source of truth for sync logic
+- [Phase 27-super-admin-analytics]: Rate limit implemented via analytics_sync_metadata DB row (not in-memory) — works across serverless instances
 
 ### Pending Todos
 
@@ -100,6 +104,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-05T13:03:15.374Z
-Stopped at: Phase 27 context gathered
-Resume file: .planning/phases/27-super-admin-analytics/27-CONTEXT.md
+Last session: 2026-04-06T01:50:56.368Z
+Stopped at: Completed 27-super-admin-analytics plan 01
+Resume file: None

@@ -54,11 +54,11 @@ Requirements for Admin Platform milestone. Each maps to roadmap phases.
 
 ### Super-Admin Analytics (MRR/Churn)
 
-- [ ] **SA-MRR-01**: Super-admin analytics page shows current MRR with correct normalisation of annual plans
-- [ ] **SA-MRR-02**: Super-admin analytics page shows MRR trend over the last 6 months
-- [ ] **SA-MRR-03**: Super-admin analytics page shows churn count (cancelled subscriptions this month)
-- [ ] **SA-MRR-04**: Super-admin analytics page shows revenue breakdown by add-on
-- [ ] **SA-MRR-05**: Stripe data is materialised via a sync job, not fetched live on page load
+- [x] **SA-MRR-01**: Super-admin analytics page shows current MRR with correct normalisation of annual plans
+- [x] **SA-MRR-02**: Super-admin analytics page shows MRR trend over the last 6 months
+- [x] **SA-MRR-03**: Super-admin analytics page shows churn count (cancelled subscriptions this month)
+- [x] **SA-MRR-04**: Super-admin analytics page shows revenue breakdown by add-on
+- [x] **SA-MRR-05**: Stripe data is materialised via a sync job, not fetched live on page load
 
 ### Super-Admin User Management
 
@@ -119,11 +119,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SA-USER-01 | Phase 26 | Complete |
 | SA-USER-02 | Phase 26 | Complete |
 | SA-USER-03 | Phase 26 | Complete |
-| SA-MRR-01 | Phase 27 | Pending |
-| SA-MRR-02 | Phase 27 | Pending |
-| SA-MRR-03 | Phase 27 | Pending |
-| SA-MRR-04 | Phase 27 | Pending |
-| SA-MRR-05 | Phase 27 | Pending |
+| SA-MRR-01 | Phase 27 | Complete |
+| SA-MRR-02 | Phase 27 | Complete |
+| SA-MRR-03 | Phase 27 | Complete |
+| SA-MRR-04 | Phase 27 | Complete |
+| SA-MRR-05 | Phase 27 | Complete |
 
 **Coverage:**
 - v4.0 requirements: 32 total
