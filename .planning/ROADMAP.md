@@ -251,5 +251,5 @@ Plans:
 | 27. Super-Admin Analytics | v4.0 | 2/2 | Complete | 2026-04-06 |
 | 28. Marketing Landing Page | v5.0 | 3/3 | Complete | 2026-04-06 |
 | 29. Backend & Billing Cleanup | v6.0 | 2/2 | Complete    | 2026-04-06 |
-| 30. Admin UI & Super Admin | v6.0 | 2/2 | Complete   | 2026-04-06 |
+| 30. Admin UI & Super Admin | v6.0 | 2/2 | Complete    | 2026-04-06 |
 | 31. Marketing Pages | v6.0 | 0/? | Not started | - |
