@@ -30,11 +30,12 @@ interface AdminSidebarProps {
   hasInventory?: boolean
   hasGiftCards?: boolean
   hasAdvancedReporting?: boolean
+  hasLoyaltyPoints?: boolean
   role?: 'owner' | 'manager'
   staffName?: string | null
 }
 
-export default function AdminSidebar({ userEmail, hasInventory, hasGiftCards, hasAdvancedReporting, role = 'owner', staffName }: AdminSidebarProps) {
+export default function AdminSidebar({ userEmail, hasInventory, hasGiftCards, hasAdvancedReporting, hasLoyaltyPoints, role = 'owner', staffName }: AdminSidebarProps) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -91,7 +92,7 @@ export default function AdminSidebar({ userEmail, hasInventory, hasGiftCards, ha
         })}
 
         {/* Add-ons section — owner only, renders when at least one add-on flag is active */}
-        {role === 'owner' && (hasGiftCards === true || hasAdvancedReporting === true) && (
+        {role === 'owner' && (hasGiftCards === true || hasAdvancedReporting === true || hasLoyaltyPoints === true) && (
           <div className="pt-4">
             <p className="px-3 pb-1 text-[11px] uppercase tracking-widest text-white/40 font-sans">
               Add-ons
@@ -111,6 +112,24 @@ export default function AdminSidebar({ userEmail, hasInventory, hasGiftCards, ha
                   ].join(' ')}
                 >
                   Gift Cards
+                </Link>
+              )
+            })()}
+            {hasLoyaltyPoints && (() => {
+              const href = '/admin/loyalty'
+              const isActive = pathname === href || pathname.startsWith(href + '/')
+              return (
+                <Link
+                  href={href}
+                  onClick={() => setMobileOpen(false)}
+                  className={[
+                    'flex items-center px-3 py-3 rounded-[var(--radius-md)] text-sm font-semibold font-sans transition-colors duration-150',
+                    isActive
+                      ? 'bg-white/10 text-white border-l-4 border-amber pl-2'
+                      : 'text-white/60 hover:text-white hover:bg-white/5',
+                  ].join(' ')}
+                >
+                  Loyalty
                 </Link>
               )
             })()}

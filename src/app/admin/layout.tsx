@@ -16,6 +16,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   let hasInventory = false
   let hasGiftCards = false
   let hasAdvancedReporting = false
+  let hasLoyaltyPoints = false
   let role: 'owner' | 'manager' = 'owner'
   let staffName: string | null = null
   let storeId: string | undefined
@@ -62,16 +63,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: storePlan } = await (adminClient as any)
       .from('store_plans')
-      .select('has_gift_cards, has_advanced_reporting')
+      .select('has_gift_cards, has_advanced_reporting, has_loyalty_points')
       .eq('store_id', storeId)
       .maybeSingle()
     hasGiftCards = storePlan?.has_gift_cards === true
     hasAdvancedReporting = storePlan?.has_advanced_reporting === true
+    hasLoyaltyPoints = storePlan?.has_loyalty_points === true
   }
 
   return (
     <div className="flex min-h-screen bg-bg">
-      <AdminSidebar userEmail={userEmail} hasInventory={hasInventory} hasGiftCards={hasGiftCards} hasAdvancedReporting={hasAdvancedReporting} role={role} staffName={staffName} />
+      <AdminSidebar userEmail={userEmail} hasInventory={hasInventory} hasGiftCards={hasGiftCards} hasAdvancedReporting={hasAdvancedReporting} hasLoyaltyPoints={hasLoyaltyPoints} role={role} staffName={staffName} />
       <div className="flex-1 flex flex-col overflow-auto">
         <StripeTestModeBanner />
         {role === 'owner' && (xeroStatus === 'disconnected' || xeroStatus === 'token_expired') && (
