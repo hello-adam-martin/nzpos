@@ -40,6 +40,11 @@ export async function middleware(request: NextRequest) {
     return addSecurityHeaders(NextResponse.next())
   }
 
+  // 1.5. Demo routes — public, no auth, no tenant resolution (per D-02)
+  if (pathname.startsWith('/demo')) {
+    return addSecurityHeaders(NextResponse.next())
+  }
+
   // 2. Determine if this is the root domain or a store subdomain
   const host = request.headers.get('host') ?? ''
   const rootDomain = process.env.ROOT_DOMAIN ?? 'lvh.me:3000'
