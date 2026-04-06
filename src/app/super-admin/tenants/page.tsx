@@ -20,7 +20,7 @@ export default async function TenantsPage({
   let query = (admin as any)
     .from('stores')
     .select(
-      'id, name, slug, is_active, created_at, store_plans(has_xero, has_email_notifications, has_custom_domain)',
+      'id, name, slug, is_active, created_at, store_plans(has_xero, has_custom_domain, has_inventory)',
       { count: 'exact' }
     )
     .range(from, to)

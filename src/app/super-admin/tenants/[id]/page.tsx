@@ -32,7 +32,7 @@ export default async function TenantDetailPage({
     (admin as any)
       .from('store_plans')
       .select(
-        'has_xero, has_email_notifications, has_custom_domain, has_inventory, has_xero_manual_override, has_email_notifications_manual_override, has_custom_domain_manual_override, has_inventory_manual_override'
+        'has_xero, has_custom_domain, has_inventory, has_xero_manual_override, has_custom_domain_manual_override, has_inventory_manual_override'
       )
       .eq('store_id', id)
       .single(),
