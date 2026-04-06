@@ -1,69 +1,71 @@
-# Requirements: NZPOS v5.0
+# Requirements: NZPOS v6.0
 
 **Defined:** 2026-04-06
 **Core Value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
 
-## v5.0 Requirements
+## v6.0 Requirements
 
-Requirements for Marketing & Landing Page milestone. Each maps to roadmap phases.
+Requirements for Free Email Notifications milestone. Move email notifications from paid add-on to free tier.
 
-### Features Section
+### Backend & Feature Gating
 
-- [x] **MKT-01**: Landing page features section showcases all major shipped capabilities (POS, online store, GST, inventory, barcode scanning, customer accounts, staff management, reporting, receipts, click-and-collect)
-- [x] **MKT-02**: Each feature card has a clear title, description, and icon
+- [ ] **GATE-01**: Email sending works for all stores without feature gate check
+- [ ] **GATE-02**: Auth hook always sets email_notifications JWT claim to true
+- [ ] **GATE-03**: All existing stores have email notifications enabled via migration
+- [ ] **GATE-04**: New stores provisioned with email notifications enabled by default
 
-### Pricing Section
+### Billing & Stripe
 
-- [x] **MKT-03**: Pricing section lists all 3 add-ons: Xero ($9/mo), Email Notifications ($5/mo), Inventory Management ($9/mo)
-- [x] **MKT-04**: Free tier feature list accurately reflects what's included at no cost
-- [x] **MKT-05**: Each add-on card lists its key benefits
+- [ ] **BILL-01**: Email notifications removed from ADDONS config and Stripe price mappings
+- [ ] **BILL-02**: Email notifications removed from subscription checkout session creation
+- [ ] **BILL-03**: Stripe billing webhook no longer toggles email_notifications feature flag
 
-### Hero & CTA
+### Admin UI
 
-- [ ] **MKT-06**: Hero copy reflects mature SaaS platform (not just MVP)
-- [ ] **MKT-07**: CTA sections updated with compelling messaging
+- [ ] **ADMIN-01**: Admin billing page shows only Xero and Inventory add-on cards
+- [ ] **ADMIN-02**: UpgradePrompt component no longer references email_notifications
+- [ ] **ADMIN-03**: Super admin activate/deactivate addon actions no longer include email_notifications
 
-### Design & Quality
+### Marketing Pages
 
-- [x] **MKT-08**: All sections follow DESIGN.md (navy/amber, Satoshi/DM Sans, spacing tokens)
-- [x] **MKT-09**: Page is responsive (mobile, tablet, desktop)
+- [ ] **MKT-01**: Landing pricing section shows only 2 add-on cards (Xero, Inventory)
+- [ ] **MKT-02**: /add-ons/email-notifications detail page removed
+- [ ] **MKT-03**: Add-ons hub page shows only 2 add-ons
+- [ ] **MKT-04**: Free tier checklist on landing pricing includes "Email notifications"
+- [ ] **MKT-05**: Add-on grid updated to 2-column layout on landing and hub pages
 
-## Future Requirements
+### Tests
 
-None — this is a content-focused milestone.
-
-## Out of Scope
-
-- Blog / content marketing pages — not needed for v5.0
-- SEO optimization (meta tags, structured data) — separate concern
-- Animated illustrations or video content — static page sufficient
-- Testimonials / social proof — no customer testimonials available yet
-- Comparison with competitors — not appropriate for v5.0
+- [ ] **TEST-01**: All test files updated to reflect email notifications as free (no gating)
 
 ## Traceability
 
-| Requirement | Phase | Plan | Status |
-|-------------|-------|------|--------|
-| MKT-01 | Phase 28 | — | Pending |
-| MKT-02 | Phase 28 | — | Pending |
-| MKT-03 | Phase 28 | — | Pending |
-| MKT-04 | Phase 28 | — | Pending |
-| MKT-05 | Phase 28 | — | Pending |
-| MKT-06 | Phase 28 | — | Pending |
-| MKT-07 | Phase 28 | — | Pending |
-| MKT-08 | Phase 28 | — | Pending |
-| MKT-09 | Phase 28 | — | Pending |
+| REQ | Phase | Plan | Status |
+|-----|-------|------|--------|
+| GATE-01 | — | — | Pending |
+| GATE-02 | — | — | Pending |
+| GATE-03 | — | — | Pending |
+| GATE-04 | — | — | Pending |
+| BILL-01 | — | — | Pending |
+| BILL-02 | — | — | Pending |
+| BILL-03 | — | — | Pending |
+| ADMIN-01 | — | — | Pending |
+| ADMIN-02 | — | — | Pending |
+| ADMIN-03 | — | — | Pending |
+| MKT-01 | — | — | Pending |
+| MKT-02 | — | — | Pending |
+| MKT-03 | — | — | Pending |
+| MKT-04 | — | — | Pending |
+| MKT-05 | — | — | Pending |
+| TEST-01 | — | — | Pending |
 
-## Prior Milestones
+## Future Requirements
 
-### v4.0 Admin Platform (Shipped)
+None deferred from this milestone.
 
-- [x] **STAFF-01** through **STAFF-06**: Staff management with roles
-- [x] **CUST-01** through **CUST-05**: Customer management
-- [x] **PROMO-01**, **PROMO-02**: Promo code management
-- [x] **SETTINGS-01** through **SETTINGS-03**: Store settings expansion
-- [x] **DASH-01** through **DASH-03**: Admin dashboard improvements
-- [x] **SA-DASH-01** through **SA-DASH-04**: Super-admin dashboard
-- [x] **SA-BILL-01** through **SA-BILL-04**: Super-admin billing visibility
-- [x] **SA-USER-01** through **SA-USER-04**: Super-admin user management
-- [x] **SA-MRR-01** through **SA-MRR-05**: Super-admin analytics
+## Out of Scope
+
+- Removing the `has_email_notifications` column entirely (keep for backwards compatibility, always true)
+- Changing Xero or Inventory pricing
+- Adding new notification types
+- Email template customization
