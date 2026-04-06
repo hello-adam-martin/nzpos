@@ -19,6 +19,15 @@ export default function LandingCTA() {
         <p className="font-sans text-sm text-white/60 mt-[var(--space-sm)]">
           Set up in under 5 minutes. No credit card needed.
         </p>
+        <p className="font-sans text-sm text-white/60 mt-[var(--space-xs)]">
+          Want to try it first?{' '}
+          <Link
+            href="/demo/pos"
+            className="underline hover:text-white/80 transition-colors duration-150"
+          >
+            Try the POS demo
+          </Link>
+        </p>
       </div>
     </section>
   )
