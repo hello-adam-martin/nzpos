@@ -17,9 +17,9 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 
 ## Current State
 
-**Shipped:** v1.0 through v7.0 (2026-04-01 → 2026-04-06)
+**Shipped:** v1.0 through v7.0 (2026-04-01 → 2026-04-06), v8.0 Phase 35 (2026-04-07)
 
-1,000+ source files, 49,000+ LOC TypeScript, 34 phases shipped across 100+ plans. Production-ready multi-tenant SaaS POS with inventory management and Xero as paid add-ons ($9/mo each), email notifications free for all stores. Landing page showcases 15 features, 2 paid add-ons, NZ trust signals, and a "Try POS Demo" ghost button linking to `/demo/pos`. Demo POS runs real UI with client-side sale simulation — after completing a demo sale, visitors see a signup CTA linking to merchant registration. Platform fully operational for merchant self-serve signup with integrated demo-to-signup conversion funnel.
+1,000+ source files, 49,000+ LOC TypeScript, 35 phases shipped across 100+ plans. Production-ready multi-tenant SaaS POS with inventory management and Xero as paid add-ons ($9/mo each), email notifications free for all stores. Phase 35 complete — Gift Cards add-on ($14/mo) with digital issuance, POS + online redemption, NZ Fair Trading Act 2024 compliance (3-year minimum expiry), admin management UI. Landing page showcases 15 features, 3 paid add-ons, NZ trust signals, and a "Try POS Demo" ghost button linking to `/demo/pos`. Demo POS runs real UI with client-side sale simulation — after completing a demo sale, visitors see a signup CTA linking to merchant registration. Platform fully operational for merchant self-serve signup with integrated demo-to-signup conversion funnel.
 
 ## Core Value
 
