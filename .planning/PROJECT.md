@@ -17,7 +17,7 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 
 **Shipped:** v1.0 through v5.0 (2026-04-02 → 2026-04-06)
 
-1,000+ source files, 99,000+ LOC TypeScript, 29 phases shipped across 100+ plans. Production-ready multi-tenant SaaS POS with inventory management and Xero as paid add-ons, email notifications now free at the backend level (Phase 29 complete — feature gates removed, billing cleanup done, auth hook updated). Marketing landing page updated with 15-feature showcase, add-on detail pages, and NZ trust signals.
+1,000+ source files, 99,000+ LOC TypeScript, 30 phases shipped across 100+ plans. Production-ready multi-tenant SaaS POS with inventory management and Xero as paid add-ons, email notifications fully free (Phase 29 backend cleanup + Phase 30 admin/super-admin UI cleanup complete). Marketing landing page updated with 15-feature showcase, add-on detail pages, and NZ trust signals.
 
 ## Current Milestone: v6.0 Free Email Notifications
 
@@ -109,7 +109,7 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - v2.1 shipped 2026-04-04 with 434 tests, 989 files, 89,000+ LOC TypeScript
 - v3.0 shipped 2026-04-05 with inventory management add-on, service products, and stocktake workflows
 - Platform is now multi-tenant SaaS — any NZ business can sign up at the root domain
-- Pricing: free core POS/storefront/admin + email notifications, paid add-ons via Stripe (Xero, inventory management). Email notifications moving from paid to free in v6.0.
+- Pricing: free core POS/storefront/admin + email notifications, paid add-ons via Stripe (Xero, inventory management). Email notifications fully free — all UI references to email as paid add-on removed in Phase 30.
 - Super admin panel operational for platform management
 - Full documentation suite: setup guide, env vars, architecture, server actions, deployment runbook, merchant guide
 - CSP headers in Report-Only mode — switch to enforcing after production monitoring confirms no false positives
@@ -178,4 +178,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-06 — Phase 29 (Backend & Billing Cleanup) complete*
+*Last updated: 2026-04-06 — Phase 30 (Admin UI & Super Admin Email Cleanup) complete*
