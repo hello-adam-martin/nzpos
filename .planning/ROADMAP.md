@@ -102,7 +102,7 @@
 
 - [x] **Phase 35: Gift Cards Add-On** — Digital gift card issuance, redemption, and NZ Fair Trading Act compliance (completed 2026-04-06)
 - [x] **Phase 36: Advanced Reporting / COGS Add-On** — Cost price tracking, margin reports, and CSV export (completed 2026-04-06)
-- [ ] **Phase 37: Loyalty Points Add-On** — Points earn/redeem at POS and online, privacy-compliant enrollment
+- [x] **Phase 37: Loyalty Points Add-On** — Points earn/redeem at POS and online, privacy-compliant enrollment (completed 2026-04-06)
 
 ## Phase Details
 
@@ -154,14 +154,14 @@ Plans:
   3. Identified customers earn points automatically on completed POS and online sales, and can view their balance on their account page
   4. Customer can apply points as a discount during online checkout; staff can apply points during POS checkout
   5. Privacy notice is displayed to customers before any loyalty data is collected, compliant with Privacy Act 2020 and Privacy Amendment Act 2025 (IPP 3A)
-**Plans:** 6/7 plans executed
+**Plans:** 7/7 plans complete
 Plans:
 - [x] 37-00-PLAN.md — Wave 0 RED test stubs (loyalty utils, cart state, server actions)
 - [x] 37-01-PLAN.md — DB schema, billing pipeline, admin nav, loyalty-utils
 - [x] 37-02-PLAN.md — Admin loyalty settings page (earn/redeem rates, pause toggle)
 - [x] 37-03-PLAN.md — POS customer lookup + cart state machine + UI components
 - [x] 37-04-PLAN.md — Points earning (POS completeSale + online webhook)
-- [ ] 37-05-PLAN.md — Online checkout redemption + customer account profile
+- [x] 37-05-PLAN.md — Online checkout redemption + customer account profile
 - [x] 37-06-PLAN.md — Admin customer loyalty (points column, transaction history)
 **UI hint**: yes
 
@@ -205,4 +205,4 @@ Plans:
 | 34. Signup Conversion & Landing Page | v7.0 | 2/2 | Complete | 2026-04-06 |
 | 35. Gift Cards Add-On | v8.0 | 7/7 | Complete    | 2026-04-06 |
 | 36. Advanced Reporting / COGS Add-On | v8.0 | 4/4 | Complete    | 2026-04-06 |
-| 37. Loyalty Points Add-On | v8.0 | 6/7 | In Progress|  |
+| 37. Loyalty Points Add-On | v8.0 | 7/7 | Complete   | 2026-04-06 |
