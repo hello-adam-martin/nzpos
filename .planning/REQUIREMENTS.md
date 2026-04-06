@@ -44,15 +44,15 @@ None — this is a content-focused milestone.
 
 | Requirement | Phase | Plan | Status |
 |-------------|-------|------|--------|
-| MKT-01 | — | — | Pending |
-| MKT-02 | — | — | Pending |
-| MKT-03 | — | — | Pending |
-| MKT-04 | — | — | Pending |
-| MKT-05 | — | — | Pending |
-| MKT-06 | — | — | Pending |
-| MKT-07 | — | — | Pending |
-| MKT-08 | — | — | Pending |
-| MKT-09 | — | — | Pending |
+| MKT-01 | Phase 28 | — | Pending |
+| MKT-02 | Phase 28 | — | Pending |
+| MKT-03 | Phase 28 | — | Pending |
+| MKT-04 | Phase 28 | — | Pending |
+| MKT-05 | Phase 28 | — | Pending |
+| MKT-06 | Phase 28 | — | Pending |
+| MKT-07 | Phase 28 | — | Pending |
+| MKT-08 | Phase 28 | — | Pending |
+| MKT-09 | Phase 28 | — | Pending |
 
 ## Prior Milestones
 

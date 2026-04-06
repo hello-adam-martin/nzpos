@@ -6,7 +6,8 @@
 - ✅ **v2.0 SaaS Platform** — Phases 7-16 (shipped 2026-04-03). [Archive](milestones/v2.0-ROADMAP.md)
 - ✅ **v2.1 Hardening & Documentation** — Phases 17-20 (shipped 2026-04-04). [Archive](milestones/v2.1-ROADMAP.md)
 - ✅ **v3.0 Inventory Management** — Phases 21-23 (shipped 2026-04-05). [Archive](milestones/v3.0-ROADMAP.md)
-- 🚧 **v4.0 Admin Platform** — Phases 24-27 (in progress)
+- ✅ **v4.0 Admin Platform** — Phases 24-27 (shipped 2026-04-06)
+- 🚧 **v5.0 Marketing & Landing Page** — Phase 28 (in progress)
 
 ## Phases
 
@@ -57,14 +58,21 @@
 
 </details>
 
-### v4.0 Admin Platform (In Progress)
+<details>
+<summary>✅ v4.0 Admin Platform (Phases 24-27) — SHIPPED 2026-04-06</summary>
 
-**Milestone Goal:** Complete the admin and super-admin areas with staff management, customer management, role-based permissions, platform analytics, and merchant account management.
+- [x] **Phase 24: Staff RBAC Foundation** — completed 2026-04-04
+- [x] **Phase 25: Admin Operational UI** — completed 2026-04-05
+- [x] **Phase 26: Super-Admin Billing + User Management** — completed 2026-04-05
+- [x] **Phase 27: Super-Admin Analytics** — completed 2026-04-06
 
-- [x] **Phase 24: Staff RBAC Foundation** - Manager role, shared role constants, staff management UI, and role-gated Server Action guards (completed 2026-04-04)
-- [x] **Phase 25: Admin Operational UI** - Customer management, promo edit/delete, store settings expansion, and admin dashboard charts (completed 2026-04-05)
-- [x] **Phase 26: Super-Admin Billing + User Management** - Platform overview metrics, per-tenant billing visibility, and merchant account management (completed 2026-04-05)
-- [x] **Phase 27: Super-Admin Analytics** - Materialised MRR/churn analytics with Stripe sync job and platform revenue breakdown (completed 2026-04-06)
+</details>
+
+### v5.0 Marketing & Landing Page (In Progress)
+
+**Milestone Goal:** Update the marketing landing page to accurately reflect all shipped features across v1.0-v4.0, showcase all available add-ons, and present a compelling picture of the platform.
+
+- [ ] **Phase 28: Marketing Landing Page** — Complete rewrite of all landing page sections with accurate feature coverage, correct add-on pricing, and mature SaaS messaging
 
 ## Phase Details
 
@@ -136,6 +144,19 @@ Plans:
 - [x] 27-02-PLAN.md — Analytics page UI: stat cards, MRR trend chart, add-on revenue chart, sync controls
 **UI hint**: yes
 
+### Phase 28: Marketing Landing Page
+**Goal**: Visitors to the root domain see a landing page that accurately showcases the full NZPOS platform — all major features, all three add-ons with correct pricing, and copy that reflects a mature SaaS product rather than an MVP
+**Depends on**: Phase 27
+**Requirements**: MKT-01, MKT-02, MKT-03, MKT-04, MKT-05, MKT-06, MKT-07, MKT-08, MKT-09
+**Success Criteria** (what must be TRUE):
+  1. Visitor can read a features section listing all major shipped capabilities (POS, online store, GST, inventory management, barcode scanning, customer accounts, staff management, reporting, receipts, click-and-collect) — each with a title, description, and icon
+  2. Visitor can see a pricing section listing all three add-ons (Xero $9/mo, Email Notifications $5/mo, Inventory Management $9/mo) with a clear free-tier feature list and per-add-on benefit lists
+  3. Visitor reads hero copy and CTA sections that describe a mature multi-tenant SaaS POS platform, not a single-store MVP
+  4. Page renders correctly on mobile, tablet, and desktop without horizontal scroll or broken layouts
+  5. All sections use the project design system (deep navy #1E293B, amber #E67E22, Satoshi/DM Sans typography) with no visual regressions against DESIGN.md
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -163,7 +184,8 @@ Plans:
 | 21. Service Product Type + Free-Tier Simplification | v3.0 | 3/3 | Complete | 2026-04-04 |
 | 22. Inventory Add-on Core | v3.0 | 5/5 | Complete | 2026-04-04 |
 | 23. Feature Gating + POS/Storefront Integration | v3.0 | 3/3 | Complete | 2026-04-04 |
-| 24. Staff RBAC Foundation | v4.0 | 3/3 | Complete    | 2026-04-04 |
-| 25. Admin Operational UI | v4.0 | 3/3 | Complete    | 2026-04-05 |
-| 26. Super-Admin Billing + User Management | v4.0 | 2/3 | Complete    | 2026-04-05 |
-| 27. Super-Admin Analytics | v4.0 | 2/2 | Complete    | 2026-04-06 |
+| 24. Staff RBAC Foundation | v4.0 | 3/3 | Complete | 2026-04-04 |
+| 25. Admin Operational UI | v4.0 | 3/3 | Complete | 2026-04-05 |
+| 26. Super-Admin Billing + User Management | v4.0 | 3/3 | Complete | 2026-04-05 |
+| 27. Super-Admin Analytics | v4.0 | 2/2 | Complete | 2026-04-06 |
+| 28. Marketing Landing Page | v5.0 | 0/TBD | Not started | - |
