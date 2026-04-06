@@ -34,10 +34,13 @@ export type ReceiptData = {
   subtotalCents: number
   gstCents: number
   totalCents: number
-  paymentMethod: 'eftpos' | 'cash' | 'split' | 'online'
+  paymentMethod: 'eftpos' | 'cash' | 'split' | 'online' | 'gift_card'
   cashTenderedCents?: number
   changeDueCents?: number
   customerEmail?: string      // captured on receipt, email sent in Phase 9
+  giftCardCodeLast4?: string       // last 4 digits of code
+  giftCardAmountCents?: number     // amount charged to card
+  giftCardRemainingCents?: number  // balance remaining after transaction
 }
 
 // ---------------------------------------------------------------------------
@@ -59,10 +62,13 @@ type BuildReceiptDataParams = {
     gstCents: number
     totalCents: number
   }
-  paymentMethod: 'eftpos' | 'cash' | 'split' | 'online'
+  paymentMethod: 'eftpos' | 'cash' | 'split' | 'online' | 'gift_card'
   cashTenderedCents?: number
   changeDueCents?: number
   customerEmail?: string
+  giftCardCodeLast4?: string
+  giftCardAmountCents?: number
+  giftCardRemainingCents?: number
 }
 
 /**
@@ -82,6 +88,9 @@ export function buildReceiptData(params: BuildReceiptDataParams): ReceiptData {
     cashTenderedCents,
     changeDueCents,
     customerEmail,
+    giftCardCodeLast4,
+    giftCardAmountCents,
+    giftCardRemainingCents,
   } = params
 
   const receiptItems: ReceiptLineItem[] = items.map(item => ({
@@ -117,6 +126,15 @@ export function buildReceiptData(params: BuildReceiptDataParams): ReceiptData {
   }
   if (customerEmail !== undefined) {
     receipt.customerEmail = customerEmail
+  }
+  if (giftCardCodeLast4 !== undefined) {
+    receipt.giftCardCodeLast4 = giftCardCodeLast4
+  }
+  if (giftCardAmountCents !== undefined) {
+    receipt.giftCardAmountCents = giftCardAmountCents
+  }
+  if (giftCardRemainingCents !== undefined) {
+    receipt.giftCardRemainingCents = giftCardRemainingCents
   }
 
   return receipt

@@ -25,12 +25,19 @@ export type CartItem = {
 
 export type CartState = {
   items: CartItem[]
-  paymentMethod: 'eftpos' | 'cash' | null
+  paymentMethod: 'eftpos' | 'cash' | 'gift_card' | null
   cashTenderedCents: number | null
   cartDiscountCents: number
   cartDiscountType: 'percentage' | 'fixed' | null
-  phase: 'idle' | 'eftpos_confirm' | 'cash_entry' | 'processing' | 'sale_complete' | 'sale_void'
+  phase: 'idle' | 'eftpos_confirm' | 'cash_entry' | 'gift_card_entry' | 'gift_card_confirmed' | 'processing' | 'sale_complete' | 'sale_void'
   completedOrderId: string | null
+  // Gift card fields (all null when not using gift card payment)
+  giftCardCode: string | null               // raw 8-digit code (no dash)
+  giftCardBalanceCents: number | null       // validated balance from server
+  giftCardAmountCents: number | null        // amount to charge to gift card
+  giftCardRemainingAfterCents: number | null // balance after this sale
+  giftCardExpiresAt: string | null          // ISO string for display
+  splitRemainderMethod: 'eftpos' | 'cash' | null  // for split payments
 }
 
 export type CartAction =
@@ -39,13 +46,17 @@ export type CartAction =
   | { type: 'REMOVE_ITEM'; productId: string }
   | { type: 'APPLY_LINE_DISCOUNT'; productId: string; discountCents: number; discountType?: 'percentage' | 'fixed'; reason?: string }
   | { type: 'APPLY_CART_DISCOUNT'; discountCents: number; discountType: 'percentage' | 'fixed' }
-  | { type: 'SET_PAYMENT_METHOD'; method: 'eftpos' | 'cash' }
+  | { type: 'SET_PAYMENT_METHOD'; method: 'eftpos' | 'cash' | 'gift_card' }
   | { type: 'SET_CASH_TENDERED'; cents: number }
   | { type: 'INITIATE_PAYMENT' }
   | { type: 'CONFIRM_EFTPOS' }
   | { type: 'VOID_SALE' }
   | { type: 'SALE_COMPLETE'; orderId: string }
   | { type: 'NEW_SALE' }
+  | { type: 'ENTER_GIFT_CARD_CODE'; code: string }
+  | { type: 'GIFT_CARD_VALIDATED'; balanceCents: number; expiresAt: string }
+  | { type: 'GIFT_CARD_VALIDATION_FAILED' }
+  | { type: 'SET_SPLIT_REMAINDER_METHOD'; method: 'eftpos' | 'cash' }
 
 // ---------------------------------------------------------------------------
 // Initial state
@@ -59,6 +70,12 @@ export const initialCartState: CartState = {
   cartDiscountType: null,
   phase: 'idle',
   completedOrderId: null,
+  giftCardCode: null,
+  giftCardBalanceCents: null,
+  giftCardAmountCents: null,
+  giftCardRemainingAfterCents: null,
+  giftCardExpiresAt: null,
+  splitRemainderMethod: null,
 }
 
 // ---------------------------------------------------------------------------
@@ -68,6 +85,14 @@ export const initialCartState: CartState = {
 function recalcItem(item: CartItem): CartItem {
   const { lineTotal, gst } = calcLineItem(item.unitPriceCents, item.quantity, item.discountCents)
   return { ...item, lineTotalCents: lineTotal, gstCents: gst }
+}
+
+// ---------------------------------------------------------------------------
+// Helper: compute cart total (sum of line totals after discounts)
+// ---------------------------------------------------------------------------
+
+function calcTotal(state: CartState): number {
+  return state.items.reduce((sum, i) => sum + i.lineTotalCents, 0)
 }
 
 // ---------------------------------------------------------------------------
@@ -154,7 +179,65 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
       if (state.paymentMethod === 'cash') {
         return { ...state, phase: 'cash_entry' }
       }
+      if (state.paymentMethod === 'gift_card') {
+        return { ...state, phase: 'gift_card_entry' }
+      }
       return state
+    }
+
+    case 'ENTER_GIFT_CARD_CODE': {
+      // Strip non-digits, store raw code
+      const raw = action.code.replace(/\D/g, '')
+      return { ...state, giftCardCode: raw }
+    }
+
+    case 'GIFT_CARD_VALIDATED': {
+      const totalCents = calcTotal(state)
+      const giftCardAmountCents = Math.min(action.balanceCents, totalCents)
+      const giftCardRemainingAfterCents = action.balanceCents - giftCardAmountCents
+
+      // If gift card fully covers the total, transition to confirmed
+      if (giftCardAmountCents >= totalCents) {
+        return {
+          ...state,
+          giftCardBalanceCents: action.balanceCents,
+          giftCardAmountCents,
+          giftCardRemainingAfterCents,
+          giftCardExpiresAt: action.expiresAt,
+          phase: 'gift_card_confirmed',
+        }
+      }
+
+      // Partial cover — stay in gift_card_entry, wait for SET_SPLIT_REMAINDER_METHOD
+      return {
+        ...state,
+        giftCardBalanceCents: action.balanceCents,
+        giftCardAmountCents,
+        giftCardRemainingAfterCents,
+        giftCardExpiresAt: action.expiresAt,
+        phase: 'gift_card_entry',
+      }
+    }
+
+    case 'GIFT_CARD_VALIDATION_FAILED': {
+      return {
+        ...state,
+        giftCardCode: null,
+        giftCardBalanceCents: null,
+        giftCardAmountCents: null,
+        giftCardRemainingAfterCents: null,
+        giftCardExpiresAt: null,
+        splitRemainderMethod: null,
+        phase: 'gift_card_entry',
+      }
+    }
+
+    case 'SET_SPLIT_REMAINDER_METHOD': {
+      return {
+        ...state,
+        splitRemainderMethod: action.method,
+        phase: 'gift_card_confirmed',
+      }
     }
 
     case 'CONFIRM_EFTPOS': {
