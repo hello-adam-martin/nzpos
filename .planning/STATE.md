@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: POS Demo
-status: requirements
+status: roadmap
 stopped_at: null
 last_updated: "2026-04-06"
 last_activity: 2026-04-06
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Defining requirements for v7.0 POS Demo
+**Current focus:** v7.0 POS Demo — roadmap defined, ready to plan Phase 32
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 32 (Demo Store Seed) — not started
 Plan: —
-Status: Defining requirements
-Last activity: 2026-04-06 — Milestone v7.0 started
+Status: Roadmap approved, ready for phase planning
+Last activity: 2026-04-06 — Roadmap created for v7.0
+
+[==========          ] 0% — 0/3 phases complete
 
 ## Performance Metrics
 
@@ -50,6 +52,8 @@ Last activity: 2026-04-06 — Milestone v7.0 started
 - Design system: deep navy (#1E293B) + amber (#E67E22), Satoshi + DM Sans
 - Demo approach: real demo store in DB, real POS code, completeSale intercepted in demo mode
 - Session isolation via client-side cart (already useReducer), no DB writes in demo mode
+- Demo seed script must be idempotent (re-runnable without duplicates)
+- Barcode scanner, new-order polling, and receipt email disabled in demo mode (DPOS-04)
 
 ### Pending Todos
 
@@ -62,5 +66,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-06
-Stopped at: null
+Stopped at: Roadmap created — Phase 32 ready to plan
 Resume file: None

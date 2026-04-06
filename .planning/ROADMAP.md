@@ -9,6 +9,7 @@
 - ✅ **v4.0 Admin Platform** — Phases 24-27 (shipped 2026-04-06). [Archive](milestones/v4.0-ROADMAP.md)
 - ✅ **v5.0 Marketing & Landing Page** — Phase 28 (shipped 2026-04-06). [Archive](milestones/v5.0-ROADMAP.md)
 - ✅ **v6.0 Free Email Notifications** — Phases 29-31 (shipped 2026-04-06). [Archive](milestones/v6.0-ROADMAP.md)
+- 🚧 **v7.0 POS Demo** — Phases 32-34 (in progress)
 
 ## Phases
 
@@ -85,6 +86,51 @@
 
 </details>
 
+### v7.0 POS Demo
+
+- [ ] **Phase 32: Demo Store Seed** - Pre-seeded NZ retail store with ~20 products, categories, and placeholder images in the database
+- [ ] **Phase 33: Demo POS Route & Checkout** - Unauthenticated `/demo/pos` running real POS code with simulated sale completion
+- [ ] **Phase 34: Signup Conversion & Landing Page** - Post-sale CTA overlay and "Try POS Demo" entry point on the landing page
+
+## Phase Details
+
+### Phase 32: Demo Store Seed
+**Goal**: A realistic NZ retail demo store exists in the database, ready for the demo POS to query
+**Depends on**: Nothing (data prerequisite)
+**Requirements**: DEMO-01, DEMO-02, DEMO-03, DEMO-04
+**Success Criteria** (what must be TRUE):
+  1. A demo store record exists with a NZ business name, logo, and valid store details
+  2. The store has ~20 products spread across at least 4 categories with NZD tax-inclusive prices
+  3. Every product has a placeholder image URL and a valid SKU
+  4. Running the seed script twice produces the same result with no duplicate records
+**Plans**: TBD
+
+### Phase 33: Demo POS Route & Checkout
+**Goal**: Visitors can use the real POS interface at `/demo/pos` — add products, apply discounts, complete a simulated EFTPOS or cash sale, and see a receipt — without creating an account or writing to the database
+**Depends on**: Phase 32
+**Requirements**: DPOS-01, DPOS-02, DPOS-03, DPOS-04, DCHK-01, DCHK-02, DCHK-03, DCHK-04, DCHK-05, DCHK-06, DCHK-07
+**Success Criteria** (what must be TRUE):
+  1. Visiting `/demo/pos` in an incognito browser loads the full POS product grid with no login prompt
+  2. Products from the seeded demo store appear in the grid, grouped by category
+  3. Adding items to the cart, adjusting quantities, and removing items works correctly with live GST breakdown
+  4. Applying a line-item or cart-level discount recalculates GST and totals correctly
+  5. Selecting EFTPOS shows the "Terminal approved?" confirmation screen; clicking Yes shows a receipt with full line-item detail — no database record is written
+  6. Selecting Cash shows a tendered-amount entry with correct change calculation; completing the sale shows a receipt
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 34: Signup Conversion & Landing Page
+**Goal**: Visitors who complete a demo sale are prompted to sign up, and prospective merchants on the landing page can discover and enter the demo in one click
+**Depends on**: Phase 33
+**Requirements**: CONV-01, CONV-02, CONV-03, LAND-01, LAND-02
+**Success Criteria** (what must be TRUE):
+  1. After a simulated sale completes, a signup CTA overlay or banner appears on the receipt screen
+  2. Clicking the CTA navigates to the merchant signup page
+  3. Dismissing the CTA returns to a fresh demo session with an empty cart
+  4. The landing page has a clearly visible "Try POS Demo" button that navigates to `/demo/pos`
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -120,3 +166,6 @@
 | 29. Backend & Billing Cleanup | v6.0 | 2/2 | Complete | 2026-04-06 |
 | 30. Admin UI & Super Admin | v6.0 | 2/2 | Complete | 2026-04-06 |
 | 31. Marketing Pages | v6.0 | 2/2 | Complete | 2026-04-06 |
+| 32. Demo Store Seed | v7.0 | 0/? | Not started | - |
+| 33. Demo POS Route & Checkout | v7.0 | 0/? | Not started | - |
+| 34. Signup Conversion & Landing Page | v7.0 | 0/? | Not started | - |

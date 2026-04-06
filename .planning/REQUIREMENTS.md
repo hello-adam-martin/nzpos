@@ -71,32 +71,32 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DEMO-01 | — | Pending |
-| DEMO-02 | — | Pending |
-| DEMO-03 | — | Pending |
-| DEMO-04 | — | Pending |
-| DPOS-01 | — | Pending |
-| DPOS-02 | — | Pending |
-| DPOS-03 | — | Pending |
-| DPOS-04 | — | Pending |
-| DCHK-01 | — | Pending |
-| DCHK-02 | — | Pending |
-| DCHK-03 | — | Pending |
-| DCHK-04 | — | Pending |
-| DCHK-05 | — | Pending |
-| DCHK-06 | — | Pending |
-| DCHK-07 | — | Pending |
-| CONV-01 | — | Pending |
-| CONV-02 | — | Pending |
-| CONV-03 | — | Pending |
-| LAND-01 | — | Pending |
-| LAND-02 | — | Pending |
+| DEMO-01 | Phase 32 | Pending |
+| DEMO-02 | Phase 32 | Pending |
+| DEMO-03 | Phase 32 | Pending |
+| DEMO-04 | Phase 32 | Pending |
+| DPOS-01 | Phase 33 | Pending |
+| DPOS-02 | Phase 33 | Pending |
+| DPOS-03 | Phase 33 | Pending |
+| DPOS-04 | Phase 33 | Pending |
+| DCHK-01 | Phase 33 | Pending |
+| DCHK-02 | Phase 33 | Pending |
+| DCHK-03 | Phase 33 | Pending |
+| DCHK-04 | Phase 33 | Pending |
+| DCHK-05 | Phase 33 | Pending |
+| DCHK-06 | Phase 33 | Pending |
+| DCHK-07 | Phase 33 | Pending |
+| CONV-01 | Phase 34 | Pending |
+| CONV-02 | Phase 34 | Pending |
+| CONV-03 | Phase 34 | Pending |
+| LAND-01 | Phase 34 | Pending |
+| LAND-02 | Phase 34 | Pending |
 
 **Coverage:**
 - v7.0 requirements: 20 total
-- Mapped to phases: 0
-- Unmapped: 20
+- Mapped to phases: 20
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-06*
-*Last updated: 2026-04-06 after initial definition*
+*Last updated: 2026-04-06 after roadmap creation*
