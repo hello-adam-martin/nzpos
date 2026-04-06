@@ -85,21 +85,34 @@ export async function completeSale(input: unknown) {
   // 6a. Gift card redemption (atomic — after order creation)
   let giftCardRemainingCents: number | undefined
   if (parsed.data.gift_card_code && parsed.data.gift_card_amount_cents) {
+    // Look up gift card UUID by store_id + code (redeem_gift_card RPC takes p_gift_card_id UUID)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: redemptionData, error: redemptionError } = await (supabase as any).rpc('redeem_gift_card', {
-      p_store_id: staff.store_id,
-      p_code: parsed.data.gift_card_code,
-      p_amount_cents: parsed.data.gift_card_amount_cents,
-      p_channel: 'pos',
-      p_order_id: orderId,
-      p_staff_id: staff.staff_id,
-    })
-    if (redemptionError) {
-      console.warn('[completeSale] Gift card redemption warning store_id=%s orderId=%s:', staff.store_id, orderId, redemptionError)
-      // Order is already created — log warning but don't fail the sale
-    } else if (redemptionData) {
-      const redemptionResult = redemptionData as unknown as { balance_after_cents: number }
-      giftCardRemainingCents = redemptionResult.balance_after_cents
+    const { data: giftCard } = await (supabase as any)
+      .from('gift_cards')
+      .select('id')
+      .eq('store_id', staff.store_id)
+      .eq('code', parsed.data.gift_card_code)
+      .maybeSingle() as { data: { id: string } | null }
+
+    if (!giftCard) {
+      console.warn('[completeSale] Gift card not found store_id=%s code=%s orderId=%s', staff.store_id, parsed.data.gift_card_code, orderId)
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: redemptionData, error: redemptionError } = await (supabase as any).rpc('redeem_gift_card', {
+        p_store_id: staff.store_id,
+        p_gift_card_id: giftCard.id,
+        p_amount_cents: parsed.data.gift_card_amount_cents,
+        p_channel: 'pos',
+        p_order_id: orderId,
+        p_staff_id: staff.staff_id,
+      })
+      if (redemptionError) {
+        console.warn('[completeSale] Gift card redemption warning store_id=%s orderId=%s:', staff.store_id, orderId, redemptionError)
+        // Order is already created — log warning but don't fail the sale
+      } else if (redemptionData) {
+        const redemptionResult = redemptionData as unknown as { balance_after_cents: number }
+        giftCardRemainingCents = redemptionResult.balance_after_cents
+      }
     }
   }
 
