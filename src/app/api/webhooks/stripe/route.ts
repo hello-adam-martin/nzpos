@@ -112,6 +112,63 @@ async function handleCheckoutComplete(
 
   if (rpcError) throw rpcError
 
+  // ---------------------------------------------------------------------------
+  // Partial gift card redemption (D-12, Pitfall 1 prevention)
+  // Gift card balance is deducted HERE (after Stripe confirms payment) — not in createCheckoutSession.
+  // Failure is logged as warning; does NOT block order completion or email.
+  // ---------------------------------------------------------------------------
+  const giftCardCode = session.metadata?.gift_card_code
+  const giftCardAmountCentsStr = session.metadata?.gift_card_amount_cents
+
+  if (giftCardCode && giftCardAmountCentsStr) {
+    const giftCardAmountCents = Number(giftCardAmountCentsStr)
+
+    if (!isNaN(giftCardAmountCents) && giftCardAmountCents > 0) {
+      // Look up gift card by code to get its ID (RPC requires UUID, not code)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: giftCard } = await (supabase as any)
+        .from('gift_cards')
+        .select('id')
+        .eq('store_id', storeId)
+        .eq('code', giftCardCode)
+        .maybeSingle() as { data: { id: string } | null }
+
+      if (giftCard?.id) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: redemptionError } = await (supabase as any).rpc('redeem_gift_card', {
+          p_store_id: storeId,
+          p_gift_card_id: giftCard.id,
+          p_amount_cents: giftCardAmountCents,
+          p_channel: 'online',
+          p_order_id: orderId,
+          p_staff_id: null,
+        })
+
+        if (redemptionError) {
+          console.warn(
+            '[stripe-webhook] Partial gift card redemption warning store_id=%s order_id=%s:',
+            storeId,
+            orderId,
+            redemptionError
+          )
+          // Order is already completed — log warning but don't fail webhook
+        } else {
+          console.log(
+            '[stripe-webhook] Partial gift card redeemed: gift_card_id=%s amount=%d order_id=%s',
+            giftCard.id,
+            giftCardAmountCents,
+            orderId
+          )
+        }
+      } else {
+        console.warn(
+          '[stripe-webhook] Partial gift card not found by code for order_id=%s',
+          orderId
+        )
+      }
+    }
+  }
+
   // NOTIF-01: Send online receipt email (fire-and-forget per D-05 — must not block webhook response)
   const customerEmail = session.customer_details?.email
   if (customerEmail) {
