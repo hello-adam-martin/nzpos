@@ -1,5 +1,18 @@
 # Milestones
 
+## v7.0 POS Demo (Shipped: 2026-04-06)
+
+**Phases completed:** 3 phases, 5 plans, 6 tasks
+
+**Key accomplishments:**
+
+- Idempotent SQL migration seeding 'Aroha Home & Gift' demo store with synthetic auth user, 5 categories, 20 NZD-priced products, plus DEMO_STORE_ID TypeScript constant and 6 SVG placeholder images
+- One-liner:
+- One-liner:
+- Inline demo-mode signup CTA on ReceiptScreen — navy 'Create your free store' button linking to /signup, rendered only when demoMode=true, with optional dismiss via onNewSale callback
+
+---
+
 ## v6.0 Free Email Notifications (Shipped: 2026-04-06)
 
 **Phases completed:** 8 phases, 20 plans, 31 tasks

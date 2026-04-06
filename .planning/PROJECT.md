@@ -79,20 +79,15 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - ✓ Marketing landing page (15-feature showcase, pricing section, NZ trust badges) — v5.0
 - ✓ Email notifications moved to free tier (feature gate removal, billing cleanup, migration) — v6.0
 - ✓ Marketing pages updated for 2-add-on pricing model — v6.0
+- ✓ Demo store seed (Aroha Home & Gift, 20 products, 5 categories, NZD prices) — v7.0
+- ✓ Unauthenticated demo POS at `/demo/pos` with full checkout simulation — v7.0
+- ✓ Demo mode flag (demoMode prop) — client-side sale completion, no DB writes — v7.0
+- ✓ Post-demo-sale signup CTA on receipt screen with dismiss action — v7.0
+- ✓ Landing page "Try POS Demo" ghost button linking to `/demo/pos` — v7.0
 
 ### Active
 
-## Current Milestone: v7.0 POS Demo
-
-**Goal:** Let prospective merchants try the real POS system from the landing page — no signup required, full checkout flow with simulated payment, signup nudge after completing a sale.
-
-**Target features:**
-- Pre-seeded demo store with ~20 realistic NZ retail products
-- `/demo/pos` route running the actual POS code, no auth required
-- Demo-mode flag that simulates sale completion (skips DB write, returns fake receipt)
-- Full EFTPOS confirmation flow with simulated payment
-- Signup CTA after completing a demo sale
-- "Try POS Demo" button on the landing page
+(No active requirements — planning next milestone)
 
 ### Out of Scope
 
@@ -121,11 +116,13 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - v2.0 shipped 2026-04-03 with 365+ tests, 336 source files, 36,329 LOC TypeScript
 - v2.1 shipped 2026-04-04 with 434 tests, 989 files, 89,000+ LOC TypeScript
 - v3.0 shipped 2026-04-05 with inventory management add-on, service products, and stocktake workflows
+- v7.0 shipped 2026-04-06 with interactive POS demo and demo-to-signup conversion funnel
 - Platform is now multi-tenant SaaS — any NZ business can sign up at the root domain
 - Pricing: free core POS/storefront/admin/email notifications, 2 paid add-ons via Stripe (Xero $9/mo, Inventory Management $9/mo)
 - Super admin panel operational for platform management
 - Full documentation suite: setup guide, env vars, architecture, server actions, deployment runbook, merchant guide
 - CSP headers in Report-Only mode — switch to enforcing after production monitoring confirms no false positives
+- Demo POS live at `/demo/pos` — visitors can try the full checkout flow and are prompted to sign up
 
 ## Constraints
 
@@ -193,4 +190,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-06 after Phase 33 demo-pos-route-checkout complete*
+*Last updated: 2026-04-06 after v7.0 POS Demo milestone*
