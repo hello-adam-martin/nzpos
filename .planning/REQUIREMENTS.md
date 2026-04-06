@@ -10,16 +10,16 @@ Requirements for v8.0 Add-On Catalog Expansion. Each maps to roadmap phases.
 ### Gift Cards
 
 - [x] **GIFT-01**: Merchant can enable the Gift Cards add-on ($14/mo) via Stripe subscription
-- [ ] **GIFT-02**: Merchant can create gift card products with configurable denominations
+- [x] **GIFT-02**: Merchant can create gift card products with configurable denominations
 - [x] **GIFT-03**: Customer can purchase a digital gift card on the storefront (generates unique code)
 - [ ] **GIFT-04**: Customer receives gift card code and expiry date via email after purchase
-- [ ] **GIFT-05**: Gift card expiry is enforced at minimum 3 years per NZ Fair Trading Act 2024
+- [x] **GIFT-05**: Gift card expiry is enforced at minimum 3 years per NZ Fair Trading Act 2024
 - [x] **GIFT-06**: Staff can redeem a gift card as payment method during POS checkout (enter code, validate balance)
 - [ ] **GIFT-07**: Customer can redeem a gift card during online storefront checkout
 - [ ] **GIFT-08**: Gift card supports partial redemption with remaining balance tracked
-- [ ] **GIFT-09**: Gift card issuance is recorded as deferred liability (not revenue), GST deferred to redemption
+- [x] **GIFT-09**: Gift card issuance is recorded as deferred liability (not revenue), GST deferred to redemption
 - [ ] **GIFT-10**: Merchant can view gift card list with balances, status, and transaction history in admin
-- [ ] **GIFT-11**: Gift card issuance is excluded from Xero sales sync (deferred liability, not revenue)
+- [x] **GIFT-11**: Gift card issuance is excluded from Xero sales sync (deferred liability, not revenue)
 
 ### Advanced Reporting / COGS
 
@@ -75,16 +75,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | GIFT-01 | Phase 35 | Complete |
-| GIFT-02 | Phase 35 | Pending |
+| GIFT-02 | Phase 35 | Complete |
 | GIFT-03 | Phase 35 | Complete |
 | GIFT-04 | Phase 35 | Pending |
-| GIFT-05 | Phase 35 | Pending |
+| GIFT-05 | Phase 35 | Complete |
 | GIFT-06 | Phase 35 | Complete |
 | GIFT-07 | Phase 35 | Pending |
 | GIFT-08 | Phase 35 | Pending |
-| GIFT-09 | Phase 35 | Pending |
+| GIFT-09 | Phase 35 | Complete |
 | GIFT-10 | Phase 35 | Pending |
-| GIFT-11 | Phase 35 | Pending |
+| GIFT-11 | Phase 35 | Complete |
 | COGS-01 | Phase 36 | Pending |
 | COGS-02 | Phase 36 | Pending |
 | COGS-03 | Phase 36 | Pending |
