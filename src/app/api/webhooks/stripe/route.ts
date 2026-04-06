@@ -245,6 +245,65 @@ async function handleCheckoutComplete(
     console.error('[stripe-webhook] Failed to record event dedup:', dedupError.message)
   }
 
+  // ---------------------------------------------------------------------------
+  // Loyalty points — redemption and earning (AFTER complete_online_sale — Pitfall 2 prevention)
+  // ---------------------------------------------------------------------------
+  const loyaltyCustomerId = session.metadata?.loyalty_customer_id
+  const loyaltyPointsRedeemed = session.metadata?.loyalty_points_redeemed
+    ? parseInt(session.metadata.loyalty_points_redeemed, 10)
+    : 0
+
+  // Loyalty points redemption (deduct points AFTER payment confirmed — never before)
+  if (loyaltyCustomerId && loyaltyPointsRedeemed > 0) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).rpc('redeem_loyalty_points', {
+        p_store_id: storeId,
+        p_customer_id: loyaltyCustomerId,
+        p_points_to_redeem: loyaltyPointsRedeemed,
+        p_order_id: orderId,
+        p_channel: 'online',
+        p_staff_id: null,
+      })
+    } catch (err) {
+      console.warn('[stripe-webhook] Loyalty redemption failed (non-fatal):', err)
+    }
+  }
+
+  // Loyalty points earning — look up customer by email (customer may not have loyalty_customer_id in metadata)
+  const customerEmailForLoyalty = session.customer_details?.email
+  if (customerEmailForLoyalty) {
+    const { data: loyaltyCustomer } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('store_id', storeId)
+      .eq('email', customerEmailForLoyalty)
+      .maybeSingle()
+
+    if (loyaltyCustomer) {
+      // D-09: Stripe amount_total already reflects all negative line items
+      // (gift card + loyalty deductions). It IS the net amount paid.
+      // Do NOT subtract gift card or loyalty amounts again.
+      const netAmountCents = session.amount_total ?? 0
+
+      if (netAmountCents > 0) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase as any).rpc('earn_loyalty_points', {
+            p_store_id: storeId,
+            p_customer_id: loyaltyCustomer.id,
+            p_order_id: orderId,
+            p_net_amount_cents: netAmountCents,
+            p_channel: 'online',
+            p_staff_id: null,
+          })
+        } catch (err) {
+          console.warn('[stripe-webhook] Loyalty earning failed (non-fatal):', err)
+        }
+      }
+    }
+  }
+
   // Increment promo usage atomically (only after successful payment)
   const { data: orderRow } = await (supabase as any)
     .from('orders')
