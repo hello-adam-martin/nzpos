@@ -1,174 +1,197 @@
 # Project Research Summary
 
-**Project:** NZPOS v4.0 — Admin Platform
-**Domain:** SaaS POS admin platform — staff RBAC, customer management, enhanced dashboard analytics, super-admin billing visibility and merchant impersonation
-**Researched:** 2026-04-05
+**Project:** NZPOS v8.0 — Add-On Catalog Expansion
+**Domain:** Multi-tenant SaaS POS — paid feature add-ons for NZ small retail merchants
+**Researched:** 2026-04-06
 **Confidence:** HIGH
+
+---
 
 ## Executive Summary
 
-NZPOS v4.0 is an incremental expansion of an already-shipped multi-tenant SaaS POS system. The stack (Next.js 16 App Router, Supabase, Stripe, Tailwind CSS v4) is confirmed correct and requires no changes. The codebase has established patterns for auth, feature gating, tenant resolution, super-admin actions, and audit logging — v4.0 work is almost entirely additive, extending existing patterns rather than introducing new ones. Most features are low-to-medium complexity because the underlying data (staff, customers, promos, orders, store settings, Stripe subscriptions) already exists in the database.
+NZPOS enters v8.0 as a fully operational multi-tenant SaaS POS with two paid add-ons already live (Xero at $9/mo, Inventory at $9/mo) and a complete billing pipeline built on Stripe subscriptions, Supabase RLS, and JWT-based feature gating. The v8.0 milestone adds new paid add-ons to grow MRR. The research confirms that the highest-opportunity add-ons for NZ small retail are Gift Cards ($14/mo), Advanced Reporting/COGS ($9/mo), and Loyalty Points ($15/mo) — in that build priority. All three are well below competitor pricing (Marsello charges NZ$100/mo for loyalty alone; Square charges A$49/mo; Lightspeed bundles these into plans starting at NZ$89/mo), giving NZPOS a strong price advantage in the NZ market.
 
-The recommended approach is to sequence work by dependency order: schema migrations first, then CRUD UI, then analytics and advanced features. Three migration-dependent chains must be unblocked in the first phase — the manager role CHECK constraint expansion, the `stores` table receipt columns, and the shared role constants refactor. The significant complexity risks are concentrated in two features: merchant impersonation (session isolation and audit trail) and Stripe analytics (rate limiting and MRR normalisation). Both have clear solutions documented in the architecture research, but both require getting the architecture right before writing any application code.
+The architecture requires no foundational changes. Every new add-on follows a proven four-step pattern: schema migration with RLS policies, config registration in `src/config/addons.ts`, Server Actions guarded by `requireFeature()`, and admin UI pages behind the feature gate. The existing `complete_pos_sale` and `complete_online_sale` RPCs are the key integration points for Loyalty and Gift Card redemption — hooks added inside these SECURITY DEFINER RPCs keep all side effects atomic. Purchase Orders is deferred to v8.1 or later due to high build complexity and dependency on Inventory Management adoption in production.
 
-The primary risk is security: stale JWT roles acting on wrong permissions, impersonation sessions overwriting the super-admin's own session, and cross-tenant customer data exposure via the Supabase admin client. None of these are novel problems — all have well-established mitigations. The codebase's existing patterns (RLS-enforced server client, `requireFeature()` DB verification, `super_admin_actions` audit trail) provide the right model; v4.0 work must extend those patterns consistently rather than short-circuit them.
+The primary risk in this milestone is NZ-specific compliance. Two legal requirements are non-negotiable and time-sensitive: the Fair Trading (Gift Card Expiry) Amendment Act 2024 (effective 16 March 2026, weeks before this build) mandates a 3-year minimum gift card expiry enforced by a DB check constraint; and the Privacy Act 2020 (with 2025 amendments taking effect 1 May 2026) requires privacy notices before any CRM or loyalty data collection. Gift card revenue must be modelled as deferred liability — it must never be recorded in the `orders` table at issuance. Violating this corrupts Xero sync and overstates GST payable from the first transaction. These compliance requirements cannot be retrofitted and must be built correctly in the first schema migration of Phase 1.
+
+---
 
 ## Key Findings
 
 ### Recommended Stack
 
-The existing stack is validated and unchanged for v4.0. The only new runtime dependency is `recharts@2.x` for the admin dashboard chart. No ORM, no new auth library, no new BaaS. All features are built on existing packages.
+The existing stack (Next.js 16.2, Supabase, Stripe, Tailwind CSS v4) requires no changes for v8.0. The add-on billing infrastructure is already production-ready. Each new add-on adds one Stripe Price ID (env var), one boolean column per add-on to `store_plans`, and a rewrite of the `custom_access_token_hook` to inject the new JWT claim. The `requireFeature()` utility handles both JWT fast-path (reads) and DB-path (mutations) gating out of the box.
 
 **Core technologies:**
-- Next.js 16.2 App Router + React 19: full-stack framework — Server Components for data fetching, Server Actions for mutations, Tailwind v4 CSS-native config
-- Supabase (supabase-js ^2.x + @supabase/ssr): Postgres + RLS + Auth — RLS with custom JWT claims enforces multi-tenant isolation; server client for merchant routes, admin client for super-admin routes only
-- jose ^5.x: JWT signing for staff PIN sessions and new impersonation tokens — Edge Runtime compatible, already in use; extend to `sa_impersonation` cookie for impersonation
-- Stripe node ^17.x: billing API — list subscriptions/invoices for super-admin billing views; normalize all amounts to monthly for MRR calculation
-- recharts 2.x (new dependency): `'use client'` chart rendering — server fetches aggregated data, client renders; React 19 compatible as of v2.13+
-- Zod ^3.x: Server Action input validation — every mutation validates before DB access; `z.enum(POS_ROLES)` derived from shared constants
-- Vitest + Playwright: unit tests for MRR normalisation and role logic, E2E for role-gated action bypass attempts
+- Next.js 16.2 + React 19: Full-stack framework with App Router Server Components and Server Actions — already in production, no changes needed
+- Supabase (Postgres + Auth + RLS): JWT custom claims via `custom_access_token_hook` drive all feature gating — scales cleanly to 20+ add-ons without architectural change
+- Stripe Subscriptions: One Price ID per add-on; webhook routes through `PRICE_TO_FEATURE` map; idempotency via `stripe_processed_events` table is required before any new add-on billing is wired up
+- `requireFeature()` utility: JWT fast-path for page renders, DB-path for all mutations — this is the single gating mechanism; no add-on should create its own check
 
 ### Expected Features
 
-**Must have (v4.0 core — table stakes):**
-- Staff management UI — add, edit, deactivate, PIN reset (staff table exists; UI-only addition)
-- Manager role migration — expand CHECK constraint + permission gates on void/refund/discount Server Actions
-- Promo edit and soft delete — create-only today; edit+delete expected by any merchant
-- Store settings expansion — address, phone, IRD/GST number, receipt header/footer (most data columns already exist)
-- Customer list with search — paginated, store-scoped; `customers` table already exists from v2.0
-- Customer order history view — join on `auth_user_id`; no new schema
-- Customer account disable — flip `is_active` via service role
-- Admin dashboard: 7/30-day sales trend chart and period comparison metrics
-- Admin dashboard: recent orders widget
-- Super-admin: per-tenant billing visibility (subscriptions, invoices, payment failures)
-- Super-admin: platform overview metrics (total tenants, active add-ons, new signups chart)
+**Must have (table stakes for v8.0 MRR):**
+- Gift Cards ($14/mo) — every competitor offers this; NZ law change (March 2026) makes NZ-compliant digital gift cards a genuine differentiator; standalone, no add-on dependencies
+- Advanced Reporting / COGS ($9/mo) — orders and line items already exist in the DB; adding `cost_price_cents` to products unlocks margin reports with minimal build complexity
 
-**Should have (v4.1 — add after core is complete):**
-- Super-admin MRR/churn analytics — high complexity Stripe aggregation; validate need before building
-- Merchant impersonation — significant security surface; highest value for support operations
-- Store hours display on storefront
+**Should have (strong demand, v8.1):**
+- Loyalty Points ($15/mo) — proven willingness to pay at much higher price points; NZPOS has existing customer accounts (zero friction vs. standalone tools like Marsello); requires a POS customer lookup UX change that needs design iteration
 
-**Defer (v5+):**
-- Loyalty program integration (explicitly out of scope in PROJECT.md)
-- Customer email broadcast / CRM campaigns
-- Granular per-permission RBAC beyond three fixed tiers
+**Defer (v8.1 or v9.0):**
+- Purchase Orders ($9/mo) — high complexity, hard dependency on Inventory Management adoption, multiple new tables and an RPC change; build after Loyalty and COGS validate the add-on demand model
+
+**Explicitly out of scope (anti-features):**
+- SMS marketing (NZ short-code costs NZ$275/mo — uneconomical at this price point)
+- Booking/appointments (separate product category, out of POS scope)
+- Loyalty VIP tiers (unnecessary complexity for NZ micro-retailers in v1)
+- Physical gift card printing or EFTPOS tap-to-redeem (deferred hardware integration)
 
 ### Architecture Approach
 
-v4.0 follows every established architectural pattern in the codebase. Auth is dual-path (Supabase Auth for owners/super-admins, jose JWT for staff PIN). Feature gating uses `requireFeature()` with JWT fast-path and DB fallback on mutations. Tenant resolution is middleware-injected `x-store-id` header. Impersonation uses a shadow `sa_impersonation` jose JWT cookie — not `supabase.auth.signInAsUser()` — to preserve the super-admin's own Supabase session. Stripe analytics data is materialised into a local snapshot table via a sync job; the analytics page reads from Supabase, not the live Stripe API. Role strings are centralised in `src/config/roles.ts` and imported by middleware, JWT issuance, and Zod schemas to prevent the "manager added to DB but not middleware" failure mode.
+The add-on integration architecture is a mature, defined four-step pipeline. No new patterns need to be invented. Every add-on plugs into the same flow: (1) schema migration with `store_plans` boolean columns plus new add-on tables with RLS; (2) config registration in `addons.ts`; (3) `requireFeature()`-guarded Server Actions; (4) gated admin UI pages. The two most critical integration points are the `complete_pos_sale` and `complete_online_sale` RPCs — both Loyalty (earn points) and Gift Cards (redemption) hook into these via optional parameters that call SECURITY DEFINER sub-functions. Keeping all side effects inside the RPC boundary is mandatory for atomicity.
 
 **Major components:**
-1. Staff RBAC layer — `requireRole()` utility + `resolveStaffAuthVerified()` DB-verified check in all role-gated Server Actions; shared `POS_ROLES` constant; new admin routes `/admin/staff/**`
-2. Admin dashboard charts — `SalesTrendChart` (Client Component, recharts) + `MetricsComparisonRow` (Server Component); server aggregates orders, serializes to client
-3. Store settings expansion — two new columns (`receipt_header`, `receipt_footer`), new form components following `BrandingForm.tsx` pattern; `address`/`phone`/`gst_number` already exist
-4. Customer management — new `/admin/customers/**` routes; standard server client enforces RLS isolation; paginated list + detail with order history
-5. Super-admin billing panel — `TenantBillingPanel` added to existing tenant detail page; reads Stripe subscriptions/invoices by `stripe_customer_id`
-6. Super-admin analytics — new `/super-admin/analytics` page with `platform_analytics_snapshots` Supabase table; daily Stripe sync job; 5-minute page-level revalidation
-7. Merchant impersonation — shadow `sa_impersonation` jose cookie; middleware branch injects `x-store-id` for impersonated store; `ImpersonationBanner` in admin layout; audit trail for all mutations during session
+1. `store_plans` table — single source of truth for all feature flags; JWT hook reads it and injects boolean claims at login; add one column per new add-on
+2. `requireFeature()` utility — JWT fast-path for read gates; DB-path for mutation gates; all add-ons use this, never custom permission checks
+3. Add-on-specific tables and RPCs — each add-on owns its schema, all tables with `store_id` RLS, all mutations via SECURITY DEFINER RPCs
+4. `src/config/addons.ts` — central config registry for `SubscriptionFeature` type, Stripe Price IDs, webhook routing map, and billing UI metadata
+5. `/api/webhooks/stripe/billing` — single webhook handler for all subscription lifecycle events; must have idempotency via `stripe_processed_events` table before new add-ons go live
 
 ### Critical Pitfalls
 
-1. **Stale role in staff JWT after role change** — JWT embeds role, valid for 8 hours. After demotion, staff can act under the old role until re-login. Fix: `resolveStaffAuthVerified()` does a DB role lookup for all role-gated mutations; never trust JWT role for write actions. On role change, force re-login by setting `pin_locked_until` to now.
+1. **Gift card sale recorded as revenue instead of deferred liability** — gift card issuance must never write to the `orders` table. It writes to a separate `gift_cards` table. Only redemption creates an order. Xero sync must explicitly exclude gift card issuance rows. Violation corrupts GST accounting and Xero sync from day one and is unrecoverable without manual intervention.
 
-2. **Impersonation overwrites super-admin Supabase session** — `supabase.auth.signInAsUser()` replaces the session cookie, logging out the super-admin on impersonation end. Fix: shadow `sa_impersonation` jose cookie independent of Supabase session cookies; `endImpersonation` deletes only the jose cookie, original session untouched.
+2. **Gift card expiry under 3 years (NZ law violation)** — hard-code a DB check constraint: `expires_at >= issued_at + INTERVAL '3 years'`. The UI must offer only "3 years" or "No expiry." Expiry date must appear prominently in the gift card confirmation email. Penalty: up to $30,000 per offence under the Fair Trading Act 2024.
 
-3. **Manager role breaks existing middleware POS gate** — middleware currently allows only `role='owner' || 'staff'`; adding `manager` to the DB without updating the middleware allowlist locks managers out of POS. Fix: centralise role enum in `src/config/roles.ts`, import in `middleware.ts`, `staffPin.ts`, and `staff.ts` Zod schema.
+3. **Stripe webhook duplicate processing** — add a `stripe_processed_events` table and check event ID before processing any webhook. Wrap the idempotency insert and `store_plans` update in a single DB transaction. Audit the existing webhook handler before adding any new add-on event handling.
 
-4. **Stripe analytics rate limiting** — super-admin analytics via live Stripe API on page load can trigger 30–50+ API calls when paginating subscriptions across tenants, hitting Stripe's 100 req/s limit. Fix: materialise to `platform_analytics_snapshots` in Supabase; page reads from DB with 5-minute revalidation; on-demand "Refresh now" rate-limited to once per 5 minutes.
+4. **New add-on tables without RLS policies** — every migration that creates a new table must include `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` and `store_id`-scoped policies in the same migration file. Cross-tenant isolation test must be in acceptance criteria for every phase with a new table.
 
-5. **Cross-tenant customer data leak** — using Supabase admin client (service role) for merchant-facing customer list bypasses RLS and returns all tenants' customers. This is a Privacy Act 2020 breach. Fix: always use standard server client for merchant admin routes; admin client only in super-admin routes with explicit `store_id` filter.
+5. **Privacy Act notice missing from loyalty/CRM data collection** — any customer-facing enrollment flow must display a privacy notice before collecting data. The Privacy Amendment Act 2025 (IPP 3A, effective 1 May 2026) adds indirect collection notification obligations. A customer data deletion workflow is required. This is a legal requirement, not optional polish.
 
-6. **MRR miscalculation for annual plans** — summing `plan.amount` without normalising interval overstates annual plans by 12x. Fix: divide annual plan amounts by 12 in the Stripe sync job; add a unit test asserting a $120/year plan contributes $10/month to MRR.
+---
 
 ## Implications for Roadmap
 
-Based on research, the natural phase structure follows dependency chains: unblock schemas and shared constants first, then add CRUD UI, then analytics, then high-security features last.
+The dependency graph and compliance requirements drive a clear phase order. Gift Cards and COGS are both standalone (no add-on dependencies), compliance requirements for Gift Cards are fully documented, and the architecture integration pattern is identical for all add-ons. Loyalty follows because it requires a POS UX change (customer lookup step) that needs its own design iteration and because the `complete_pos_sale` hook pattern will have been validated in Phase 1. Purchase Orders is last due to high complexity and inventory dependency.
 
-### Phase 1: Schema and Staff RBAC Foundation
-**Rationale:** Two features block everything else. The manager role CHECK constraint must exist before any role-gated UI can be built. The shared `POS_ROLES` constant refactor must be the very first commit — otherwise Pitfall 4 (middleware gate breakage) is guaranteed when manager is added. The `receipt_header`/`receipt_footer` columns must exist before the settings form can save.
-**Delivers:** `manager` role in DB, updated middleware and JWT issuance, `requireRole()` utility, `resolveStaffAuthVerified()` DB-verified role check, staff management UI (list, add, edit, deactivate, PIN reset), `receipt_header`/`receipt_footer` migration
-**Features:** Staff management UI, manager role migration + permission gates, store settings (receipt columns)
-**Avoids:** Pitfall 1 (stale role in mutations), Pitfall 4 (middleware gate broken), Pitfall 7 (Server Action bypass)
+### Phase 1: Gift Cards Add-On
 
-### Phase 2: Admin Operational UI
-**Rationale:** Low complexity, high merchant value, no security risk. Customer management and promo edit/delete follow established patterns with no new schema. Admin dashboard charts require only one new dependency (recharts) and an aggregation query on existing `orders` data. All work is additive to existing pages.
-**Delivers:** Customer list + search + order history + account disable; promo edit and soft delete; admin dashboard sales chart + period comparison + recent orders widget; store settings form for address/phone/IRD number/receipt text
-**Features:** All remaining P1 admin features
-**Avoids:** Pitfall 8 (cross-tenant customer data — enforce server client + RLS in acceptance criteria for customer list)
+**Rationale:** The NZ Fair Trading Act change (effective 16 March 2026) makes this the most time-sensitive add-on. It is standalone with no add-on dependencies. The deferred liability data model is the most important architectural decision in the whole milestone — establish it correctly before any other add-on can reference gift card concepts. Highest compliance risk if done wrong; medium build complexity.
 
-### Phase 3: Super-Admin Billing Visibility
-**Rationale:** Read-only Stripe integration with no new schema. `stripe_customer_id` already on `stores`. Pattern already exists in `admin/billing/page.tsx`. This is isolated enough to build without touching impersonation or analytics infrastructure.
-**Delivers:** Per-tenant subscription/invoice/payment-failure view in existing tenant detail page; platform overview metrics (tenant count, signup trend, active add-ons count)
-**Features:** Super-admin billing visibility, platform overview metrics
-**Avoids:** Pitfall 5 by keeping this phase read-only per-tenant (no aggregation pagination loops yet)
+**Delivers:** Digital gift card issuance and code delivery; balance tracking; POS and storefront redemption; NZ Fair Trading Act compliance (3-year minimum expiry check constraint, prominent expiry display in confirmation email); Xero sync exclusion for issuance events; merchant admin at `/admin/gift-cards` and `/admin/gift-cards/settings`.
 
-### Phase 4: Super-Admin Analytics (MRR, Churn, Add-on Revenue)
-**Rationale:** Requires materialised snapshot architecture before any code is written — this cannot be retrofitted. Phase 3 establishes the Stripe API call patterns; Phase 4 adds the sync job and the analytics page that reads from local DB.
-**Delivers:** `platform_analytics_snapshots` table, daily Stripe sync job (Vercel Cron or pg_cron), super-admin analytics page with MRR/churn/add-on revenue breakdown, payment failures list, platform growth chart
-**Features:** Super-admin MRR/churn analytics (v4.1)
-**Avoids:** Pitfall 5 (rate limiting via snapshot architecture), Pitfall 6 (MRR normalisation for annual plans — unit test required)
+**Addresses:** Table stakes feature (every competitor offers it); NZ legal compliance is a genuine differentiator; $14/mo new MRR per subscribing merchant.
 
-### Phase 5: Merchant Impersonation
-**Rationale:** Highest security surface in v4.0. Must be designed in isolation, with session isolation (Pitfall 2) and audit trail completeness (Pitfall 3) as explicit acceptance criteria. Building last ensures all other admin features are stable and that the impersonation context (injecting `x-store-id`) is tested against a mature admin surface.
-**Delivers:** Shadow `sa_impersonation` jose cookie, middleware branch for impersonation routing, `ImpersonationBanner` persistent in admin layout, `startImpersonation`/`endImpersonation` Server Actions with audit rows, `resolveImpersonationContext()` helper enforcing audit logging on mutations during impersonation
-**Features:** Merchant impersonation (v4.1)
-**Avoids:** Pitfall 2 (session overwrite — never use `supabase.auth.signInAsUser()`), Pitfall 3 (missing audit trail for mutations during impersonation)
+**Avoids:** Pitfall 1 (deferred liability data model — separate from `orders` table), Pitfall 2 (3-year expiry check constraint and UI), Pitfall 4 (webhook idempotency — audit existing handler first as pre-task), Pitfall 5 (RLS on new tables).
+
+**Research flag:** Standard pattern for this codebase. Architecture and compliance requirements are fully documented in ARCHITECTURE.md and PITFALLS.md. No phase-level research needed.
+
+---
+
+### Phase 2: Advanced Reporting / COGS Add-On
+
+**Rationale:** Lowest build risk of any add-on. The existing `orders` and `order_items` tables already contain all needed data. The only schema addition is `cost_price_cents` on the `products` table. No RPC changes to sale completion flows. Follows the existing analytics snapshot cron pattern exactly. Generates MRR alongside Phase 1 with minimal downside.
+
+**Delivers:** `cost_price_cents` column on products; margin% display in product admin; COGS report by date range; snapshot cron job following the existing 030_analytics_snapshot.sql model; merchant admin at `/admin/reports`.
+
+**Addresses:** Universal merchant need for margin data; $9/mo new MRR; strong price advantage over Square (A$109/mo equivalent) and Lightspeed (bundled at NZ$89+/mo).
+
+**Avoids:** Pitfall 5 (RLS on any new snapshot tables), Pitfall 6 from ARCHITECTURE.md (store_id filter on all analytics queries — cross-tenant isolation test in acceptance criteria).
+
+**Research flag:** Standard pattern. No research needed. Cron job follows existing model exactly.
+
+---
+
+### Phase 3: Loyalty Points Add-On
+
+**Rationale:** High merchant demand and the strongest price advantage vs. competitors (Marsello NZ$100/mo, Square A$49/mo). However, it requires a UX change to the POS checkout flow — an optional customer lookup step before completing a sale. This is a riskier change than Phase 1 or 2 and needs design consideration. Building after Gift Cards means the `complete_pos_sale` RPC extension pattern will already have been validated in production (gift card redemption hook uses the same approach).
+
+**Delivers:** `loyalty_accounts`, `loyalty_transactions`, `loyalty_settings` tables; `earn_loyalty_points` and `redeem_loyalty_points` SECURITY DEFINER RPCs; optional customer lookup step in POS cart before checkout; points balance displayed and redeemable in online storefront checkout; privacy notice in enrollment flow; `(store_id, customer_email)` composite unique constraint to prevent cross-store contamination; merchant admin at `/admin/loyalty`.
+
+**Addresses:** Must-have competitive feature; $15/mo new MRR; integrates with existing customer accounts (zero friction vs. competitors requiring separate loyalty signup).
+
+**Avoids:** Pitfall 3 (no cash-out path; points-only discount system to stay below financial regulation threshold), Pitfall 7 (Privacy Act notice in enrollment — effective 1 May 2026 for IPP 3A), Pitfall 8 from PITFALLS.md (composite unique constraint on `store_id` + email), Pitfall 5 (RLS on new loyalty tables).
+
+**Research flag:** The POS customer lookup UX change may benefit from a lightweight design spike to avoid disrupting the existing fast-checkout flow for cash customers who have no loyalty account.
+
+---
+
+### Phase 4: Purchase Orders Add-On (v8.1 or later)
+
+**Rationale:** High complexity and a hard dependency on Inventory Management adoption in production. Defer until Phases 1-3 are live and generating MRR. The `receive_stock_against_po` RPC modifies stock counts — this is the most risk-bearing operation in the milestone after gift card accounting. Build with the operational learnings from earlier add-on phases.
+
+**Delivers:** `suppliers`, `purchase_orders`, `purchase_order_lines`, `supplier_products` tables; `receive_stock_against_po` SECURITY DEFINER RPC; admin UI at `/admin/suppliers` and `/admin/purchase-orders`; PO PDF/email generation; auto-stock-increment on receive event.
+
+**Prerequisite:** Merchant must have `has_inventory = true` (gate enforced at subscription time via prerequisite check).
+
+**Research flag:** Server-side PDF generation for PO documents has no existing pattern in this codebase and will need research before planning begins.
+
+---
 
 ### Phase Ordering Rationale
 
-- Phase 1 must come first: role enum and DB constraint are hard prerequisites for all role-gated code throughout v4.0
-- Phases 2 and 3 can largely run in parallel — they share no dependencies; sequence them by priority
-- Phase 4 references Phase 3's Stripe API patterns but has no hard dependency; can follow Phase 3 or run overlapping
-- Phase 5 is deliberately last — impersonation touching a half-built admin creates unpredictable audit noise and an untestable security surface
+- Gift Cards first: NZ law compliance is time-sensitive and the deferred liability data model is the most consequential accounting decision in the whole milestone — establish it before anything else.
+- COGS second: Zero architectural risk, immediate MRR, uses no new patterns — validates the add-on delivery pipeline with minimal downside.
+- Loyalty third: Highest demand and best price advantage, but requires POS flow changes; building after Phase 1 means the `complete_pos_sale` hook extension pattern has been proven in production.
+- Purchase Orders last: Two-table dependency chain plus stock-system RPC changes justify caution; build with accumulated learnings.
 
 ### Research Flags
 
-Phases likely needing deeper research during planning:
-- **Phase 4 (Super-admin analytics):** Vercel Cron availability on free tier vs Supabase pg_cron; `platform_analytics_snapshots` schema finalisation for MRR/churn queries; webhook event handling for incremental updates between daily syncs
-- **Phase 5 (Impersonation):** Security review of middleware branch; CSRF protection for `startImpersonation`; final policy decision on impersonation write-mode (read-only vs audited writes)
+**Needs deeper research during planning:**
+- Phase 3 (Loyalty): POS customer lookup UX — how to add customer search to the fast-checkout flow without creating friction for the majority of cash transactions that have no loyalty customer.
+- Phase 4 (Purchase Orders): Server-side PDF generation approach for PO documents (no existing pattern in codebase).
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1 (Staff RBAC):** Schema migration + CRUD UI; all patterns already exist in codebase
-- **Phase 2 (Admin operational UI):** Follows existing `admin/orders` and `admin/promos` patterns exactly; recharts integration is well-documented
-- **Phase 3 (Super-admin billing):** Stripe list API documented in research; pattern already exists in `admin/billing/page.tsx`
+**Standard patterns (skip research-phase):**
+- Phase 1 (Gift Cards): Architecture fully defined in ARCHITECTURE.md; compliance requirements fully documented in PITFALLS.md; four-step add-on integration pattern is established.
+- Phase 2 (COGS Reporting): Follows existing analytics snapshot cron pattern at `030_analytics_snapshot.sql` exactly.
+
+---
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Verified against live Next.js 16.2.1 docs; all packages confirmed current; recharts v2.13+ React 19 compatibility confirmed |
-| Features | HIGH | Existing schema verified in codebase migrations 001–026; competitor patterns (Square, Lightspeed) confirmed via WebSearch |
-| Architecture | HIGH | Direct codebase analysis of middleware, resolveAuth, staffPin, existing admin patterns; decisions validated against official Supabase and Next.js docs |
-| Pitfalls | HIGH | Critical pitfalls confirmed against existing codebase files (`middleware.ts` lines 204–208, `staffPin.ts`, `resolveAuth.ts`); Stripe rate limits from official docs |
+| Stack | HIGH | Existing production stack; add-on architecture derived from direct codebase analysis of `src/config/addons.ts`, `requireFeature.ts`, and migration files |
+| Features | MEDIUM | Competitor pricing verified via official pages (Square, Lightspeed, Marsello); NZ willingness-to-pay at $9–15/mo estimated from market proxies, not direct survey data |
+| Architecture | HIGH | Derived from direct codebase analysis of existing add-on pipeline, not speculation; four-step integration pattern is proven across two live add-ons |
+| Pitfalls | HIGH | NZ legal compliance confirmed against official NZ legislation; Stripe idempotency confirmed against Stripe official docs; gift card accounting confirmed against IRD guidance (April 2025) |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Vercel Cron on free tier:** Phase 4 needs a Stripe sync job scheduler. Vercel Cron supports 1 job on free tier (last confirmed 2025) — verify before committing. Alternative: Supabase pg_cron (available on free tier via extensions).
-- **Manager admin read-only access:** Architecture recommends deferring manager `/admin` route access to a later task (Option A). If product decides managers need read-only admin access before v4.0 ships, middleware must be extended in Phase 1. Flag for product confirmation before Phase 1 planning begins.
-- **Impersonation write mode policy:** Research recommends read-only impersonation with explicit super-admin Server Actions for writes. Final policy needed before Phase 5 spec.
-- **`receipt_header`/`receipt_footer` columns confirmed absent:** Architecture research confirmed these two columns do not yet exist. All other settings columns (`address`, `phone`, `gst_number`, `opening_hours`) are present from migrations 010/011. The gap is two SQL columns — trivial to add.
+- **Merchant willingness-to-pay validation:** Research used AU/NZ competitor pricing as proxy. No direct NZ merchant survey data. Validate pricing with first live merchant before committing — $9/mo across all add-ons is a safer fallback if $14–15/mo shows conversion friction.
+- **Stripe webhook idempotency state in current codebase:** PITFALLS.md flags that the existing `/api/webhooks/stripe/billing/route.ts` may not have a `stripe_processed_events` table. Audit this before Phase 1 begins — this is a blocker for any new add-on billing work, not a nice-to-have.
+- **Privacy Amendment Act 2025 (IPP 3A) timing:** Takes effect 1 May 2026. If Loyalty (Phase 3) ships before that date, Privacy Act 2020 requirements apply; if after, the stricter indirect collection notification rules apply. Build to the stricter standard regardless to avoid a second round of compliance work.
+- **`complete_pos_sale` RPC current complexity:** Both Gift Cards (Phase 1, redemption) and Loyalty (Phase 3, earn points) add hooks to this RPC. Read the current RPC before Phase 1 planning begins to understand existing complexity and estimate integration risk accurately.
+
+---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Next.js 16.2.1 official docs (confirmed 2026-03-25) — Server Components, Server Actions, middleware, testing (Vitest, Playwright)
-- Supabase custom claims and RBAC docs — JWT claims pattern, RLS policy structure
-- Stripe API docs — subscriptions list, invoices list, rate limits (100 req/s), pagination
-- Existing codebase: `src/middleware.ts`, `src/actions/auth/staffPin.ts`, `src/lib/resolveAuth.ts`, `src/schemas/staff.ts`, `supabase/migrations/001–026`
+- Existing NZPOS codebase (direct analysis, 2026-04-06): `src/config/addons.ts`, `src/lib/requireFeature.ts`, `/api/webhooks/stripe/billing/route.ts`, Supabase migrations 019–030
+- Fair Trading (Gift Card Expiry) Amendment Act 2024 — official NZ legislation, effective 16 March 2026
+- Privacy Act 2020 (IPP 1, IPP 3, IPP 5) — official NZ legislation
+- Privacy Amendment Act 2025 (IPP 3A) — effective 1 May 2026
+- IRD tax treatment of gift cards (Affinity Accounting, April 2025) — GST recognised at redemption, not issuance
+- Next.js 16.2.1 official docs (confirmed 2026-03-25)
 
 ### Secondary (MEDIUM confidence)
-- Stripe MRR calculation accuracy analysis (getlago.com) — confirmed interval normalisation requirement and common mistakes
-- WorkOS multi-tenant RBAC design — three-tier role model validation against industry norms
-- OWASP Session Management Cheat Sheet — impersonation session isolation pattern
-- Supabase user impersonation pattern (jjacky.substack.com) — shadow cookie approach confirmation
-- Stripe SaaS analytics patterns (stripe.com/resources) — pull-on-demand vs webhook-sourced MRR trade-offs
+- Square AU/NZ pricing pages (verified 2026-04-06) — loyalty A$49/mo, Retail Plus A$109/mo
+- Lightspeed Retail NZ pricing (verified 2026-04-06) — Basic NZ$89/mo, all features bundled
+- Marsello pricing (NZD, verified 2026-04-06) — loyalty NZ$100–200/mo
+- Shopify POS Pro pricing — US$89/mo for omnichannel features
+- NRS Advanced Data — US$14.95/mo analytics add-on (US reference for analytics price sensitivity)
+- Stripe webhook idempotency best practices (Stripe official docs + community sources)
+- NZ Commerce Commission gift card guidance (comcom.govt.nz)
 
 ### Tertiary (LOW confidence)
-- Supabase free tier limits (from training data; pricing page not confirmed) — 500MB DB, 1GB storage, 50K MAU; assumed sufficient for v1
-- Vercel Cron free tier (1 job) — assumed available; verify before Phase 4 planning
+- NZ small-business willingness-to-pay at $9–15/mo add-on price points — inferred from competitor pricing and NZ market size, not direct survey data; validate before launch
 
 ---
-*Research completed: 2026-04-05*
+
+*Research completed: 2026-04-06*
 *Ready for roadmap: yes*

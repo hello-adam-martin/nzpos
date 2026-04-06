@@ -1,781 +1,712 @@
 # Architecture Research
 
-**Domain:** Admin platform features — staff RBAC, Stripe analytics, merchant impersonation, customer management
-**Researched:** 2026-04-05
-**Confidence:** HIGH (direct codebase analysis + verified patterns from official docs)
+**Domain:** Multi-tenant SaaS POS — paid add-on integration
+**Researched:** 2026-04-06
+**Confidence:** HIGH (based on existing codebase, not speculation)
 
 ---
 
-## Existing Architecture Summary
+## Context: What Already Exists
 
-Before documenting new integration points, this is what already exists and must not be changed.
+This is not a greenfield architecture question. The billing and gating infrastructure is fully operational. Every new add-on plugs into an established pipeline. The question is how each add-on type maps to that pipeline and what net-new components each requires.
 
-### Auth Layer (Dual-path, already working)
+### Existing Billing Pipeline (Do Not Change)
 
 ```
-Owner login  → Supabase Auth → app_metadata.role='owner', store_id, is_super_admin
-Staff login  → staffPin.ts   → jose JWT in staff_session cookie (role, store_id, staff_id)
-Super admin  → Supabase Auth → app_metadata.is_super_admin=true (no store_id)
-Customer     → Supabase Auth → app_metadata.role='customer'
+Merchant clicks "Subscribe" in /admin/billing
+    ↓
+createSubscriptionCheckoutSession(feature) — Server Action
+    ↓
+Stripe Checkout (hosted, 14-day trial, metadata: store_id + feature)
+    ↓
+Stripe webhook: customer.subscription.created/updated/deleted
+    ↓
+/api/webhooks/stripe/billing/route.ts
+    ↓ PRICE_TO_FEATURE[priceId] → featureColumn
+    ↓
+store_plans UPDATE SET has_{feature} = true/false
+    ↓
+Next JWT refresh → app_metadata.{feature} = true
+    ↓
+requireFeature(feature) fast-path reads JWT claim
+    ↓
+Server Action mutations use requireFeature(feature, { requireDbCheck: true })
 ```
 
-`resolveAuth()` tries Supabase owner session first, falls back to staff JWT cookie.
-`resolveStaffAuth()` reads staff JWT only — used in POS actions.
-Both return `{ store_id, staff_id, role? }` or null.
-
-### Feature Gating (JWT fast-path + DB fallback)
-
-`requireFeature(feature, { requireDbCheck })` in `src/lib/requireFeature.ts`:
-- Default: reads `user.app_metadata[feature]` from JWT (no DB roundtrip)
-- `requireDbCheck: true`: queries `store_plans` table via admin client (used on mutations)
-
-### Tenant Resolution (Middleware)
-
-Middleware resolves `store_id` from subdomain slug, injects `x-store-id` header.
-Server Components and Server Actions read it via `resolveAuth()` or directly from `headers()`.
-
-### Super Admin Pattern (Established)
-
-- Route protection: `super-admin/layout.tsx` checks `user.app_metadata.is_super_admin === true`
-- Actions: `createSupabaseAdminClient()` (service_role) for all super-admin mutations
-- Audit trail: `super_admin_actions` table — every mutation inserts an audit row
-- Tenant cache invalidation: `invalidateCachedStoreId(slug)` after store state changes
-
-### Existing `staff` Table Schema
+### Existing Schema for Feature Gating
 
 ```sql
-staff (
-  id UUID PRIMARY KEY,
-  store_id UUID NOT NULL REFERENCES stores(id),
-  auth_user_id UUID REFERENCES auth.users(id),  -- only owners
-  name TEXT NOT NULL,
-  pin_hash TEXT,           -- bcrypt, 4-digit PIN
-  role TEXT CHECK (role IN ('owner', 'staff')),  -- CURRENT: only 2 values
-  is_active BOOLEAN DEFAULT true,
-  pin_attempts INTEGER DEFAULT 0,
-  pin_locked_until TIMESTAMPTZ,
-  created_at, updated_at
-)
+-- store_plans (one row per store, extends on each new add-on)
+store_id UUID UNIQUE
+has_xero BOOLEAN DEFAULT false
+has_xero_manual_override BOOLEAN DEFAULT false
+has_email_notifications BOOLEAN DEFAULT false  -- always true, kept for compat
+has_custom_domain BOOLEAN DEFAULT false
+has_inventory BOOLEAN DEFAULT false
+has_inventory_manual_override BOOLEAN DEFAULT false
 ```
 
-Role values in JWT claims: `'owner'` | `'staff'`. No `'manager'` yet.
+### Existing Config for Add-ons
 
-### Existing `stores` Table (Relevant Columns)
-
-Columns confirmed present across migrations 001–026:
 ```
-slug, name, logo_url, primary_color, store_description
-address, phone, gst_number   -- migration 010
-opening_hours                -- migration 011
-stripe_customer_id           -- migration 014
-is_active, suspended_at, suspension_reason  -- migration 014/020
-setup_wizard_dismissed       -- migration 018
+src/config/addons.ts
+  SubscriptionFeature union type
+  PRICE_ID_MAP: feature → Stripe Price ID (env var)
+  PRICE_TO_FEATURE: Stripe Price ID → store_plans column
+  FEATURE_TO_COLUMN: feature → store_plans column
+  ADDONS array: display metadata for billing UI
 ```
-
-Missing for v4.0: `receipt_header`, `receipt_footer`. The `gst_number` column serves as the IRD number field — no separate column needed.
 
 ---
 
-## New Integration Points
+## System Overview
 
-### 1. Staff Role-Based Permissions (RBAC)
-
-**Current state:** `staff.role` accepts `'owner'` | `'staff'`. Middleware only allows `role='owner'` into `/admin`. Staff use POS only via PIN JWT. No admin UI exists for managing staff.
-
-**New requirement:** Three-tier roles (`Owner / Manager / Staff`). Manager can view admin read-only areas (orders, reports). Owner retains all write access. Admin UI for creating, editing, deactivating, and resetting PINs for staff members.
-
-**Schema change (new migration):**
-```sql
--- Drop existing CHECK constraint and add 'manager'
-ALTER TABLE public.staff DROP CONSTRAINT staff_role_check;
-ALTER TABLE public.staff ADD CONSTRAINT staff_role_check
-  CHECK (role IN ('owner', 'manager', 'staff'));
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      MERCHANT BROWSER                           │
+│  /admin/billing  /admin/{addon}  /pos  /store (public)          │
+└────────────────────────────┬────────────────────────────────────┘
+                             │ HTTPS
+┌────────────────────────────▼────────────────────────────────────┐
+│                       NEXT.JS APP ROUTER                        │
+│                                                                 │
+│  Server Components (RSC)      Server Actions                    │
+│  ┌──────────────────────┐    ┌──────────────────────────────┐   │
+│  │  Admin pages         │    │  requireFeature() guard      │   │
+│  │  /admin/billing      │    │  JWT fast-path (reads claims) │   │
+│  │  /admin/{addon}/*    │    │  DB fallback (mutations)     │   │
+│  └──────────────────────┘    └──────────────────────────────┘   │
+│                                                                 │
+│  API Route Handlers                                             │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  /api/webhooks/stripe/billing  (subscription events)    │   │
+│  │  /api/webhooks/stripe          (checkout.session events) │   │
+│  │  /api/cron/*                   (scheduled jobs)          │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└────────────────────────────┬────────────────────────────────────┘
+                             │
+┌────────────────────────────▼────────────────────────────────────┐
+│                         SUPABASE                                │
+│                                                                 │
+│  ┌──────────────────┐  ┌──────────────────┐                     │
+│  │  Postgres + RLS  │  │  Auth + JWT hook  │                    │
+│  │  (store_id on    │  │  custom_access_   │                    │
+│  │   all tables)    │  │  token_hook       │                    │
+│  └──────────────────┘  └──────────────────┘                     │
+│                                                                 │
+│  Core tables: stores, store_plans, products, orders, staff      │
+│  Add-on tables: stock_adjustments, stocktake_*, loyalty_*...    │
+└────────────────────────────┬────────────────────────────────────┘
+                             │
+┌────────────────────────────▼────────────────────────────────────┐
+│                    EXTERNAL SERVICES                            │
+│  Stripe (billing + checkout)  Xero (accounting)  Email          │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-CHECK constraint (not ENUM) — follows established `product_type` pattern, allows easy future extension.
+---
 
-**JWT claims:** Staff PIN JWT already embeds `role` in payload. `resolveStaffAuth()` already returns `role`. No JWT structure changes needed — new enum value flows through automatically once the DB constraint allows it.
+## The Four-Step Add-On Integration Checklist
 
-**New `requireRole()` utility** (new file, does not replace `resolveAuth()`):
+Every new add-on requires exactly these four steps. The order is non-negotiable — billing must exist before gating works.
+
+### Step 1: Schema Extension
+
+```sql
+-- In a new migration file: 0XX_{addon}_core.sql
+
+-- 1a. Add flag columns to store_plans
+ALTER TABLE public.store_plans
+  ADD COLUMN IF NOT EXISTS has_{addon} BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS has_{addon}_manual_override BOOLEAN NOT NULL DEFAULT false;
+
+-- 1b. Create add-on-specific tables (with store_id + RLS)
+CREATE TABLE public.{addon}_* (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id UUID NOT NULL REFERENCES public.stores(id),
+  ...
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE public.{addon}_* ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "{addon}_store_isolation" ON public.{addon}_*
+  USING ((store_id)::text = (auth.jwt() -> 'app_metadata' ->> 'store_id'));
+
+-- 1c. Update custom_access_token_hook to inject new claim
+-- (Full CREATE OR REPLACE — preserve all existing logic)
+```
+
+### Step 2: Config Registration
+
 ```typescript
-// src/lib/requireRole.ts
-import 'server-only'
-import { resolveAuth } from './resolveAuth'
+// src/config/addons.ts — four additions per add-on:
 
-type AllowedRole = 'owner' | 'manager' | 'staff'
-const HIERARCHY: Record<AllowedRole, number> = { owner: 3, manager: 2, staff: 1 }
+// 1. Extend the union type
+export type SubscriptionFeature = 'xero' | 'inventory' | '{addon}'
 
-export async function requireRole(minimumRole: AllowedRole) {
-  const auth = await resolveAuth()
-  if (!auth) return null
-  const userLevel = HIERARCHY[(auth as { role?: AllowedRole }).role ?? 'staff'] ?? 0
-  return userLevel >= HIERARCHY[minimumRole] ? auth : null
+// 2. Extend FeatureFlags interface
+interface FeatureFlags {
+  has_{addon}: boolean
+}
+
+// 3. Add to PRICE_ID_MAP
+{addon}: process.env.STRIPE_PRICE_{ADDON}!,
+
+// 4. Add to PRICE_TO_FEATURE (webhook routing)
+[process.env.STRIPE_PRICE_{ADDON}!]: 'has_{addon}',
+
+// 5. Add to FEATURE_TO_COLUMN (requireFeature DB-path)
+{addon}: 'has_{addon}',
+
+// 6. Add to ADDONS display array (billing UI)
+{
+  feature: '{addon}' as SubscriptionFeature,
+  name: '{Addon Display Name}',
+  benefitLine: '...',
+  gatedHeadline: '...',
+  gatedBody: '...',
 }
 ```
 
-**Admin route access for managers:** Middleware currently blocks non-owner from `/admin` (line 158: `if (role !== 'owner') redirect`). The manager role comes via staff PIN JWT, not Supabase Auth, so `role` is extracted from a different path than owner. Two options:
+### Step 3: Server Actions with requireFeature Guard
 
-- Option A: Keep middleware unchanged. Managers only use POS. Admin read-only is an owner-only concern. (Simpler — defers manager complexity entirely.)
-- Option B: Extend middleware to detect valid staff JWT with `role='manager'` on admin routes, inject `x-staff-role: manager` header. Admin Server Components gate write-only UI behind `x-staff-role !== 'manager'`.
-
-**Recommendation:** Option A for Phase 1. The PROJECT.md v4.0 target lists "basic roles (Owner/Manager/Staff)" but the initial constraint is admin UI for staff management, not manager access to admin. Build the CRUD UI and schema first; middleware extension is a second task if product demands it.
-
-**How Server Actions consume roles:**
 ```typescript
-// Write-only actions (create product, update settings): unchanged
-const auth = await resolveAuth()
-if (!auth || auth.role !== 'owner') return { error: 'Unauthorized' }
+// src/actions/{addon}/someAction.ts
+'use server'
+import 'server-only'
+import { requireFeature } from '@/lib/requireFeature'
 
-// New staff management actions: owner only
-const auth = await requireRole('owner')
-if (!auth) return { error: 'Unauthorized' }
+export async function someAddonMutation(input: Input) {
+  // DB-path check for all mutations (stale JWT is unacceptable for writes)
+  const gate = await requireFeature('{addon}', { requireDbCheck: true })
+  if (!gate.authorized) return { error: 'feature_not_subscribed', upgradeUrl: gate.upgradeUrl }
+
+  // ... rest of action
+}
 ```
 
-**UI permission rendering:** Pass `role` from server component as prop to client components. Client components gate edit buttons with `role === 'owner'` check. No separate permission lookup on client — server already verified.
+### Step 4: UI Gate in Admin Pages
 
-**Schema update:** `src/schemas/staff.ts` `CreateStaffSchema` role field:
 ```typescript
-role: z.enum(['owner', 'manager', 'staff'])
+// src/app/admin/{addon}/page.tsx (Server Component)
+const gate = await requireFeature('{addon}')  // JWT fast-path for reads
+if (!gate.authorized) return <UpgradePrompt feature="{addon}" upgradeUrl={gate.upgradeUrl} />
+
+// Render the actual add-on UI
 ```
 
-**New admin routes:**
+---
+
+## Component Boundaries Per Add-On Type
+
+### Add-On: Loyalty Program
+
+**What it is:** Points earned per dollar spent, redeemable for discounts. In-store (POS) and online redemption.
+
+**New tables:**
+
+```sql
+loyalty_accounts        -- one per customer, store_id + customer_id (or email)
+  store_id UUID
+  customer_id UUID REFERENCES customers(id) -- nullable for guest/phone lookup
+  email TEXT            -- primary lookup key
+  phone TEXT            -- secondary lookup
+  points_balance INTEGER NOT NULL DEFAULT 0
+  lifetime_points INTEGER NOT NULL DEFAULT 0
+
+loyalty_transactions    -- append-only ledger (like stock_adjustments pattern)
+  store_id UUID
+  loyalty_account_id UUID
+  order_id UUID         -- nullable (manual adjustments have no order)
+  points_delta INTEGER  -- positive = earned, negative = redeemed
+  points_after INTEGER
+  reason TEXT CHECK (reason IN ('purchase', 'redemption', 'manual_adjustment', 'expiry', 'bonus'))
+  created_at TIMESTAMPTZ
+
+loyalty_settings        -- one per store, configurable earn rate
+  store_id UUID UNIQUE
+  points_per_dollar INTEGER NOT NULL DEFAULT 1  -- e.g. 1 point per $1 spent
+  dollars_per_point NUMERIC(10,4) NOT NULL DEFAULT 0.01  -- e.g. 100 points = $1
+  minimum_redemption INTEGER NOT NULL DEFAULT 100
+  expiry_days INTEGER   -- null = no expiry
 ```
-src/app/admin/staff/page.tsx        ← Staff list
-src/app/admin/staff/new/page.tsx    ← Create staff
-src/app/admin/staff/[id]/page.tsx   ← Edit / deactivate / reset PIN
+
+**New RPCs (SECURITY DEFINER):**
+
+```sql
+earn_loyalty_points(store_id, order_id, customer_email)
+  -- Called by complete_pos_sale / complete_online_sale
+  -- Reads loyalty_settings earn rate, inserts loyalty_transaction, updates balance
+
+redeem_loyalty_points(store_id, loyalty_account_id, points_to_redeem)
+  -- Returns discount_cents
+  -- Validates minimum_redemption, atomically decrements balance
 ```
+
+**Integration with POS/Storefront:** The complete_pos_sale and complete_online_sale RPCs need loyalty calls added (same pattern as stock_adjustments was added in 025_inventory_core.sql). This is the key dependency — loyalty only works well if sales automatically earn points.
 
 **New Server Actions:**
-```
-src/actions/staff/createStaff.ts       ← Zod validate, bcrypt PIN, insert
-src/actions/staff/updateStaff.ts       ← Update name/role/is_active
-src/actions/staff/resetStaffPin.ts     ← Owner resets a staff PIN
-```
+- `lookupLoyaltyAccount(email | phone)` — POS lookup before checkout
+- `redeemPoints(accountId, pointsToRedeem)` — returns discount cents
+- `adjustLoyaltyPoints(accountId, delta, reason)` — manual admin adjustment
+- `getLoyaltyDashboard(storeId)` — top accounts, total outstanding points liability
 
-**Data flow:**
-```
-Admin staff page (Server Component)
-  → supabase.from('staff').select().eq('store_id', storeId)
-  → StaffListClient (Client Component)
-    → StaffForm (modal/page, role-gated)
-      → createStaff / updateStaff / resetStaffPin Server Actions
-        → requireRole('owner')   [only owners manage staff]
-        → Zod validate
-        → supabase admin client: insert / update
-        → revalidatePath('/admin/staff')
-```
+**Admin UI pages:**
+- `/admin/loyalty/settings` — earn rate, redemption rate, expiry
+- `/admin/loyalty/accounts` — customer point balances
+- `/admin/loyalty/transactions` — full ledger view
+
+**POS integration:** Search field before checkout shows "Has loyalty account (450 pts)" → optional redemption → discount applied before total.
+
+**Build dependency:** Requires customer accounts to exist (already shipped). No hard dependency on Inventory add-on.
 
 ---
 
-### 2. Admin Dashboard Improvements (Sales Trend Chart + Metrics)
+### Add-On: Gift Cards
 
-**Current state:** `src/app/admin/dashboard/page.tsx` fetches today's orders inline, renders `DashboardHeroCard` + `LowStockAlertList`. No charts, no period comparison.
+**What it is:** Merchant sells digital gift cards. Customer receives code, redeems in-store or online.
 
-**New requirement:** 7/30-day sales trend chart, recent orders widget, current-vs-prior-period metric comparison.
+**New tables:**
 
-**Library:** Recharts. Confirmed requirement: `'use client'` — Recharts uses browser-only APIs and cannot render in Server Components. Use `recharts@2.x` (React 19 compatible as of v2.13+). Do not use v3 (alpha).
-
-**Pattern — server fetches, client renders (established in `admin/billing/page.tsx`):**
-
-```typescript
-// dashboard/page.tsx (Server Component) — add to existing page
-const thirtyDaysAgo = subDays(new Date(), 30)
-const { data: historicalOrders } = await supabase
-  .from('orders')
-  .select('created_at, total_cents')
-  .eq('store_id', storeId)
-  .in('status', ['completed', 'pending_pickup', 'ready', 'collected'])
-  .gte('created_at', thirtyDaysAgo.toISOString())
-
-// Group by day in TypeScript — pass serialized array to Client Component
-const dailyTotals = groupByDay(historicalOrders ?? [])
-return <SalesTrendChart data={dailyTotals} />
-```
-
-**New components:**
-```
-src/components/admin/dashboard/SalesTrendChart.tsx      ← 'use client', recharts AreaChart
-src/components/admin/dashboard/RecentOrdersList.tsx     ← Server Component (no interactivity)
-src/components/admin/dashboard/MetricsComparisonRow.tsx ← Server Component (pure display)
-```
-
-**No new routes** — all additions go into the existing `dashboard/page.tsx` and new component files.
-
----
-
-### 3. Store Settings Expansion
-
-**Current state:** `stores` table already has `address`, `phone`, `gst_number`, `opening_hours`. Admin settings page only shows branding (name, slug, logo, primary_color).
-
-**New requirement:** Business address, phone, IRD number, receipt header/footer, store hours.
-
-**Schema addition (new migration):**
 ```sql
-ALTER TABLE public.stores
-  ADD COLUMN IF NOT EXISTS receipt_header TEXT,
-  ADD COLUMN IF NOT EXISTS receipt_footer TEXT;
--- address, phone, gst_number, opening_hours already exist (migrations 010/011)
+gift_cards
+  store_id UUID
+  code TEXT UNIQUE NOT NULL  -- 16-char alphanumeric, uppercase
+  initial_balance_cents INTEGER NOT NULL
+  current_balance_cents INTEGER NOT NULL
+  issued_to_email TEXT        -- nullable (anonymous purchase)
+  issued_order_id UUID        -- the Stripe order that purchased it
+  expires_at TIMESTAMPTZ      -- nullable, from gift_card_settings
+  is_active BOOLEAN DEFAULT true
+  created_at TIMESTAMPTZ
+
+gift_card_transactions       -- redemption audit log
+  store_id UUID
+  gift_card_id UUID
+  order_id UUID
+  amount_cents INTEGER        -- negative = redemption, positive = refund
+  balance_after_cents INTEGER
+  created_at TIMESTAMPTZ
 ```
 
-**No new routes** — expand existing `src/app/admin/settings/page.tsx` with additional form sections, following the `BrandingForm.tsx` pattern.
+**New RPCs (SECURITY DEFINER):**
 
-**New form components:**
-```
-src/components/admin/settings/BusinessInfoForm.tsx     ← address, phone, gst_number
-src/components/admin/settings/ReceiptSettingsForm.tsx  ← receipt_header, receipt_footer
-src/components/admin/settings/HoursForm.tsx            ← opening_hours
+```sql
+generate_gift_card(store_id, initial_balance_cents, issued_to_email, issued_order_id)
+  -- Generates unique code, inserts gift_card row
+
+redeem_gift_card(store_id, code, amount_to_redeem_cents)
+  -- Validates code active + sufficient balance
+  -- Atomically decrements current_balance_cents
+  -- Returns actual_amount_redeemed (may be less than requested if partial)
 ```
 
-**New Server Action:** `src/actions/settings/updateBusinessInfo.ts` — follows `updateBranding.ts` pattern (Zod validate, `requireRole('owner')`, supabase update, revalidatePath).
+**Stripe integration for gift card purchase:** Gift card purchase goes through Stripe Checkout (product = "Gift Card $X"). On checkout.session.completed, the existing Stripe webhook calls generate_gift_card. The gift card code is emailed to the buyer.
+
+**Admin UI pages:**
+- `/admin/gift-cards` — list all cards, balance search by code
+- `/admin/gift-cards/settings` — expiry policy
+
+**POS integration:** Code entry field at checkout. Partial redemption allowed (remaining balance stays on card).
+
+**Build dependency:** Standalone. No dependency on Loyalty or Inventory.
 
 ---
 
-### 4. Customer Management (Admin UI)
+### Add-On: Supplier Management
 
-**Current state:** `customers` table exists (migration 012). RLS policy `staff_read_customers` allows `role IN ('owner', 'staff')` to read. `orders.customer_id` references `auth.users.id`. No admin UI exists.
+**What it is:** Track suppliers, record purchase orders, receive stock against POs (auto-updates inventory).
 
-**New requirement:** Customer list, search, order history per customer, basic account management.
+**New tables:**
 
-**No schema changes needed.** RLS already allows owner to read customers.
+```sql
+suppliers
+  store_id UUID
+  name TEXT NOT NULL
+  contact_name TEXT
+  contact_email TEXT
+  contact_phone TEXT
+  account_number TEXT
+  notes TEXT
+  is_active BOOLEAN DEFAULT true
+  created_at TIMESTAMPTZ
 
-**New admin routes:**
+purchase_orders
+  store_id UUID
+  supplier_id UUID
+  status TEXT CHECK (status IN ('draft', 'sent', 'partial', 'received', 'cancelled'))
+  po_number TEXT               -- auto-generated or manual
+  expected_at DATE
+  notes TEXT
+  created_by UUID REFERENCES staff(id)
+  created_at TIMESTAMPTZ
+
+purchase_order_lines
+  store_id UUID
+  purchase_order_id UUID
+  product_id UUID
+  quantity_ordered INTEGER NOT NULL
+  quantity_received INTEGER NOT NULL DEFAULT 0
+  unit_cost_cents INTEGER      -- cost price, not retail
+  created_at TIMESTAMPTZ
+
+supplier_products              -- maps which suppliers supply which products
+  store_id UUID
+  supplier_id UUID
+  product_id UUID
+  supplier_sku TEXT
+  unit_cost_cents INTEGER
+  PRIMARY KEY (store_id, supplier_id, product_id)
 ```
-src/app/admin/customers/page.tsx       ← Paginated list with search
-src/app/admin/customers/[id]/page.tsx  ← Customer detail: profile + order history
+
+**New RPC (SECURITY DEFINER):**
+
+```sql
+receive_stock_against_po(purchase_order_id, lines: [{product_id, quantity_received}])
+  -- For each line: calls adjust_stock with reason='received', updates quantity_received
+  -- Updates PO status to 'partial' or 'received'
+  -- Atomic: all lines succeed or none
 ```
 
-**Data fetching (follows `admin/orders/page.tsx` pattern):**
-```typescript
-// Customer list — standard Supabase client (RLS enforces store_id isolation)
-const { data: customers } = await supabase
-  .from('customers')
-  .select('id, name, email, created_at, auth_user_id')
-  .eq('store_id', storeId)
-  .ilike('email', `%${q}%`)
-  .order('created_at', { ascending: false })
-  .range(offset, offset + PAGE_SIZE - 1)
+**Build dependency:** Hard dependency on Inventory add-on. Stock receiving only makes sense if the store tracks stock. Should be gated as requiring both `supplier_management` AND `inventory`. Consider bundling with inventory or treating it as an inventory sub-feature.
 
-// Customer orders — join via auth_user_id -> customer_id on orders
-const { data: orders } = await supabase
-  .from('orders')
-  .select('id, total_cents, status, created_at, channel')
-  .eq('store_id', storeId)
-  .eq('customer_id', customer.auth_user_id)
-  .order('created_at', { ascending: false })
-```
-
-**Important relationship:** `orders.customer_id` = `auth.users.id` = `customers.auth_user_id`. The join is `customers.auth_user_id = orders.customer_id`, not `customers.id`.
-
-**No new Server Actions** for read-only view. Account deactivation (if required) uses `supabase.auth.admin.updateUserById` via service_role — wrap in a Server Action with `requireRole('owner')` guard.
-
-**New components:**
-```
-src/components/admin/customers/CustomerTable.tsx        ← Paginated, searchable
-src/components/admin/customers/CustomerDetailPanel.tsx  ← Order history + profile
-```
+**Admin UI pages:**
+- `/admin/suppliers` — supplier list
+- `/admin/suppliers/[id]` — supplier detail, products, PO history
+- `/admin/purchase-orders` — PO list, status filter
+- `/admin/purchase-orders/new` — create PO from supplier + products
 
 ---
 
-### 5. Promo Management Edit/Delete
+### Add-On: Advanced Analytics / Reports
 
-**Current state:** `PromoList.tsx` and `PromoForm.tsx` exist in `src/components/admin/`. Create flow exists. No edit or delete.
+**What it is:** Deeper reporting beyond the existing basic dashboard. Period comparison, product performance cohorts, customer lifetime value.
 
-**No schema changes needed.** `promo_codes` table already exists.
+**Architecture note:** The existing Stripe analytics snapshot pattern (030_analytics_snapshot.sql) provides the model — materialised snapshots queried by the admin UI, refreshed by cron jobs. Use the same pattern for add-on analytics.
 
-**Additions only:**
-- Extend `PromoList.tsx` with edit/delete buttons
-- New Server Actions: `updatePromo.ts`, `deletePromo.ts` (follows existing `createPromo` pattern)
+**New tables:**
+
+```sql
+analytics_daily_snapshots    -- pre-aggregated per store per day
+  store_id UUID
+  snapshot_date DATE
+  total_revenue_cents INTEGER
+  transaction_count INTEGER
+  avg_transaction_cents INTEGER
+  top_products JSONB           -- [{product_id, name, revenue_cents, units_sold}]
+  hourly_breakdown JSONB       -- [24 integers for revenue by hour]
+  channel_breakdown JSONB      -- {pos: cents, online: cents}
+  created_at TIMESTAMPTZ
+  PRIMARY KEY (store_id, snapshot_date)
+
+analytics_customer_snapshots -- CLV, purchase frequency per customer
+  store_id UUID
+  customer_id UUID
+  snapshot_month DATE          -- first of month
+  orders_this_month INTEGER
+  revenue_this_month_cents INTEGER
+  lifetime_orders INTEGER
+  lifetime_revenue_cents INTEGER
+  last_order_at TIMESTAMPTZ
+  created_at TIMESTAMPTZ
+  PRIMARY KEY (store_id, customer_id, snapshot_month)
+```
+
+**Cron job:** `/api/cron/analytics-snapshot` — runs nightly via Vercel cron, populates analytics_daily_snapshots for all stores with analytics add-on. Same pattern as existing Stripe snapshot cron.
+
+**No new RPCs needed** — snapshots are read-only from the admin UI. Server Components query directly.
+
+**Build dependency:** Standalone. No dependency on Inventory or Loyalty. The existing orders table has enough data for meaningful analytics from day one.
 
 ---
 
-### 6. Super-Admin Dashboard (Platform Overview)
+### Add-On: Multi-Location
 
-**Current state:** Super admin has tenant list and tenant detail. No aggregate platform metrics.
+**What it is:** One merchant account managing multiple physical store locations, each with separate inventory.
 
-**New requirement:** Platform overview — total tenants, signups (30d), revenue breakdown.
+**Architecture note:** This is the most complex add-on. The entire existing architecture assumes one store per merchant account. Multi-location requires a concept of "location" within a store.
 
-**New route:** `src/app/super-admin/page.tsx` (or promote existing redirect to a real dashboard page).
+**New tables:**
 
-**Data sources:** Supabase `stores` count (admin client) + Stripe subscriptions.
+```sql
+locations                    -- physical locations within a store
+  store_id UUID
+  name TEXT NOT NULL          -- "CBD Store", "Airport Kiosk"
+  address TEXT
+  is_active BOOLEAN DEFAULT true
+  created_at TIMESTAMPTZ
 
-**New components:**
+product_location_stock       -- replaces products.stock_quantity per-location
+  store_id UUID
+  product_id UUID
+  location_id UUID
+  stock_quantity INTEGER NOT NULL DEFAULT 0
+  PRIMARY KEY (store_id, product_id, location_id)
 ```
-src/components/super-admin/PlatformMetricsGrid.tsx   ← Tenant/signup/MRR counts
-```
+
+**Impact on existing RPCs:** complete_pos_sale and complete_online_sale currently decrement products.stock_quantity. With multi-location, they must decrement product_location_stock for the correct location. This is a significant migration.
+
+**Recommended approach:** Gate the UI at the location selector. When a multi-location store opens POS, they pick a location first. That location_id is threaded through the entire sale. The RPCs accept an optional location_id parameter — when provided, decrement product_location_stock; when null, decrement products.stock_quantity (backward compat for single-location stores).
+
+**Build dependency:** Hard dependency on Inventory add-on (stock tracking per location). This is the last add-on to build — it modifies core RPCs and needs the most testing.
 
 ---
 
-### 7. Super-Admin Stripe Analytics (MRR, Churn, Revenue per Add-on)
+### Add-On: CRM (Customer Relationship Management)
 
-**Current state:** No Stripe analytics in super-admin. The pattern for Stripe subscription queries exists in `src/app/admin/billing/page.tsx`.
+**What it is:** Enhanced customer profiles, purchase history analysis, customer segmentation, manual outreach logging.
 
-**New requirement:** Platform-wide MRR, active subscriber count, revenue per add-on, payment failures.
+**Architecture note:** Customer accounts and basic order history already exist. CRM extends this with segments, tags, and communication activity logging.
 
-**Stripe API does NOT have a pre-built MRR endpoint.** MRR is calculated by aggregating active subscription items. This is confirmed by official Stripe documentation — the analytics UI is not an API.
+**New tables:**
 
-**Key Stripe calls:**
+```sql
+customer_tags
+  store_id UUID
+  name TEXT NOT NULL
+  color TEXT                   -- hex for UI label
+  PRIMARY KEY (store_id, name)
 
-```typescript
-// All active subscriptions — paginate if tenant count exceeds 100
-const activeSubs = await stripe.subscriptions.list({
-  status: 'active',
-  limit: 100,
-  expand: ['data.items.data.price'],
-})
+customer_tag_assignments
+  store_id UUID
+  customer_id UUID
+  tag_name TEXT
+  PRIMARY KEY (store_id, customer_id, tag_name)
 
-// Open/past-due invoices (payment failures)
-const failedInvoices = await stripe.invoices.list({
-  status: 'open',
-  limit: 50,
-})
+customer_segments            -- saved filter queries
+  store_id UUID
+  name TEXT NOT NULL
+  filter_criteria JSONB        -- {min_orders: 3, last_purchase_within_days: 90, tags: [...]}
+  customer_count INTEGER        -- cached, refreshed on cron
+  created_at TIMESTAMPTZ
 
-// Recent new subscriptions for growth trend
-const recentSubs = await stripe.subscriptions.list({
-  created: { gte: Math.floor(subDays(new Date(), 30).getTime() / 1000) },
-  limit: 100,
-})
+crm_activities               -- log of manual outreach
+  store_id UUID
+  customer_id UUID
+  staff_id UUID
+  type TEXT CHECK (type IN ('note', 'email', 'call', 'sms'))
+  notes TEXT
+  created_at TIMESTAMPTZ
 ```
 
-**MRR calculation (normalize all intervals to monthly):**
-```typescript
-const mrrCents = activeSubs.data.reduce((sum, sub) => {
-  return sum + sub.items.data.reduce((itemSum, item) => {
-    const amount = item.price.unit_amount ?? 0
-    const interval = item.price.recurring?.interval ?? 'month'
-    const count = item.price.recurring?.interval_count ?? 1
-    const monthly = interval === 'year' ? amount / (12 * count) : amount / count
-    return itemSum + monthly * (item.quantity ?? 1)
-  }, 0)
-}, 0)
-```
-
-**Revenue per add-on:** Group active subscription items by `price.id`, map to feature via `PRICE_TO_FEATURE` (already exists in `src/config/addons.ts`).
-
-**Caching:** Stripe API calls are slow and super-admin analytics do not need real-time data. Use page-level revalidation:
-```typescript
-// src/app/super-admin/analytics/page.tsx
-export const revalidate = 300 // 5-minute cache
-```
-
-This is compatible with `force-dynamic` already used on tenant pages — only the analytics page gets the cache.
-
-**New routes:**
-```
-src/app/super-admin/analytics/page.tsx    ← Platform analytics dashboard
-```
-
-**New components:**
-```
-src/components/super-admin/PlatformMetricsGrid.tsx     ← MRR, subscriber count, failure count
-src/components/super-admin/AddOnRevenueTable.tsx        ← Revenue breakdown per add-on
-src/components/super-admin/PaymentFailuresList.tsx      ← Open/past-due invoices
-src/components/super-admin/PlatformGrowthChart.tsx      ← 'use client' + recharts (signup trend)
-```
+**Build dependency:** Requires customer accounts (already shipped). No dependency on Inventory or Loyalty. Can be built independently.
 
 ---
 
-### 8. Super-Admin Billing Visibility (View Tenant Invoices)
+## How the Feature Gating Pattern Scales
 
-**Current state:** Tenant detail page shows add-on status from `store_plans`. No Stripe invoice history.
+### Current State (2 active paid add-ons)
 
-**New requirement:** Super-admin can view a tenant's subscription history and invoices.
+The pattern works cleanly at 2-5 add-ons. The JWT hook SELECT is one query that fetches all columns from store_plans. Adding a column per add-on adds negligible overhead.
 
-**Integration approach:** `stores.stripe_customer_id` already exists. `admin/billing/page.tsx` already shows the exact query pattern.
+### At 10+ Add-Ons
 
-**Addition to existing tenant detail page** (`/super-admin/tenants/[id]/page.tsx`):
-```typescript
-// Add to parallel Promise.all in tenant detail page
-stripe.subscriptions.list({ customer: stripeCustomerId, status: 'all' }),
-stripe.invoices.list({ customer: stripeCustomerId, limit: 10 }),
-```
+The custom_access_token_hook SQL function grows but remains one query. The JWT payload grows by one boolean per add-on — at 10 add-ons the JWT is still under 1KB. No architectural change needed.
 
-**No new routes.** New component only:
-```
-src/components/super-admin/TenantBillingPanel.tsx  ← Invoice list + subscription history
-```
+### At 20+ Add-Ons
 
----
+Consider grouping related features (e.g., `loyalty_and_crm: true` instead of separate booleans) only if store_plans grows unwieldy. At 20 columns it is still manageable. The real scaling concern is developer confusion, not technical overhead — the `has_{addon}` naming convention prevents this.
 
-### 9. Super-Admin User Management + Impersonation
+### Webhook Routing Scaling
 
-**Current state:** Tenant detail shows store info, can suspend/unsuspend and override add-ons. No user account management.
+The PRICE_TO_FEATURE map in addons.ts is a flat lookup. Each new add-on adds one entry. At 20 add-ons this is still a simple object literal. No scaling concern.
 
-**New requirement:** View merchant accounts, password resets, disable accounts, impersonation.
+### JWT Refresh Timing
 
-**Password reset:** `supabase.auth.admin.generateLink({ type: 'recovery', email })` (service_role). New Server Action follows `suspendTenant.ts` pattern with `is_super_admin` guard + audit row.
-
-**Disable account:** `supabase.auth.admin.updateUserById(userId, { ban_duration: '876600h' })` (service_role). Effectively permanent. Combines with `stores.is_active = false` (suspension already does this via `suspendTenant` action).
-
-**Impersonation approach:**
-
-Direct session impersonation (magic-link sign-in as merchant) creates session complexity and risks the super-admin losing their own session. The simpler and more auditable approach for this codebase is a **short-lived impersonation JWT that injects merchant store context**:
-
-1. Super-admin clicks "Impersonate" on tenant detail page
-2. `startImpersonation` Server Action: verifies `is_super_admin`, creates a 15-minute jose JWT containing `{ store_id, super_admin_id }`, sets it in an httpOnly cookie `sa_impersonation`
-3. Inserts `super_admin_actions` audit row: action='impersonate_start'
-4. Redirects to `/admin/dashboard` on the root domain (not the merchant's subdomain)
-5. New middleware branch detects `sa_impersonation` cookie on root-domain `/admin` routes: verifies the JWT, injects `x-store-id` = merchant's store ID and `x-impersonating: 'true'` header
-6. Admin Server Components render merchant data (they already read `x-store-id` from headers via `resolveAuth()`)
-7. `ImpersonationBanner` component reads `x-impersonating` header from a layout and renders a dismissal bar
-8. `endImpersonation` Server Action clears the cookie and inserts audit row: action='impersonate_end'
-
-**New utility file:**
-```typescript
-// src/lib/impersonation.ts  (NEW)
-import 'server-only'
-import { SignJWT, jwtVerify } from 'jose'
-
-const secret = new TextEncoder().encode(process.env.SUPER_ADMIN_JWT_SECRET!)
-
-export async function createImpersonationToken(storeId: string, superAdminId: string) {
-  return new SignJWT({ store_id: storeId, super_admin_id: superAdminId })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setExpirationTime('15m')
-    .sign(secret)
-}
-
-export async function verifyImpersonationToken(token: string) {
-  const { payload } = await jwtVerify(token, secret)
-  return payload as { store_id: string; super_admin_id: string }
-}
-```
-
-**Middleware addition** (new branch before existing `/admin` route check):
-```typescript
-// In middleware.ts, before the "Admin routes" block:
-const impersonationToken = request.cookies.get('sa_impersonation')?.value
-if (isRoot && pathname.startsWith('/admin') && impersonationToken) {
-  const supabase = createSupabaseMiddlewareClient(request)
-  const { data: { user } } = await supabase.auth.getUser()
-  if (user?.app_metadata?.is_super_admin === true) {
-    try {
-      const { store_id } = await verifyImpersonationToken(impersonationToken)
-      // Inject merchant store context into request headers
-      requestHeaders.set('x-store-id', store_id)
-      requestHeaders.set('x-impersonating', 'true')
-      return NextResponse.next({ request: { headers: requestHeaders } })
-    } catch {
-      // Token expired — fall through to normal admin auth check
-    }
-  }
-}
-```
-
-**New env var required:** `SUPER_ADMIN_JWT_SECRET` (separate from `STAFF_JWT_SECRET` for independent rotation).
-
-**New Server Actions:**
-```
-src/actions/super-admin/startImpersonation.ts       ← Create token, set cookie, audit
-src/actions/super-admin/endImpersonation.ts         ← Clear cookie, audit
-src/actions/super-admin/sendPasswordReset.ts        ← auth.admin.generateLink recovery
-src/actions/super-admin/disableMerchantAccount.ts   ← auth.admin.updateUserById ban
-```
-
-**New component:**
-```
-src/components/super-admin/ImpersonationBanner.tsx  ← 'use client', "Impersonating X / Exit"
-```
-
----
-
-## Component Boundaries Summary
-
-| Component | Type | Receives From | Calls |
-|-----------|------|---------------|-------|
-| `SalesTrendChart` | Client | Dashboard Server Component (serialized daily sales array) | Nothing (pure render) |
-| `MetricsComparisonRow` | Server | Dashboard page (computed period comparison) | Nothing |
-| `StaffListClient` | Client | Staff page Server Component (staff rows, owner role) | `updateStaff`, `resetStaffPin` Server Actions |
-| `CustomerTable` | Client | Customers Server Component (customer rows) | Navigation only |
-| `PlatformMetricsGrid` | Server | Analytics page (MRR, counts computed server-side) | Nothing |
-| `PlatformGrowthChart` | Client | Analytics page (time series serialized) | Nothing |
-| `AddOnRevenueTable` | Server | Analytics page (per-add-on revenue map) | Nothing |
-| `TenantBillingPanel` | Server | Tenant detail page (Stripe sub + invoice data) | Nothing |
-| `ImpersonationBanner` | Client | Admin layout (reads `x-impersonating` header via cookie/prop) | `endImpersonation` Server Action |
-
----
-
-## Data Flow Diagrams
-
-### Staff RBAC Flow
-
-```
-POST /admin/staff/new
-  → createStaff Server Action
-    → requireRole('owner')   [only owners manage staff]
-    → Zod: CreateStaffSchema.safeParse (name, pin, role IN ['manager','staff'])
-    → bcrypt.hash(pin, 12)
-    → supabase.from('staff').insert({ store_id, name, pin_hash, role })
-    → revalidatePath('/admin/staff')
-    → { success: true }
-```
-
-### Stripe Analytics Flow
-
-```
-GET /super-admin/analytics  (revalidate: 300s)
-  → Auth check via super-admin layout (already done)
-  → Server Component:
-    → stripe.subscriptions.list({ status: 'active', expand: ['data.items.data.price'] })
-    → stripe.invoices.list({ status: 'open', limit: 50 })
-    → Calculate MRR, revenue per add-on, failure count
-    → supabase admin: SELECT COUNT(*) FROM stores WHERE created_at >= 30daysAgo
-    → Render PlatformMetricsGrid (Server Component, computed values)
-    → Render PlatformGrowthChart (Client Component, serialized time series)
-```
-
-### Impersonation Flow
-
-```
-Super Admin → "Impersonate" button on /super-admin/tenants/[id]
-  → startImpersonation Server Action
-    → verify user.app_metadata.is_super_admin === true
-    → createImpersonationToken(storeId, superAdminId)
-    → Set httpOnly cookie 'sa_impersonation' (15min, Secure, SameSite=Lax)
-    → Insert super_admin_actions { action: 'impersonate_start', store_id, note }
-    → Return { success: true }  → Client redirects to /admin/dashboard
-
-Root domain GET /admin/dashboard
-  → Middleware detects 'sa_impersonation' cookie
-    → Verifies super admin session (Supabase Auth)
-    → verifyImpersonationToken(cookie)
-    → Injects x-store-id: merchantStoreId, x-impersonating: 'true'
-    → NextResponse.next() with modified headers
-
-Admin dashboard renders
-  → resolveAuth() reads x-store-id → returns merchant's store_id
-  → All queries use merchant's store_id (RLS via JWT, but admin actions use admin client)
-  → ImpersonationBanner receives x-impersonating prop from layout, renders exit button
-```
-
-### Customer Management Flow
-
-```
-GET /admin/customers
-  → Server Component
-    → resolveAuth() → storeId
-    → supabase.from('customers').select().eq('store_id', storeId).ilike('email', ...)
-    → CustomerTable (Client Component) — search/pagination
-      → URL search params drive re-fetches (Server Component re-runs on navigation)
-
-GET /admin/customers/[id]
-  → Server Component
-    → Fetch customer by id + store_id
-    → Fetch customer.auth_user_id
-    → supabase.from('orders').eq('customer_id', auth_user_id)
-    → CustomerDetailPanel (Server Component — no interactivity needed)
-```
+After a merchant subscribes, their JWT claims are stale until the next token refresh (up to 1 hour by default in Supabase). The requireFeature DB-path (requireDbCheck: true) on all mutations prevents unauthorized access during this window. The UI may show a gated state for up to 1 hour after subscription — acceptable for a billing flow. Mitigate by calling `supabase.auth.refreshSession()` on the billing page after detecting the `?subscribed={feature}` query param.
 
 ---
 
 ## Recommended Build Order
 
-Dependencies drive the ordering. Each item below is unblocked by items above it.
+Dependencies drive the order. Build the infrastructure additions first, then independent add-ons, then dependent ones.
 
-**1. Store Settings Expansion** (no dependencies, simple schema add + form extension)
-- Migration: `receipt_header`, `receipt_footer` columns
-- Expand settings page with BusinessInfoForm, ReceiptSettingsForm, HoursForm
-- New `updateBusinessInfo` Server Action
+```
+Phase 1: Loyalty Program
+  - No dependencies on other add-ons
+  - High merchant value; Square NZ charges $45+/mo for loyalty
+  - Extends complete_pos_sale / complete_online_sale (establishes pattern for future hooks)
 
-**2. Promo Management Edit/Delete** (no dependencies, extends existing list)
-- `updatePromo.ts` + `deletePromo.ts` Server Actions
-- Extend `PromoList.tsx` with edit/delete buttons
+Phase 2: Gift Cards
+  - No dependencies
+  - Standalone Stripe product purchase flow
+  - Well-defined scope, no complex dependencies
 
-**3. Staff Management CRUD** (depends on schema migration for `'manager'` role)
-- Migration: update role CHECK constraint to allow `'manager'`
-- New `requireRole()` utility
-- Staff admin pages + Server Actions
-- Update `schemas/staff.ts`
+Phase 3: Advanced Analytics
+  - No dependencies
+  - Reuses existing snapshot cron pattern
+  - Adds meaningful dashboard value for merchants with order history
 
-**4. Admin Dashboard Charts** (depends on recharts install, no schema changes)
-- `npm install recharts`
-- Add historical sales query to dashboard page
-- `SalesTrendChart`, `RecentOrdersList`, `MetricsComparisonRow` components
+Phase 4: CRM
+  - Depends on customer accounts (already shipped)
+  - No dependency on above add-ons
+  - Natural complement to Loyalty data
 
-**5. Customer Management** (no schema changes, RLS already covers it)
-- New `/admin/customers` routes and components
+Phase 5: Supplier Management
+  - Hard dependency on Inventory add-on (v3.0, already shipped)
+  - Must be built after Inventory is stable in production
 
-**6. Super-Admin Platform Dashboard** (depends on understanding existing admin patterns)
-- Simple tenant count + signup count from Supabase
-- `PlatformMetricsGrid` component
-
-**7. Super-Admin Stripe Analytics** (depends on Stripe patterns, no schema changes)
-- New `/super-admin/analytics` page with Stripe API calls
-- `AddOnRevenueTable`, `PaymentFailuresList`, `PlatformGrowthChart` components
-
-**8. Super-Admin Billing Visibility** (depends on 7 for Stripe familiarity)
-- Additions to existing tenant detail page
-- `TenantBillingPanel` component
-
-**9. Super-Admin User Management + Impersonation** (most complex, build last)
-- New env var `SUPER_ADMIN_JWT_SECRET`
-- `src/lib/impersonation.ts` utility
-- Middleware extension (impersonation cookie branch)
-- New super-admin actions: sendPasswordReset, disableMerchantAccount, startImpersonation, endImpersonation
-- `ImpersonationBanner` component
-- Super-admin sidebar additions (Analytics, Billing links)
-
----
-
-## Full New Files List
-
-### New Source Files
-
-| File | Type | Purpose |
-|------|------|---------|
-| `src/lib/requireRole.ts` | Utility | Role hierarchy guard (owner > manager > staff) |
-| `src/lib/impersonation.ts` | Utility | Impersonation JWT creation/verification |
-| `src/app/admin/staff/page.tsx` | Server Component | Staff list |
-| `src/app/admin/staff/new/page.tsx` | Server Component | Create staff form |
-| `src/app/admin/staff/[id]/page.tsx` | Server Component | Edit/deactivate staff |
-| `src/app/admin/customers/page.tsx` | Server Component | Customer list |
-| `src/app/admin/customers/[id]/page.tsx` | Server Component | Customer detail + order history |
-| `src/app/super-admin/analytics/page.tsx` | Server Component | Platform Stripe analytics |
-| `src/app/super-admin/billing/page.tsx` | Server Component | Platform billing overview |
-| `src/actions/staff/createStaff.ts` | Server Action | Create staff member with PIN |
-| `src/actions/staff/updateStaff.ts` | Server Action | Update name/role/is_active |
-| `src/actions/staff/resetStaffPin.ts` | Server Action | Owner resets a staff PIN |
-| `src/actions/settings/updateBusinessInfo.ts` | Server Action | Update address/phone/IRD/receipt |
-| `src/actions/promos/updatePromo.ts` | Server Action | Edit existing promo |
-| `src/actions/promos/deletePromo.ts` | Server Action | Delete promo code |
-| `src/actions/super-admin/startImpersonation.ts` | Server Action | Begin merchant impersonation |
-| `src/actions/super-admin/endImpersonation.ts` | Server Action | Clear impersonation cookie |
-| `src/actions/super-admin/sendPasswordReset.ts` | Server Action | Email merchant recovery link |
-| `src/actions/super-admin/disableMerchantAccount.ts` | Server Action | Ban merchant auth account |
-| `src/components/admin/dashboard/SalesTrendChart.tsx` | Client Component | Recharts area chart |
-| `src/components/admin/dashboard/RecentOrdersList.tsx` | Server Component | Latest orders widget |
-| `src/components/admin/dashboard/MetricsComparisonRow.tsx` | Server Component | Period comparison |
-| `src/components/admin/settings/BusinessInfoForm.tsx` | Client Component | Address/phone/IRD form |
-| `src/components/admin/settings/ReceiptSettingsForm.tsx` | Client Component | Receipt header/footer |
-| `src/components/admin/settings/HoursForm.tsx` | Client Component | Opening hours |
-| `src/components/admin/customers/CustomerTable.tsx` | Client Component | Paginated customer list |
-| `src/components/admin/customers/CustomerDetailPanel.tsx` | Server Component | Order history + profile |
-| `src/components/super-admin/PlatformMetricsGrid.tsx` | Server Component | MRR/subscriber metrics |
-| `src/components/super-admin/AddOnRevenueTable.tsx` | Server Component | Revenue breakdown |
-| `src/components/super-admin/PaymentFailuresList.tsx` | Server Component | Failed invoice list |
-| `src/components/super-admin/PlatformGrowthChart.tsx` | Client Component | Recharts signup trend |
-| `src/components/super-admin/TenantBillingPanel.tsx` | Server Component | Tenant Stripe history |
-| `src/components/super-admin/ImpersonationBanner.tsx` | Client Component | "Impersonating X / Exit" bar |
-
-### Modified Files
-
-| File | Change |
-|------|--------|
-| `src/middleware.ts` | Add impersonation cookie branch before admin route check |
-| `src/schemas/staff.ts` | Add `'manager'` to role enum in `CreateStaffSchema` |
-| `src/app/admin/settings/page.tsx` | Add business info + receipt settings form sections |
-| `src/app/admin/dashboard/page.tsx` | Add 30-day historical orders query + chart component |
-| `src/app/super-admin/tenants/[id]/page.tsx` | Add Stripe billing data fetch + TenantBillingPanel |
-| `src/components/super-admin/SuperAdminSidebar.tsx` | Add Analytics + Billing nav links |
-| `src/components/admin/AdminSidebar.tsx` | Add Staff + Customers nav links |
-| `src/components/admin/PromoList.tsx` | Add edit/delete buttons + actions |
-
-### New Migration
-
-| File | Contents |
-|------|----------|
-| `supabase/migrations/027_v4_admin_platform.sql` | `manager` role in staff CHECK constraint; `receipt_header`, `receipt_footer` columns on stores |
-
----
-
-## Architectural Patterns to Follow
-
-### Pattern: Server Component → Client Component Data Bridge
-
-**What:** Server Component fetches and serializes data, passes to Client Component as plain props.
-**When:** All charts, tables with interactive state (search/pagination), forms.
-**Established in codebase:** `admin/billing/page.tsx` → `BillingClient.tsx`
-
-### Pattern: Super-Admin Action Guard
-
-**What:** Every super-admin Server Action checks `is_super_admin === true` before executing.
-**Established in codebase:** `suspendTenant.ts`, `activateAddon.ts`
-
-```typescript
-const { data: { user } } = await supabase.auth.getUser()
-if (!user || user.app_metadata?.is_super_admin !== true) {
-  return { error: 'Unauthorized' }
-}
+Phase 6: Multi-Location
+  - Hard dependency on Inventory add-on
+  - Modifies core RPCs (highest risk)
+  - Build last, test extensively
 ```
 
-### Pattern: Audit Every Super-Admin Mutation
+**Rationale for this order:**
+- Loyalty and Gift Cards are highest-value NZ retail add-ons with proven willingness to pay
+- Analytics and CRM require no risky RPC changes
+- Supplier Management and Multi-Location touch the stock system — saved for when Inventory is battle-tested in production
 
-**What:** All super-admin mutations insert into `super_admin_actions` table.
-**When:** Any state change (suspend, override, impersonate, disable, password reset).
-**Established in codebase:** `suspendTenant.ts` step 6
+---
 
-### Pattern: Admin Client for Super-Admin Data Access
+## Data Flow: New Add-On Full Lifecycle
 
-**What:** Super-admin pages use `createSupabaseAdminClient()` (service_role), bypassing RLS.
-**Why:** Super-admin has no `store_id` in JWT — RLS would block all tenant data reads.
-**Established in codebase:** All super-admin pages and actions.
+```
+1. SCHEMA MIGRATION
+   Migration file → store_plans ALTER → new tables + RLS → hook rewrite
+
+2. CONFIG REGISTRATION
+   addons.ts → SubscriptionFeature type → PRICE_ID_MAP → PRICE_TO_FEATURE → ADDONS array
+
+3. BILLING SUBSCRIBE
+   /admin/billing → createSubscriptionCheckoutSession('loyalty')
+   → Stripe Checkout → webhook → store_plans.has_loyalty = true
+   → JWT refresh → app_metadata.loyalty = true
+   → /admin/billing detects ?subscribed=loyalty → refreshSession() → gate lifts immediately
+
+4. FEATURE ACCESS (reads)
+   Server Component → requireFeature('loyalty') [JWT fast-path]
+   → authorized: true → render add-on UI
+
+5. FEATURE ACCESS (mutations)
+   Server Action → requireFeature('loyalty', { requireDbCheck: true }) [DB path]
+   → authorized: true → execute mutation
+
+6. CANCEL SUBSCRIPTION
+   Stripe webhook: customer.subscription.deleted
+   → store_plans.has_loyalty = false
+   → Next JWT refresh → gate re-applies
+```
+
+---
+
+## Integration Points
+
+### Extending complete_pos_sale and complete_online_sale
+
+These two RPCs are the most critical integration point. Both Loyalty (earning points) and Gift Cards (redemption) need to hook in at sale completion. The pattern established by stock_adjustments (adding INSERT statements inside the RPC) is the correct approach — keep all side effects inside the SECURITY DEFINER RPC, not in application-layer Server Actions.
+
+```sql
+-- Pattern: additions to complete_pos_sale RPC
+IF p_loyalty_account_id IS NOT NULL THEN
+  PERFORM earn_loyalty_points(p_store_id, v_order_id, p_loyalty_account_id, v_total_cents);
+END IF;
+
+IF p_gift_card_code IS NOT NULL THEN
+  PERFORM redeem_gift_card(p_store_id, p_gift_card_code, p_gift_card_amount_cents);
+END IF;
+```
+
+**Risk:** These RPCs are already complex. Each new hook adds a failure mode. Mitigation: each helper function is itself SECURITY DEFINER with its own error handling. The outer RPC continues if a loyalty earn fails — a failed point earn should not roll back a completed sale.
+
+### Super Admin Override Pattern
+
+Every new add-on follows the `has_{addon}_manual_override` column pattern. The billing webhook must respect overrides:
+
+```typescript
+// requireFeature DB-path reads both columns:
+const isAuthorized = plan.has_{addon} || plan.has_{addon}_manual_override
+```
+
+This lets the platform comp add-ons to strategic merchants without Stripe subscriptions. The super admin panel already handles this for xero and inventory — extend the same UI.
+
+### Environment Variables
+
+Each add-on requires a new Stripe Price ID env var. Naming convention: `STRIPE_PRICE_{ADDON_UPPERCASE}`. Must be added to `.env.local`, Vercel project settings, and `src/config/addons.ts` PRICE_ID_MAP.
 
 ---
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern: Supabase Realtime for UI Sync
+### Anti-Pattern 1: Creating a New Gating Mechanism Per Add-On
 
-**What people do:** Subscribe to real-time changes for live dashboard updates.
-**Why wrong:** Established project decision — refresh-on-transaction, not WebSocket.
-**Do this instead:** `revalidatePath('/admin/...')` in Server Actions + `export const dynamic = 'force-dynamic'` on pages.
+**What people do:** Build a custom permission check for each add-on feature instead of plugging into requireFeature().
 
-### Anti-Pattern: MRR from a Single Stripe API Endpoint
+**Why it's wrong:** Splits the audit trail, creates inconsistent upgrade flows, breaks the super admin override system, and makes webhook handling per-feature instead of centralized.
 
-**What people do:** Look for `stripe.billing.mrr` or similar endpoint.
-**Why wrong:** No such endpoint. Stripe analytics dashboard is UI-only, not an API.
-**Do this instead:** Calculate MRR by aggregating `stripe.subscriptions.list()` items (pattern documented above).
-
-### Anti-Pattern: Client-Side Stripe API Calls
-
-**What people do:** Call Stripe from a Client Component.
-**Why wrong:** Secret key exposure. Stripe secret key must remain server-only.
-**Do this instead:** All Stripe calls in Server Components or Server Actions. Enforced by `server-only` import in `src/lib/stripe.ts`.
-
-### Anti-Pattern: Magic-Link Session Swap for Impersonation
-
-**What people do:** Use `auth.admin.generateLink()` + `verifyOtp()` to log in as the merchant, replacing the super-admin's session.
-**Why wrong:** Super-admin loses their session. Session management becomes complex. Rolling back requires another magic link.
-**Do this instead:** Short-lived impersonation JWT that injects `store_id` context into request headers — super-admin session remains untouched.
-
-### Anti-Pattern: Role Checks Only in Middleware
-
-**What people do:** Trust middleware role check, skip guard in Server Actions.
-**Why wrong:** Server Actions can be called directly without going through middleware. Every Server Action must independently verify authentication and authorization.
-**Do this instead:** `requireRole('owner')` (or equivalent) as first step in every write Server Action.
+**Do this instead:** Every add-on uses requireFeature(). If requireFeature() needs extension (e.g., checking two features simultaneously for Supplier Management), extend the utility with a new option — do not bypass it.
 
 ---
 
-## Integration Points: External Services
+### Anti-Pattern 2: Skipping the DB-Path Check on Mutations
 
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| Stripe (platform analytics) | `stripe.subscriptions.list()` + `stripe.invoices.list()` in Server Components | Cache with `revalidate: 300`. Paginate if tenants > 100 (use `autoPagingEach`). Existing `stripe` singleton in `src/lib/stripe.ts`. |
-| Stripe (tenant billing) | `stripe.subscriptions.list({ customer })` + `stripe.invoices.list({ customer })` | Same pattern as `admin/billing/page.tsx`. No new Stripe setup. |
-| Supabase Auth Admin API | `auth.admin.generateLink()`, `auth.admin.updateUserById()` | Service role only. Available via `createSupabaseAdminClient()` — already exists. |
-| jose (impersonation JWT) | `SignJWT` / `jwtVerify` | New env var `SUPER_ADMIN_JWT_SECRET`. Same library already used for staff PINs. |
+**What people do:** Use the JWT fast-path (no requireDbCheck) on Server Action mutations to save one DB round-trip.
+
+**Why it's wrong:** The JWT is up to 1 hour stale. A cancelled subscription's JWT still says `loyalty: true` for up to an hour. This allows unauthorized writes during that window.
+
+**Do this instead:** JWT fast-path for reads (Server Component rendering). DB-path for every mutation. The extra round-trip is ~5ms and worth it.
+
+---
+
+### Anti-Pattern 3: Application-Layer Loops Instead of SECURITY DEFINER RPCs
+
+**What people do:** Call adjust_stock in a JavaScript loop over cart line items in a Server Action.
+
+**Why it's wrong:** Each iteration is a separate DB round-trip. If one fails, previous ones are already committed — partial state is worse than no state.
+
+**Do this instead:** Pass the entire payload to a SECURITY DEFINER RPC that loops in PL/pgSQL. One round-trip, one transaction, atomic.
+
+---
+
+### Anti-Pattern 4: Separate Stripe Products Instead of One Price ID Per Feature
+
+**What people do:** Create multiple Stripe Products for different tiers of an add-on.
+
+**Why it's wrong:** PRICE_TO_FEATURE is a flat lookup — it maps one Price ID to one store_plans column. Multiple Price IDs per feature require custom routing logic.
+
+**Do this instead:** One Stripe Product + one Price ID per add-on feature. If pricing needs to change, create a new Price ID and update the env var — old subscribers keep their original price.
+
+---
+
+### Anti-Pattern 5: Storing Feature State Outside store_plans
+
+**What people do:** Create a separate `loyalty_plans` table to track loyalty subscription state.
+
+**Why it's wrong:** The JWT hook only reads from store_plans. A second table creates two sources of truth and breaks the JWT fast-path.
+
+**Do this instead:** All subscription feature flags live in store_plans as boolean columns. Add-on-specific *configuration* (earn rates, expiry policies, etc.) lives in the add-on's own settings table (e.g., loyalty_settings). These are different concerns.
 
 ---
 
 ## Scaling Considerations
 
-| Concern | Now (0-50 tenants) | At 500+ tenants |
-|---------|---------------------|-----------------|
-| Stripe analytics | `subscriptions.list(limit: 100)` is fine | Must use `autoPagingEach` for >100 active subscriptions |
-| Customer list | Simple Supabase query | Add composite index `(store_id, email)` if search is slow |
-| Staff RBAC check | `resolveAuth()` + string compare — fast | No change needed |
-| Impersonation | Short-lived jose JWT — stateless, no DB | No change needed |
+| Scale | Architecture Adjustments |
+|-------|--------------------------|
+| 0-100 stores | Current architecture is correct. No changes needed. |
+| 100-1,000 stores | Add composite index on store_plans(store_id) — already exists. Monitor cron job duration for analytics snapshots. |
+| 1,000-10,000 stores | Analytics cron may need pagination (process stores in batches of 100). JWT hook stays fast (single SELECT on indexed column). |
+| 10,000+ stores | store_plans table is still fast (indexed on store_id UNIQUE). Real bottleneck will be cron analytics jobs — move to queue-based processing (Supabase pg_cron + pg_partman, or Inngest). |
+
+**First bottleneck:** Nightly analytics cron jobs processing all stores synchronously. Fix: paginate by processing stores in batches within the cron budget.
+
+**Second bottleneck:** Stripe webhook processing time if subscription events spike (mass signups during a promotion). Fix: idempotency is already built in — safe to add webhook queueing later if needed.
 
 ---
 
 ## Sources
 
-- Existing codebase: `src/lib/resolveAuth.ts`, `src/lib/requireFeature.ts`, `src/middleware.ts`, `src/actions/super-admin/suspendTenant.ts`, `src/app/admin/billing/page.tsx`, `supabase/migrations/001–026` — HIGH confidence (direct read)
-- Stripe subscriptions list API: [docs.stripe.com/api/subscriptions/list](https://docs.stripe.com/api/subscriptions/list) — HIGH confidence
-- Stripe MRR calculation: [support.stripe.com/questions/calculating-monthly-recurring-revenue-mrr-in-billing](https://support.stripe.com/questions/calculating-monthly-recurring-revenue-mrr-in-billing) — HIGH confidence (official Stripe)
-- Recharts + Next.js App Router (client component requirement): [app-generator.dev/docs/technologies/nextjs/integrate-recharts.html](https://app-generator.dev/docs/technologies/nextjs/integrate-recharts.html) — MEDIUM confidence (verified against React 19 compatibility notes)
-- Supabase impersonation patterns: [catjam.fi/articles/supabase-admin-impersonation](https://catjam.fi/articles/supabase-admin-impersonation) and [github.com/orgs/supabase/discussions/31244](https://github.com/orgs/supabase/discussions/31244) — MEDIUM confidence
-- Supabase RBAC + custom claims: [supabase.com/docs/guides/database/postgres/custom-claims-and-role-based-access-control-rbac](https://supabase.com/docs/guides/database/postgres/custom-claims-and-role-based-access-control-rbac) — HIGH confidence
+- Existing codebase (direct analysis, HIGH confidence):
+  - `src/config/addons.ts`
+  - `src/lib/requireFeature.ts`
+  - `src/app/api/webhooks/stripe/billing/route.ts`
+  - `src/actions/billing/createSubscriptionCheckoutSession.ts`
+  - `supabase/migrations/019_billing_claims.sql`
+  - `supabase/migrations/024_service_product_type.sql`
+  - `supabase/migrations/025_inventory_core.sql`
+- Competitor feature analysis: Square NZ loyalty ($45+/mo), marketing ($15+/mo) — MEDIUM confidence (WebSearch 2026-04-06)
+- Lightspeed Retail NZ add-on landscape — MEDIUM confidence (WebSearch 2026-04-06)
+- Multi-tenant feature gating patterns: [WorkOS Developer Guide](https://workos.com/blog/developers-guide-saas-multi-tenant-architecture) — MEDIUM confidence
 
 ---
-*Architecture research for: NZPOS v4.0 Admin Platform milestone*
-*Researched: 2026-04-05*
+
+*Architecture research for: NZPOS v8.0 Add-On Catalog Expansion*
+*Researched: 2026-04-06*
