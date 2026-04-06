@@ -64,7 +64,7 @@
 - [x] **Phase 24: Staff RBAC Foundation** - Manager role, shared role constants, staff management UI, and role-gated Server Action guards (completed 2026-04-04)
 - [x] **Phase 25: Admin Operational UI** - Customer management, promo edit/delete, store settings expansion, and admin dashboard charts (completed 2026-04-05)
 - [x] **Phase 26: Super-Admin Billing + User Management** - Platform overview metrics, per-tenant billing visibility, and merchant account management (completed 2026-04-05)
-- [ ] **Phase 27: Super-Admin Analytics** - Materialised MRR/churn analytics with Stripe sync job and platform revenue breakdown
+- [x] **Phase 27: Super-Admin Analytics** - Materialised MRR/churn analytics with Stripe sync job and platform revenue breakdown (completed 2026-04-06)
 
 ## Phase Details
 
@@ -133,7 +133,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 27-01-PLAN.md — Stripe snapshot sync: migration, sync function, cron route, server action with rate limiting
-- [ ] 27-02-PLAN.md — Analytics page UI: stat cards, MRR trend chart, add-on revenue chart, sync controls
+- [x] 27-02-PLAN.md — Analytics page UI: stat cards, MRR trend chart, add-on revenue chart, sync controls
 **UI hint**: yes
 
 ## Progress
@@ -166,4 +166,4 @@ Plans:
 | 24. Staff RBAC Foundation | v4.0 | 3/3 | Complete    | 2026-04-04 |
 | 25. Admin Operational UI | v4.0 | 3/3 | Complete    | 2026-04-05 |
 | 26. Super-Admin Billing + User Management | v4.0 | 2/3 | Complete    | 2026-04-05 |
-| 27. Super-Admin Analytics | v4.0 | 1/2 | In Progress|  |
+| 27. Super-Admin Analytics | v4.0 | 2/2 | Complete   | 2026-04-06 |
