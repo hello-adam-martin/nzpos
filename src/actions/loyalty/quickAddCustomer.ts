@@ -8,9 +8,8 @@ import { POS_ROLES } from '@/config/roles'
 const quickAddSchema = z.object({
   name: z.string().min(1).max(200),
   email: z.string().email(),
-  consent_given: z.literal(true, {
-    errorMap: () => ({ message: 'Customer consent is required' }),
-  }),
+  // consent_given MUST be exactly true — enforces IPP 3A privacy consent (D-13/D-14)
+  consent_given: z.literal(true),
 })
 
 export type QuickAddCustomerResult = {
@@ -40,13 +39,13 @@ export async function quickAddCustomer(
   const parsed = quickAddSchema.safeParse(input)
   if (!parsed.success) {
     // Check specifically for consent_given failure to provide the required IPP 3A message
-    const consentError = parsed.error.errors.find(e =>
+    const consentError = parsed.error.issues.find(e =>
       e.path.includes('consent_given')
     )
     if (consentError) {
       return { error: 'Customer consent is required' }
     }
-    const firstError = parsed.error.errors[0]
+    const firstError = parsed.error.issues[0]
     return { error: firstError?.message ?? 'Invalid input' }
   }
 

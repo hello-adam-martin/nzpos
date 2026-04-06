@@ -21,6 +21,7 @@ import { CashEntryScreen } from './CashEntryScreen'
 import { GiftCardCodeEntryScreen } from './GiftCardCodeEntryScreen'
 import { OutOfStockDialog } from './OutOfStockDialog'
 import { ReceiptScreen } from './ReceiptScreen'
+import { CustomerLookupSheet } from './CustomerLookupSheet'
 import type { ReceiptData } from '@/lib/receipt'
 
 // Dynamically import BarcodeScannerSheet to prevent SSR issues (Quagga2 requires browser APIs)
@@ -43,6 +44,8 @@ type POSClientShellProps = {
   staffList: StaffRow[]
   hasInventory: boolean
   hasGiftCards?: boolean
+  hasLoyalty?: boolean
+  redeemRateCents?: number
   demoMode?: boolean
   demoStore?: { name: string; address: string | null; phone: string | null; gst_number: string | null }
 }
@@ -57,6 +60,8 @@ export function POSClientShell({
   staffList,
   hasInventory,
   hasGiftCards = false,
+  hasLoyalty = false,
+  redeemRateCents = 1,
   demoMode = false,
   demoStore,
 }: POSClientShellProps) {
@@ -80,6 +85,9 @@ export function POSClientShell({
 
   // Discount sheet state
   const [discountTarget, setDiscountTarget] = useState<string | null>(null)
+
+  // Customer lookup sheet state (loyalty add-on)
+  const [customerLookupOpen, setCustomerLookupOpen] = useState(false)
 
   // Out-of-stock override dialog state
   const [outOfStockProduct, setOutOfStockProduct] = useState<ProductRow | null>(null)
@@ -492,6 +500,9 @@ export function POSClientShell({
         staffRole={staffRole}
         onOpenDiscount={(productId) => setDiscountTarget(productId)}
         showGiftCard={hasGiftCards}
+        hasLoyalty={hasLoyalty}
+        redeemRateCents={redeemRateCents}
+        onOpenCustomerLookup={() => setCustomerLookupOpen(true)}
       />
 
       {/* ── Overlays ──────────────────────────────────────────────── */}
@@ -528,6 +539,25 @@ export function POSClientShell({
           isOpen={discountTarget !== null}
           onClose={() => setDiscountTarget(null)}
           onApply={handleApplyDiscount}
+        />
+      )}
+
+      {/* Customer lookup sheet (loyalty add-on) */}
+      {hasLoyalty && (
+        <CustomerLookupSheet
+          isOpen={customerLookupOpen}
+          onClose={() => setCustomerLookupOpen(false)}
+          onCustomerSelected={(customer) => {
+            dispatch({
+              type: 'ATTACH_CUSTOMER',
+              customerId: customer.id,
+              name: customer.name,
+              pointsBalance: customer.pointsBalance,
+            })
+            setCustomerLookupOpen(false)
+          }}
+          storeId={storeId}
+          redeemRateCents={redeemRateCents}
         />
       )}
 

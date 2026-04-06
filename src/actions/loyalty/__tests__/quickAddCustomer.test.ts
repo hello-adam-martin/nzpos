@@ -6,9 +6,7 @@ import { z } from 'zod'
 const quickAddSchema = z.object({
   name: z.string().min(1).max(200),
   email: z.string().email(),
-  consent_given: z.literal(true, {
-    errorMap: () => ({ message: 'Customer consent is required' }),
-  }),
+  consent_given: z.literal(true),
 })
 
 describe('quickAddCustomer', () => {

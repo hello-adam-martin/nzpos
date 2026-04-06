@@ -262,6 +262,17 @@ describe('cartReducer', () => {
         cartDiscountType: 'fixed',
         phase: 'sale_complete',
         completedOrderId: 'order-789',
+        giftCardCode: null,
+        giftCardBalanceCents: null,
+        giftCardAmountCents: null,
+        giftCardRemainingAfterCents: null,
+        giftCardExpiresAt: null,
+        splitRemainderMethod: null,
+        attachedCustomerId: 'cust-123',
+        attachedCustomerName: 'Jane',
+        attachedCustomerPoints: 100,
+        loyaltyDiscountCents: 50,
+        loyaltyPointsRedeemed: 50,
       }
       const state = cartReducer(dirtyState, { type: 'NEW_SALE' })
       expect(state).toEqual(initialCartState)
