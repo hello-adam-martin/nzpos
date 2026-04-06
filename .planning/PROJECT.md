@@ -81,7 +81,17 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 
 ### Active
 
-(No active milestone — planning next)
+## Current Milestone: v7.0 POS Demo
+
+**Goal:** Let prospective merchants try the real POS system from the landing page — no signup required, full checkout flow with simulated payment, signup nudge after completing a sale.
+
+**Target features:**
+- Pre-seeded demo store with ~20 realistic NZ retail products
+- `/demo/pos` route running the actual POS code, no auth required
+- Demo-mode flag that simulates sale completion (skips DB write, returns fake receipt)
+- Full EFTPOS confirmation flow with simulated payment
+- Signup CTA after completing a demo sale
+- "Try POS Demo" button on the landing page
 
 ### Out of Scope
 
@@ -182,4 +192,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-06 after v6.0 milestone*
+*Last updated: 2026-04-06 after v7.0 milestone start*
