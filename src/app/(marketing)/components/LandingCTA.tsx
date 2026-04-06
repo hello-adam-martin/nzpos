@@ -5,7 +5,7 @@ export default function LandingCTA() {
     <section className="bg-[var(--color-navy)]">
       <div className="max-w-[1200px] mx-auto px-[var(--space-md)] md:px-[var(--space-lg)] py-[var(--space-3xl)] text-center">
         <h2 className="font-sans text-xl font-bold text-white leading-[1.3]">
-          Ready to run a better shop?
+          Your shop, running smarter.
         </h2>
         <div className="mt-[var(--space-lg)]">
           <Link
@@ -17,7 +17,7 @@ export default function LandingCTA() {
           </Link>
         </div>
         <p className="font-sans text-sm text-white/60 mt-[var(--space-sm)]">
-          Set up in under 5 minutes.
+          Set up in under 5 minutes. No credit card needed.
         </p>
       </div>
     </section>

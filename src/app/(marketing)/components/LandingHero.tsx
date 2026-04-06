@@ -8,11 +8,10 @@ export default function LandingHero() {
           {/* Left column — copy */}
           <div>
             <h1 className="font-display font-bold text-[28px] md:text-[48px] leading-[1.1] text-white">
-              The POS built for Kiwi retailers.
+              The retail platform built for Kiwi businesses.
             </h1>
             <p className="text-base leading-relaxed text-white/70 mt-[var(--space-lg)]">
-              Ring up sales in-store, take orders online, and get GST handled
-              correctly — all from one dashboard.
+              Sell in-store and online from one dashboard. GST handled correctly on every transaction.
             </p>
             <Link
               href="/signup"
