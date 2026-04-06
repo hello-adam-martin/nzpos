@@ -36,8 +36,8 @@ Requirements for v8.0 Add-On Catalog Expansion. Each maps to roadmap phases.
 - [x] **LOYAL-02**: Merchant can configure points-per-dollar earn rate in loyalty settings
 - [x] **LOYAL-03**: Merchant can configure points-to-dollar redemption rate in loyalty settings
 - [x] **LOYAL-04**: Staff can look up a customer by name or email during POS checkout (optional step)
-- [ ] **LOYAL-05**: Customer earns loyalty points automatically on completed POS sales when identified
-- [ ] **LOYAL-06**: Customer earns loyalty points automatically on completed online orders when logged in
+- [x] **LOYAL-05**: Customer earns loyalty points automatically on completed POS sales when identified
+- [x] **LOYAL-06**: Customer earns loyalty points automatically on completed online orders when logged in
 - [ ] **LOYAL-07**: Customer can view their points balance on their account profile page
 - [ ] **LOYAL-08**: Customer can redeem points as a discount during online checkout
 - [x] **LOYAL-09**: Staff can apply a customer's points as a discount during POS checkout
@@ -95,8 +95,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LOYAL-02 | Phase 37 | Complete |
 | LOYAL-03 | Phase 37 | Complete |
 | LOYAL-04 | Phase 37 | Complete |
-| LOYAL-05 | Phase 37 | Pending |
-| LOYAL-06 | Phase 37 | Pending |
+| LOYAL-05 | Phase 37 | Complete |
+| LOYAL-06 | Phase 37 | Complete |
 | LOYAL-07 | Phase 37 | Pending |
 | LOYAL-08 | Phase 37 | Pending |
 | LOYAL-09 | Phase 37 | Complete |

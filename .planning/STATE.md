@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: Add-On Catalog Expansion
 status: executing
-stopped_at: Completed 37-02-PLAN.md
-last_updated: "2026-04-06T20:36:22.552Z"
+stopped_at: Completed 37-04-PLAN.md
+last_updated: "2026-04-06T20:41:27.260Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 18
-  completed_plans: 14
+  completed_plans: 15
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 ## Current Position
 
 Phase: 37 (loyalty-points-add-on) — EXECUTING
-Plan: 4 of 7
+Plan: 5 of 7
 Status: Ready to execute
 Last activity: 2026-04-06
 
@@ -72,6 +72,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 37-loyalty-points-add-on]: loyalty_settings uses separate table (Option B) for clean upsert and future extensibility
 - [Phase 37-loyalty-points-add-on]: earn/redeem loyalty RPCs are SECURITY DEFINER, service_role only; redeem_loyalty_points uses SELECT FOR UPDATE for concurrency safety
 - [Phase 37-02]: LoyaltySettingsCard split as client component (not inlined in page.tsx) — proper Next.js server/client boundary
+- [Phase 37]: Loyalty operations are non-fatal — sale never voided by loyalty RPC failure (matches gift card redemption pattern)
+- [Phase 37]: Online loyalty net amount = session.amount_total (Stripe already reflects negative line items — no double-subtraction)
 
 ### Pending Todos
 
@@ -84,6 +86,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T20:36:22.549Z
-Stopped at: Completed 37-02-PLAN.md
+Last session: 2026-04-06T20:41:27.258Z
+Stopped at: Completed 37-04-PLAN.md
 Resume file: None
