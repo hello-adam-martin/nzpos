@@ -1,5 +1,32 @@
 # Milestones
 
+## v6.0 Free Email Notifications (Shipped: 2026-04-06)
+
+**Phases completed:** 8 phases, 20 plans, 31 tasks
+
+**Key accomplishments:**
+
+- Three-tier RBAC foundation: POS_ROLES constant, PIN utility with blacklist, extended Zod schemas with manager role, and DB-verified resolveStaffAuthVerified() for role-gated writes
+- 5 staff Server Actions with owner-only guards and session invalidation, middleware extended for manager JWT admin access with route whitelist, admin layout dual-auth, and both refund actions extended for manager role
+- Expanded store settings with business details and receipt customization forms, added promo edit/soft-delete with modal UI, and wired Customers link into AdminSidebar
+- 1. [Rule 1 - Bug] order_number column not in orders table schema
+- Complete customer management feature: paginated list with search, detail page with order history, and two-step disable/enable account functionality using Supabase Auth ban
+- Super-admin platform overview dashboard with 7 stat cards (tenant counts + add-on adoption rates), 30-day signup trend area chart, 3-link sidebar, and analytics stub page
+- Stripe subscription and invoice visibility added to super-admin tenant detail page, with payment overdue banner and owner email/signup date from Supabase Auth
+- Password reset email + account disable/enable via Supabase Auth admin API, with confirmation modals and audit logging on super-admin tenant detail page
+- Materialised Stripe analytics pipeline: DB tables with RLS, shared sync function with annual MRR normalisation, Vercel Cron route, and rate-limited on-demand server action with 18 unit tests
+- Analytics page with Recharts MRR trend + add-on revenue charts, stat cards, and sync controls with rate-limit countdown — all data from snapshot table, no live Stripe calls
+- Rewrote hero/CTA from MVP-era "POS for retailers" to confident SaaS "retail platform for Kiwi businesses" tone, added Features/Pricing anchor links to nav
+- Rewritten LandingFeatures with 15 grouped feature cards across 4 categories and new LandingNZCallout trust badge strip
+- Corrected pricing section with 6 free-tier features, 3 add-on cards (Xero $9, Email $5, Inventory $9), and wired NZCallout into page composition
+- One-liner:
+- One-liner:
+- Removed all email_notifications dead code from 4 super admin pages — dashboard now shows 3 adoption cards, analytics has 3 display names, tenant queries select only the 3 active add-on columns
+- Landing pricing updated to show 2 paid add-ons in centered 2-column grid with email notifications moved to free tier checklist, and email detail page deleted
+- Removed Email Notifications from add-ons hub and updated grid from 3-column to centered 2-column, reflecting email as free tier
+
+---
+
 ## v3.0 Inventory Management (Shipped: 2026-04-05)
 
 **Phases completed:** 3 phases, 11 plans, 13 tasks
