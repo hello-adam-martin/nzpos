@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: Add-On Catalog Expansion
 status: executing
-stopped_at: Phase 36 context gathered
-last_updated: "2026-04-06T18:20:02.225Z"
+stopped_at: Completed 36-00-PLAN.md
+last_updated: "2026-04-06T19:02:34.810Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 11
+  completed_plans: 8
   percent: 0
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 35 — gift-cards-add-on
+**Current focus:** Phase 36 — advanced-reporting-cogs-add-on
 
 ## Current Position
 
-Phase: 36
-Plan: Not started
+Phase: 36 (advanced-reporting-cogs-add-on) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
 Last activity: 2026-04-06
 
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 35]: Partial gift card in Stripe Checkout: negative line item reduces session total — simpler than Stripe Coupons API
 - [Phase 35]: redeem_gift_card RPC takes p_gift_card_id UUID not p_code — look up by code first, then pass UUID
 - [Phase 35]: Full-cover gift card in createCheckoutSession: placeholder stripe_session_id='gift_card_{order.id}' for complete_online_sale RPC call
+- [Phase 36]: Wave 0 RED stubs use nested describe block for has_advanced_reporting, matching existing xero test style; costPrice.test.ts validates schema-level acceptance with pure Zod parsing
 
 ### Pending Todos
 
@@ -74,6 +75,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T18:20:02.222Z
-Stopped at: Phase 36 context gathered
-Resume file: .planning/phases/36-advanced-reporting-cogs-add-on/36-CONTEXT.md
+Last session: 2026-04-06T19:02:34.808Z
+Stopped at: Completed 36-00-PLAN.md
+Resume file: None
