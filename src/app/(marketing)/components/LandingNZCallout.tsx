@@ -6,8 +6,8 @@ export default function LandingNZCallout() {
           <div className="flex flex-col items-center gap-[var(--space-sm)]">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
+              width="32"
+              height="32"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -31,8 +31,8 @@ export default function LandingNZCallout() {
           <div className="flex flex-col items-center gap-[var(--space-sm)]">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
+              width="32"
+              height="32"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -56,8 +56,8 @@ export default function LandingNZCallout() {
           <div className="flex flex-col items-center gap-[var(--space-sm)]">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
+              width="32"
+              height="32"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
