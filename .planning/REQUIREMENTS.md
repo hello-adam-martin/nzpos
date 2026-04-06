@@ -16,9 +16,9 @@ Requirements for Free Email Notifications milestone. Move email notifications fr
 
 ### Billing & Stripe
 
-- [ ] **BILL-01**: Email notifications removed from ADDONS config and Stripe price mappings
-- [ ] **BILL-02**: Email notifications removed from subscription checkout session creation
-- [ ] **BILL-03**: Stripe billing webhook no longer toggles email_notifications feature flag
+- [x] **BILL-01**: Email notifications removed from ADDONS config and Stripe price mappings
+- [x] **BILL-02**: Email notifications removed from subscription checkout session creation
+- [x] **BILL-03**: Stripe billing webhook no longer toggles email_notifications feature flag
 
 ### Admin UI
 

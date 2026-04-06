@@ -188,7 +188,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 29-01-PLAN.md — SQL migration (data fix, column default, auth hook rewrite) + email.ts gate removal
-- [ ] 29-02-PLAN.md — Remove email_notifications from config, billing actions, super admin actions, env, docs, and 7 test files
+- [x] 29-02-PLAN.md — Remove email_notifications from config, billing actions, super admin actions, env, docs, and 7 test files
 
 ### Phase 30: Admin UI & Super Admin
 **Goal**: Admin and super-admin interfaces reflect that email notifications are a free built-in feature — no billing cards, upgrade prompts, or toggle actions reference email notifications
@@ -247,6 +247,6 @@ Plans:
 | 26. Super-Admin Billing + User Management | v4.0 | 3/3 | Complete | 2026-04-05 |
 | 27. Super-Admin Analytics | v4.0 | 2/2 | Complete | 2026-04-06 |
 | 28. Marketing Landing Page | v5.0 | 3/3 | Complete | 2026-04-06 |
-| 29. Backend & Billing Cleanup | v6.0 | 1/2 | In Progress|  |
+| 29. Backend & Billing Cleanup | v6.0 | 2/2 | Complete   | 2026-04-06 |
 | 30. Admin UI & Super Admin | v6.0 | 0/? | Not started | - |
 | 31. Marketing Pages | v6.0 | 0/? | Not started | - |

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: Free Email Notifications
-status: executing
-stopped_at: Completed 29-01-PLAN.md
-last_updated: "2026-04-06T06:45:08.967Z"
+status: verifying
+stopped_at: Completed 29-02-PLAN.md
+last_updated: "2026-04-06T06:46:57.463Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 8
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 16
-  completed_plans: 14
+  completed_plans: 15
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 
 Phase: 29 (backend-billing-cleanup) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-06
 
 Progress: [░░░░░░░░░░] 0%
@@ -53,6 +53,8 @@ Progress: [░░░░░░░░░░] 0%
 - Design system: deep navy (#1E293B) + amber (#E67E22), Satoshi + DM Sans
 - [Phase 29]: has_email_notifications column kept in store_plans (always true) for backwards compatibility
 - [Phase 29]: Auth hook in 031 migration queries only xero, custom_domain, inventory claims
+- [Phase 29]: SubscriptionFeature type reduced from 4 to 3 values (xero | custom_domain | inventory) — email_notifications removed as paid add-on
+- [Phase 29]: schema.test.ts has_email_notifications assertion updated to true for post-migration DB state
 
 ### Pending Todos
 
@@ -64,6 +66,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T06:45:08.965Z
-Stopped at: Completed 29-01-PLAN.md
+Last session: 2026-04-06T06:46:57.461Z
+Stopped at: Completed 29-02-PLAN.md
 Resume file: None
