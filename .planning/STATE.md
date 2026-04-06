@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: Free Email Notifications
 status: executing
-stopped_at: Completed 30-01-PLAN.md
-last_updated: "2026-04-06T07:12:05.106Z"
+stopped_at: Completed 30-02-PLAN.md
+last_updated: "2026-04-06T07:13:30.000Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 8
   completed_phases: 6
   total_plans: 18
-  completed_plans: 17
-  percent: 0
+  completed_plans: 18
+  percent: 100
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 
 ## Current Position
 
-Phase: 30 (admin-ui-super-admin) — EXECUTING
-Plan: 2 of 2
-Status: Ready to execute
+Phase: 30 (admin-ui-super-admin) — COMPLETE
+Plan: 2 of 2 (complete)
+Status: Phase complete
 Last activity: 2026-04-06
 
 Progress: [░░░░░░░░░░] 0%
@@ -57,6 +57,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 29]: schema.test.ts has_email_notifications assertion updated to true for post-migration DB state
 - [Phase 30-admin-ui-super-admin]: UpgradePrompt feature type aligned with SubscriptionFeature: xero | custom_domain | inventory — email_notifications removed from UI
 
+- [Phase 30-02]: Super admin dashboard shows 3 adoption cards (Xero, Domain, Inventory), analytics has 3 ADDON_DISPLAY_NAMES, tenant pages select only active add-on columns
+
 ### Pending Todos
 
 None.
@@ -67,6 +69,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T07:12:05.103Z
-Stopped at: Completed 30-01-PLAN.md
+Last session: 2026-04-06T07:13:30Z
+Stopped at: Completed 30-02-PLAN.md
 Resume file: None

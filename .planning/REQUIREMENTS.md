@@ -24,7 +24,7 @@ Requirements for Free Email Notifications milestone. Move email notifications fr
 
 - [x] **ADMIN-01**: Admin billing page shows only Xero and Inventory add-on cards
 - [x] **ADMIN-02**: UpgradePrompt component no longer references email_notifications
-- [ ] **ADMIN-03**: Super admin activate/deactivate addon actions no longer include email_notifications
+- [x] **ADMIN-03**: Super admin activate/deactivate addon actions no longer include email_notifications
 
 ### Marketing Pages
 
