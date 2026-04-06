@@ -16,9 +16,9 @@ Requirements for v8.0 Add-On Catalog Expansion. Each maps to roadmap phases.
 - [x] **GIFT-05**: Gift card expiry is enforced at minimum 3 years per NZ Fair Trading Act 2024
 - [x] **GIFT-06**: Staff can redeem a gift card as payment method during POS checkout (enter code, validate balance)
 - [ ] **GIFT-07**: Customer can redeem a gift card during online storefront checkout
-- [ ] **GIFT-08**: Gift card supports partial redemption with remaining balance tracked
+- [x] **GIFT-08**: Gift card supports partial redemption with remaining balance tracked
 - [x] **GIFT-09**: Gift card issuance is recorded as deferred liability (not revenue), GST deferred to redemption
-- [ ] **GIFT-10**: Merchant can view gift card list with balances, status, and transaction history in admin
+- [x] **GIFT-10**: Merchant can view gift card list with balances, status, and transaction history in admin
 - [x] **GIFT-11**: Gift card issuance is excluded from Xero sales sync (deferred liability, not revenue)
 
 ### Advanced Reporting / COGS
@@ -81,9 +81,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GIFT-05 | Phase 35 | Complete |
 | GIFT-06 | Phase 35 | Complete |
 | GIFT-07 | Phase 35 | Pending |
-| GIFT-08 | Phase 35 | Pending |
+| GIFT-08 | Phase 35 | Complete |
 | GIFT-09 | Phase 35 | Complete |
-| GIFT-10 | Phase 35 | Pending |
+| GIFT-10 | Phase 35 | Complete |
 | GIFT-11 | Phase 35 | Complete |
 | COGS-01 | Phase 36 | Pending |
 | COGS-02 | Phase 36 | Pending |

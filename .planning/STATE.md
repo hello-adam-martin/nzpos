@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: Add-On Catalog Expansion
 status: executing
-stopped_at: Completed 35-03-PLAN.md
-last_updated: "2026-04-06T12:15:32.533Z"
+stopped_at: Completed 35-05-PLAN.md
+last_updated: "2026-04-06T12:23:19.292Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 6
-  completed_plans: 3
+  completed_plans: 5
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 ## Current Position
 
 Phase: 35 (gift-cards-add-on) — EXECUTING
-Plan: 4 of 6
+Plan: 5 of 6
 Status: Ready to execute
 Last activity: 2026-04-06
 
@@ -58,6 +58,7 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 35]: GIFT-11 verified: Xero sync excludes gift cards inherently — gift_cards table never queried in xero or cron paths
 - [Phase 35]: Auto-split: giftCardAmountCents = Math.min(balanceCents, totalCents) — gift card always applied first, remainder to EFTPOS/Cash
 - [Phase 35]: redeem_gift_card RPC called after complete_pos_sale — order created first, redemption second; redemption failure warns but does not void sale
+- [Phase 35-gift-cards-add-on]: listGiftCards returns only last 4 digits of code in list view — full code only in getGiftCard detail response
 
 ### Pending Todos
 
@@ -70,6 +71,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T12:15:32.531Z
-Stopped at: Completed 35-03-PLAN.md
+Last session: 2026-04-06T12:23:19.289Z
+Stopped at: Completed 35-05-PLAN.md
 Resume file: None
