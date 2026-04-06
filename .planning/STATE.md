@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: Free Email Notifications
-status: planning
-stopped_at: Defining requirements
-last_updated: "2026-04-06T04:30:00.000Z"
-last_activity: 2026-04-06 — Milestone v6.0 started
+status: ready_to_plan
+stopped_at: Roadmap created, ready to plan Phase 29
+last_updated: "2026-04-06T05:00:00.000Z"
+last_activity: 2026-04-06 — Roadmap created for v6.0 (3 phases, 16 requirements)
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Milestone v6.0 — Free Email Notifications
+**Current focus:** Phase 29 — Backend & Billing Cleanup
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-04-06 — Milestone v6.0 started
+Phase: 29 of 31 (Backend & Billing Cleanup)
+Plan: 0 of ? in current phase
+Status: Ready to plan
+Last activity: 2026-04-06 — Roadmap created for v6.0
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -46,14 +46,11 @@ Progress: [░░░░░░░░░░] 0%
 
 ### Decisions
 
-(Carried from v5.0)
-
 - requireFeature() JWT/DB dual-path pattern established for all add-on gating
-- Stripe analytics materialised via platform_analytics_snapshots — never fetch live Stripe API on page load
-- resolveAuth() returns snake_case { store_id, staff_id }
-- Add-on pricing: Xero $9/mo, Inventory Management $9/mo
-- Email notifications moving from $5/mo paid add-on to free tier in v6.0
-- Design system applies: deep navy (#1E293B) + amber (#E67E22), Satoshi + DM Sans
+- has_email_notifications column kept (always true) for backwards compatibility
+- Email notifications moving from $5/mo paid add-on to free tier
+- Add-on pricing post-v6.0: Xero $9/mo, Inventory Management $9/mo (2 paid add-ons)
+- Design system: deep navy (#1E293B) + amber (#E67E22), Satoshi + DM Sans
 
 ### Pending Todos
 
@@ -65,6 +62,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T04:30:00.000Z
-Stopped at: Defining requirements
+Last session: 2026-04-06T05:00:00.000Z
+Stopped at: Roadmap created, ready to plan Phase 29
 Resume file: None

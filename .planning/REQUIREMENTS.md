@@ -42,22 +42,22 @@ Requirements for Free Email Notifications milestone. Move email notifications fr
 
 | REQ | Phase | Plan | Status |
 |-----|-------|------|--------|
-| GATE-01 | — | — | Pending |
-| GATE-02 | — | — | Pending |
-| GATE-03 | — | — | Pending |
-| GATE-04 | — | — | Pending |
-| BILL-01 | — | — | Pending |
-| BILL-02 | — | — | Pending |
-| BILL-03 | — | — | Pending |
-| ADMIN-01 | — | — | Pending |
-| ADMIN-02 | — | — | Pending |
-| ADMIN-03 | — | — | Pending |
-| MKT-01 | — | — | Pending |
-| MKT-02 | — | — | Pending |
-| MKT-03 | — | — | Pending |
-| MKT-04 | — | — | Pending |
-| MKT-05 | — | — | Pending |
-| TEST-01 | — | — | Pending |
+| GATE-01 | Phase 29 | — | Pending |
+| GATE-02 | Phase 29 | — | Pending |
+| GATE-03 | Phase 29 | — | Pending |
+| GATE-04 | Phase 29 | — | Pending |
+| BILL-01 | Phase 29 | — | Pending |
+| BILL-02 | Phase 29 | — | Pending |
+| BILL-03 | Phase 29 | — | Pending |
+| ADMIN-01 | Phase 30 | — | Pending |
+| ADMIN-02 | Phase 30 | — | Pending |
+| ADMIN-03 | Phase 30 | — | Pending |
+| MKT-01 | Phase 31 | — | Pending |
+| MKT-02 | Phase 31 | — | Pending |
+| MKT-03 | Phase 31 | — | Pending |
+| MKT-04 | Phase 31 | — | Pending |
+| MKT-05 | Phase 31 | — | Pending |
+| TEST-01 | Phase 30 | — | Pending |
 
 ## Future Requirements
 

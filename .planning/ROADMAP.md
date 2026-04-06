@@ -7,7 +7,8 @@
 - ✅ **v2.1 Hardening & Documentation** — Phases 17-20 (shipped 2026-04-04). [Archive](milestones/v2.1-ROADMAP.md)
 - ✅ **v3.0 Inventory Management** — Phases 21-23 (shipped 2026-04-05). [Archive](milestones/v3.0-ROADMAP.md)
 - ✅ **v4.0 Admin Platform** — Phases 24-27 (shipped 2026-04-06)
-- 🚧 **v5.0 Marketing & Landing Page** — Phase 28 (in progress)
+- ✅ **v5.0 Marketing & Landing Page** — Phase 28 (shipped 2026-04-06)
+- 🚧 **v6.0 Free Email Notifications** — Phases 29-31 (in progress)
 
 ## Phases
 
@@ -68,13 +69,25 @@
 
 </details>
 
-### v5.0 Marketing & Landing Page (In Progress)
+<details>
+<summary>✅ v5.0 Marketing & Landing Page (Phase 28) — SHIPPED 2026-04-06</summary>
 
-**Milestone Goal:** Update the marketing landing page to accurately reflect all shipped features across v1.0-v4.0, showcase all available add-ons, and present a compelling picture of the platform.
+- [x] **Phase 28: Marketing Landing Page** — completed 2026-04-06
 
-- [x] **Phase 28: Marketing Landing Page** — Complete rewrite of all landing page sections with accurate feature coverage, correct add-on pricing, and mature SaaS messaging (completed 2026-04-06)
+</details>
+
+### v6.0 Free Email Notifications (In Progress)
+
+**Milestone Goal:** Move email notifications from paid add-on to free tier so every store gets order confirmations, pickup alerts, and daily summaries out of the box.
+
+- [ ] **Phase 29: Backend & Billing Cleanup** - Remove feature gates, update auth hook, migration, provisioning, Stripe billing cleanup
+- [ ] **Phase 30: Admin UI & Super Admin** - Remove email from billing page, upgrade prompts, super admin actions, update tests
+- [ ] **Phase 31: Marketing Pages** - Update pricing, add-ons hub, remove email detail page, update grid layout
 
 ## Phase Details
+
+<details>
+<summary>v4.0 Phase Details (shipped)</summary>
 
 ### Phase 24: Staff RBAC Foundation
 **Goal**: Store owners can manage their staff roster and the system enforces role-based permissions so managers have appropriate access without owner-level control
@@ -159,6 +172,44 @@ Plans:
 - [x] 28-01-PLAN.md — Hero/CTA copy rewrite + Nav anchor links
 - [x] 28-02-PLAN.md — Features grouped rewrite (15 cards) + NZ Callout strip
 - [x] 28-03-PLAN.md — Pricing fix (free tier + 3 add-ons) + page.tsx wiring
+
+</details>
+
+### Phase 29: Backend & Billing Cleanup
+**Goal**: Email notifications work for every store without any feature gate check, billing integration, or subscription requirement — the system treats email as a core free feature
+**Depends on**: Phase 28
+**Requirements**: GATE-01, GATE-02, GATE-03, GATE-04, BILL-01, BILL-02, BILL-03
+**Success Criteria** (what must be TRUE):
+  1. A new store created via signup automatically has email notifications enabled — no subscription or manual activation required
+  2. An existing store that never paid for email notifications now sends order confirmations, pickup-ready alerts, and daily summaries without any action from the owner
+  3. The ADDONS config and Stripe price mappings contain only Xero and Inventory Management — email_notifications is absent
+  4. Creating a Stripe checkout session for add-ons never offers email notifications as an option
+  5. Stripe billing webhooks process subscription events without toggling any email_notifications feature flag
+**Plans**: TBD
+
+### Phase 30: Admin UI & Super Admin
+**Goal**: Admin and super-admin interfaces reflect that email notifications are a free built-in feature — no billing cards, upgrade prompts, or toggle actions reference email notifications
+**Depends on**: Phase 29
+**Requirements**: ADMIN-01, ADMIN-02, ADMIN-03, TEST-01
+**Success Criteria** (what must be TRUE):
+  1. Admin billing/add-ons page shows exactly two add-on cards (Xero and Inventory Management) with no trace of email notifications
+  2. UpgradePrompt components throughout the admin never suggest upgrading to get email notifications
+  3. Super admin activate/deactivate addon actions list only Xero and Inventory Management — email_notifications cannot be toggled
+  4. All existing tests pass with email notifications treated as always-on (no feature gate assertions for email)
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 31: Marketing Pages
+**Goal**: Public-facing marketing pages reflect the updated pricing model where email notifications are included free with every store, and only two paid add-ons exist
+**Depends on**: Phase 29
+**Requirements**: MKT-01, MKT-02, MKT-03, MKT-04, MKT-05
+**Success Criteria** (what must be TRUE):
+  1. Landing page pricing section shows exactly two paid add-on cards (Xero and Inventory Management) in a 2-column layout
+  2. The free tier feature checklist on the pricing section includes "Email notifications" as a checked item
+  3. The /add-ons hub page shows exactly two add-ons — no email notifications card
+  4. Navigating to /add-ons/email-notifications returns a 404 or redirects (the detail page no longer exists)
+  5. Add-on grids on both landing and hub pages use a balanced 2-column layout (not a 3-column with a gap)
+**Plans**: TBD
 **UI hint**: yes
 
 ## Progress
@@ -192,4 +243,7 @@ Plans:
 | 25. Admin Operational UI | v4.0 | 3/3 | Complete | 2026-04-05 |
 | 26. Super-Admin Billing + User Management | v4.0 | 3/3 | Complete | 2026-04-05 |
 | 27. Super-Admin Analytics | v4.0 | 2/2 | Complete | 2026-04-06 |
-| 28. Marketing Landing Page | v5.0 | 3/3 | Complete    | 2026-04-06 |
+| 28. Marketing Landing Page | v5.0 | 3/3 | Complete | 2026-04-06 |
+| 29. Backend & Billing Cleanup | v6.0 | 0/? | Not started | - |
+| 30. Admin UI & Super Admin | v6.0 | 0/? | Not started | - |
+| 31. Marketing Pages | v6.0 | 0/? | Not started | - |
