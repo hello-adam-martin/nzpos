@@ -101,7 +101,7 @@
 **Milestone Goal:** Expand paid add-on catalog with Gift Cards, Advanced Reporting/COGS, and Loyalty Points — growing MRR per merchant while maintaining NZ legal compliance.
 
 - [x] **Phase 35: Gift Cards Add-On** — Digital gift card issuance, redemption, and NZ Fair Trading Act compliance (completed 2026-04-06)
-- [ ] **Phase 36: Advanced Reporting / COGS Add-On** — Cost price tracking, margin reports, and CSV export
+- [x] **Phase 36: Advanced Reporting / COGS Add-On** — Cost price tracking, margin reports, and CSV export (completed 2026-04-06)
 - [ ] **Phase 37: Loyalty Points Add-On** — Points earn/redeem at POS and online, privacy-compliant enrollment
 
 ## Phase Details
@@ -136,12 +136,12 @@ Plans:
   3. Merchant can generate a COGS report for a chosen date range showing revenue, cost, and margin per product
   4. Merchant can view a profit breakdown grouped by product category
   5. Merchant can export COGS report data as a CSV file
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 Plans:
 - [x] 36-00-PLAN.md — Wave 0 test stubs (billing webhook + cost price persistence)
 - [x] 36-01-PLAN.md — DB migration, billing pipeline, cost price in product form/list
 - [x] 36-02-PLAN.md — COGS calculation library with TDD tests
-- [ ] 36-03-PLAN.md — Profit & Margin tab UI (summary cards, product table, category breakdown, CSV export)
+- [x] 36-03-PLAN.md — Profit & Margin tab UI (summary cards, product table, category breakdown, CSV export)
 **UI hint**: yes
 
 ### Phase 37: Loyalty Points Add-On
@@ -196,5 +196,5 @@ Plans:
 | 33. Demo POS Route & Checkout | v7.0 | 2/2 | Complete | 2026-04-06 |
 | 34. Signup Conversion & Landing Page | v7.0 | 2/2 | Complete | 2026-04-06 |
 | 35. Gift Cards Add-On | v8.0 | 7/7 | Complete    | 2026-04-06 |
-| 36. Advanced Reporting / COGS Add-On | v8.0 | 3/4 | In Progress|  |
+| 36. Advanced Reporting / COGS Add-On | v8.0 | 4/4 | Complete   | 2026-04-06 |
 | 37. Loyalty Points Add-On | v8.0 | 0/TBD | Not started | - |

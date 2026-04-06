@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: Add-On Catalog Expansion
-status: executing
-stopped_at: Completed 36-advanced-reporting-cogs-add-on/36-01-PLAN.md
-last_updated: "2026-04-06T19:08:47.917Z"
+status: verifying
+stopped_at: Completed 36-advanced-reporting-cogs-add-on/36-03-PLAN.md
+last_updated: "2026-04-06T19:16:17.047Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 
 Phase: 36 (advanced-reporting-cogs-add-on) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-06
 
 Progress: [░░░░░░░░░░] 0%
@@ -66,6 +66,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 36]: aggregateCOGS sets sku=null since OrderItem shape does not include SKU column; plan 03 can hydrate from product cost data
 - [Phase 36-advanced-reporting-cogs-add-on]: cost_price_cents is GST-exclusive (supplier cost before tax) — enforced by UI label (excl. GST)
 - [Phase 36-advanced-reporting-cogs-add-on]: NULL cost_price_cents means not entered yet — margin shows --- in the product table
+- [Phase 36-advanced-reporting-cogs-add-on]: overallMarginPercent uses calculateMarginPercent(cogsWithCostRevenue, totalCostCents) — same denominator as CogsReportTable tfoot for consistency
+- [Phase 36-advanced-reporting-cogs-add-on]: COGS queries gated by hasAdvancedReporting && tab=profit — no unnecessary DB queries for non-subscribers
 
 ### Pending Todos
 
@@ -78,6 +80,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T19:08:47.915Z
-Stopped at: Completed 36-advanced-reporting-cogs-add-on/36-01-PLAN.md
+Last session: 2026-04-06T19:16:17.045Z
+Stopped at: Completed 36-advanced-reporting-cogs-add-on/36-03-PLAN.md
 Resume file: None
