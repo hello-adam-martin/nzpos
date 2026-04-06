@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: Add-On Catalog Expansion
 status: executing
-stopped_at: Completed 37-01-PLAN.md
-last_updated: "2026-04-06T20:34:20.066Z"
+stopped_at: Completed 37-02-PLAN.md
+last_updated: "2026-04-06T20:36:22.552Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 18
-  completed_plans: 13
+  completed_plans: 14
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 ## Current Position
 
 Phase: 37 (loyalty-points-add-on) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 Status: Ready to execute
 Last activity: 2026-04-06
 
@@ -71,6 +71,7 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 37-loyalty-points-add-on]: Wave 0 RED stubs use expect(true).toBe(false) pattern — matches Phase 35/36 Wave 0 convention across 5 files, 32 stubs
 - [Phase 37-loyalty-points-add-on]: loyalty_settings uses separate table (Option B) for clean upsert and future extensibility
 - [Phase 37-loyalty-points-add-on]: earn/redeem loyalty RPCs are SECURITY DEFINER, service_role only; redeem_loyalty_points uses SELECT FOR UPDATE for concurrency safety
+- [Phase 37-02]: LoyaltySettingsCard split as client component (not inlined in page.tsx) — proper Next.js server/client boundary
 
 ### Pending Todos
 
@@ -83,6 +84,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T20:34:20.064Z
-Stopped at: Completed 37-01-PLAN.md
+Last session: 2026-04-06T20:36:22.549Z
+Stopped at: Completed 37-02-PLAN.md
 Resume file: None
