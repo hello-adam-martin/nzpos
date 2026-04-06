@@ -1,5 +1,5 @@
 interface UpgradePromptProps {
-  feature: 'xero' | 'email_notifications' | 'custom_domain'
+  feature: 'xero' | 'custom_domain' | 'inventory'
   headline: string
   body: string
 }

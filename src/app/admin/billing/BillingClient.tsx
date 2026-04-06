@@ -11,7 +11,6 @@ import type { SubscriptionFeature } from '@/config/addons'
 interface BillingClientProps {
   storePlans: {
     has_xero: boolean
-    has_email_notifications: boolean
     has_custom_domain: boolean
     has_inventory: boolean
   }
@@ -105,7 +104,6 @@ export default function BillingClient({
   function getStatus(feature: string): 'active' | 'trial' | 'inactive' {
     const flagMap: Record<string, boolean> = {
       xero: storePlans.has_xero,
-      email_notifications: storePlans.has_email_notifications,
       custom_domain: storePlans.has_custom_domain,
       inventory: storePlans.has_inventory,
     }
