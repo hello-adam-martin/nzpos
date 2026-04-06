@@ -121,12 +121,12 @@ describe('syncStripeSnapshot', () => {
       id: 'sub_monthly',
       status: 'active',
       canceled_at: null,
-      current_period_start: 1746230400,
-      current_period_end: 1748822400,
-      discount: null,
+      discounts: [],
       items: {
         data: [
           {
+            current_period_start: 1746230400,
+            current_period_end: 1748822400,
             price: {
               id: 'price_xero_monthly',
               recurring: { interval: 'month' },
@@ -183,12 +183,12 @@ describe('syncStripeSnapshot', () => {
       id: 'sub_annual',
       status: 'active',
       canceled_at: null,
-      current_period_start: 1746230400,
-      current_period_end: 1777766400,
-      discount: null,
+      discounts: [],
       items: {
         data: [
           {
+            current_period_start: 1746230400,
+            current_period_end: 1777766400,
             price: {
               id: 'price_inventory_monthly',
               recurring: { interval: 'year' },
@@ -236,12 +236,12 @@ describe('syncStripeSnapshot', () => {
       id: 'sub_trial',
       status: 'trialing',
       canceled_at: null,
-      current_period_start: 1746230400,
-      current_period_end: 1748822400,
-      discount: null,
+      discounts: [],
       items: {
         data: [
           {
+            current_period_start: 1746230400,
+            current_period_end: 1748822400,
             price: {
               id: 'price_xero_monthly',
               recurring: { interval: 'month' },
@@ -287,12 +287,12 @@ describe('syncStripeSnapshot', () => {
       id: 'sub_email',
       status: 'active',
       canceled_at: null,
-      current_period_start: 1746230400,
-      current_period_end: 1748822400,
-      discount: null,
+      discounts: [],
       items: {
         data: [
           {
+            current_period_start: 1746230400,
+            current_period_end: 1748822400,
             price: {
               id: 'price_email_monthly',
               recurring: { interval: 'month' },
@@ -336,12 +336,12 @@ describe('syncStripeSnapshot', () => {
       id: 'sub_unknown',
       status: 'active',
       canceled_at: null,
-      current_period_start: 1746230400,
-      current_period_end: 1748822400,
-      discount: null,
+      discounts: [],
       items: {
         data: [
           {
+            current_period_start: 1746230400,
+            current_period_end: 1748822400,
             price: {
               id: 'price_unknown_plan',
               recurring: { interval: 'month' },
@@ -386,12 +386,12 @@ describe('syncStripeSnapshot', () => {
       id: 'sub_canceled',
       status: 'canceled',
       canceled_at: canceledAtUnix,
-      current_period_start: 1743638400,
-      current_period_end: 1746230400,
-      discount: null,
+      discounts: [],
       items: {
         data: [
           {
+            current_period_start: 1743638400,
+            current_period_end: 1746230400,
             price: {
               id: 'price_xero_monthly',
               recurring: { interval: 'month' },
@@ -437,12 +437,12 @@ describe('syncStripeSnapshot', () => {
       id: 'sub_period',
       status: 'active',
       canceled_at: null,
-      current_period_start: periodStartUnix,
-      current_period_end: periodEndUnix,
-      discount: null,
+      discounts: [],
       items: {
         data: [
           {
+            current_period_start: periodStartUnix,
+            current_period_end: periodEndUnix,
             price: {
               id: 'price_xero_monthly',
               recurring: { interval: 'month' },
@@ -482,21 +482,25 @@ describe('syncStripeSnapshot', () => {
     expect(row.current_period_end).toBe(new Date(periodEndUnix * 1000).toISOString())
   })
 
-  it('extracts discount_amount from sub.discount.coupon.amount_off', async () => {
+  it('extracts discount_amount from sub.discounts[0].coupon.amount_off', async () => {
     const mockSub = {
       id: 'sub_discounted',
       status: 'active',
       canceled_at: null,
-      current_period_start: 1746230400,
-      current_period_end: 1748822400,
-      discount: {
-        coupon: {
-          amount_off: 500,
+      discounts: [
+        {
+          source: {
+            coupon: {
+              amount_off: 500,
+            },
+          },
         },
-      },
+      ],
       items: {
         data: [
           {
+            current_period_start: 1746230400,
+            current_period_end: 1748822400,
             price: {
               id: 'price_xero_monthly',
               recurring: { interval: 'month' },
@@ -540,12 +544,12 @@ describe('syncStripeSnapshot', () => {
       id: 'sub_nodiscount',
       status: 'active',
       canceled_at: null,
-      current_period_start: 1746230400,
-      current_period_end: 1748822400,
-      discount: null,
+      discounts: [],
       items: {
         data: [
           {
+            current_period_start: 1746230400,
+            current_period_end: 1748822400,
             price: {
               id: 'price_xero_monthly',
               recurring: { interval: 'month' },
@@ -589,12 +593,12 @@ describe('syncStripeSnapshot', () => {
       id: 'sub_month_format',
       status: 'active',
       canceled_at: null,
-      current_period_start: 1746230400,
-      current_period_end: 1748822400,
-      discount: null,
+      discounts: [],
       items: {
         data: [
           {
+            current_period_start: 1746230400,
+            current_period_end: 1748822400,
             price: {
               id: 'price_xero_monthly',
               recurring: { interval: 'month' },
@@ -640,12 +644,12 @@ describe('syncStripeSnapshot', () => {
       id: 'sub_delete_check',
       status: 'active',
       canceled_at: null,
-      current_period_start: 1746230400,
-      current_period_end: 1748822400,
-      discount: null,
+      discounts: [],
       items: {
         data: [
           {
+            current_period_start: 1746230400,
+            current_period_end: 1748822400,
             price: {
               id: 'price_xero_monthly',
               recurring: { interval: 'month' },

@@ -90,9 +90,18 @@ export async function syncStripeSnapshot(): Promise<{ synced: number; error?: st
           const featureFlag = PRICE_TO_FEATURE[price.id]
           const addonType = featureFlag ? featureFlag.replace('has_', '') : null
 
-          // Discount: use actual amount_off from coupon if present (D-10)
-          const discountAmount = sub.discount?.coupon?.amount_off ?? 0
+          // Discount: check discounts array (Stripe v21 — discount was replaced by discounts[])
+          // In v21, coupon moved to discount.source.coupon and discounts[] may be string IDs
+          const firstDiscount = sub.discounts?.[0]
+          let discountAmount = 0
+          if (typeof firstDiscount === 'object' && firstDiscount !== null) {
+            const coupon = firstDiscount.source?.coupon
+            if (typeof coupon === 'object' && coupon !== null && coupon.amount_off) {
+              discountAmount = coupon.amount_off
+            }
+          }
 
+          // current_period_start/end live on SubscriptionItem in Stripe v21
           rows.push({
             tenant_id: store.id,
             stripe_subscription_id: sub.id,
@@ -103,11 +112,11 @@ export async function syncStripeSnapshot(): Promise<{ synced: number; error?: st
             mrr_cents: mrrCents,
             addon_type: addonType,
             canceled_at: sub.canceled_at ? new Date(sub.canceled_at * 1000).toISOString() : null,
-            current_period_start: sub.current_period_start
-              ? new Date(sub.current_period_start * 1000).toISOString()
+            current_period_start: item.current_period_start
+              ? new Date(item.current_period_start * 1000).toISOString()
               : null,
-            current_period_end: sub.current_period_end
-              ? new Date(sub.current_period_end * 1000).toISOString()
+            current_period_end: item.current_period_end
+              ? new Date(item.current_period_end * 1000).toISOString()
               : null,
             discount_amount: discountAmount,
             snapshot_month: currentMonth,
