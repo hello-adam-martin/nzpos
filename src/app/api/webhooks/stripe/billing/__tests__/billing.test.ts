@@ -61,6 +61,7 @@ vi.mock('@/config/addons', () => ({
   PRICE_TO_FEATURE: {
     price_xero_test: 'has_xero',
     price_domain_test: 'has_custom_domain',
+    price_advanced_reporting_test: 'has_advanced_reporting',
   },
 }))
 
@@ -439,6 +440,88 @@ describe('Billing Webhook Handler', () => {
     expect(storePlansUpdated).toBe(false)
     // But the event SHOULD still be recorded for idempotency
     expect(stripeEventInserted).toBe(true)
+  })
+
+  // ---------------------------------------------------------------------------
+  // has_advanced_reporting tests (Wave 0 stubs — RED until Plan 01 implements)
+  // ---------------------------------------------------------------------------
+
+  describe('has_advanced_reporting', () => {
+    function makeAdvancedReportingSubscription(overrides: Record<string, any> = {}) {
+      return {
+        id: 'sub_ar_test_123',
+        customer: 'cus_ar_test_456',
+        status: 'active',
+        metadata: { store_id: 'store-uuid-ar' },
+        items: {
+          data: [
+            { price: { id: 'price_advanced_reporting_test' } },
+          ],
+        },
+        ...overrides,
+      }
+    }
+
+    test('sets has_advanced_reporting=true when STRIPE_PRICE_ADVANCED_REPORTING subscription activates', async () => {
+      const subscription = makeAdvancedReportingSubscription({ status: 'active' })
+      const event = makeEvent('customer.subscription.created', subscription, 'evt_ar_001')
+      mockConstructEvent.mockReturnValue(event)
+
+      let updatedTable: string | null = null
+      let updatedData: any = null
+
+      mockFrom.mockImplementation((table: string) => {
+        const chain: any = {
+          select: () => chain,
+          eq: () => chain,
+          is: () => chain,
+          maybeSingle: () => Promise.resolve({ data: null, error: null }),
+          single: () => Promise.resolve({ data: { stripe_customer_id: null }, error: null }),
+          insert: (_data: any) => Promise.resolve({ data: null, error: null }),
+          update: (data: any) => {
+            updatedTable = table
+            updatedData = data
+            return chain
+          },
+          then: (resolve: any) => Promise.resolve({ data: null, error: null }).then(resolve),
+        }
+        return chain
+      })
+
+      const res = await POST(makeRequest())
+      expect(res.status).toBe(200)
+      expect(updatedTable).toBe('store_plans')
+      expect(updatedData).toMatchObject({ has_advanced_reporting: true })
+    })
+
+    test('sets has_advanced_reporting=false when subscription is cancelled', async () => {
+      const subscription = makeAdvancedReportingSubscription({ status: 'canceled' })
+      const event = makeEvent('customer.subscription.deleted', subscription, 'evt_ar_002')
+      mockConstructEvent.mockReturnValue(event)
+
+      let updatedData: any = null
+
+      mockFrom.mockImplementation((table: string) => {
+        const chain: any = {
+          select: () => chain,
+          eq: () => chain,
+          is: () => chain,
+          maybeSingle: () => Promise.resolve({ data: null, error: null }),
+          single: () => Promise.resolve({ data: { stripe_customer_id: null }, error: null }),
+          insert: (_data: any) => Promise.resolve({ data: null, error: null }),
+          update: (data: any) => {
+            if (table === 'store_plans') updatedData = data
+            return chain
+          },
+          then: (resolve: any) => Promise.resolve({ data: null, error: null }).then(resolve),
+        }
+        return chain
+      })
+
+      const res = await POST(makeRequest())
+      expect(res.status).toBe(200)
+      expect(updatedData).toMatchObject({ has_advanced_reporting: false })
+    })
   })
 
   test('falls back to stores table lookup when no store_id in metadata', async () => {
