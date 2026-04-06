@@ -118,9 +118,9 @@ Plans:
   4. Applying a line-item or cart-level discount recalculates GST and totals correctly
   5. Selecting EFTPOS shows the "Terminal approved?" confirmation screen; clicking Yes shows a receipt with full line-item detail — no database record is written
   6. Selecting Cash shows a tendered-amount entry with correct change calculation; completing the sale shows a receipt
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 33-01-PLAN.md — Middleware passthrough + demo route group (layout + page)
+- [x] 33-01-PLAN.md — Middleware passthrough + demo route group (layout + page)
 - [ ] 33-02-PLAN.md — POSClientShell + POSTopBar demoMode prop with sale simulation
 **UI hint**: yes
 
@@ -174,5 +174,5 @@ Plans:
 | 30. Admin UI & Super Admin | v6.0 | 2/2 | Complete | 2026-04-06 |
 | 31. Marketing Pages | v6.0 | 2/2 | Complete | 2026-04-06 |
 | 32. Demo Store Seed | v7.0 | 1/1 | Complete    | 2026-04-06 |
-| 33. Demo POS Route & Checkout | v7.0 | 0/2 | Not started | - |
+| 33. Demo POS Route & Checkout | v7.0 | 1/2 | In Progress|  |
 | 34. Signup Conversion & Landing Page | v7.0 | 0/? | Not started | - |

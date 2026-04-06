@@ -16,9 +16,9 @@ Requirements for POS Demo milestone. Each maps to roadmap phases.
 
 ### Demo POS Route
 
-- [ ] **DPOS-01**: Visitor can access `/demo/pos` without any authentication
+- [x] **DPOS-01**: Visitor can access `/demo/pos` without any authentication
 - [ ] **DPOS-02**: Demo POS loads real POS UI components (ProductGrid, Cart, checkout flow)
-- [ ] **DPOS-03**: Demo POS fetches products from the seeded demo store in the database
+- [x] **DPOS-03**: Demo POS fetches products from the seeded demo store in the database
 - [ ] **DPOS-04**: Demo POS disables features that require real auth (barcode scanner, new-order polling, receipt email)
 
 ### Demo Checkout
@@ -75,9 +75,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DEMO-02 | Phase 32 | Complete |
 | DEMO-03 | Phase 32 | Complete |
 | DEMO-04 | Phase 32 | Complete |
-| DPOS-01 | Phase 33 | Pending |
+| DPOS-01 | Phase 33 | Complete |
 | DPOS-02 | Phase 33 | Pending |
-| DPOS-03 | Phase 33 | Pending |
+| DPOS-03 | Phase 33 | Complete |
 | DPOS-04 | Phase 33 | Pending |
 | DCHK-01 | Phase 33 | Pending |
 | DCHK-02 | Phase 33 | Pending |
