@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: Free Email Notifications
 status: verifying
-stopped_at: Completed 31-02-PLAN.md
-last_updated: "2026-04-06T07:35:18.241Z"
+stopped_at: Completed 31-01-PLAN.md
+last_updated: "2026-04-06T07:35:21.768Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 8
@@ -60,6 +60,7 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 30-02]: Super admin dashboard shows 3 adoption cards (Xero, Domain, Inventory), analytics has 3 ADDON_DISPLAY_NAMES, tenant pages select only active add-on columns
 - [Phase 31-marketing-pages]: Email Notifications removed from add-ons hub: now free for all stores (not a paid add-on)
 - [Phase 31-marketing-pages]: Add-ons hub grid changed from 3-column to 2-column with max-w-3xl centering to match 2-add-on layout
+- [Phase 31-marketing-pages]: Email notifications added to free tier checklist on landing page, email detail page deleted
 
 ### Pending Todos
 
@@ -71,6 +72,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T07:35:09.763Z
-Stopped at: Completed 31-02-PLAN.md
+Last session: 2026-04-06T07:35:21.765Z
+Stopped at: Completed 31-01-PLAN.md
 Resume file: None
