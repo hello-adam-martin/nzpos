@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { getDateRange, type DatePreset } from '@/lib/dateRanges'
 import { ReportsPageClient } from '@/components/admin/reports/ReportsPageClient'
+import { aggregateCOGS, groupByCategory, formatCogsCSV } from '@/lib/cogs'
+import type { CogsLineItem, CogsCategoryGroup } from '@/lib/cogs'
 
 export const dynamic = 'force-dynamic'
 
@@ -71,6 +73,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
     redirect('/admin/login')
   }
   const hasInventory = (user?.app_metadata?.inventory as boolean | undefined) === true
+  const hasAdvancedReporting = (user?.app_metadata?.advanced_reporting as boolean | undefined) === true
 
   const params = await searchParams
   const preset = (params.preset ?? 'today') as DatePreset | 'custom'
@@ -138,7 +141,49 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
     stockLevels = data ?? []
   }
 
-  // Query 4: GST summary (from orders table — not order_items to avoid double counting)
+  // Query 4: COGS data — only when hasAdvancedReporting is true and tab='profit'
+  let cogsData: CogsLineItem[] = []
+  let cogsCategoryGroups: CogsCategoryGroup[] = []
+  let cogsCSVData: Array<Record<string, string | number>> = []
+
+  if (hasAdvancedReporting && tab === 'profit' && orderIds.length > 0) {
+    // Fetch order_items with product_id for cost joining
+    const { data: cogsItems } = await supabase
+      .from('order_items')
+      .select('product_id, product_name, quantity, line_total_cents, gst_cents')
+      .in('order_id', orderIds)
+
+    // Collect unique product_ids
+    const productIds = [...new Set(
+      (cogsItems ?? []).map(i => i.product_id).filter(Boolean)
+    )] as string[]
+
+    // Fetch product cost data
+    let productCosts: Array<{
+      id: string
+      cost_price_cents: number | null
+      category_id: string | null
+      categories: { name: string } | null
+    }> = []
+    if (productIds.length > 0) {
+      const { data } = await supabase
+        .from('products')
+        .select('id, cost_price_cents, category_id, categories(name)')
+        .in('id', productIds)
+      productCosts = data ?? []
+    }
+
+    // Aggregate using pure functions from cogs.ts
+    cogsData = aggregateCOGS(cogsItems ?? [], productCosts)
+    cogsCategoryGroups = groupByCategory(cogsData)
+    cogsCSVData = formatCogsCSV(cogsData)
+  }
+
+  // Compute date strings for CSV filename
+  const fromDateStr = fromDate.toISOString().slice(0, 10)
+  const toDateStr = toDate.toISOString().slice(0, 10)
+
+  // Query 5: GST summary (from orders table — not order_items to avoid double counting)
   const gstOrders = (orders ?? []).filter(o => o.status !== 'refunded')
   const totalSalesCents = gstOrders.reduce((s, o) => s + o.total_cents, 0)
   const totalGSTCents = gstOrders.reduce((s, o) => s + o.gst_cents, 0)
@@ -148,7 +193,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const refundedTotalCents = refundedOrders.reduce((s, o) => s + o.total_cents, 0)
   const refundedGSTCents = refundedOrders.reduce((s, o) => s + o.gst_cents, 0)
 
-  // Query 5: GST per-line detail (only when tab='gst')
+  // Query 6: GST per-line detail (only when tab='gst')
   let gstLineDetail: Array<{ order_id: string; product_name: string; line_total_cents: number; gst_cents: number }> = []
   if (tab === 'gst' && orderIds.length > 0) {
     const { data } = await supabase
@@ -184,6 +229,12 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       gstLineDetail={gstLineDetail}
       posTotalCents={posTotalCents}
       onlineTotalCents={onlineTotalCents}
+      hasAdvancedReporting={hasAdvancedReporting}
+      cogsData={cogsData}
+      cogsCategoryGroups={cogsCategoryGroups}
+      cogsCSVData={cogsCSVData}
+      fromDateStr={fromDateStr}
+      toDateStr={toDateStr}
     />
   )
 }
