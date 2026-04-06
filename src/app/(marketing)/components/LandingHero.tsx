@@ -13,13 +13,23 @@ export default function LandingHero() {
             <p className="text-base leading-relaxed text-white/70 mt-[var(--space-lg)]">
               Sell in-store and online from one dashboard. GST handled correctly on every transaction.
             </p>
-            <Link
-              href="/signup"
-              className="inline-block bg-[var(--color-amber)] text-white px-[var(--space-xl)] py-[var(--space-sm)] rounded-md text-sm font-bold mt-[var(--space-lg)] hover:opacity-90 transition-opacity duration-150"
-              aria-label="Get started free — hero call to action"
-            >
-              Get started free
-            </Link>
+            {/* CTA buttons — per D-07: two CTAs in hero, per D-08: ghost outlined secondary */}
+            <div className="flex flex-wrap gap-[var(--space-sm)] mt-[var(--space-lg)] items-center">
+              <Link
+                href="/signup"
+                className="inline-block bg-[var(--color-amber)] text-white px-[var(--space-xl)] py-[var(--space-sm)] rounded-md text-sm font-bold hover:opacity-90 transition-opacity duration-150"
+                aria-label="Get started free — hero call to action"
+              >
+                Get started free
+              </Link>
+              <Link
+                href="/demo/pos"
+                className="inline-block border border-white/70 text-white px-[var(--space-xl)] py-[var(--space-sm)] rounded-md text-sm font-bold hover:bg-white/10 transition-colors duration-150"
+                aria-label="Try the POS demo"
+              >
+                Try POS Demo
+              </Link>
+            </div>
             <p className="text-sm text-white/50 mt-[var(--space-sm)]">
               No credit card required. NZD pricing.
             </p>
