@@ -14,6 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   let userEmail: string | null = null
   let hasInventory = false
+  let hasGiftCards = false
   let role: 'owner' | 'manager' = 'owner'
   let staffName: string | null = null
   let storeId: string | undefined
@@ -47,18 +48,28 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // Only for owners — managers don't manage integrations
   let xeroStatus: 'connected' | 'disconnected' | 'token_expired' | null = null
   if (storeId && role === 'owner') {
+    const adminClient = createSupabaseAdminClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: xeroConn } = await (createSupabaseAdminClient() as any)
+    const { data: xeroConn } = await (adminClient as any)
       .from('xero_connections')
       .select('status')
       .eq('store_id', storeId)
       .maybeSingle()
     xeroStatus = xeroConn?.status ?? null
+
+    // Query store_plans for add-on feature flags (has_gift_cards)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: storePlan } = await (adminClient as any)
+      .from('store_plans')
+      .select('has_gift_cards')
+      .eq('store_id', storeId)
+      .maybeSingle()
+    hasGiftCards = storePlan?.has_gift_cards === true
   }
 
   return (
     <div className="flex min-h-screen bg-bg">
-      <AdminSidebar userEmail={userEmail} hasInventory={hasInventory} role={role} staffName={staffName} />
+      <AdminSidebar userEmail={userEmail} hasInventory={hasInventory} hasGiftCards={hasGiftCards} role={role} staffName={staffName} />
       <div className="flex-1 flex flex-col overflow-auto">
         <StripeTestModeBanner />
         {role === 'owner' && (xeroStatus === 'disconnected' || xeroStatus === 'token_expired') && (

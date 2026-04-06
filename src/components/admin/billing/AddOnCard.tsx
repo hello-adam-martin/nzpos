@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { Gift } from 'lucide-react'
 import type { SubscriptionFeature } from '@/config/addons'
 
 interface AddOnCardProps {
@@ -44,6 +45,9 @@ function FeatureIcon({ feature, muted }: { feature: string; muted?: boolean }) {
         <path strokeLinecap="round" strokeLinejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
       </svg>
     )
+  }
+  if (feature === 'gift_cards') {
+    return <Gift className={`w-6 h-6 ${colorClass}`} strokeWidth={1.5} aria-hidden="true" />
   }
   // custom_domain: globe icon
   return (
