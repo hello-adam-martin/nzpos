@@ -9,6 +9,11 @@ import { TopProductsTable } from './TopProductsTable'
 import { StockLevelsTable } from './StockLevelsTable'
 import { GSTSummaryBlock } from './GSTSummaryBlock'
 import { ExportCSVButton } from './ExportCSVButton'
+import { CogsReportSummaryCards } from './CogsReportSummaryCards'
+import { CogsReportTable } from './CogsReportTable'
+import { CogsCategoryBreakdown } from './CogsCategoryBreakdown'
+import { calculateMarginPercent } from '@/lib/cogs'
+import type { CogsLineItem, CogsCategoryGroup } from '@/lib/cogs'
 
 interface DailyTotal {
   date: string
@@ -55,6 +60,12 @@ interface ReportsPageClientProps {
   gstLineDetail: GSTLineDetail[]
   posTotalCents: number
   onlineTotalCents: number
+  hasAdvancedReporting: boolean
+  cogsData: CogsLineItem[]
+  cogsCategoryGroups: CogsCategoryGroup[]
+  cogsCSVData: Array<Record<string, string | number>>
+  fromDateStr: string
+  toDateStr: string
 }
 
 export function ReportsPageClient({
@@ -74,6 +85,12 @@ export function ReportsPageClient({
   gstLineDetail,
   posTotalCents,
   onlineTotalCents,
+  hasAdvancedReporting,
+  cogsData,
+  cogsCategoryGroups,
+  cogsCSVData,
+  fromDateStr,
+  toDateStr,
 }: ReportsPageClientProps) {
   const searchParams = useSearchParams()
   const activeTab = searchParams.get('tab') ?? tab
@@ -109,6 +126,14 @@ export function ReportsPageClient({
     gst_cents: d.gst_cents,
   }))
 
+  // COGS summary totals for Profit & Margin tab
+  const cogsWithCost = cogsData.filter(d => d.hasCostPrice)
+  const cogsWithCostRevenue = cogsWithCost.reduce((s, d) => s + d.revenueExclGstCents, 0)
+  const totalRevenueExclGstCents = cogsData.reduce((s, d) => s + d.revenueExclGstCents, 0)
+  const totalCostCents = cogsWithCost.reduce((s, d) => s + d.costCents, 0)
+  const totalMarginCents = cogsWithCostRevenue - totalCostCents
+  const overallMarginPercent = calculateMarginPercent(cogsWithCostRevenue, totalCostCents)
+
   return (
     <div className="space-y-[var(--space-xl)]">
       <h1 className="font-display text-[2.25rem] font-bold text-primary">Reports</h1>
@@ -123,6 +148,11 @@ export function ReportsPageClient({
         <TabButton href={buildHref({ preset, customFrom, customTo, tab: 'gst' })} active={activeTab === 'gst'}>
           GST Summary
         </TabButton>
+        {hasAdvancedReporting && (
+          <TabButton href={buildHref({ preset, customFrom, customTo, tab: 'profit' })} active={activeTab === 'profit'}>
+            Profit & Margin
+          </TabButton>
+        )}
       </div>
 
       {activeTab === 'sales' && (
@@ -219,6 +249,50 @@ export function ReportsPageClient({
               refundedGSTCents={refundedGSTCents}
               lineDetail={gstLineDetail}
             />
+          )}
+        </div>
+      )}
+      {activeTab === 'profit' && hasAdvancedReporting && (
+        <div className="space-y-[var(--space-xl)]">
+          {cogsData.length === 0 ? (
+            <div className="py-[var(--space-xl)] text-center">
+              <p className="text-sm font-semibold text-[var(--color-text)] mb-1">No sales data in this period</p>
+              <p className="text-sm text-[var(--color-text-muted)]">Select a different date range to see profit and margin data.</p>
+            </div>
+          ) : cogsData.every(d => !d.hasCostPrice) ? (
+            <div className="py-[var(--space-xl)] text-center">
+              <p className="text-sm font-semibold text-[var(--color-text)] mb-1">No cost prices set</p>
+              <p className="text-sm text-[var(--color-text-muted)]">Add cost prices to your products to see margin calculations.</p>
+            </div>
+          ) : (
+            <>
+              {/* Summary cards */}
+              <CogsReportSummaryCards
+                totalRevenueExclGstCents={totalRevenueExclGstCents}
+                totalCostCents={totalCostCents}
+                totalMarginCents={totalMarginCents}
+                overallMarginPercent={overallMarginPercent}
+              />
+
+              {/* Profit by Product */}
+              <section>
+                <div className="flex items-center justify-between mb-[var(--space-sm)]">
+                  <h2 className="font-bold text-primary text-xl">Profit by Product</h2>
+                  <ExportCSVButton
+                    data={cogsCSVData}
+                    filename={`cogs-report-${fromDateStr}-to-${toDateStr}`}
+                    label="Export COGS CSV"
+                  />
+                </div>
+                <CogsReportTable data={cogsData} />
+              </section>
+
+              {/* Profit by Category */}
+              <section>
+                <h2 className="font-bold text-primary text-xl mb-[var(--space-sm)]">Profit by Category</h2>
+                <CogsCategoryBreakdown data={cogsCategoryGroups} />
+              </section>
+            </>
           )}
         </div>
       )}

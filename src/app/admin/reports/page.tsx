@@ -159,18 +159,21 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
     )] as string[]
 
     // Fetch product cost data
-    let productCosts: Array<{
+    // Note: cast to ProductCostData[] because Supabase generated types predate the
+    // cost_price_cents column (migration 034_cogs.sql — applied but types not yet regenerated)
+    type ProductCostRow = {
       id: string
       cost_price_cents: number | null
       category_id: string | null
       categories: { name: string } | null
-    }> = []
+    }
+    let productCosts: ProductCostRow[] = []
     if (productIds.length > 0) {
       const { data } = await supabase
         .from('products')
         .select('id, cost_price_cents, category_id, categories(name)')
         .in('id', productIds)
-      productCosts = data ?? []
+      productCosts = (data ?? []) as unknown as ProductCostRow[]
     }
 
     // Aggregate using pure functions from cogs.ts
