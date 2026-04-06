@@ -6,7 +6,7 @@ export const dynamic = 'force-static'
 export const metadata: Metadata = {
   title: 'Add-ons — NZPOS',
   description:
-    'Extend NZPOS with optional features. Xero integration, email notifications, and inventory management — pay only for what you use.',
+    'Extend NZPOS with optional features. Xero integration and inventory management — pay only for what you use.',
 }
 
 const addOns = [
@@ -21,19 +21,6 @@ const addOns = [
         <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
         <path d="M12 12v9" />
         <path d="m8 17 4 4 4-4" />
-      </svg>
-    ),
-  },
-  {
-    name: 'Email Notifications',
-    price: '$5/month NZD',
-    description:
-      'Keep customers informed with order confirmations, pickup-ready alerts, and get a daily sales summary straight to your inbox.',
-    href: '/add-ons/email-notifications',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <rect width="20" height="16" x="2" y="4" rx="2" />
-        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
       </svg>
     ),
   },
@@ -71,7 +58,7 @@ export default function AddOnsPage() {
       {/* Add-on cards */}
       <section className="bg-[var(--color-bg)]">
         <div className="max-w-[1200px] mx-auto px-[var(--space-md)] md:px-[var(--space-lg)] py-[var(--space-3xl)]">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-lg)]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-lg)] max-w-3xl mx-auto">
             {addOns.map((addon) => (
               <Link
                 key={addon.name}
