@@ -87,7 +87,6 @@ Default local values:
 |----------|---------|--------|----------|
 | `STRIPE_BILLING_WEBHOOK_SECRET` | Signing secret for subscription lifecycle webhooks | Separate webhook endpoint in Stripe dashboard | Yes |
 | `STRIPE_PRICE_XERO` | Stripe Price ID for the Xero accounting add-on | Stripe dashboard → Products | Yes |
-| `STRIPE_PRICE_EMAIL_NOTIFICATIONS` | Stripe Price ID for the email notifications add-on | Stripe dashboard → Products | Yes |
 | `STRIPE_PRICE_CUSTOM_DOMAIN` | Stripe Price ID for the custom domain add-on | Stripe dashboard → Products | Yes |
 
 > Billing webhooks use a **separate** webhook endpoint (`/api/webhooks/stripe/billing`) with its own signing secret. Both secrets must be set — they are different values.

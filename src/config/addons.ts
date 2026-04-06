@@ -1,11 +1,10 @@
 // Add-on configuration: centralized metadata, Price IDs, and feature flag mappings.
 // Price IDs are loaded from environment variables (D-02: never hardcode Price IDs).
 
-export type SubscriptionFeature = 'xero' | 'email_notifications' | 'custom_domain' | 'inventory'
+export type SubscriptionFeature = 'xero' | 'custom_domain' | 'inventory'
 
 interface FeatureFlags {
   has_xero: boolean
-  has_email_notifications: boolean
   has_custom_domain: boolean
   has_inventory: boolean
 }
@@ -13,7 +12,6 @@ interface FeatureFlags {
 // Map: feature name -> Stripe Price ID (from env vars)
 export const PRICE_ID_MAP: Record<SubscriptionFeature, string> = {
   xero: process.env.STRIPE_PRICE_XERO!,
-  email_notifications: process.env.STRIPE_PRICE_EMAIL_NOTIFICATIONS!,
   custom_domain: process.env.STRIPE_PRICE_CUSTOM_DOMAIN!,
   inventory: process.env.STRIPE_PRICE_INVENTORY ?? '',
 }
@@ -21,7 +19,6 @@ export const PRICE_ID_MAP: Record<SubscriptionFeature, string> = {
 // Reverse map: Stripe Price ID -> store_plans column name (for webhook handler)
 export const PRICE_TO_FEATURE: Record<string, keyof FeatureFlags> = {
   [process.env.STRIPE_PRICE_XERO!]: 'has_xero',
-  [process.env.STRIPE_PRICE_EMAIL_NOTIFICATIONS!]: 'has_email_notifications',
   [process.env.STRIPE_PRICE_CUSTOM_DOMAIN!]: 'has_custom_domain',
   ...(process.env.STRIPE_PRICE_INVENTORY
     ? { [process.env.STRIPE_PRICE_INVENTORY]: 'has_inventory' }
@@ -31,7 +28,6 @@ export const PRICE_TO_FEATURE: Record<string, keyof FeatureFlags> = {
 // Map: feature name -> store_plans boolean column name
 export const FEATURE_TO_COLUMN: Record<SubscriptionFeature, keyof FeatureFlags> = {
   xero: 'has_xero',
-  email_notifications: 'has_email_notifications',
   custom_domain: 'has_custom_domain',
   inventory: 'has_inventory',
 }
@@ -44,13 +40,6 @@ export const ADDONS = [
     benefitLine: 'Sync your daily sales to Xero automatically — no manual data entry.',
     gatedHeadline: 'Xero sync requires an upgrade',
     gatedBody: 'Connect your Xero account and sync sales automatically. No manual data entry.',
-  },
-  {
-    feature: 'email_notifications' as SubscriptionFeature,
-    name: 'Email Notifications',
-    benefitLine: 'Send order confirmations, pickup reminders, and daily summaries automatically.',
-    gatedHeadline: 'Email notifications require an upgrade',
-    gatedBody: 'Automatically email customers when orders are confirmed, ready, or shipped.',
   },
   {
     feature: 'custom_domain' as SubscriptionFeature,

@@ -137,14 +137,13 @@ Go to **Developers > API Keys**:
 
 ### 2.3 Create Add-On Products and Price IDs
 
-NZPOS uses per-add-on billing. Create three products in the Stripe dashboard:
+NZPOS uses per-add-on billing. Create two products in the Stripe dashboard:
 
 Go to **Products > Add a product** for each:
 
 | Add-On | Product Name | Billing | Env Var |
 |--------|-------------|---------|---------|
 | Xero integration | `Xero Integration Add-on` | Monthly recurring | `STRIPE_PRICE_XERO` |
-| Email notifications | `Email Notifications Add-on` | Monthly recurring | `STRIPE_PRICE_EMAIL_NOTIFICATIONS` |
 | Custom domain | `Custom Domain Add-on` | Monthly recurring | `STRIPE_PRICE_CUSTOM_DOMAIN` |
 
 For each product, set a price and note the **Price ID** (`price_...`). Copy each price ID into your environment variables.
@@ -245,7 +244,6 @@ Go to **Project > Settings > Environment Variables**. Add all 24 variables from 
 | `STRIPE_WEBHOOK_SECRET` | From Section 2.4 |
 | `STRIPE_BILLING_WEBHOOK_SECRET` | From Section 2.5 |
 | `STRIPE_PRICE_XERO` | `price_...` from Section 2.3 |
-| `STRIPE_PRICE_EMAIL_NOTIFICATIONS` | `price_...` from Section 2.3 |
 | `STRIPE_PRICE_CUSTOM_DOMAIN` | `price_...` from Section 2.3 |
 | `RESEND_API_KEY` | From Section 3.6 below |
 | `RESEND_FROM_ADDRESS` | Verified sender address |
