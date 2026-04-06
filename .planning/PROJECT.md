@@ -18,7 +18,7 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 
 **Shipped:** v1.0 through v6.0, v7.0 in progress (2026-04-02 → 2026-04-06)
 
-1,000+ source files, 49,000+ LOC TypeScript, 32 phases shipped across 100+ plans. Production-ready multi-tenant SaaS POS with inventory management and Xero as paid add-ons ($9/mo each), email notifications free for all stores. Landing page showcases 15 features, 2 paid add-ons, and NZ trust signals. Platform fully operational for merchant self-serve signup. Phase 32 complete — demo store "Aroha Home & Gift" seeded with 20 products across 5 categories.
+1,000+ source files, 49,000+ LOC TypeScript, 33 phases shipped across 100+ plans. Production-ready multi-tenant SaaS POS with inventory management and Xero as paid add-ons ($9/mo each), email notifications free for all stores. Landing page showcases 15 features, 2 paid add-ons, and NZ trust signals. Platform fully operational for merchant self-serve signup. Phase 33 complete — unauthenticated `/demo/pos` route runs real POS UI with client-side sale simulation (no DB writes). Demo store "Aroha Home & Gift" with 20 products, EFTPOS/cash checkout flows, GST calculations, and DEMO badge in top bar.
 
 ## Core Value
 
@@ -192,4 +192,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-06 after Phase 32 demo-store-seed complete*
+*Last updated: 2026-04-06 after Phase 33 demo-pos-route-checkout complete*
