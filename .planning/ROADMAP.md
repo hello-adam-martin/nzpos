@@ -10,6 +10,7 @@
 - ✅ **v5.0 Marketing & Landing Page** — Phase 28 (shipped 2026-04-06). [Archive](milestones/v5.0-ROADMAP.md)
 - ✅ **v6.0 Free Email Notifications** — Phases 29-31 (shipped 2026-04-06). [Archive](milestones/v6.0-ROADMAP.md)
 - ✅ **v7.0 POS Demo** — Phases 32-34 (shipped 2026-04-06). [Archive](milestones/v7.0-ROADMAP.md)
+- 🚧 **v8.0 Add-On Catalog Expansion** — Phases 35-37 (in progress)
 
 ## Phases
 
@@ -95,10 +96,59 @@
 
 </details>
 
+### 🚧 v8.0 Add-On Catalog Expansion (In Progress)
+
+**Milestone Goal:** Expand paid add-on catalog with Gift Cards, Advanced Reporting/COGS, and Loyalty Points — growing MRR per merchant while maintaining NZ legal compliance.
+
+- [ ] **Phase 35: Gift Cards Add-On** — Digital gift card issuance, redemption, and NZ Fair Trading Act compliance
+- [ ] **Phase 36: Advanced Reporting / COGS Add-On** — Cost price tracking, margin reports, and CSV export
+- [ ] **Phase 37: Loyalty Points Add-On** — Points earn/redeem at POS and online, privacy-compliant enrollment
+
+## Phase Details
+
+### Phase 35: Gift Cards Add-On
+**Goal**: Merchants can sell digital gift cards and customers can redeem them in-store and online, with full NZ Fair Trading Act 2024 compliance
+**Depends on**: Phase 34 (existing billing and add-on pipeline)
+**Requirements**: GIFT-01, GIFT-02, GIFT-03, GIFT-04, GIFT-05, GIFT-06, GIFT-07, GIFT-08, GIFT-09, GIFT-10, GIFT-11
+**Success Criteria** (what must be TRUE):
+  1. Merchant can subscribe to Gift Cards add-on at $14/mo via Stripe and the feature activates
+  2. Customer can purchase a gift card on the storefront and receive a unique code with expiry date by email
+  3. Gift card expiry is at minimum 3 years from issuance (enforced by DB constraint, NZ Fair Trading Act 2024)
+  4. Staff can enter a gift card code at POS checkout and apply the balance as payment, with partial redemption tracking the remaining balance
+  5. Gift card issuance is recorded as deferred liability — excluded from Xero sales sync and not written to the orders table
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 36: Advanced Reporting / COGS Add-On
+**Goal**: Merchants can track product cost prices and generate profit/margin reports by date range and category
+**Depends on**: Phase 35
+**Requirements**: COGS-01, COGS-02, COGS-03, COGS-04, COGS-05, COGS-06
+**Success Criteria** (what must be TRUE):
+  1. Merchant can subscribe to Advanced Reporting add-on at $9/mo via Stripe and the feature activates
+  2. Merchant can enter a cost price per product and see the margin percentage displayed in the product list
+  3. Merchant can generate a COGS report for a chosen date range showing revenue, cost, and margin per product
+  4. Merchant can view a profit breakdown grouped by product category
+  5. Merchant can export COGS report data as a CSV file
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 37: Loyalty Points Add-On
+**Goal**: Customers earn and redeem points on purchases in-store and online, with privacy-compliant enrollment and merchant-configurable earn/redeem rates
+**Depends on**: Phase 36
+**Requirements**: LOYAL-01, LOYAL-02, LOYAL-03, LOYAL-04, LOYAL-05, LOYAL-06, LOYAL-07, LOYAL-08, LOYAL-09, LOYAL-10, LOYAL-11
+**Success Criteria** (what must be TRUE):
+  1. Merchant can subscribe to Loyalty Points add-on at $15/mo via Stripe and configure earn rate and redemption rate in admin settings
+  2. Staff can optionally look up a customer by name or email during POS checkout without disrupting the standard fast-checkout flow
+  3. Identified customers earn points automatically on completed POS and online sales, and can view their balance on their account page
+  4. Customer can apply points as a discount during online checkout; staff can apply points during POS checkout
+  5. Privacy notice is displayed to customers before any loyalty data is collected, compliant with Privacy Act 2020 and Privacy Amendment Act 2025 (IPP 3A)
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
-|-------|-----------|---------------|--------|-----------|
+|-------|-----------|----------------|--------|-----------|
 | 1. Foundation | v1.0 | 5/5 | Complete | 2026-04-01 |
 | 2. Product Catalog | v1.0 | 5/5 | Complete | 2026-04-01 |
 | 3. POS Checkout | v1.0 | 6/6 | Complete | 2026-04-01 |
@@ -130,6 +180,9 @@
 | 29. Backend & Billing Cleanup | v6.0 | 2/2 | Complete | 2026-04-06 |
 | 30. Admin UI & Super Admin | v6.0 | 2/2 | Complete | 2026-04-06 |
 | 31. Marketing Pages | v6.0 | 2/2 | Complete | 2026-04-06 |
-| 32. Demo Store Seed | v7.0 | 1/1 | Complete    | 2026-04-06 |
-| 33. Demo POS Route & Checkout | v7.0 | 2/2 | Complete    | 2026-04-06 |
-| 34. Signup Conversion & Landing Page | v7.0 | 2/2 | Complete    | 2026-04-06 |
+| 32. Demo Store Seed | v7.0 | 1/1 | Complete | 2026-04-06 |
+| 33. Demo POS Route & Checkout | v7.0 | 2/2 | Complete | 2026-04-06 |
+| 34. Signup Conversion & Landing Page | v7.0 | 2/2 | Complete | 2026-04-06 |
+| 35. Gift Cards Add-On | v8.0 | 0/TBD | Not started | - |
+| 36. Advanced Reporting / COGS Add-On | v8.0 | 0/TBD | Not started | - |
+| 37. Loyalty Points Add-On | v8.0 | 0/TBD | Not started | - |

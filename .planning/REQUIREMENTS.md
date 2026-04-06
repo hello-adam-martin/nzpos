@@ -74,40 +74,40 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GIFT-01 | — | Pending |
-| GIFT-02 | — | Pending |
-| GIFT-03 | — | Pending |
-| GIFT-04 | — | Pending |
-| GIFT-05 | — | Pending |
-| GIFT-06 | — | Pending |
-| GIFT-07 | — | Pending |
-| GIFT-08 | — | Pending |
-| GIFT-09 | — | Pending |
-| GIFT-10 | — | Pending |
-| GIFT-11 | — | Pending |
-| COGS-01 | — | Pending |
-| COGS-02 | — | Pending |
-| COGS-03 | — | Pending |
-| COGS-04 | — | Pending |
-| COGS-05 | — | Pending |
-| COGS-06 | — | Pending |
-| LOYAL-01 | — | Pending |
-| LOYAL-02 | — | Pending |
-| LOYAL-03 | — | Pending |
-| LOYAL-04 | — | Pending |
-| LOYAL-05 | — | Pending |
-| LOYAL-06 | — | Pending |
-| LOYAL-07 | — | Pending |
-| LOYAL-08 | — | Pending |
-| LOYAL-09 | — | Pending |
-| LOYAL-10 | — | Pending |
-| LOYAL-11 | — | Pending |
+| GIFT-01 | Phase 35 | Pending |
+| GIFT-02 | Phase 35 | Pending |
+| GIFT-03 | Phase 35 | Pending |
+| GIFT-04 | Phase 35 | Pending |
+| GIFT-05 | Phase 35 | Pending |
+| GIFT-06 | Phase 35 | Pending |
+| GIFT-07 | Phase 35 | Pending |
+| GIFT-08 | Phase 35 | Pending |
+| GIFT-09 | Phase 35 | Pending |
+| GIFT-10 | Phase 35 | Pending |
+| GIFT-11 | Phase 35 | Pending |
+| COGS-01 | Phase 36 | Pending |
+| COGS-02 | Phase 36 | Pending |
+| COGS-03 | Phase 36 | Pending |
+| COGS-04 | Phase 36 | Pending |
+| COGS-05 | Phase 36 | Pending |
+| COGS-06 | Phase 36 | Pending |
+| LOYAL-01 | Phase 37 | Pending |
+| LOYAL-02 | Phase 37 | Pending |
+| LOYAL-03 | Phase 37 | Pending |
+| LOYAL-04 | Phase 37 | Pending |
+| LOYAL-05 | Phase 37 | Pending |
+| LOYAL-06 | Phase 37 | Pending |
+| LOYAL-07 | Phase 37 | Pending |
+| LOYAL-08 | Phase 37 | Pending |
+| LOYAL-09 | Phase 37 | Pending |
+| LOYAL-10 | Phase 37 | Pending |
+| LOYAL-11 | Phase 37 | Pending |
 
 **Coverage:**
 - v8.0 requirements: 28 total
-- Mapped to phases: 0
-- Unmapped: 28 ⚠️
+- Mapped to phases: 28
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-06*
-*Last updated: 2026-04-06 after initial definition*
+*Last updated: 2026-04-06 after roadmap creation — all 28 requirements mapped*
