@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: Add-On Catalog Expansion
-status: planning
-stopped_at: Phase 35 context gathered
-last_updated: "2026-04-06T11:02:49.681Z"
-last_activity: 2026-04-06 — v8.0 roadmap created (3 phases, 28 requirements mapped)
+status: executing
+stopped_at: Completed 35-00-PLAN.md
+last_updated: "2026-04-06T12:02:54.395Z"
+last_activity: 2026-04-06
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 6
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 35 — Gift Cards Add-On
+**Current focus:** Phase 35 — gift-cards-add-on
 
 ## Current Position
 
-Phase: 35 of 37 (Gift Cards Add-On)
-Plan: — (not yet planned)
-Status: Ready to plan
-Last activity: 2026-04-06 — v8.0 roadmap created (3 phases, 28 requirements mapped)
+Phase: 35 (gift-cards-add-on) — EXECUTING
+Plan: 2 of 6
+Status: Ready to execute
+Last activity: 2026-04-06
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Privacy Amendment Act 2025 (IPP 3A, effective 1 May 2026): build loyalty enrollment to stricter standard regardless of ship date
 - Webhook idempotency via `stripe_processed_events` must be audited before Phase 35 billing work
 - Add-on pricing: Xero $9/mo, Inventory $9/mo, Gift Cards $14/mo (new), COGS $9/mo (new), Loyalty $15/mo (new)
+- [Phase 35]: Wave 0 test stubs use expect(true).toBe(false) RED pattern — 16 stubs across 2 files for gift card utilities and cart state machine
 
 ### Pending Todos
 
@@ -64,6 +65,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T11:02:49.678Z
-Stopped at: Phase 35 context gathered
-Resume file: .planning/phases/35-gift-cards-add-on/35-CONTEXT.md
+Last session: 2026-04-06T12:02:54.392Z
+Stopped at: Completed 35-00-PLAN.md
+Resume file: None
