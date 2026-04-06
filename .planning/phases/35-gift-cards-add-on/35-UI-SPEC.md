@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: false
 preset: none
 created: 2026-04-06
+revised: 2026-04-06
 ---
 
 # Phase 35 — UI Design Contract
@@ -48,26 +49,37 @@ Source: DESIGN.md (locked).
 Exceptions:
 - POS touch targets (Gift Card payment method button, numpad keys): minimum 44x44px (D-05, DESIGN.md POS rule)
 - POS numpad digit keys: 56px height minimum for reliable finger press on iPad
-- Gift card code input in POS: minimum 48px height, large text (24px) so code is readable at arm's length
+- Gift card code input in POS: minimum 48px height — see Typography note on code rendering
 
 ---
 
 ## Typography
 
-Source: DESIGN.md (locked). These are the active sizes for Phase 35 surfaces.
+Source: DESIGN.md (locked). Exactly 4 sizes. No exceptions.
 
 | Role | Size | Weight | Line Height | Font | Usage |
 |------|------|--------|-------------|------|-------|
-| Body | 16px (1rem) | 400 (DM Sans regular) | 1.5 | DM Sans | Page body copy, table cells, form helper text |
-| Label | 14px (0.875rem) | 500–600 (DM Sans medium/semibold) | 1.4 | DM Sans | Form labels, table column headers, badge text, nav items |
-| Heading | 20px (1.25rem) | 600 (DM Sans semibold) | 1.3 | DM Sans | Page section headings (admin), card titles, drawer headings |
-| Display | 30px (1.875rem) | 700 (Satoshi bold) | 1.2 | Satoshi | Gift card code display in POS code entry screen, "Total to pay" in POS |
+| Body | 16px (1rem) | 400 (DM Sans regular) | 1.5 | DM Sans | Page body copy, table cells, form helper text, email body rows |
+| Label | 14px (0.875rem) | 500–600 (DM Sans medium/semibold) | 1.4 | DM Sans | Form labels, table column headers, badge text, nav items, transaction timestamps, expiry rows in email |
+| Heading | 20px (1.25rem) | 600 (DM Sans semibold) | 1.3 | DM Sans | Page section headings (admin), card titles, drawer headings, email balance row ("Value: $50.00"), admin detail code display |
+| Display | 30px (1.875rem) | 700 (Satoshi bold) | 1.2 | Satoshi | Gift card code in POS code entry screen, email code block, storefront page heading, "Total to pay" in POS |
 
-Specific to this phase:
-- **Gift card code** (8-digit, e.g. 4827-1593): render in `font-mono` (Geist Mono), 24px, weight 700, letter-spacing 0.05em. Used in POS code entry display, email template, admin detail view.
-- **Balance amounts** (e.g. $50.00): DM Sans, `tabular-nums`, 20px, weight 600. Use `formatNZD()` utility — never raw numbers.
-- **Expiry date** in email and admin: 14px DM Sans, weight 400, text-muted color. Always include full date (e.g. "Expires 6 April 2029") — NZ Fair Trading Act requires clear disclosure (D-03, D-19).
-- **Transaction timeline timestamps**: 12px DM Sans, text-muted. Channel label (POS / Online): 12px badge alongside.
+**Size mapping decisions (checker fix — collapsed from 9 to 4):**
+
+| Original spec | Collapsed to | Rationale |
+|---------------|-------------|-----------|
+| 12px transaction timestamps | Label 14px | Minimum readable size; `text-muted` provides visual de-emphasis |
+| 18px email balance row | Heading 20px | Nearest heading scale step; semibold weight maintains prominence |
+| 24px gift card code in admin detail | Heading 20px | Admin detail view; `font-mono` provides sufficient distinction |
+| 28px email heading | Display 30px | Nearest display step; single-pixel difference imperceptible in email clients |
+| 32px email code block | Display 30px | `font-mono` + `letter-spacing 0.1em` provides all needed distinction; size reduction is negligible |
+
+**Phase-specific rendering rules:**
+
+- **Gift card code** (8-digit, e.g. 4827-1593): render in `font-mono` (Geist Mono), Display 30px in POS entry screen and email code block, Heading 20px in admin detail view. Weight 700, `letter-spacing: 0.1em` in email / `letter-spacing: 0.05em` in admin. `inputMode="numeric"`, auto-dash after 4 digits.
+- **Balance amounts** (e.g. $50.00): DM Sans, `tabular-nums`, Heading 20px, weight 600. Use `formatNZD()` utility — never raw numbers.
+- **Expiry date** in email and admin: Label 14px, DM Sans, weight 400, `text-muted` color. Always include full date (e.g. "Expires 6 April 2029") — NZ Fair Trading Act requires clear disclosure (D-03, D-19).
+- **Transaction timeline timestamps**: Label 14px, `text-muted`. Channel badge (POS / Online): Label 14px alongside.
 
 ---
 
@@ -109,6 +121,8 @@ Source: globals.css @theme tokens + DESIGN.md (locked). All values via CSS custo
 
 ### 1. Admin Sidebar — Add-ons Section (D-16)
 
+**Focal point:** The "Gift Cards" nav link — it is the entry point to the entire feature for the store owner.
+
 - Insert a new section group below "Integrations" in `AdminSidebar.tsx`
 - Section label: "Add-ons" — 11px uppercase, letter-spacing 0.08em, `text-text-light`, not a link
 - Section only renders when `hasGiftCards` prop is true (subscription gated)
@@ -116,6 +130,8 @@ Source: globals.css @theme tokens + DESIGN.md (locked). All values via CSS custo
 - Active state: navy background, white text, matching existing pattern
 
 ### 2. Billing Page — Gift Cards Add-on Card
+
+**Focal point:** The amber "Start free trial" CTA button.
 
 - Reuse `AddOnCard` component exactly; pass `feature="gift_cards"`
 - Add gift card icon to `FeatureIcon` switch: use lucide-react `Gift` icon (24x24, strokeWidth 1.5)
@@ -125,6 +141,8 @@ Source: globals.css @theme tokens + DESIGN.md (locked). All values via CSS custo
 - Trial CTA: "Start free trial" (14-day) — amber button, existing pattern
 
 ### 3. Admin Gift Cards List Page (`/admin/gift-cards`)
+
+**Focal point:** The data table itself — the owner's primary management surface for all issued cards.
 
 Replicate `OrderDataTable` pattern exactly.
 
@@ -138,9 +156,9 @@ Replicate `OrderDataTable` pattern exactly.
 | Status | 100px | Center | Badge per color map above |
 | Issued | 120px | Left | `en-NZ` date format |
 | Expires | 120px | Left | `en-NZ` date format. Text-warning if within 30 days. |
-| Actions | 60px | Center | Icon button: eye (view detail), no other inline actions |
+| Actions | 60px | Center | Icon button: eye (view detail), `aria-label="View gift card details"` |
 
-Table header: navy background (`bg-navy`), white text, 14px semibold — matches OrderDataTable.
+Table header: navy background (`bg-navy`), white text, Label 14px semibold — matches OrderDataTable.
 
 **Filters (above table, matching OrderFilterBar pattern):**
 - Status filter: dropdown — All / Active / Redeemed / Expired / Voided
@@ -154,21 +172,23 @@ Table header: navy background (`bg-navy`), white text, 14px semibold — matches
 
 ### 4. Gift Card Detail Drawer (D-15)
 
+**Focal point:** The gift card code (Heading 20px, font-mono) and remaining balance stat — these are the first things the owner checks.
+
 Pattern: same as `OrderDetailDrawer` — slide-in from right, overlay, `z-50`.
 
 **Header:**
-- Card code (last 8, formatted `4827-1593`): font-mono, 24px, weight 700
+- Card code (last 8, formatted `4827-1593`): font-mono, Heading 20px, weight 700
 - Status badge (pill, per color map)
 
 **Balance section:**
-- Original value, remaining balance in two-column stat layout
-- Expiry date: full date (dd MMMM yyyy), text-muted, 14px
+- Original value, remaining balance in two-column stat layout, Heading 20px, tabular-nums
+- Expiry date: full date (dd MMMM yyyy), `text-muted`, Label 14px
 
 **Transaction timeline:**
-- Each event: icon + label + amount + channel badge + remaining balance after + timestamp
+- Each event: icon + label + amount + channel badge + remaining balance after + timestamp (Label 14px, `text-muted`)
 - Issuance event icon: lucide `Gift` — navy
 - Redemption event icon: lucide `Minus` — text-muted
-- Channel badge: "POS" (navy pill) / "Online" (info-blue pill)
+- Channel badge: "POS" (navy pill) / "Online" (info-blue pill) — Label 14px
 - Timeline connector: 1px vertical line, border-light color
 
 **Void action (D-14):**
@@ -180,16 +200,22 @@ Pattern: same as `OrderDetailDrawer` — slide-in from right, overlay, `z-50`.
 
 ### 5. Admin Gift Card Settings (Denomination Management — D-02, D-09)
 
+**Focal point:** The denomination pill list — the merchant's control over what purchase amounts are available.
+
 Location: `/admin/settings` → "Gift Cards" tab (or sub-section if tabs not yet implemented)
 
 **Denomination list UI:**
 - List of active denominations as pills: e.g. `$25` `$50` `$100`
-- Each pill: border, `radius-full`, 14px semibold, `×` remove button on right
+- Each pill: border, `radius-full`, Label 14px semibold, `×` remove button on right
 - "Add denomination" input: inline dollar amount field + "Add" button
 - Minimum denomination: $5. Maximum: $500. DB-enforced + client validated.
 - Empty state: "No denominations set. Add at least one so customers can purchase gift cards."
 
 ### 6. POS — Gift Card Payment Method Toggle (D-05, D-06, D-07)
+
+**Focal point (toggle row):** The "Gift Card" button — must be equal-weight to EFTPOS and Cash so it is discoverable.
+
+**Focal point (code entry screen):** The code input field — must be large enough to read at arm's length on iPad.
 
 Modify `PaymentMethodToggle` to accept `'gift_card'` as a third option.
 
@@ -202,26 +228,26 @@ Modify `PaymentMethodToggle` to accept `'gift_card'` as a third option.
 **Gift Card code entry screen** (new screen, peer of `CashEntryScreen`):
 
 - Full-screen overlay: `fixed inset-0 z-50 bg-card`, same as `CashEntryScreen`
-- Label: "Enter gift card code" — 14px, text-muted, centered
+- Label: "Enter gift card code" — Label 14px, `text-muted`, centered
 - Code input: numeric-only (`inputMode="numeric"`), formatted `XXXX-XXXX` as user types
-  - Input style: `font-mono text-3xl font-bold text-center`, border-navy on focus
+  - Input style: `font-mono text-[30px] font-bold text-center` (Display 30px), border-navy on focus
   - Auto-dash inserted after 4 digits
-- "Look up" button: navy, full-width, `min-h-[48px]` — triggers server action to validate code
+- "Look Up Balance" button: navy, full-width, `min-h-[48px]` — triggers server action to validate code
 - **After successful lookup (D-07):**
-  - Balance display: "Balance: $50.00 · Expires 6 April 2029" — 16px, text
-  - Applied amount: "Applying $50.00 to this sale" — success green, 14px
-  - If partial (gift card < sale total): "Remaining $12.50 due via EFTPOS or Cash" — text-muted
+  - Balance display: "Balance: $50.00 · Expires 6 April 2029" — Body 16px, `text`
+  - Applied amount: "Applying $50.00 to this sale" — success green, Label 14px
+  - If partial (gift card < sale total): "Remaining $12.50 due via EFTPOS or Cash" — `text-muted`, Label 14px
   - No extra confirm tap — auto-applies (D-07)
 - **Error states:**
-  - Invalid code: "Code not found. Check the number and try again." — error red, inline below input
-  - Expired: "This gift card expired on {date} and cannot be used." — error red
-  - Voided: "This gift card has been voided and cannot be used." — error red
-  - Zero balance: "This gift card has a $0.00 balance and cannot be used." — error red
+  - Invalid code: "Code not found. Check the number and try again." — error red, inline below input, Label 14px
+  - Expired: "This gift card expired on {date} and cannot be used." — error red, Label 14px
+  - Voided: "This gift card has been voided and cannot be used." — error red, Label 14px
+  - Zero balance: "This gift card has a $0.00 balance and cannot be used." — error red, Label 14px
 - Cancel button: ghost, `border-border`, "Cancel" — same as `CashEntryScreen`
 
 **POS Cart Summary — applied gift card (D-08):**
 - New line in payment breakdown: "Gift Card ****1593: −$50.00" — font-mono for code digits, amber checkmark icon left
-- Remaining balance after transaction: "Remaining balance: $0.00" — 12px, text-muted
+- Remaining balance after transaction: "Remaining balance: $0.00" — Label 14px, `text-muted`
 
 **POS Receipt — gift card fields (D-08):**
 - Payment row: "Gift Card ****1593 — $50.00"
@@ -229,22 +255,24 @@ Modify `PaymentMethodToggle` to accept `'gift_card'` as a third option.
 
 ### 7. Storefront — `/gift-cards` Page (D-09, D-10)
 
+**Focal point:** The amber "Buy Gift Card — $[amount]" CTA button — the single purchase action on the page.
+
 **Layout:** Centred, max-width 480px, consistent with storefront checkout page layout.
 
-**Page heading:** "Gift Cards" — Satoshi, 30px, weight 700
+**Page heading:** "Gift Cards" — Satoshi, Display 30px, weight 700
 
 **Denomination selection:**
 - Denomination pills in a flex-wrap row
-- Each pill: `border border-border`, `radius-full`, 20px height, 32px px padding, 16px DM Sans semibold
+- Each pill: `border border-border`, `radius-full`, 20px height, 32px px padding, Body 16px DM Sans semibold
 - Selected: `border-amber bg-amber/10 text-amber` (amber-tinted selected state)
 - Unselected: `border-border text-text hover:border-navy`
 
 **Message to buyer:**
 - Helper text below denominations: "You'll receive the gift card code by email to share with someone special."
-- 14px, text-muted
+- Label 14px, `text-muted`
 
 **Buyer email:**
-- Label: "Your email address" — 14px semibold
+- Label: "Your email address" — Label 14px semibold
 - Standard text input, `type="email"`, `inputMode="email"`
 
 **CTA:** "Buy Gift Card — $50.00" (updates dynamically with selected denomination)
@@ -253,42 +281,48 @@ Modify `PaymentMethodToggle` to accept `'gift_card'` as a third option.
 
 **After purchase success:**
 - Inline success message (no redirect): "Gift card purchased! Check your email for the code."
-- Green check icon + success message, 16px
+- Green check icon + success message, Body 16px
 
 ### 8. Storefront Checkout — Gift Card Redemption Field (D-11, D-12)
+
+**Focal point:** The collapsed entry point link ("Have a gift card? Enter code") — low visual weight keeps focus on the primary checkout flow; it expands only on demand.
 
 **Placement:** Above the Stripe payment section in checkout, in a collapsible section.
 
 **Collapsed state:**
-- Link text: "Have a gift card? Enter code" — 14px, navy, underline on hover
+- Link text: "Have a gift card? Enter code" — Label 14px, navy, underline on hover
 - Not a button — low visual weight so it doesn't distract from primary checkout flow
 
 **Expanded state (inline, no modal):**
-- Label: "Gift card code"
+- Label: "Gift card code" — Label 14px semibold
 - Code input: font-mono, formatted `XXXX-XXXX`
-- "Apply" button: navy, 14px semibold, inline right of input
-- Applied state: green check icon + "Gift card applied — $50.00 off"
+- "Apply Gift Card" button: navy, Label 14px semibold, inline right of input
+- Applied state: green check icon + "Gift card applied — $50.00 off" — Body 16px, `text-success`
 - If gift card fully covers total (D-12): Stripe payment section hides entirely; CTA changes to "Complete Order" (navy, no Stripe logo)
 
 **Error states:**
-- Invalid/expired/voided/zero-balance: same copy as POS (adapted for context)
+- Invalid/expired/voided/zero-balance: same copy as POS (adapted for context), Label 14px, `text-error`
 
 ### 9. Gift Card Delivery Email (D-03, D-04)
+
+**Focal point:** The gift card code block (Display 30px, font-mono, bordered box) — the recipient's only way to use the card.
 
 Layout: React Email template, follows `PosReceiptEmail.tsx` pattern.
 
 **Email structure (top to bottom):**
 1. Store name + logo (if configured) — centered header
-2. Heading: "Here's your gift card" — Satoshi 28px
+2. Heading: "Here's your gift card" — Satoshi, Display 30px, weight 700
 3. Gift card code block: large mono display
-   - Code: `font-mono`, 32px, weight 700, letter-spacing 0.1em, centered
+   - Code: `font-mono` (Geist Mono), Display 30px, weight 700, `letter-spacing: 0.1em`, centered
    - Formatted: `4827-1593`
    - Surrounded by a bordered box: 2px border, `#E7E5E4`, `radius-md`, padding 24px
-4. Balance row: "Value: $50.00" — 18px, semibold
-5. Expiry row: "Valid until: 6 April 2029" — 16px, **bold**, `color: #DC2626` (red) — NZ FTA prominence requirement
-6. Store name: "Redeemable at [Store Name]" — 14px, text-muted
-7. Instructions: "Use this code at checkout in-store or online." — 14px
+4. Balance row: "Value: $50.00" — Heading 20px, semibold, DM Sans
+5. Expiry row: "Valid until: 6 April 2029" — Body 16px, **bold** (`<strong>`), `color: #DC2626` (red) — NZ FTA prominence requirement
+6. Store name: "Redeemable at [Store Name]" — Label 14px, `text-muted`
+7. Instructions: "Use this code at checkout in-store or online." — Label 14px
 8. Footer: standard store footer (address, contact)
+
+**Typography note:** Email clients do not render Tailwind classes. Use inline styles mapped to the 4 declared sizes: Display = `font-size: 30px`, Heading = `font-size: 20px`, Body = `font-size: 16px`, Label = `font-size: 14px`. Follow the pattern in `PosReceiptEmail.tsx`.
 
 ---
 
@@ -306,9 +340,11 @@ Source: D-01 through D-16 (CONTEXT.md), with defaults for Claude's Discretion ar
 | Storefront page CTA | "Buy Gift Card — $[amount]" (dynamic) |
 | Storefront post-purchase success | "Gift card purchased! Check your email for the code." |
 | POS code entry label | "Enter gift card code" |
-| POS lookup button | "Look up" |
+| POS lookup button | "Look Up Balance" |
+| POS checkout apply button | (auto-applies per D-07 — no explicit apply button in POS) |
 | POS applied state (partial) | "Remaining $[X] due via EFTPOS or Cash" |
 | Checkout gift card collapsed link | "Have a gift card? Enter code" |
+| Checkout gift card apply button | "Apply Gift Card" |
 | Checkout gift card applied | "Gift card applied — $[X] off" |
 | Checkout Stripe-bypass CTA | "Complete Order" |
 | POS error — invalid code | "Code not found. Check the number and try again." |
@@ -338,8 +374,8 @@ All interactive elements must implement all states listed. No state may be skipp
 | Hover | `hover:opacity-90` on solid buttons; `hover:bg-surface` on ghost/outline; `hover:border-navy` on denomination pills |
 | Focus | `focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy` on all inputs |
 | Disabled | `opacity-50 cursor-not-allowed` — denomination pill when gift card not enabled; lookup button before code entered |
-| Loading | Inline spinner (same `Spinner` component in `AddOnCard`) on "Look up" and "Buy Gift Card" during async calls |
-| Error | Error text below input, `text-error` color, 14px, no icon |
+| Loading | Inline spinner (same `Spinner` component in `AddOnCard`) on "Look Up Balance" and "Buy Gift Card" during async calls |
+| Error | Error text below input, `text-error` color, Label 14px, no icon |
 | Success | Green check icon (`lucide CheckCircle`) + success text, `text-success`, inline |
 
 ---
@@ -373,6 +409,7 @@ POS rule (DESIGN.md): nothing in the POS checkout path animates longer than 150m
 | Void reason input | `aria-required="true"`, disable confirm until reason length > 3 chars |
 | Email expiry date | HTML bold tag (`<strong>`) so screen readers emphasize expiry — NZ FTA prominence |
 | Denomination pills | `role="radio"` group with `aria-checked` |
+| Admin table eye icon button | `aria-label="View gift card details"` on each row's eye icon button |
 
 ---
 
@@ -402,6 +439,7 @@ All components for this phase are built as custom TSX following existing project
 | `DenominationManager` | `src/components/admin/settings/DenominationManager.tsx` | `PromoList.tsx` | Add/remove denomination pills |
 
 **Modified components:**
+
 | Component | Modification |
 |-----------|-------------|
 | `PaymentMethodToggle.tsx` | Add `'gift_card'` to union type; third pill |
