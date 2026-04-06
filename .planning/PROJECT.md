@@ -17,7 +17,7 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 
 **Shipped:** v1.0 through v5.0 (2026-04-02 → 2026-04-06)
 
-1,000+ source files, 99,000+ LOC TypeScript, 28 phases shipped across 100+ plans. Production-ready multi-tenant SaaS POS with inventory management and Xero as paid add-ons, email notifications as paid add-on (moving to free in v6.0). Marketing landing page updated with 15-feature showcase, add-on detail pages, and NZ trust signals.
+1,000+ source files, 99,000+ LOC TypeScript, 29 phases shipped across 100+ plans. Production-ready multi-tenant SaaS POS with inventory management and Xero as paid add-ons, email notifications now free at the backend level (Phase 29 complete — feature gates removed, billing cleanup done, auth hook updated). Marketing landing page updated with 15-feature showcase, add-on detail pages, and NZ trust signals.
 
 ## Current Milestone: v6.0 Free Email Notifications
 
@@ -178,4 +178,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-06 — Milestone v6.0 Free Email Notifications started*
+*Last updated: 2026-04-06 — Phase 29 (Backend & Billing Cleanup) complete*
