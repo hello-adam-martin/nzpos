@@ -103,7 +103,9 @@
   2. The store has ~20 products spread across at least 4 categories with NZD tax-inclusive prices
   3. Every product has a placeholder image URL and a valid SKU
   4. Running the seed script twice produces the same result with no duplicate records
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 32-01-PLAN.md — SQL migration + constants + SVG placeholders for demo store seed
 
 ### Phase 33: Demo POS Route & Checkout
 **Goal**: Visitors can use the real POS interface at `/demo/pos` — add products, apply discounts, complete a simulated EFTPOS or cash sale, and see a receipt — without creating an account or writing to the database
@@ -116,7 +118,9 @@
   4. Applying a line-item or cart-level discount recalculates GST and totals correctly
   5. Selecting EFTPOS shows the "Terminal approved?" confirmation screen; clicking Yes shows a receipt with full line-item detail — no database record is written
   6. Selecting Cash shows a tendered-amount entry with correct change calculation; completing the sale shows a receipt
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 32-01-PLAN.md — SQL migration + constants + SVG placeholders for demo store seed
 **UI hint**: yes
 
 ### Phase 34: Signup Conversion & Landing Page
@@ -128,7 +132,9 @@
   2. Clicking the CTA navigates to the merchant signup page
   3. Dismissing the CTA returns to a fresh demo session with an empty cart
   4. The landing page has a clearly visible "Try POS Demo" button that navigates to `/demo/pos`
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 32-01-PLAN.md — SQL migration + constants + SVG placeholders for demo store seed
 **UI hint**: yes
 
 ## Progress
@@ -166,6 +172,6 @@
 | 29. Backend & Billing Cleanup | v6.0 | 2/2 | Complete | 2026-04-06 |
 | 30. Admin UI & Super Admin | v6.0 | 2/2 | Complete | 2026-04-06 |
 | 31. Marketing Pages | v6.0 | 2/2 | Complete | 2026-04-06 |
-| 32. Demo Store Seed | v7.0 | 0/? | Not started | - |
+| 32. Demo Store Seed | v7.0 | 0/1 | Planned | - |
 | 33. Demo POS Route & Checkout | v7.0 | 0/? | Not started | - |
 | 34. Signup Conversion & Landing Page | v7.0 | 0/? | Not started | - |
