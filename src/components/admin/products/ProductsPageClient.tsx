@@ -17,9 +17,10 @@ interface ProductsPageClientProps {
   products: ProductWithCategory[]
   categories: Category[]
   hasInventory: boolean
+  hasAdvancedReporting: boolean
 }
 
-export default function ProductsPageClient({ products, categories, hasInventory }: ProductsPageClientProps) {
+export default function ProductsPageClient({ products, categories, hasInventory, hasAdvancedReporting }: ProductsPageClientProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [stockStatus, setStockStatus] = useState<StockStatus>('all')
@@ -104,6 +105,7 @@ export default function ProductsPageClient({ products, categories, hasInventory 
           activeStatus={activeStatus}
           onProductSelect={handleProductSelect}
           hasInventory={hasInventory}
+          hasAdvancedReporting={hasAdvancedReporting}
         />
       </div>
 
@@ -124,6 +126,7 @@ export default function ProductsPageClient({ products, categories, hasInventory 
           categories={categories}
           onClose={handleDrawerClose}
           hasInventory={hasInventory}
+          hasAdvancedReporting={hasAdvancedReporting}
         />
       )}
 

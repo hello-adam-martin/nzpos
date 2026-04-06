@@ -20,6 +20,7 @@ interface ProductFormDrawerProps {
   categories: Category[]
   onClose: () => void
   hasInventory?: boolean
+  hasAdvancedReporting?: boolean
 }
 
 interface FormErrors {
@@ -37,6 +38,7 @@ export default function ProductFormDrawer({
   categories,
   onClose,
   hasInventory,
+  hasAdvancedReporting,
 }: ProductFormDrawerProps) {
   const isEditMode = product !== null
 
@@ -46,6 +48,7 @@ export default function ProductFormDrawer({
   const [sku, setSku] = useState(product?.sku ?? '')
   const [barcode, setBarcode] = useState(product?.barcode ?? '')
   const [priceCents, setPriceCents] = useState<number | null>(product?.price_cents ?? null)
+  const [costPriceCents, setCostPriceCents] = useState<number | null>(product?.cost_price_cents ?? null)
   const [categoryId, setCategoryId] = useState<string>(product?.category_id ?? '')
   const [stockQuantity, setStockQuantity] = useState<number>(product?.stock_quantity ?? 0)
   const [reorderThreshold, setReorderThreshold] = useState<number>(product?.reorder_threshold ?? 0)
@@ -157,6 +160,13 @@ export default function ProductFormDrawer({
     formData.set('sku', sku.trim())
     formData.set('barcode', barcode.trim())
     formData.set('price_dollars', String(priceCents! / 100))
+    if (hasAdvancedReporting) {
+      if (costPriceCents !== null) {
+        formData.set('cost_price_cents', String(costPriceCents))
+      } else {
+        formData.set('cost_price_cents', '')
+      }
+    }
     if (categoryId) formData.set('category_id', categoryId)
     if (hasInventory) {
       formData.set('stock_quantity', String(stockQuantity))
@@ -307,6 +317,22 @@ export default function ProductFormDrawer({
             onPriceChange={setPriceCents}
             error={errors.price_cents?.[0]}
           />
+
+          {/* Cost Price — only shown when advanced reporting add-on is active */}
+          {hasAdvancedReporting && (
+            <div className="flex flex-col gap-1">
+              <label htmlFor="drawer-cost-price" className="text-sm font-bold font-sans text-text">
+                Cost Price <span className="text-text-muted text-xs">(excl. GST)</span>
+              </label>
+              <PriceInput
+                initialCents={product?.cost_price_cents ?? undefined}
+                onPriceChange={setCostPriceCents}
+              />
+              <p className="text-sm font-sans text-text-muted">
+                Supplier cost excluding GST. Used to calculate profit margin.
+              </p>
+            </div>
+          )}
 
           {/* Category */}
           <div className="flex flex-col gap-1">

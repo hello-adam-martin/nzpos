@@ -17,6 +17,16 @@ export interface ProductWithCategory {
   is_active: boolean
   category_id: string | null
   categories: { name: string } | null
+  cost_price_cents: number | null
+}
+
+/** Calculate gross margin % from GST-inclusive sell price and GST-exclusive cost price.
+ * sell_ex_gst = price_cents / 1.15 (strip NZ GST)
+ * margin % = (sell_ex_gst - cost_price_cents) / sell_ex_gst * 100
+ */
+function productMarginPercent(priceCents: number, costPriceCents: number): number {
+  const sellExclGst = priceCents / 1.15
+  return ((sellExclGst - costPriceCents) / sellExclGst) * 100
 }
 
 type SortColumn = 'name' | 'sku' | 'price_cents' | 'stock_quantity'
@@ -30,6 +40,7 @@ interface ProductDataTableProps {
   activeStatus: ActiveStatus
   onProductSelect: (product: ProductWithCategory) => void
   hasInventory: boolean
+  hasAdvancedReporting: boolean
 }
 
 function getStockVariant(product: ProductWithCategory): StockStatus {
@@ -46,6 +57,7 @@ export default function ProductDataTable({
   activeStatus,
   onProductSelect,
   hasInventory,
+  hasAdvancedReporting,
 }: ProductDataTableProps) {
   const [sortColumn, setSortColumn] = useState<SortColumn | null>(null)
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
@@ -198,6 +210,9 @@ export default function ProductDataTable({
               </th>
             ))}
             <th className="px-3 py-3 text-left text-sm font-semibold font-sans">Category</th>
+            {hasAdvancedReporting && (
+              <th className="px-4 py-3 text-right text-sm font-bold font-sans">Margin %</th>
+            )}
             <th className="px-3 py-3 text-left text-sm font-semibold font-sans">Status</th>
           </tr>
         </thead>
@@ -277,6 +292,32 @@ export default function ProductDataTable({
                   {product.categories?.name ?? '—'}
                 </span>
               </td>
+
+              {/* Margin % — only shown when advanced reporting add-on is active */}
+              {hasAdvancedReporting && (
+                <td className="px-4 py-2 text-right">
+                  {product.cost_price_cents === null || product.cost_price_cents === undefined ? (
+                    <span className="text-sm font-mono text-text-muted">---</span>
+                  ) : (() => {
+                    const margin = productMarginPercent(product.price_cents, product.cost_price_cents)
+                    const colorClass = margin > 30
+                      ? 'text-success'
+                      : margin >= 15
+                        ? 'text-primary'
+                        : margin >= 0
+                          ? 'text-warning'
+                          : 'text-error'
+                    return (
+                      <span
+                        className={`text-sm font-mono ${colorClass}`}
+                        style={{ fontFeatureSettings: "'tnum' 1" }}
+                      >
+                        {margin.toFixed(1)}%
+                      </span>
+                    )
+                  })()}
+                </td>
+              )}
 
               {/* Status badge */}
               <td className="px-3 py-2">
