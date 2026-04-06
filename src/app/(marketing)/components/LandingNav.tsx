@@ -14,7 +14,7 @@ export default function LandingNav() {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-[var(--space-sm)]" aria-label="Main navigation">
+        <nav className="hidden md:flex items-center gap-[var(--space-md)]" aria-label="Main navigation">
           <a href="#features" className="font-sans text-sm text-white/70 hover:text-white transition-colors duration-150 py-2">Features</a>
           <a href="#pricing" className="font-sans text-sm text-white/70 hover:text-white transition-colors duration-150 py-2">Pricing</a>
           <Link href="/add-ons" className="font-sans text-sm text-white/70 hover:text-white transition-colors duration-150 py-2">Add-ons</Link>
