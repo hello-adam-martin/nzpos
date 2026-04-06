@@ -154,7 +154,11 @@ Plans:
   3. Visitor reads hero copy and CTA sections that describe a mature multi-tenant SaaS POS platform, not a single-store MVP
   4. Page renders correctly on mobile, tablet, and desktop without horizontal scroll or broken layouts
   5. All sections use the project design system (deep navy #1E293B, amber #E67E22, Satoshi/DM Sans typography) with no visual regressions against DESIGN.md
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 28-01-PLAN.md — Hero/CTA copy rewrite + Nav anchor links
+- [ ] 28-02-PLAN.md — Features grouped rewrite (15 cards) + NZ Callout strip
+- [ ] 28-03-PLAN.md — Pricing fix (free tier + 3 add-ons) + page.tsx wiring
 **UI hint**: yes
 
 ## Progress
@@ -188,4 +192,4 @@ Plans:
 | 25. Admin Operational UI | v4.0 | 3/3 | Complete | 2026-04-05 |
 | 26. Super-Admin Billing + User Management | v4.0 | 3/3 | Complete | 2026-04-05 |
 | 27. Super-Admin Analytics | v4.0 | 2/2 | Complete | 2026-04-06 |
-| 28. Marketing Landing Page | v5.0 | 0/TBD | Not started | - |
+| 28. Marketing Landing Page | v5.0 | 0/3 | Not started | - |
