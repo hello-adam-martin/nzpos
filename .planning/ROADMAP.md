@@ -116,7 +116,7 @@
   3. Gift card expiry is at minimum 3 years from issuance (enforced by DB constraint, NZ Fair Trading Act 2024)
   4. Staff can enter a gift card code at POS checkout and apply the balance as payment, with partial redemption tracking the remaining balance
   5. Gift card issuance is recorded as deferred liability — excluded from Xero sales sync and not written to the orders table
-**Plans:** 6/6 plans complete
+**Plans:** 7/7 plans complete
 Plans:
 - [x] 35-00-PLAN.md — Wave 0 test stubs (code generation, cart gift card, balance ops)
 - [x] 35-01-PLAN.md — DB schema, billing pipeline, admin navigation
@@ -190,6 +190,6 @@ Plans:
 | 32. Demo Store Seed | v7.0 | 1/1 | Complete | 2026-04-06 |
 | 33. Demo POS Route & Checkout | v7.0 | 2/2 | Complete | 2026-04-06 |
 | 34. Signup Conversion & Landing Page | v7.0 | 2/2 | Complete | 2026-04-06 |
-| 35. Gift Cards Add-On | v8.0 | 6/6 | Complete   | 2026-04-06 |
+| 35. Gift Cards Add-On | v8.0 | 7/7 | Complete   | 2026-04-06 |
 | 36. Advanced Reporting / COGS Add-On | v8.0 | 0/TBD | Not started | - |
 | 37. Loyalty Points Add-On | v8.0 | 0/TBD | Not started | - |
