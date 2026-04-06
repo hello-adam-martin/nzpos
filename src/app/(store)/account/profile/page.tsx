@@ -2,6 +2,9 @@ import { redirect } from 'next/navigation'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { ProfileForm } from './ProfileForm'
+import { getCustomerLoyalty } from '@/actions/loyalty/getCustomerLoyalty'
+import { LoyaltyBanner } from '@/components/store/LoyaltyBanner'
+import { LoyaltyBalanceSection } from '@/components/store/LoyaltyBalanceSection'
 
 export const metadata = {
   title: 'My Profile | NZPOS',
@@ -31,9 +34,35 @@ export default async function ProfilePage() {
     marketingEmailsEnabled: customer?.preferences?.marketing_emails ?? false,
   }
 
+  // Fetch loyalty data (non-blocking — errors result in loyalty section being hidden)
+  const loyaltyResult = await getCustomerLoyalty()
+  const loyalty = 'data' in loyaltyResult ? loyaltyResult.data : null
+
   return (
     <div className="py-8">
+      <div className="max-w-[600px] mx-auto px-4">
+        {/* Privacy banner (D-11, LOYAL-11) — shown on first visit when loyalty is active */}
+        {loyalty && (
+          <LoyaltyBanner
+            isActive={loyalty.isActive}
+            bannerDismissed={loyalty.bannerDismissed}
+          />
+        )}
+      </div>
+
       <ProfileForm initialData={initialData} />
+
+      {/* Loyalty balance section — shown when loyalty is active */}
+      {loyalty && loyalty.isActive && (
+        <div className="max-w-[600px] mx-auto mt-6 px-4">
+          <LoyaltyBalanceSection
+            pointsBalance={loyalty.pointsBalance}
+            redeemRateCents={loyalty.redeemRateCents}
+            dollarValue={loyalty.dollarValue}
+            transactions={loyalty.transactions}
+          />
+        </div>
+      )}
     </div>
   )
 }
