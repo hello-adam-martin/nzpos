@@ -187,7 +187,7 @@ Plans:
   5. Stripe billing webhooks process subscription events without toggling any email_notifications feature flag
 **Plans**: 2 plans
 Plans:
-- [ ] 29-01-PLAN.md — SQL migration (data fix, column default, auth hook rewrite) + email.ts gate removal
+- [x] 29-01-PLAN.md — SQL migration (data fix, column default, auth hook rewrite) + email.ts gate removal
 - [ ] 29-02-PLAN.md — Remove email_notifications from config, billing actions, super admin actions, env, docs, and 7 test files
 
 ### Phase 30: Admin UI & Super Admin
@@ -247,6 +247,6 @@ Plans:
 | 26. Super-Admin Billing + User Management | v4.0 | 3/3 | Complete | 2026-04-05 |
 | 27. Super-Admin Analytics | v4.0 | 2/2 | Complete | 2026-04-06 |
 | 28. Marketing Landing Page | v5.0 | 3/3 | Complete | 2026-04-06 |
-| 29. Backend & Billing Cleanup | v6.0 | 0/2 | Not started | - |
+| 29. Backend & Billing Cleanup | v6.0 | 1/2 | In Progress|  |
 | 30. Admin UI & Super Admin | v6.0 | 0/? | Not started | - |
 | 31. Marketing Pages | v6.0 | 0/? | Not started | - |

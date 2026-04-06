@@ -9,10 +9,10 @@ Requirements for Free Email Notifications milestone. Move email notifications fr
 
 ### Backend & Feature Gating
 
-- [ ] **GATE-01**: Email sending works for all stores without feature gate check
-- [ ] **GATE-02**: Auth hook always sets email_notifications JWT claim to true
-- [ ] **GATE-03**: All existing stores have email notifications enabled via migration
-- [ ] **GATE-04**: New stores provisioned with email notifications enabled by default
+- [x] **GATE-01**: Email sending works for all stores without feature gate check
+- [x] **GATE-02**: Auth hook always sets email_notifications JWT claim to true
+- [x] **GATE-03**: All existing stores have email notifications enabled via migration
+- [x] **GATE-04**: New stores provisioned with email notifications enabled by default
 
 ### Billing & Stripe
 
