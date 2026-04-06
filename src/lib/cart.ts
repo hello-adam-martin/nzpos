@@ -38,6 +38,12 @@ export type CartState = {
   giftCardRemainingAfterCents: number | null // balance after this sale
   giftCardExpiresAt: string | null          // ISO string for display
   splitRemainderMethod: 'eftpos' | 'cash' | null  // for split payments
+  // Loyalty / customer attachment (all null when no customer attached)
+  attachedCustomerId: string | null
+  attachedCustomerName: string | null
+  attachedCustomerPoints: number | null
+  loyaltyDiscountCents: number | null
+  loyaltyPointsRedeemed: number | null
 }
 
 export type CartAction =
@@ -57,6 +63,10 @@ export type CartAction =
   | { type: 'GIFT_CARD_VALIDATED'; balanceCents: number; expiresAt: string }
   | { type: 'GIFT_CARD_VALIDATION_FAILED' }
   | { type: 'SET_SPLIT_REMAINDER_METHOD'; method: 'eftpos' | 'cash' }
+  | { type: 'ATTACH_CUSTOMER'; customerId: string; name: string; pointsBalance: number }
+  | { type: 'DETACH_CUSTOMER' }
+  | { type: 'APPLY_LOYALTY_DISCOUNT'; discountCents: number; pointsRedeemed: number }
+  | { type: 'REMOVE_LOYALTY_DISCOUNT' }
 
 // ---------------------------------------------------------------------------
 // Initial state
@@ -76,6 +86,11 @@ export const initialCartState: CartState = {
   giftCardRemainingAfterCents: null,
   giftCardExpiresAt: null,
   splitRemainderMethod: null,
+  attachedCustomerId: null,
+  attachedCustomerName: null,
+  attachedCustomerPoints: null,
+  loyaltyDiscountCents: null,
+  loyaltyPointsRedeemed: null,
 }
 
 // ---------------------------------------------------------------------------
@@ -254,6 +269,42 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
 
     case 'NEW_SALE': {
       return { ...initialCartState }
+    }
+
+    case 'ATTACH_CUSTOMER': {
+      return {
+        ...state,
+        attachedCustomerId: action.customerId,
+        attachedCustomerName: action.name,
+        attachedCustomerPoints: action.pointsBalance,
+      }
+    }
+
+    case 'DETACH_CUSTOMER': {
+      return {
+        ...state,
+        attachedCustomerId: null,
+        attachedCustomerName: null,
+        attachedCustomerPoints: null,
+        loyaltyDiscountCents: null,
+        loyaltyPointsRedeemed: null,
+      }
+    }
+
+    case 'APPLY_LOYALTY_DISCOUNT': {
+      return {
+        ...state,
+        loyaltyDiscountCents: action.discountCents,
+        loyaltyPointsRedeemed: action.pointsRedeemed,
+      }
+    }
+
+    case 'REMOVE_LOYALTY_DISCOUNT': {
+      return {
+        ...state,
+        loyaltyDiscountCents: null,
+        loyaltyPointsRedeemed: null,
+      }
     }
 
     default:
