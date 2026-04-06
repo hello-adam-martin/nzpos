@@ -72,7 +72,7 @@
 
 **Milestone Goal:** Update the marketing landing page to accurately reflect all shipped features across v1.0-v4.0, showcase all available add-ons, and present a compelling picture of the platform.
 
-- [ ] **Phase 28: Marketing Landing Page** — Complete rewrite of all landing page sections with accurate feature coverage, correct add-on pricing, and mature SaaS messaging
+- [x] **Phase 28: Marketing Landing Page** — Complete rewrite of all landing page sections with accurate feature coverage, correct add-on pricing, and mature SaaS messaging (completed 2026-04-06)
 
 ## Phase Details
 
@@ -156,9 +156,9 @@ Plans:
   5. All sections use the project design system (deep navy #1E293B, amber #E67E22, Satoshi/DM Sans typography) with no visual regressions against DESIGN.md
 **Plans**: 3 plans
 Plans:
-- [ ] 28-01-PLAN.md — Hero/CTA copy rewrite + Nav anchor links
+- [x] 28-01-PLAN.md — Hero/CTA copy rewrite + Nav anchor links
 - [x] 28-02-PLAN.md — Features grouped rewrite (15 cards) + NZ Callout strip
-- [ ] 28-03-PLAN.md — Pricing fix (free tier + 3 add-ons) + page.tsx wiring
+- [x] 28-03-PLAN.md — Pricing fix (free tier + 3 add-ons) + page.tsx wiring
 **UI hint**: yes
 
 ## Progress
@@ -192,4 +192,4 @@ Plans:
 | 25. Admin Operational UI | v4.0 | 3/3 | Complete | 2026-04-05 |
 | 26. Super-Admin Billing + User Management | v4.0 | 3/3 | Complete | 2026-04-05 |
 | 27. Super-Admin Analytics | v4.0 | 2/2 | Complete | 2026-04-06 |
-| 28. Marketing Landing Page | v5.0 | 1/3 | In Progress|  |
+| 28. Marketing Landing Page | v5.0 | 3/3 | Complete   | 2026-04-06 |

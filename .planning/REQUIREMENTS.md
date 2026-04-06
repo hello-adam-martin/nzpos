@@ -14,9 +14,9 @@ Requirements for Marketing & Landing Page milestone. Each maps to roadmap phases
 
 ### Pricing Section
 
-- [ ] **MKT-03**: Pricing section lists all 3 add-ons: Xero ($9/mo), Email Notifications ($5/mo), Inventory Management ($9/mo)
-- [ ] **MKT-04**: Free tier feature list accurately reflects what's included at no cost
-- [ ] **MKT-05**: Each add-on card lists its key benefits
+- [x] **MKT-03**: Pricing section lists all 3 add-ons: Xero ($9/mo), Email Notifications ($5/mo), Inventory Management ($9/mo)
+- [x] **MKT-04**: Free tier feature list accurately reflects what's included at no cost
+- [x] **MKT-05**: Each add-on card lists its key benefits
 
 ### Hero & CTA
 
