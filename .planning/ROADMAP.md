@@ -157,7 +157,7 @@ Plans:
 **Plans**: 3 plans
 Plans:
 - [ ] 28-01-PLAN.md — Hero/CTA copy rewrite + Nav anchor links
-- [ ] 28-02-PLAN.md — Features grouped rewrite (15 cards) + NZ Callout strip
+- [x] 28-02-PLAN.md — Features grouped rewrite (15 cards) + NZ Callout strip
 - [ ] 28-03-PLAN.md — Pricing fix (free tier + 3 add-ons) + page.tsx wiring
 **UI hint**: yes
 
@@ -192,4 +192,4 @@ Plans:
 | 25. Admin Operational UI | v4.0 | 3/3 | Complete | 2026-04-05 |
 | 26. Super-Admin Billing + User Management | v4.0 | 3/3 | Complete | 2026-04-05 |
 | 27. Super-Admin Analytics | v4.0 | 2/2 | Complete | 2026-04-06 |
-| 28. Marketing Landing Page | v5.0 | 0/3 | Not started | - |
+| 28. Marketing Landing Page | v5.0 | 1/3 | In Progress|  |

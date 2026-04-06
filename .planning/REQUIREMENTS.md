@@ -9,8 +9,8 @@ Requirements for Marketing & Landing Page milestone. Each maps to roadmap phases
 
 ### Features Section
 
-- [ ] **MKT-01**: Landing page features section showcases all major shipped capabilities (POS, online store, GST, inventory, barcode scanning, customer accounts, staff management, reporting, receipts, click-and-collect)
-- [ ] **MKT-02**: Each feature card has a clear title, description, and icon
+- [x] **MKT-01**: Landing page features section showcases all major shipped capabilities (POS, online store, GST, inventory, barcode scanning, customer accounts, staff management, reporting, receipts, click-and-collect)
+- [x] **MKT-02**: Each feature card has a clear title, description, and icon
 
 ### Pricing Section
 
@@ -25,8 +25,8 @@ Requirements for Marketing & Landing Page milestone. Each maps to roadmap phases
 
 ### Design & Quality
 
-- [ ] **MKT-08**: All sections follow DESIGN.md (navy/amber, Satoshi/DM Sans, spacing tokens)
-- [ ] **MKT-09**: Page is responsive (mobile, tablet, desktop)
+- [x] **MKT-08**: All sections follow DESIGN.md (navy/amber, Satoshi/DM Sans, spacing tokens)
+- [x] **MKT-09**: Page is responsive (mobile, tablet, desktop)
 
 ## Future Requirements
 
