@@ -383,7 +383,7 @@ export default function LandingFeatures() {
   return (
     <section id="features" className="bg-[var(--color-bg)]">
       <div className="max-w-[1200px] mx-auto px-[var(--space-md)] md:px-[var(--space-lg)] py-[var(--space-3xl)]">
-        <h2 className="font-sans text-xl font-bold text-[var(--color-text)] text-center leading-[1.3]">
+        <h2 className="font-sans text-2xl md:text-3xl font-bold text-[var(--color-text)] text-center leading-[1.3]">
           Everything your store needs, out of the box
         </h2>
         {featureGroups.map((group, i) => (
