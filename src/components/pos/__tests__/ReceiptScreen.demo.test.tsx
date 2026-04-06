@@ -14,6 +14,11 @@ import type { ReceiptData } from '@/lib/receipt'
 const mockReceipt: ReceiptData = {
   orderId: 'test-order-123',
   storeName: 'Demo Store',
+  storeAddress: '123 Demo St',
+  storePhone: '09 000 0000',
+  gstNumber: '123-456-789',
+  completedAt: '2026-04-06T00:00:00.000Z',
+  staffName: 'Demo Staff',
   items: [
     {
       productId: 'p1',

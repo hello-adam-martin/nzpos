@@ -483,6 +483,7 @@ export function POSClientShell({
             await sendPosReceipt({ orderId: lastReceiptData.orderId, email })
           }}
           mode="pos"
+          demoMode={demoMode}
         />
       )}
 
