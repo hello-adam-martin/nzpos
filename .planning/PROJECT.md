@@ -17,20 +17,14 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 
 1,000+ source files, 99,000+ LOC TypeScript, 27 phases shipped across 100+ plans. Production-ready multi-tenant SaaS POS with inventory management as a paid add-on. Phase 27 complete — Stripe snapshot sync pipeline (daily cron + on-demand refresh) populates local analytics table; super-admin analytics page shows MRR, churn, active subscriptions, 6-month MRR trend chart, and add-on revenue breakdown. All data from snapshot table, not live Stripe API.
 
-## Current Milestone: v4.0 Admin Platform
+## Current Milestone: v5.0 Marketing & Landing Page
 
-**Goal:** Complete the admin and super-admin areas with staff management, customer management, role-based permissions, platform analytics, and merchant account management.
+**Goal:** Update the marketing landing page to accurately reflect all shipped features across v1.0-v4.0, showcase all available add-ons, and present a compelling picture of the platform.
 
 **Target features:**
-- Staff management — add/edit/remove/deactivate staff, PIN reset, basic roles (Owner/Manager/Staff)
-- Customer management — customer list, search, order history view, account management
-- Promo management — edit and delete existing promo codes
-- Store settings expansion — business address, phone, IRD number, receipt header/footer, store hours
-- Admin dashboard improvements — sales trend chart, recent orders widget, key metrics comparison
-- Super-admin dashboard — platform overview with tenant/signup/adoption metrics
-- Super-admin analytics — full Stripe integration (MRR, churn, revenue per add-on, payment failures)
-- Super-admin billing visibility — view tenant subscriptions, invoices, payment history
-- Super-admin user management — view merchant accounts, password resets, disable accounts, impersonation
+- Expanded features section covering all shipped capabilities (barcode scanning, customer accounts, staff management, admin dashboard, receipts, partial refunds, promo codes, etc.)
+- Complete add-on pricing including Inventory Management alongside Xero and Email Notifications
+- Improved marketing page structure and content reflecting a mature SaaS product
 
 ## Core Value
 
@@ -80,7 +74,7 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 
 ### Active
 
-(None — run `/gsd:new-milestone` to define next milestone requirements)
+(Defined in REQUIREMENTS.md for v5.0 Marketing & Landing Page)
 
 ### Out of Scope
 
@@ -179,4 +173,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-05 after Phase 25 Admin Operational UI completed*
+*Last updated: 2026-04-06 — Milestone v5.0 Marketing & Landing Page started*

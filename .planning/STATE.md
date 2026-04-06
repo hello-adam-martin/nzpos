@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v4.0
-milestone_name: Admin Platform
-status: verifying
-stopped_at: Completed 27-super-admin-analytics plan 02 (Task 3 checkpoint approved — phase complete)
-last_updated: "2026-04-06T02:18:52.833Z"
+milestone: v5.0
+milestone_name: Marketing & Landing Page
+status: defining-requirements
+stopped_at: Milestone v5.0 started — defining requirements
+last_updated: "2026-04-06T03:00:00.000Z"
 last_activity: 2026-04-06
 progress:
-  total_phases: 4
-  completed_phases: 3
-  total_plans: 11
-  completed_plans: 10
-  percent: 89
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 27 — super-admin-analytics
+**Current focus:** Milestone v5.0 — Marketing & Landing Page
 
 ## Current Position
 
-Phase: 27
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-06
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-06 — Milestone v5.0 started
 
-Progress: [█████████░] 89%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
