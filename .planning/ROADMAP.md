@@ -96,7 +96,7 @@
 
 </details>
 
-### 🚧 v8.0 Add-On Catalog Expansion (In Progress)
+### v8.0 Add-On Catalog Expansion (In Progress)
 
 **Milestone Goal:** Expand paid add-on catalog with Gift Cards, Advanced Reporting/COGS, and Loyalty Points — growing MRR per merchant while maintaining NZ legal compliance.
 
@@ -116,7 +116,13 @@
   3. Gift card expiry is at minimum 3 years from issuance (enforced by DB constraint, NZ Fair Trading Act 2024)
   4. Staff can enter a gift card code at POS checkout and apply the balance as payment, with partial redemption tracking the remaining balance
   5. Gift card issuance is recorded as deferred liability — excluded from Xero sales sync and not written to the orders table
-**Plans**: TBD
+**Plans:** 5 plans
+Plans:
+- [ ] 35-01-PLAN.md — DB schema, billing pipeline, admin navigation
+- [ ] 35-02-PLAN.md — Gift card issuance (POS + online + email)
+- [ ] 35-03-PLAN.md — POS redemption (cart state machine + payment method)
+- [ ] 35-04-PLAN.md — Online redemption (checkout gift card + Stripe bypass)
+- [ ] 35-05-PLAN.md — Admin management (list, detail, void)
 **UI hint**: yes
 
 ### Phase 36: Advanced Reporting / COGS Add-On
@@ -183,6 +189,6 @@
 | 32. Demo Store Seed | v7.0 | 1/1 | Complete | 2026-04-06 |
 | 33. Demo POS Route & Checkout | v7.0 | 2/2 | Complete | 2026-04-06 |
 | 34. Signup Conversion & Landing Page | v7.0 | 2/2 | Complete | 2026-04-06 |
-| 35. Gift Cards Add-On | v8.0 | 0/TBD | Not started | - |
+| 35. Gift Cards Add-On | v8.0 | 0/5 | Planning | - |
 | 36. Advanced Reporting / COGS Add-On | v8.0 | 0/TBD | Not started | - |
 | 37. Loyalty Points Add-On | v8.0 | 0/TBD | Not started | - |
