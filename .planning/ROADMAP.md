@@ -215,7 +215,10 @@ Plans:
   3. The /add-ons hub page shows exactly two add-ons — no email notifications card
   4. Navigating to /add-ons/email-notifications returns a 404 or redirects (the detail page no longer exists)
   5. Add-on grids on both landing and hub pages use a balanced 2-column layout (not a 3-column with a gap)
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 31-01-PLAN.md — Landing pricing: remove email card, add to free tier checklist, 2-column grid + delete email detail page
+- [ ] 31-02-PLAN.md — Add-ons hub: remove email entry, update metadata, 2-column grid
 **UI hint**: yes
 
 ## Progress
@@ -252,4 +255,4 @@ Plans:
 | 28. Marketing Landing Page | v5.0 | 3/3 | Complete | 2026-04-06 |
 | 29. Backend & Billing Cleanup | v6.0 | 2/2 | Complete    | 2026-04-06 |
 | 30. Admin UI & Super Admin | v6.0 | 2/2 | Complete    | 2026-04-06 |
-| 31. Marketing Pages | v6.0 | 0/? | Not started | - |
+| 31. Marketing Pages | v6.0 | 0/2 | Not started | - |
