@@ -172,6 +172,6 @@ Plans:
 | 29. Backend & Billing Cleanup | v6.0 | 2/2 | Complete | 2026-04-06 |
 | 30. Admin UI & Super Admin | v6.0 | 2/2 | Complete | 2026-04-06 |
 | 31. Marketing Pages | v6.0 | 2/2 | Complete | 2026-04-06 |
-| 32. Demo Store Seed | v7.0 | 1/1 | Complete   | 2026-04-06 |
+| 32. Demo Store Seed | v7.0 | 1/1 | Complete    | 2026-04-06 |
 | 33. Demo POS Route & Checkout | v7.0 | 0/? | Not started | - |
 | 34. Signup Conversion & Landing Page | v7.0 | 0/? | Not started | - |
