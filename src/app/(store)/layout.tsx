@@ -65,7 +65,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
         {customer && !customer.emailVerified && (
           <VerificationBanner email={customer.email} />
         )}
-        <CartDrawer />
+        <CartDrawer storeId={storeId ?? ''} hasGiftCards={hasGiftCards} />
         <main className="mx-auto max-w-[1200px] px-6 lg:px-8">
           {children}
         </main>

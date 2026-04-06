@@ -1,20 +1,48 @@
 'use client'
 
-import { useTransition, useEffect, useRef } from 'react'
+import { useTransition, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useCart } from '@/contexts/CartContext'
 import { CartLineItem } from './CartLineItem'
 import { CartSummary } from './CartSummary'
 import { PromoCodeInput } from './PromoCodeInput'
+import { GiftCardInput, type AppliedGiftCard } from './GiftCardInput'
 import { createCheckoutSession } from '@/actions/orders/createCheckoutSession'
+import { formatNZD } from '@/lib/money'
 
-export function CartDrawer() {
-  const { state, dispatch, itemCount } = useCart()
+// ---------------------------------------------------------------------------
+// Props
+// ---------------------------------------------------------------------------
+
+interface CartDrawerProps {
+  storeId: string
+  hasGiftCards?: boolean
+}
+
+export function CartDrawer({ storeId, hasGiftCards = false }: CartDrawerProps) {
+  const { state, dispatch, itemCount, totalCents } = useCart()
   const [isPending, startTransition] = useTransition()
   const drawerRef = useRef<HTMLDivElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
 
-  const { isDrawerOpen, items, promoCode, promoDiscountCents, promoDiscountType } = state
+  // Gift card state (local — not persisted to cart context)
+  const [appliedGiftCard, setAppliedGiftCard] = useState<AppliedGiftCard | null>(null)
+
+  const { isDrawerOpen, items, promoCode } = state
+
+  // Reset gift card when drawer closes or cart is cleared
+  useEffect(() => {
+    if (!isDrawerOpen) {
+      setAppliedGiftCard(null)
+    }
+  }, [isDrawerOpen])
+
+  // Reset gift card if cart items change (to avoid stale coverage math)
+  useEffect(() => {
+    if (items.length === 0) {
+      setAppliedGiftCard(null)
+    }
+  }, [items])
 
   // Focus management: focus close button when drawer opens
   useEffect(() => {
@@ -61,27 +89,50 @@ export function CartDrawer() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isDrawerOpen, dispatch])
 
+  // ---------------------------------------------------------------------------
+  // Computed: effective total after gift card (for Stripe charge)
+  // ---------------------------------------------------------------------------
+
+  const giftCardAmountCents = appliedGiftCard?.giftCardAmountCents ?? 0
+  const remainingAfterGiftCard = Math.max(0, totalCents - giftCardAmountCents)
+  const isFullyCoveredByGiftCard = appliedGiftCard !== null && remainingAfterGiftCard === 0
+
+  // ---------------------------------------------------------------------------
+  // Checkout handler
+  // ---------------------------------------------------------------------------
+
   async function handleCheckout() {
     startTransition(async () => {
       const promoId = promoCode ? (state as { promoId?: string }).promoId : undefined
+
       const result = await createCheckoutSession({
         items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
         })),
         promoId,
-        promoDiscountCents: promoDiscountCents > 0 ? promoDiscountCents : undefined,
-        promoDiscountType: promoDiscountType ?? undefined,
+        promoDiscountCents: state.promoDiscountCents > 0 ? state.promoDiscountCents : undefined,
+        promoDiscountType: state.promoDiscountType ?? undefined,
+        // Gift card fields (optional — only when applied)
+        giftCardCode: appliedGiftCard?.code,
+        giftCardAmountCents: appliedGiftCard?.giftCardAmountCents,
       })
 
       if ('url' in result && result.url) {
+        // Partial cover: redirect to Stripe
         window.location.href = result.url
+      } else if ('redirect' in result && result.redirect) {
+        // Full cover: server handled order, redirect to confirmation
+        dispatch({ type: 'CLEAR_CART' })
+        window.location.href = result.redirect
       } else if ('error' in result) {
-        // Handle specific errors — for now surface via alert; webhook plan adds proper UI
+        const err = result as { error: string; productName?: string }
         alert(
-          result.error === 'out_of_stock'
-            ? `Sorry, "${(result as { productName?: string }).productName}" is out of stock. Please remove it from your cart.`
-            : 'Something went wrong. Please try again.'
+          err.error === 'out_of_stock'
+            ? `Sorry, "${err.productName}" is out of stock. Please remove it from your cart.`
+            : err.error === 'gift_card_invalid'
+              ? 'Your gift card is no longer valid. Please remove it and try again.'
+              : 'Something went wrong. Please try again.'
         )
       }
     })
@@ -191,18 +242,61 @@ export function CartDrawer() {
 
               <PromoCodeInput />
               <CartSummary />
+
+              {/* Gift card section — shown when store has gift cards enabled */}
+              {hasGiftCards && (
+                <>
+                  <div className="border-t border-[var(--color-border)]" />
+                  <GiftCardInput
+                    storeId={storeId}
+                    totalCents={totalCents}
+                    applied={appliedGiftCard}
+                    onApply={setAppliedGiftCard}
+                    onRemove={() => setAppliedGiftCard(null)}
+                  />
+                </>
+              )}
+
+              {/* Gift card adjusted total — shown when partially covered */}
+              {appliedGiftCard && !isFullyCoveredByGiftCard && (
+                <div className="py-2 border-t border-[var(--color-border)]">
+                  <div className="flex justify-between text-sm text-[var(--color-text-muted)]">
+                    <span>Gift card</span>
+                    <span className="tabular-nums text-[var(--color-success)]">
+                      -{formatNZD(giftCardAmountCents)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-base font-semibold text-[var(--color-text)] pt-1">
+                    <span>Remaining to pay</span>
+                    <span className="tabular-nums">{formatNZD(remainingAfterGiftCard)}</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Footer CTA */}
             <div className="px-4 py-4 border-t border-[var(--color-border)] shrink-0">
-              <button
-                type="button"
-                onClick={handleCheckout}
-                disabled={isPending || items.length === 0}
-                className="w-full py-3 px-6 bg-[var(--color-amber)] text-white text-base font-semibold rounded-lg hover:bg-[var(--color-amber-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
-              >
-                {isPending ? 'Redirecting…' : 'Proceed to Checkout'}
-              </button>
+              {isFullyCoveredByGiftCard ? (
+                /* Full cover: "Complete Order" — no Stripe, no logo */
+                <button
+                  type="button"
+                  onClick={handleCheckout}
+                  disabled={isPending || items.length === 0}
+                  className="w-full py-3 px-6 bg-[var(--color-navy)] text-white text-base font-semibold rounded-lg hover:bg-[var(--color-navy-light)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                >
+                  {isPending ? 'Processing…' : 'Complete Order'}
+                </button>
+              ) : (
+                /* Normal: Stripe checkout */
+                <button
+                  type="button"
+                  onClick={handleCheckout}
+                  disabled={isPending || items.length === 0}
+                  className="w-full py-3 px-6 bg-[var(--color-amber)] text-white text-base font-semibold rounded-lg hover:bg-[var(--color-amber-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                >
+                  {isPending ? 'Redirecting…' : 'Proceed to Checkout'}
+                </button>
+              )}
             </div>
           </>
         )}
