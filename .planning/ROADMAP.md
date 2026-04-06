@@ -196,5 +196,5 @@ Plans:
 | 33. Demo POS Route & Checkout | v7.0 | 2/2 | Complete | 2026-04-06 |
 | 34. Signup Conversion & Landing Page | v7.0 | 2/2 | Complete | 2026-04-06 |
 | 35. Gift Cards Add-On | v8.0 | 7/7 | Complete    | 2026-04-06 |
-| 36. Advanced Reporting / COGS Add-On | v8.0 | 4/4 | Complete   | 2026-04-06 |
+| 36. Advanced Reporting / COGS Add-On | v8.0 | 4/4 | Complete    | 2026-04-06 |
 | 37. Loyalty Points Add-On | v8.0 | 0/TBD | Not started | - |
