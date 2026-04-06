@@ -1,7 +1,6 @@
 import 'server-only'
 import { Resend } from 'resend'
 import type React from 'react'
-import { requireFeature } from '@/lib/requireFeature'
 
 let _resend: Resend | null = null
 function getResend(): Resend | null {
@@ -22,13 +21,6 @@ export async function sendEmail(params: {
   subject: string
   react: React.ReactElement
 }): Promise<{ success: boolean }> {
-  // Gate: email_notifications subscription required (DB check for mutation)
-  const gate = await requireFeature('email_notifications', { requireDbCheck: true })
-  if (!gate.authorized) {
-    console.log('[email] Email notifications not active — skipping send')
-    return { success: false }
-  }
-
   const resend = getResend()
   if (!resend) {
     console.warn('[email] RESEND_API_KEY not configured — skipping send')
