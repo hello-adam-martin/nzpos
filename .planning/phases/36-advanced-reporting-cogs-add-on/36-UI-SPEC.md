@@ -165,7 +165,7 @@ Cost Price (excl. GST)    [NZ$  _____ ]
 Supplier cost excluding GST. Used to calculate profit margin.
 ```
 
-- Label: `text-sm font-semibold font-sans text-text`
+- Label: `text-sm font-bold font-sans text-text`
 - "(excl. GST)" annotation: `text-text-muted text-xs`
 - Input: reuse existing `PriceInput` component pattern
 - Helper text: `text-sm font-sans text-text-muted`
@@ -352,5 +352,6 @@ No third-party component registry blocks used in this phase. All components are 
 | Tab name "Profit & Margin" | CONTEXT.md D-04 |
 | Summary card labels (Revenue/Cost/Gross Profit/Margin %) | CONTEXT.md D-05 + RESEARCH.md summary card example |
 | Category collapsible layout | CONTEXT.md D-06 |
+| ProductFormDrawer cost price label: font-bold (not font-semibold) | Checker revision 2026-04-07 — aligns with declared 2-weight system (400/700) |
 
 All design contract fields are sourced from upstream artifacts or direct codebase reads. No user questions required.
