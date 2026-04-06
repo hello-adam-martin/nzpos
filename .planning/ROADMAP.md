@@ -100,7 +100,7 @@
 
 **Milestone Goal:** Expand paid add-on catalog with Gift Cards, Advanced Reporting/COGS, and Loyalty Points — growing MRR per merchant while maintaining NZ legal compliance.
 
-- [ ] **Phase 35: Gift Cards Add-On** — Digital gift card issuance, redemption, and NZ Fair Trading Act compliance
+- [x] **Phase 35: Gift Cards Add-On** — Digital gift card issuance, redemption, and NZ Fair Trading Act compliance (completed 2026-04-06)
 - [ ] **Phase 36: Advanced Reporting / COGS Add-On** — Cost price tracking, margin reports, and CSV export
 - [ ] **Phase 37: Loyalty Points Add-On** — Points earn/redeem at POS and online, privacy-compliant enrollment
 
@@ -116,13 +116,13 @@
   3. Gift card expiry is at minimum 3 years from issuance (enforced by DB constraint, NZ Fair Trading Act 2024)
   4. Staff can enter a gift card code at POS checkout and apply the balance as payment, with partial redemption tracking the remaining balance
   5. Gift card issuance is recorded as deferred liability — excluded from Xero sales sync and not written to the orders table
-**Plans:** 5/6 plans executed
+**Plans:** 6/6 plans complete
 Plans:
 - [x] 35-00-PLAN.md — Wave 0 test stubs (code generation, cart gift card, balance ops)
 - [x] 35-01-PLAN.md — DB schema, billing pipeline, admin navigation
 - [x] 35-02-PLAN.md — Gift card issuance (POS + online + email + storefront nav)
 - [x] 35-03-PLAN.md — POS redemption (cart state machine + payment method)
-- [ ] 35-04-PLAN.md — Online redemption (checkout gift card + Stripe bypass)
+- [x] 35-04-PLAN.md — Online redemption (checkout gift card + Stripe bypass)
 - [x] 35-05-PLAN.md — Admin management (list, detail, void)
 **UI hint**: yes
 
@@ -190,6 +190,6 @@ Plans:
 | 32. Demo Store Seed | v7.0 | 1/1 | Complete | 2026-04-06 |
 | 33. Demo POS Route & Checkout | v7.0 | 2/2 | Complete | 2026-04-06 |
 | 34. Signup Conversion & Landing Page | v7.0 | 2/2 | Complete | 2026-04-06 |
-| 35. Gift Cards Add-On | v8.0 | 5/6 | In Progress|  |
+| 35. Gift Cards Add-On | v8.0 | 6/6 | Complete   | 2026-04-06 |
 | 36. Advanced Reporting / COGS Add-On | v8.0 | 0/TBD | Not started | - |
 | 37. Loyalty Points Add-On | v8.0 | 0/TBD | Not started | - |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: Add-On Catalog Expansion
 status: executing
-stopped_at: Completed 35-05-PLAN.md
-last_updated: "2026-04-06T12:23:19.292Z"
+stopped_at: Completed 35-04-PLAN.md
+last_updated: "2026-04-06T12:25:41.918Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 ## Current Position
 
 Phase: 35 (gift-cards-add-on) — EXECUTING
-Plan: 5 of 6
+Plan: 6 of 6
 Status: Ready to execute
 Last activity: 2026-04-06
 
@@ -59,6 +59,9 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 35]: Auto-split: giftCardAmountCents = Math.min(balanceCents, totalCents) — gift card always applied first, remainder to EFTPOS/Cash
 - [Phase 35]: redeem_gift_card RPC called after complete_pos_sale — order created first, redemption second; redemption failure warns but does not void sale
 - [Phase 35-gift-cards-add-on]: listGiftCards returns only last 4 digits of code in list view — full code only in getGiftCard detail response
+- [Phase 35]: Partial gift card in Stripe Checkout: negative line item reduces session total — simpler than Stripe Coupons API
+- [Phase 35]: redeem_gift_card RPC takes p_gift_card_id UUID not p_code — look up by code first, then pass UUID
+- [Phase 35]: Full-cover gift card in createCheckoutSession: placeholder stripe_session_id='gift_card_{order.id}' for complete_online_sale RPC call
 
 ### Pending Todos
 
@@ -71,6 +74,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T12:23:19.289Z
-Stopped at: Completed 35-05-PLAN.md
+Last session: 2026-04-06T12:25:41.915Z
+Stopped at: Completed 35-04-PLAN.md
 Resume file: None
