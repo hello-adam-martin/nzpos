@@ -9,6 +9,7 @@ import { normalizeGiftCardCode, effectiveGiftCardStatus } from '@/lib/gift-card-
 import { sendEmail } from '@/lib/email'
 import { OnlineReceiptEmail } from '@/emails/OnlineReceiptEmail'
 import type { ReceiptData } from '@/lib/receipt'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 // ---------------------------------------------------------------------------
 // Zod schema — SEC-08 / F-6.1: runtime validation before any DB access
@@ -30,6 +31,8 @@ const CreateCheckoutSessionSchema = z.object({
     .transform((s) => normalizeGiftCardCode(s))
     .optional(),
   giftCardAmountCents: z.number().int().positive().optional(),
+  // Loyalty points redemption (optional — LOYAL-08)
+  loyalty_points_to_redeem: z.number().int().min(0).optional(),
 })
 
 type CreateCheckoutSessionResult =
@@ -64,7 +67,20 @@ export async function createCheckoutSession(
     promoDiscountType,
     giftCardCode,
     giftCardAmountCents,
+    loyalty_points_to_redeem,
   } = parsed.data
+
+  // Get authenticated customer email for loyalty validation (may be null for guests)
+  let authenticatedCustomerEmail: string | undefined
+  try {
+    const serverClient = await createSupabaseServerClient()
+    const { data: { user } } = await serverClient.auth.getUser()
+    if (user?.email && user.app_metadata?.role === 'customer') {
+      authenticatedCustomerEmail = user.email
+    }
+  } catch {
+    // Not authenticated — loyalty redemption will be skipped
+  }
 
   const supabase = createSupabaseAdminClient()
 
@@ -242,6 +258,58 @@ export async function createCheckoutSession(
   }
 
   // ---------------------------------------------------------------------------
+  // Loyalty points validation (LOYAL-08) — server-side balance check
+  // CRITICAL: Do NOT call redeem_loyalty_points RPC here.
+  // Points are deducted in the webhook AFTER payment confirms (never before).
+  // ---------------------------------------------------------------------------
+
+  let verifiedLoyaltyDiscountCents = 0
+  let verifiedLoyaltyCustomerId: string | null = null
+  let verifiedLoyaltyPointsRedeemed = 0
+
+  if (loyalty_points_to_redeem && loyalty_points_to_redeem > 0 && authenticatedCustomerEmail) {
+    const { data: customer } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('store_id', storeId)
+      .eq('email', authenticatedCustomerEmail)
+      .maybeSingle()
+
+    if (customer) {
+      // Server-side balance check — NEVER trust client
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: loyaltyRow } = await (supabase as any)
+        .from('loyalty_points')
+        .select('points_balance')
+        .eq('store_id', storeId)
+        .eq('customer_id', customer.id)
+        .maybeSingle() as { data: { points_balance: number } | null }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: loyaltySettings } = await (supabase as any)
+        .from('loyalty_settings')
+        .select('redeem_rate_cents, is_active')
+        .eq('store_id', storeId)
+        .maybeSingle() as { data: { redeem_rate_cents: number; is_active: boolean } | null }
+
+      if (
+        loyaltyRow &&
+        loyaltySettings &&
+        loyaltySettings.is_active &&
+        loyaltySettings.redeem_rate_cents &&
+        loyaltyRow.points_balance >= loyalty_points_to_redeem
+      ) {
+        // Remaining after gift card deduction
+        const remainingAfterGiftCard = totalCents - verifiedGiftCardAmountCents
+        const discountCents = loyalty_points_to_redeem * loyaltySettings.redeem_rate_cents
+        verifiedLoyaltyDiscountCents = Math.min(discountCents, remainingAfterGiftCard)
+        verifiedLoyaltyCustomerId = customer.id
+        verifiedLoyaltyPointsRedeemed = loyalty_points_to_redeem
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Gift card full-cover path (D-12) — bypass Stripe entirely
   // ---------------------------------------------------------------------------
 
@@ -258,6 +326,32 @@ export async function createCheckoutSession(
       verifiedPromoId,
       verifiedGiftCardId,
       verifiedGiftCardAmountCents: totalCents, // cap at actual total
+    })
+  }
+
+  // ---------------------------------------------------------------------------
+  // Loyalty full-cover path (LOYAL-08) — bypass Stripe, complete order server-side
+  // Only applies when no gift card is in play and loyalty covers the entire order
+  // ---------------------------------------------------------------------------
+
+  if (
+    !verifiedGiftCardId &&
+    verifiedLoyaltyCustomerId &&
+    verifiedLoyaltyDiscountCents >= totalCents
+  ) {
+    return handleFullLoyaltyCover({
+      supabase,
+      storeId,
+      baseUrl,
+      finalCartItems,
+      totalCents,
+      gstCents,
+      totalDiscountCents,
+      subtotalBeforeDiscount,
+      verifiedPromoId,
+      verifiedLoyaltyCustomerId,
+      verifiedLoyaltyPointsRedeemed,
+      verifiedLoyaltyDiscountCents: totalCents, // cap at actual total
     })
   }
 
@@ -342,6 +436,20 @@ export async function createCheckoutSession(
           },
         ]
       : []),
+    // Loyalty points deduction as negative line item (mirrors gift card pattern)
+    // CRITICAL: Do NOT call redeem_loyalty_points here — webhook handles it after payment
+    ...(verifiedLoyaltyDiscountCents > 0
+      ? [
+          {
+            price_data: {
+              currency: 'nzd',
+              product_data: { name: 'Loyalty Points Applied' },
+              unit_amount: -verifiedLoyaltyDiscountCents,
+            },
+            quantity: 1 as const,
+          },
+        ]
+      : []),
   ]
 
   const session = await stripe.checkout.sessions.create({
@@ -356,6 +464,14 @@ export async function createCheckoutSession(
         ? {
             gift_card_code: giftCardCode!,
             gift_card_amount_cents: String(verifiedGiftCardAmountCents),
+          }
+        : {}),
+      // Loyalty points redemption — deduction happens in webhook after payment (Pitfall 2)
+      ...(verifiedLoyaltyCustomerId
+        ? {
+            loyalty_customer_id: verifiedLoyaltyCustomerId,
+            loyalty_points_redeemed: String(verifiedLoyaltyPointsRedeemed),
+            loyalty_discount_cents: String(verifiedLoyaltyDiscountCents),
           }
         : {}),
     },
@@ -512,6 +628,137 @@ async function handleFullGiftCardCover({
   )
 
   // Redirect to confirmation page (matches webhook success_url pattern)
+  return { redirect: `/order/${order.id}/confirmation?token=${lookupToken}` }
+}
+
+// ---------------------------------------------------------------------------
+// Full loyalty cover — bypass Stripe, complete order + redeem points server-side
+// ---------------------------------------------------------------------------
+
+async function handleFullLoyaltyCover({
+  supabase,
+  storeId,
+  baseUrl,
+  finalCartItems,
+  totalCents,
+  gstCents,
+  totalDiscountCents,
+  subtotalBeforeDiscount,
+  verifiedPromoId,
+  verifiedLoyaltyCustomerId,
+  verifiedLoyaltyPointsRedeemed,
+  verifiedLoyaltyDiscountCents,
+}: {
+  supabase: ReturnType<typeof createSupabaseAdminClient>
+  storeId: string
+  baseUrl: string
+  finalCartItems: Array<{
+    productId: string
+    productName: string
+    unitPriceCents: number
+    quantity: number
+    discountShareCents: number
+    lineTotalCents: number
+    gstCents: number
+  }>
+  totalCents: number
+  gstCents: number
+  totalDiscountCents: number
+  subtotalBeforeDiscount: number
+  verifiedPromoId: string | undefined
+  verifiedLoyaltyCustomerId: string
+  verifiedLoyaltyPointsRedeemed: number
+  verifiedLoyaltyDiscountCents: number
+}): Promise<CreateCheckoutSessionResult> {
+  const lookupToken = crypto.randomUUID()
+  const { data: order, error: orderError } = await supabase
+    .from('orders')
+    .insert({
+      store_id: storeId,
+      channel: 'online',
+      status: 'pending',
+      subtotal_cents: subtotalBeforeDiscount,
+      gst_cents: gstCents,
+      total_cents: totalCents,
+      discount_cents: totalDiscountCents,
+      payment_method: 'loyalty',
+      lookup_token: lookupToken,
+      promo_id: verifiedPromoId ?? null,
+    } as any)
+    .select('id')
+    .single()
+
+  if (orderError || !order) {
+    console.error('[createCheckoutSession] Loyalty full-cover: failed to create order:', orderError?.message)
+    return { error: 'server_error' }
+  }
+
+  const orderItemsData = finalCartItems.map((item) => ({
+    order_id: order.id,
+    store_id: storeId,
+    product_id: item.productId,
+    product_name: item.productName,
+    unit_price_cents: item.unitPriceCents,
+    quantity: item.quantity,
+    discount_cents: item.discountShareCents,
+    line_total_cents: item.lineTotalCents,
+    gst_cents: item.gstCents,
+  }))
+
+  const { error: itemsError } = await supabase.from('order_items').insert(orderItemsData)
+  if (itemsError) {
+    console.error('[createCheckoutSession] Loyalty full-cover: failed to insert order_items:', itemsError.message)
+    await supabase.from('orders').delete().eq('id', order.id)
+    return { error: 'server_error' }
+  }
+
+  const { error: saleError } = await supabase.rpc('complete_online_sale', {
+    p_store_id: storeId,
+    p_order_id: order.id,
+    p_stripe_session_id: `loyalty_${order.id}`,
+    p_stripe_payment_intent_id: '',
+    p_customer_email: undefined,
+    p_items: finalCartItems.map((item) => ({
+      product_id: item.productId,
+      quantity: item.quantity,
+    })),
+  })
+
+  if (saleError) {
+    console.error('[createCheckoutSession] Loyalty full-cover: complete_online_sale RPC error:', saleError.message)
+    return { error: 'server_error' }
+  }
+
+  // Redeem loyalty points immediately (full cover — no webhook to wait for)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: redemptionError } = await (supabase as any).rpc('redeem_loyalty_points', {
+    p_store_id: storeId,
+    p_customer_id: verifiedLoyaltyCustomerId,
+    p_points_to_redeem: verifiedLoyaltyPointsRedeemed,
+    p_order_id: order.id,
+    p_channel: 'online',
+    p_discount_cents: verifiedLoyaltyDiscountCents,
+  })
+
+  if (redemptionError) {
+    console.warn(
+      '[createCheckoutSession] Loyalty full-cover: loyalty redemption warning store_id=%s order_id=%s:',
+      storeId,
+      order.id,
+      redemptionError
+    )
+    // Order is already completed — log warning but don't fail (matches gift card pattern)
+  }
+
+  void sendConfirmationEmail({ supabase, storeId, orderId: order.id })
+
+  console.log(
+    '[createCheckoutSession] Full-cover loyalty: customer_id=%s points=%d order_id=%s',
+    verifiedLoyaltyCustomerId,
+    verifiedLoyaltyPointsRedeemed,
+    order.id
+  )
+
   return { redirect: `/order/${order.id}/confirmation?token=${lookupToken}` }
 }
 
