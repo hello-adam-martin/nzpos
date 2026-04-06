@@ -10,7 +10,7 @@ import type { SubscriptionFeature } from '@/config/addons'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
-const featureSchema = z.enum(['xero', 'custom_domain', 'inventory', 'gift_cards'])
+const featureSchema = z.enum(['xero', 'custom_domain', 'inventory', 'gift_cards', 'advanced_reporting'])
 
 type Result = { url: string } | { error: string }
 

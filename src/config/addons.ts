@@ -1,13 +1,14 @@
 // Add-on configuration: centralized metadata, Price IDs, and feature flag mappings.
 // Price IDs are loaded from environment variables (D-02: never hardcode Price IDs).
 
-export type SubscriptionFeature = 'xero' | 'custom_domain' | 'inventory' | 'gift_cards'
+export type SubscriptionFeature = 'xero' | 'custom_domain' | 'inventory' | 'gift_cards' | 'advanced_reporting'
 
 interface FeatureFlags {
   has_xero: boolean
   has_custom_domain: boolean
   has_inventory: boolean
   has_gift_cards: boolean
+  has_advanced_reporting: boolean
 }
 
 // Map: feature name -> Stripe Price ID (from env vars)
@@ -16,6 +17,7 @@ export const PRICE_ID_MAP: Record<SubscriptionFeature, string> = {
   custom_domain: process.env.STRIPE_PRICE_CUSTOM_DOMAIN!,
   inventory: process.env.STRIPE_PRICE_INVENTORY ?? '',
   gift_cards: process.env.STRIPE_PRICE_GIFT_CARDS ?? '',
+  advanced_reporting: process.env.STRIPE_PRICE_ADVANCED_REPORTING ?? '',
 }
 
 // Reverse map: Stripe Price ID -> store_plans column name (for webhook handler)
@@ -28,6 +30,9 @@ export const PRICE_TO_FEATURE: Record<string, keyof FeatureFlags> = {
   ...(process.env.STRIPE_PRICE_GIFT_CARDS
     ? { [process.env.STRIPE_PRICE_GIFT_CARDS]: 'has_gift_cards' as const }
     : {}),
+  ...(process.env.STRIPE_PRICE_ADVANCED_REPORTING
+    ? { [process.env.STRIPE_PRICE_ADVANCED_REPORTING]: 'has_advanced_reporting' as const }
+    : {}),
 }
 
 // Map: feature name -> store_plans boolean column name
@@ -36,6 +41,7 @@ export const FEATURE_TO_COLUMN: Record<SubscriptionFeature, keyof FeatureFlags> 
   custom_domain: 'has_custom_domain',
   inventory: 'has_inventory',
   gift_cards: 'has_gift_cards',
+  advanced_reporting: 'has_advanced_reporting',
 }
 
 // Add-on display metadata for UI rendering
@@ -67,5 +73,12 @@ export const ADDONS = [
     benefitLine: 'Sell digital gift cards in-store and online. Compliant with NZ Fair Trading Act 2024.',
     gatedHeadline: 'Gift cards require an upgrade',
     gatedBody: 'Sell digital gift cards in-store and online with NZ Fair Trading Act compliance.',
+  },
+  {
+    feature: 'advanced_reporting' as SubscriptionFeature,
+    name: 'Advanced Reporting',
+    benefitLine: 'Track product costs and generate profit & margin reports.',
+    gatedHeadline: 'Advanced Reporting requires an upgrade',
+    gatedBody: 'Enter cost prices per product and generate COGS reports by date range.',
   },
 ] as const

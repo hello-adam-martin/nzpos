@@ -29,11 +29,12 @@ interface AdminSidebarProps {
   userEmail?: string | null
   hasInventory?: boolean
   hasGiftCards?: boolean
+  hasAdvancedReporting?: boolean
   role?: 'owner' | 'manager'
   staffName?: string | null
 }
 
-export default function AdminSidebar({ userEmail, hasInventory, hasGiftCards, role = 'owner', staffName }: AdminSidebarProps) {
+export default function AdminSidebar({ userEmail, hasInventory, hasGiftCards, hasAdvancedReporting, role = 'owner', staffName }: AdminSidebarProps) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -90,7 +91,7 @@ export default function AdminSidebar({ userEmail, hasInventory, hasGiftCards, ro
         })}
 
         {/* Add-ons section — owner only, renders when at least one add-on flag is active */}
-        {role === 'owner' && hasGiftCards === true && (
+        {role === 'owner' && (hasGiftCards === true || hasAdvancedReporting === true) && (
           <div className="pt-4">
             <p className="px-3 pb-1 text-[11px] uppercase tracking-widest text-white/40 font-sans">
               Add-ons
