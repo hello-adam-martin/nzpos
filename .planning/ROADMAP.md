@@ -133,9 +133,11 @@ Plans:
   2. Clicking the CTA navigates to the merchant signup page
   3. Dismissing the CTA returns to a fresh demo session with an empty cart
   4. The landing page has a clearly visible "Try POS Demo" button that navigates to `/demo/pos`
-**Plans:** 1 plan
+**Plans:** 2 plans
 Plans:
-- [ ] 32-01-PLAN.md — SQL migration + constants + SVG placeholders for demo store seed
+- [ ] 34-01-PLAN.md — ReceiptScreen demo signup CTA with dismiss action
+- [ ] 34-02-PLAN.md — Landing page "Try POS Demo" ghost button + bottom CTA link
+
 **UI hint**: yes
 
 ## Progress
@@ -175,4 +177,4 @@ Plans:
 | 31. Marketing Pages | v6.0 | 2/2 | Complete | 2026-04-06 |
 | 32. Demo Store Seed | v7.0 | 1/1 | Complete    | 2026-04-06 |
 | 33. Demo POS Route & Checkout | v7.0 | 2/2 | Complete    | 2026-04-06 |
-| 34. Signup Conversion & Landing Page | v7.0 | 0/? | Not started | - |
+| 34. Signup Conversion & Landing Page | v7.0 | 0/2 | Not started | - |
