@@ -116,6 +116,49 @@ export async function completeSale(input: unknown) {
     }
   }
 
+  // 6b. Loyalty points redemption (if customer redeemed points — deduct BEFORE earning)
+  if (parsed.data.customer_id && parsed.data.loyalty_points_redeemed && parsed.data.loyalty_points_redeemed > 0) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).rpc('redeem_loyalty_points', {
+        p_store_id: staff.store_id,
+        p_customer_id: parsed.data.customer_id,
+        p_points_to_redeem: parsed.data.loyalty_points_redeemed,
+        p_order_id: orderId,
+        p_channel: 'pos',
+        p_staff_id: staff.staff_id,
+      })
+    } catch (err) {
+      console.warn('[completeSale] Loyalty redemption failed (non-fatal):', err)
+      // Warn but do NOT void the sale — matches gift card redemption pattern
+    }
+  }
+
+  // 6c. Loyalty points earning (if customer identified)
+  if (parsed.data.customer_id) {
+    // D-09: Points earned on NET amount — exclude gift card + loyalty discount to prevent points-on-points loops
+    const netAmountCents = parsed.data.total_cents
+      - (parsed.data.gift_card_amount_cents ?? 0)
+      - (parsed.data.loyalty_discount_cents ?? 0)
+
+    if (netAmountCents > 0) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any).rpc('earn_loyalty_points', {
+          p_store_id: staff.store_id,
+          p_customer_id: parsed.data.customer_id,
+          p_order_id: orderId,
+          p_net_amount_cents: netAmountCents,
+          p_channel: 'pos',
+          p_staff_id: staff.staff_id,
+        })
+      } catch (err) {
+        console.warn('[completeSale] Loyalty earning failed (non-fatal):', err)
+        // Non-fatal — sale already completed
+      }
+    }
+  }
+
   const changeDueCents = parsed.data.cash_tendered_cents
     ? calcChangeDue(parsed.data.total_cents, parsed.data.cash_tendered_cents)
     : undefined

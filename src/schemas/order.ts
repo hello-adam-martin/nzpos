@@ -25,6 +25,9 @@ export const CreateOrderSchema = z.object({
   split_remainder_method: z.enum(['eftpos', 'cash']).optional(),
   staff_id: z.string().uuid().optional(),
   customer_email: z.string().email().optional(),
+  customer_id: z.string().uuid().optional(),
+  loyalty_discount_cents: z.number().int().min(0).optional(),
+  loyalty_points_redeemed: z.number().int().min(0).optional(),
   notes: z.string().max(500).optional(),
   receipt_data: z.record(z.string(), z.unknown()).optional(),
 })
