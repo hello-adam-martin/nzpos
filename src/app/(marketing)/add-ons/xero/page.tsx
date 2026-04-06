@@ -9,115 +9,134 @@ export const metadata: Metadata = {
     'Automatically sync daily sales to Xero with GST breakdowns and credit notes. No manual data entry.',
 }
 
+const withoutItems = [
+  'End every day typing sales into Xero manually',
+  'Double-check GST calculations line by line',
+  'Chase down refunds to create credit notes',
+  'Worry about missed transactions before GST filing',
+]
+
+const withItems = [
+  'Wake up to yesterday\'s sales already in Xero',
+  'GST calculated per line, IRD-ready, automatically',
+  'Refunds create matching credit notes instantly',
+  'Every transaction accounted for, every night',
+]
+
 const features = [
   {
     title: 'Daily sales sync',
     description:
-      'Every sale is automatically sent to Xero as an invoice at the end of each day. No manual entry, no missed transactions.',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <polyline points="23 4 23 10 17 10" />
-        <polyline points="1 20 1 14 7 14" />
-        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-      </svg>
-    ),
+      'Every sale is batched and sent to Xero as an invoice at end of day. No manual entry, no missed transactions.',
   },
   {
-    title: 'GST breakdowns on every invoice',
+    title: 'Per-line GST breakdowns',
     description:
-      'Each invoice includes a full GST breakdown calculated per line item on discounted amounts — exactly how the IRD expects it.',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <rect x="4" y="2" width="16" height="20" rx="2" />
-        <line x1="8" y1="6" x2="16" y2="6" />
-        <line x1="8" y1="10" x2="10" y2="10" />
-        <line x1="14" y1="10" x2="16" y2="10" />
-        <line x1="8" y1="14" x2="10" y2="14" />
-        <line x1="14" y1="14" x2="16" y2="14" />
-        <line x1="8" y1="18" x2="16" y2="18" />
-      </svg>
-    ),
+      'Each invoice includes GST calculated on discounted amounts per line item. Exactly how the IRD expects it.',
   },
   {
-    title: 'Credit notes for refunds',
+    title: 'Automatic credit notes',
     description:
-      'When you issue a refund in NZPOS, a matching credit note is created in Xero automatically. Your books stay balanced.',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <polyline points="1 4 1 10 7 10" />
-        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
-      </svg>
-    ),
+      'Issue a refund in NZPOS and a matching credit note appears in Xero. Books stay balanced without extra work.',
   },
   {
     title: 'One-click connect',
     description:
-      'Authorise your Xero account once from NZPOS Settings. No API keys, no spreadsheets, no accountant required to set up.',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-      </svg>
-    ),
+      'Authorise your Xero account once from Settings. No API keys, no spreadsheets, no accountant needed.',
   },
 ]
 
 const steps = [
-  { number: '1', text: 'Enable Xero Integration in Settings → Integrations' },
-  { number: '2', text: 'Connect your Xero account with one click' },
-  { number: '3', text: 'Sales sync to Xero automatically each night' },
+  { number: '1', title: 'Enable', text: 'Turn on Xero Integration in Settings' },
+  { number: '2', title: 'Connect', text: 'Authorise your Xero account with one click' },
+  { number: '3', title: 'Done', text: 'Sales sync to Xero automatically each night' },
 ]
 
 export default function XeroPage() {
   return (
     <>
-      {/* Back link + Hero */}
+      {/* Hero */}
       <section className="bg-[var(--color-navy)]">
         <div className="max-w-[1200px] mx-auto px-[var(--space-md)] md:px-[var(--space-lg)] py-[var(--space-3xl)]">
           <Link
             href="/add-ons"
-            className="inline-flex items-center gap-[var(--space-xs)] font-sans text-sm text-white/50 hover:text-white transition-colors duration-150"
+            className="inline-flex items-center gap-[var(--space-xs)] font-sans text-sm text-white/50 hover:text-white transition-colors duration-150 py-2"
           >
             ← Back to add-ons
           </Link>
           <h1 className="font-display text-3xl md:text-5xl font-bold text-white leading-[1.1] mt-[var(--space-lg)]">
-            Xero Integration
+            Stop typing sales into Xero.
           </h1>
-          <div className="flex items-center gap-[var(--space-md)] mt-[var(--space-md)]">
-            <span className="inline-block bg-[var(--color-amber)] text-white font-sans text-sm font-bold px-4 py-1 rounded-full">
-              $9/month NZD
+          <p className="font-sans text-base md:text-lg text-white/70 mt-[var(--space-md)] max-w-2xl">
+            NZPOS syncs every transaction to Xero overnight. GST calculated correctly on every line. You just sell.
+          </p>
+          <div className="flex items-center gap-[var(--space-md)] mt-[var(--space-lg)]">
+            <Link
+              href="/signup"
+              className="inline-block bg-[var(--color-amber)] text-white px-6 py-3 rounded-md text-base font-bold hover:opacity-90 transition-opacity duration-150"
+            >
+              Get started free
+            </Link>
+            <span className="font-sans text-sm text-white/50">
+              then enable Xero for $9/month NZD
             </span>
           </div>
-          <p className="font-sans text-base md:text-lg text-white/70 mt-[var(--space-md)] max-w-2xl">
-            Stop entering sales into Xero by hand. NZPOS syncs your daily transactions automatically — with GST calculated correctly on every line.
-          </p>
         </div>
       </section>
 
-      {/* What it does */}
+      {/* Before / After */}
       <section className="bg-[var(--color-bg)]">
         <div className="max-w-[1200px] mx-auto px-[var(--space-md)] md:px-[var(--space-lg)] py-[var(--space-3xl)]">
-          <h2 className="font-sans text-xl font-bold text-[var(--color-text)] leading-[1.3]">
-            What it does
-          </h2>
-          <div className="mt-[var(--space-md)] max-w-2xl space-y-[var(--space-sm)]">
-            <p className="font-sans text-base text-[var(--color-text-muted)]">
-              At the end of each day, NZPOS batches your sales and sends them to Xero as invoices. Each invoice includes a per-line GST breakdown that matches IRD requirements — no rounding errors, no manual adjustments.
-            </p>
-            <p className="font-sans text-base text-[var(--color-text-muted)]">
-              Refunds are handled too. When you issue a refund in NZPOS, a credit note is created in Xero automatically, keeping your books balanced without extra work.
-            </p>
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-lg)]">
+            {/* Without */}
+            <div className="border border-[var(--color-border)] rounded-lg p-[var(--space-xl)]">
+              <p className="font-sans text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wide">
+                Without Xero Integration
+              </p>
+              <ul className="mt-[var(--space-lg)] space-y-[var(--space-md)]">
+                {withoutItems.map((item) => (
+                  <li key={item} className="flex gap-[var(--space-sm)] items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--color-text-light)] shrink-0 mt-0.5" aria-hidden="true">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                    <span className="font-sans text-base text-[var(--color-text-muted)]">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          {/* Features */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-[var(--space-xl)] mt-[var(--space-2xl)]">
+            {/* With */}
+            <div className="border-2 border-[var(--color-amber)] rounded-lg p-[var(--space-xl)] bg-white">
+              <p className="font-sans text-sm font-bold text-[var(--color-amber)] uppercase tracking-wide">
+                With Xero Integration
+              </p>
+              <ul className="mt-[var(--space-lg)] space-y-[var(--space-md)]">
+                {withItems.map((item) => (
+                  <li key={item} className="flex gap-[var(--space-sm)] items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--color-success)] shrink-0 mt-0.5" aria-hidden="true">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span className="font-sans text-base text-[var(--color-text)]">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="bg-[var(--color-surface)]">
+        <div className="max-w-[1200px] mx-auto px-[var(--space-md)] md:px-[var(--space-lg)] py-[var(--space-3xl)]">
+          <h2 className="font-sans text-2xl font-bold text-[var(--color-text)] leading-[1.3]">
+            What you get
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-[var(--space-lg)] mt-[var(--space-xl)]">
             {features.map((feature) => (
-              <div key={feature.title} className="flex gap-[var(--space-md)] items-start">
-                <div className="text-[var(--color-amber)] shrink-0">{feature.icon}</div>
-                <div>
-                  <p className="font-sans text-sm font-bold text-[var(--color-text)]">{feature.title}</p>
-                  <p className="font-sans text-sm text-[var(--color-text-muted)] mt-[var(--space-xs)]">{feature.description}</p>
-                </div>
+              <div key={feature.title}>
+                <p className="font-sans text-base font-bold text-[var(--color-text)]">{feature.title}</p>
+                <p className="font-sans text-sm text-[var(--color-text-muted)] mt-[var(--space-xs)]">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -125,18 +144,19 @@ export default function XeroPage() {
       </section>
 
       {/* How it works */}
-      <section className="bg-[var(--color-surface)]">
+      <section className="bg-[var(--color-bg)]">
         <div className="max-w-[1200px] mx-auto px-[var(--space-md)] md:px-[var(--space-lg)] py-[var(--space-3xl)]">
-          <h2 className="font-sans text-xl font-bold text-[var(--color-text)] leading-[1.3]">
-            How it works
+          <h2 className="font-sans text-2xl font-bold text-[var(--color-text)] leading-[1.3]">
+            Three steps. Two minutes.
           </h2>
-          <div className="mt-[var(--space-xl)] max-w-xl space-y-[var(--space-lg)]">
+          <div className="mt-[var(--space-xl)] grid grid-cols-1 md:grid-cols-3 gap-[var(--space-lg)]">
             {steps.map((step) => (
-              <div key={step.number} className="flex gap-[var(--space-md)] items-start">
-                <span className="shrink-0 w-8 h-8 rounded-full bg-[var(--color-navy)] text-white font-sans text-sm font-bold flex items-center justify-center">
+              <div key={step.number} className="flex flex-col items-start">
+                <span className="shrink-0 w-10 h-10 rounded-full bg-[var(--color-navy)] text-white font-sans text-base font-bold flex items-center justify-center">
                   {step.number}
                 </span>
-                <p className="font-sans text-base text-[var(--color-text)] pt-1">{step.text}</p>
+                <p className="font-sans text-base font-bold text-[var(--color-text)] mt-[var(--space-sm)]">{step.title}</p>
+                <p className="font-sans text-sm text-[var(--color-text-muted)] mt-[var(--space-xs)]">{step.text}</p>
               </div>
             ))}
           </div>
@@ -147,10 +167,10 @@ export default function XeroPage() {
       <section className="bg-[var(--color-navy)]">
         <div className="max-w-[1200px] mx-auto px-[var(--space-md)] md:px-[var(--space-lg)] py-[var(--space-3xl)] text-center">
           <h2 className="font-display text-xl md:text-2xl font-bold text-white leading-[1.3]">
-            Ready to stop the manual data entry?
+            Your sales in Xero by morning. Every morning.
           </h2>
           <p className="font-sans text-base text-white/70 mt-[var(--space-sm)]">
-            Sign up free, then enable Xero Integration from Settings.
+            Free to start. Add Xero Integration for $9/month when you are ready.
           </p>
           <Link
             href="/signup"
