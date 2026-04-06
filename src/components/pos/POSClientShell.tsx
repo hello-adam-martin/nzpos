@@ -8,6 +8,7 @@ import { cartReducer, initialCartState, calcCartTotals, calcChangeDue } from '@/
 import { formatNZD } from '@/lib/money'
 import { completeSale } from '@/actions/orders/completeSale'
 import { sendPosReceipt } from '@/actions/orders/sendPosReceipt'
+import { buildReceiptData } from '@/lib/receipt'
 import type { Database } from '@/types/database'
 import { POSTopBar } from './POSTopBar'
 import { NewOrderToast } from './NewOrderToast'
@@ -40,6 +41,8 @@ type POSClientShellProps = {
   storeId: string
   staffList: StaffRow[]
   hasInventory: boolean
+  demoMode?: boolean
+  demoStore?: { name: string; address: string | null; phone: string | null; gst_number: string | null }
 }
 
 export function POSClientShell({
@@ -51,12 +54,18 @@ export function POSClientShell({
   storeId,
   staffList,
   hasInventory,
+  demoMode = false,
+  demoStore,
 }: POSClientShellProps) {
   const [cart, dispatch] = useReducer(cartReducer, initialCartState)
   const router = useRouter()
 
   // New order sound alert: polls every 30s, plays chime, manages badge and toast (NOTIF-06)
-  const { unreadCount, toast, isMuted, toggleMute } = useNewOrderAlert()
+  // In demo mode, override alert values to suppress polling side effects in UI
+  const orderAlert = useNewOrderAlert()
+  const { unreadCount, toast, isMuted, toggleMute } = demoMode
+    ? { unreadCount: 0, toast: null, isMuted: false, toggleMute: () => {} }
+    : orderAlert
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [search, setSearch] = useState('')
@@ -95,10 +104,10 @@ export function POSClientShell({
     }
   }, [cart.items, discountTarget])
 
-  // Stock refresh on page focus (D-14, POS-08)
+  // Stock refresh on page focus (D-14, POS-08) — skipped in demo mode
   useEffect(() => {
     function handleVisibilityChange() {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && !demoMode) {
         router.refresh()
       }
     }
@@ -106,7 +115,7 @@ export function POSClientShell({
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [router])
+  }, [router, demoMode])
 
   // Auto-reset after sale void (show brief toast, then reset)
   useEffect(() => {
@@ -194,6 +203,48 @@ export function POSClientShell({
   const totals = calcCartTotals(cart.items)
 
   async function handleCompleteSale(cashTenderedCents?: number, splitCash?: number) {
+    // Demo mode: build receipt client-side, no server action call, no DB writes
+    if (demoMode) {
+      setIsProcessing(true)
+      // Simulate brief processing delay for realism
+      await new Promise<void>(resolve => setTimeout(resolve, 300))
+
+      const fakeOrderId = Array.from(crypto.getRandomValues(new Uint8Array(4)))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('')
+
+      let demoPaymentMethod: 'eftpos' | 'cash' | 'split' = cart.paymentMethod ?? 'eftpos'
+      if (splitCash != null && splitCash > 0) {
+        demoPaymentMethod = 'split'
+      }
+
+      const demoTenderedForSummary = cashTenderedCents ?? splitCash ?? null
+      if (demoTenderedForSummary != null) {
+        setLastCashTenderedCents(demoTenderedForSummary)
+      }
+
+      const demoChangeDue = cashTenderedCents != null && cashTenderedCents > totals.totalCents
+        ? calcChangeDue(totals.totalCents, cashTenderedCents)
+        : undefined
+
+      const receipt = buildReceiptData({
+        orderId: fakeOrderId,
+        store: demoStore ?? { name: storeName, address: null, phone: null, gst_number: null },
+        staffName: 'Demo',
+        items: cart.items,
+        totals,
+        paymentMethod: demoPaymentMethod,
+        cashTenderedCents: cashTenderedCents ?? splitCash,
+        changeDueCents: demoChangeDue,
+      })
+
+      setLastReceiptData(receipt)
+      dispatch({ type: 'SALE_COMPLETE', orderId: fakeOrderId })
+      setIsProcessing(false)
+      // NOTE: No router.refresh() in demo mode — no DB writes to reflect
+      return
+    }
+
     setIsProcessing(true)
     setSaleError(null)
 
@@ -317,13 +368,14 @@ export function POSClientShell({
       <div className="flex flex-col h-full overflow-hidden">
         <POSTopBar
           storeName={storeName}
-          staffName={staffName}
-          onLogout={handleLogout}
-          onScanOpen={handleScanOpen}
+          staffName={demoMode ? '' : staffName}
+          onLogout={demoMode ? () => {} : handleLogout}
+          onScanOpen={demoMode ? undefined : handleScanOpen}
           scanDisabled={!scannerAvailable}
-          unreadOrderCount={unreadCount}
-          isMuted={isMuted}
-          onToggleMute={toggleMute}
+          unreadOrderCount={demoMode ? 0 : unreadCount}
+          isMuted={demoMode ? false : isMuted}
+          onToggleMute={demoMode ? undefined : toggleMute}
+          demoMode={demoMode}
         />
         <CategoryFilterBar
           categories={categories}
@@ -427,7 +479,7 @@ export function POSClientShell({
             setSaleError(null)
             setLastReceiptData(null)
           }}
-          onEmailCapture={async (email) => {
+          onEmailCapture={demoMode ? undefined : async (email) => {
             await sendPosReceipt({ orderId: lastReceiptData.orderId, email })
           }}
           mode="pos"

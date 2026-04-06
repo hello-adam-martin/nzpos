@@ -1,5 +1,14 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+
+// Mock server-only dependencies pulled in by POSTopBar -> CashUpModal -> server actions
+vi.mock('@/actions/cash-sessions/openCashSession', () => ({ openCashSession: vi.fn() }))
+vi.mock('@/actions/cash-sessions/closeCashSession', () => ({ closeCashSession: vi.fn() }))
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/demo/pos',
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+}))
+
 import { POSTopBar } from '../POSTopBar'
 
 // Minimal props factory for POSTopBar
