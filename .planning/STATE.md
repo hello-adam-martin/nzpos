@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: Add-On Catalog Expansion
 status: executing
-stopped_at: Completed 37-03-PLAN.md
-last_updated: "2026-04-06T20:51:30.716Z"
+stopped_at: Completed 37-06-PLAN.md
+last_updated: "2026-04-06T20:57:18.240Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 18
-  completed_plans: 16
+  completed_plans: 17
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 ## Current Position
 
 Phase: 37 (loyalty-points-add-on) — EXECUTING
-Plan: 6 of 7
+Plan: 7 of 7
 Status: Ready to execute
 Last activity: 2026-04-06
 
@@ -77,6 +77,7 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 37-loyalty-points-add-on]: CartPanel Add Customer button: border style (no customer) vs amber style (attached) — amber signals active loyalty engagement
 - [Phase 37-loyalty-points-add-on]: DETACH_CUSTOMER also clears loyaltyDiscountCents and loyaltyPointsRedeemed — single action removes all loyalty state
 - [Phase 37-loyalty-points-add-on]: Zod v4 uses .issues[] not .errors[] — project is on Zod 4.3.6; all server actions must use parsed.error.issues
+- [Phase 37]: hasLoyaltyPoints fetched separately in CustomersPage and getCustomerDetail — avoids prop-drilling through client boundary, each query is cheap
 
 ### Pending Todos
 
@@ -89,6 +90,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T20:51:30.713Z
-Stopped at: Completed 37-03-PLAN.md
+Last session: 2026-04-06T20:57:18.236Z
+Stopped at: Completed 37-06-PLAN.md
 Resume file: None

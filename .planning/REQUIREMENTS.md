@@ -41,7 +41,7 @@ Requirements for v8.0 Add-On Catalog Expansion. Each maps to roadmap phases.
 - [ ] **LOYAL-07**: Customer can view their points balance on their account profile page
 - [ ] **LOYAL-08**: Customer can redeem points as a discount during online checkout
 - [x] **LOYAL-09**: Staff can apply a customer's points as a discount during POS checkout
-- [ ] **LOYAL-10**: Merchant can view customer loyalty balances and transaction history in admin
+- [x] **LOYAL-10**: Merchant can view customer loyalty balances and transaction history in admin
 - [x] **LOYAL-11**: Privacy notice is displayed to customers before loyalty enrollment
 
 ## Future Requirements
@@ -100,7 +100,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LOYAL-07 | Phase 37 | Pending |
 | LOYAL-08 | Phase 37 | Pending |
 | LOYAL-09 | Phase 37 | Complete |
-| LOYAL-10 | Phase 37 | Pending |
+| LOYAL-10 | Phase 37 | Complete |
 | LOYAL-11 | Phase 37 | Complete |
 
 **Coverage:**
