@@ -1,16 +1,16 @@
 export default function LandingPricing() {
   return (
-    <section className="bg-[var(--color-surface)]">
+    <section id="pricing" className="bg-[var(--color-surface)]">
       <div className="max-w-[1200px] mx-auto px-[var(--space-md)] md:px-[var(--space-lg)] py-[var(--space-3xl)]">
         <h2 className="font-sans text-xl font-bold text-[var(--color-text)] text-center leading-[1.3]">
           Transparent pricing
         </h2>
         <p className="font-sans text-base text-[var(--color-text-muted)] text-center mt-[var(--space-sm)]">
-          Free to start. Pay only for what you use.
+          Free to start. Add only what you need.
         </p>
 
         {/* Free core card */}
-        <div className="bg-white border-2 border-[var(--color-navy)] rounded-lg p-[var(--space-xl)] max-w-md mx-auto mt-[var(--space-xl)]">
+        <div className="bg-white border-2 border-[var(--color-navy)] rounded-lg p-[var(--space-xl)] max-w-lg mx-auto mt-[var(--space-xl)]">
           <div className="font-display font-bold text-[28px] md:text-[48px] leading-[1.1] text-[var(--color-text)]">
             Free
           </div>
@@ -21,8 +21,10 @@ export default function LandingPricing() {
             {[
               'POS checkout',
               'Online storefront',
-              'Inventory management',
               'GST-compliant receipts',
+              'Staff management',
+              'Customer accounts',
+              'Reporting',
             ].map((item) => (
               <li key={item} className="flex items-center gap-[var(--space-sm)] font-sans text-base text-[var(--color-text)]">
                 <svg
@@ -47,7 +49,7 @@ export default function LandingPricing() {
         </div>
 
         {/* Add-on pills */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-lg)] max-w-lg mx-auto mt-[var(--space-lg)]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-lg)] mt-[var(--space-lg)]">
           {/* Xero Integration */}
           <div className="bg-white border border-[var(--color-border)] rounded-lg p-[var(--space-xl)]">
             <h3 className="font-sans text-sm font-bold text-[var(--color-text)]">
@@ -83,6 +85,28 @@ export default function LandingPricing() {
                 'Order confirmations to customers',
                 'Pickup-ready alerts',
                 'Daily sales summary',
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-[var(--space-xs)] font-sans text-sm text-[var(--color-text-muted)]">
+                  <span className="mt-1 shrink-0 text-[var(--color-text-muted)]">·</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Inventory Management */}
+          <div className="bg-white border border-[var(--color-border)] rounded-lg p-[var(--space-xl)]">
+            <h3 className="font-sans text-sm font-bold text-[var(--color-text)]">
+              Inventory Management
+            </h3>
+            <p className="font-sans text-sm font-bold text-[var(--color-amber)] mt-[var(--space-xs)]">
+              $9/month NZD
+            </p>
+            <ul className="mt-[var(--space-md)] space-y-[var(--space-xs)]">
+              {[
+                'Live stock levels across in-store and online',
+                'Low-stock alerts',
+                'Inventory reports',
               ].map((item) => (
                 <li key={item} className="flex items-start gap-[var(--space-xs)] font-sans text-sm text-[var(--color-text-muted)]">
                   <span className="mt-1 shrink-0 text-[var(--color-text-muted)]">·</span>
