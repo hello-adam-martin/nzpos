@@ -187,6 +187,86 @@
 
 ---
 
+## Milestone: v4.0 — Admin Platform
+
+**Shipped:** 2026-04-06
+**Phases:** 4 | **Plans:** 11
+
+### What Was Built
+- Staff RBAC: owner/manager/staff roles, role-gated server actions, PIN reset, deactivation, resolveStaffAuthVerified()
+- Admin operational UI: customer management (search, detail, disable), promo edit/delete, store settings (business details, receipt), enhanced dashboard (trend charts, comparison cards, recent orders)
+- Super admin platform dashboard: tenant stats, signup trends, add-on adoption rates
+- Super admin tenant detail: Stripe billing visibility (subscriptions, invoices, payment failures), owner info, password reset, account disable/enable
+- Super admin analytics: materialised Stripe snapshots, MRR/churn/per-add-on revenue, daily sync with rate-limited on-demand refresh
+
+### What Worked
+- **Parallel execution across independent phases** — Phases 25 and 26 both depended on 24 but not each other, enabling back-to-back execution
+- **Recharts for data viz** — simple API, consistent styling with design system, no configuration overhead for trend/area/bar charts
+- **Materialised Stripe snapshots** — analytics page loads in <2s from local DB, never hits Stripe API on page load
+
+### What Was Inefficient
+- **order_number column missing** — Phase 25 plan referenced an order_number column that didn't exist in the orders schema, causing a summary self-check failure
+
+### Key Lessons
+1. **Verify schema assumptions in plans** — plan references to columns/tables should be validated against actual migration state before execution
+2. **Rate limiting via DB is robust** — Supabase RPC-based rate limiting works well for serverless (no in-memory state needed)
+
+---
+
+## Milestone: v5.0 — Marketing & Landing Page
+
+**Shipped:** 2026-04-06
+**Phases:** 1 | **Plans:** 3
+
+### What Was Built
+- Complete landing page rewrite: confident SaaS hero copy, 15-feature showcase across 4 categories, NZ trust badge strip
+- Pricing section: free tier with 6 features, 3 add-on cards with correct pricing
+- Mobile-responsive nav with CSS-only hamburger menu
+
+### What Worked
+- **Single-phase milestone** — focused scope, fast execution, no cross-phase dependencies
+- **Static generation** — `force-static` export on all marketing pages means zero serverless function overhead
+
+### Key Lessons
+1. **Marketing pages should be updated whenever pricing changes** — v6.0 had to update the pricing section that v5.0 just built
+
+---
+
+## Milestone: v6.0 — Free Email Notifications
+
+**Shipped:** 2026-04-06
+**Phases:** 3 | **Plans:** 6
+
+### What Was Built
+- SQL migration making email notifications free for all stores (existing + new), auth hook rewrite
+- Feature gate removal from email sending code, billing config cleanup
+- Admin billing UI cleanup: 2 add-on cards only, UpgradePrompt updated
+- Super admin cleanup: dashboard adoption cards, analytics display names, tenant queries
+- Marketing pages: landing pricing 2-column grid, email in free tier checklist, email detail page deleted
+- Add-ons hub: 2 entries, updated metadata, centered 2-column layout
+
+### What Worked
+- **Clean layer-by-layer approach** — backend (Phase 29) → admin UI (Phase 30) → marketing (Phase 31). Each layer could be verified independently.
+- **Parallel plan execution within waves** — both Phase 31 plans ran simultaneously with zero conflicts (different files)
+- **Small, focused milestone** — 3 phases, 6 plans, all completed in a single session
+- **Pre-existing test infrastructure** — 565 tests passing meant confident refactoring without fear of silent breakage
+
+### What Was Inefficient
+- **Server component cache stale after edits** — HMR didn't pick up Tailwind class changes in server components, required full server restart (same issue as v1.0)
+- **3 pre-existing test failures** — schema.test.ts and refund action tests had failures unrelated to this milestone, cluttering the regression gate output
+
+### Key Lessons
+1. **Pricing model changes touch every layer** — backend, admin UI, marketing pages, and tests all needed updates. Plan for full-stack sweeps when changing billing.
+2. **Keep has_email_notifications column** — backwards-compatible default (always true) avoids migration risk while allowing clean removal later if needed
+3. **Server component restart is still needed** — Tailwind v4 class changes in server components don't HMR reliably. Documented in v1.0, still true.
+
+### Cost Observations
+- Model mix: ~40% opus (orchestration), ~60% sonnet (executor/verifier agents)
+- Sessions: 1 (entire milestone completed in single session)
+- Notable: fastest milestone yet — 3 phases completed and verified in ~30 minutes
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -197,6 +277,9 @@
 | v2.0 | ~6 | 10 | Parallel worktree agents matured. TDD pattern solidified for all Server Actions. |
 | v2.1 | ~3 | 4 | Security-first hardening. Documentation-only phases execute fastest. gsd-tools automation eliminated drift. |
 | v3.0 | ~3 | 3 | Feature add-on pattern matured. SECURITY DEFINER RPCs for all stock mutations. Smallest milestone, highest LOC density. |
+| v4.0 | ~2 | 4 | Admin platform build-out. Materialised Stripe snapshots for analytics. |
+| v5.0 | ~1 | 1 | Single-phase marketing milestone. Static-first marketing pages. |
+| v6.0 | 1 | 3 | Full-stack pricing model change. Layer-by-layer approach (backend → UI → marketing). Fastest milestone. |
 
 ### Cumulative Quality
 
@@ -206,6 +289,7 @@
 | v2.0 | 365+ | 336 | 36,329 |
 | v2.1 | 434 | 989 | 89,000+ |
 | v3.0 | 445+ | 1,000+ | 99,000+ |
+| v4.0-v6.0 | 565+ | 1,000+ | 49,354 |
 
 ### Top Lessons (Verified Across Milestones)
 
@@ -217,3 +301,5 @@
 6. Documentation-only phases are the fastest to execute — no build/test cycles, pure content creation with grep verification.
 7. SUMMARY.md one-liner extraction is broken across all 4 milestones — needs tooling fix before v4.0.
 8. Append-only audit tables with INSERT+SELECT-only RLS are a reusable pattern for tamper-proof history.
+9. Pricing model changes are full-stack — backend, admin UI, marketing, and tests all need updating. Plan sweeps, not spot fixes.
+10. Layer-by-layer refactoring (backend → UI → marketing) allows independent verification at each stage.
