@@ -32,7 +32,7 @@ Requirements for v8.0 Add-On Catalog Expansion. Each maps to roadmap phases.
 
 ### Loyalty Points
 
-- [ ] **LOYAL-01**: Merchant can enable the Loyalty Points add-on ($15/mo) via Stripe subscription
+- [x] **LOYAL-01**: Merchant can enable the Loyalty Points add-on ($15/mo) via Stripe subscription
 - [x] **LOYAL-02**: Merchant can configure points-per-dollar earn rate in loyalty settings
 - [x] **LOYAL-03**: Merchant can configure points-to-dollar redemption rate in loyalty settings
 - [x] **LOYAL-04**: Staff can look up a customer by name or email during POS checkout (optional step)
@@ -91,7 +91,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COGS-04 | Phase 36 | Complete |
 | COGS-05 | Phase 36 | Complete |
 | COGS-06 | Phase 36 | Complete |
-| LOYAL-01 | Phase 37 | Pending |
+| LOYAL-01 | Phase 37 | Complete |
 | LOYAL-02 | Phase 37 | Complete |
 | LOYAL-03 | Phase 37 | Complete |
 | LOYAL-04 | Phase 37 | Complete |
