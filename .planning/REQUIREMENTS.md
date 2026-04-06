@@ -22,8 +22,8 @@ Requirements for Free Email Notifications milestone. Move email notifications fr
 
 ### Admin UI
 
-- [ ] **ADMIN-01**: Admin billing page shows only Xero and Inventory add-on cards
-- [ ] **ADMIN-02**: UpgradePrompt component no longer references email_notifications
+- [x] **ADMIN-01**: Admin billing page shows only Xero and Inventory add-on cards
+- [x] **ADMIN-02**: UpgradePrompt component no longer references email_notifications
 - [ ] **ADMIN-03**: Super admin activate/deactivate addon actions no longer include email_notifications
 
 ### Marketing Pages
@@ -36,7 +36,7 @@ Requirements for Free Email Notifications milestone. Move email notifications fr
 
 ### Tests
 
-- [ ] **TEST-01**: All test files updated to reflect email notifications as free (no gating)
+- [x] **TEST-01**: All test files updated to reflect email notifications as free (no gating)
 
 ## Traceability
 

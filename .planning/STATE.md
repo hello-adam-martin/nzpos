@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: Free Email Notifications
-status: verifying
-stopped_at: Phase 30 context gathered
-last_updated: "2026-04-06T06:58:20.341Z"
+status: executing
+stopped_at: Completed 30-01-PLAN.md
+last_updated: "2026-04-06T07:12:05.106Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 8
-  completed_phases: 5
-  total_plans: 16
-  completed_plans: 15
+  completed_phases: 6
+  total_plans: 18
+  completed_plans: 17
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 29 — backend-billing-cleanup
+**Current focus:** Phase 30 — admin-ui-super-admin
 
 ## Current Position
 
-Phase: 30
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 30 (admin-ui-super-admin) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-06
 
 Progress: [░░░░░░░░░░] 0%
@@ -55,6 +55,7 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 29]: Auth hook in 031 migration queries only xero, custom_domain, inventory claims
 - [Phase 29]: SubscriptionFeature type reduced from 4 to 3 values (xero | custom_domain | inventory) — email_notifications removed as paid add-on
 - [Phase 29]: schema.test.ts has_email_notifications assertion updated to true for post-migration DB state
+- [Phase 30-admin-ui-super-admin]: UpgradePrompt feature type aligned with SubscriptionFeature: xero | custom_domain | inventory — email_notifications removed from UI
 
 ### Pending Todos
 
@@ -66,6 +67,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T06:58:20.338Z
-Stopped at: Phase 30 context gathered
-Resume file: .planning/phases/30-admin-ui-super-admin/30-CONTEXT.md
+Last session: 2026-04-06T07:12:05.103Z
+Stopped at: Completed 30-01-PLAN.md
+Resume file: None
