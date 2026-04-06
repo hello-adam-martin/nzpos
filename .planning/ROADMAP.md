@@ -177,4 +177,4 @@ Plans:
 | 31. Marketing Pages | v6.0 | 2/2 | Complete | 2026-04-06 |
 | 32. Demo Store Seed | v7.0 | 1/1 | Complete    | 2026-04-06 |
 | 33. Demo POS Route & Checkout | v7.0 | 2/2 | Complete    | 2026-04-06 |
-| 34. Signup Conversion & Landing Page | v7.0 | 2/2 | Complete   | 2026-04-06 |
+| 34. Signup Conversion & Landing Page | v7.0 | 2/2 | Complete    | 2026-04-06 |
