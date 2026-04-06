@@ -27,6 +27,7 @@ export default function LandingPricing() {
               'Staff management',
               'Customer accounts',
               'Reporting',
+              'Email notifications',
             ].map((item) => (
               <li key={item} className="flex items-center gap-[var(--space-sm)] font-sans text-base text-[var(--color-text)]">
                 <svg
@@ -54,7 +55,7 @@ export default function LandingPricing() {
         <h3 className="font-sans text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wide text-center mt-[var(--space-2xl)]">
           Optional add-ons
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-lg)] mt-[var(--space-md)]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-lg)] mt-[var(--space-md)] max-w-3xl mx-auto">
           {/* Xero Integration */}
           <Link
             href="/add-ons/xero"
@@ -71,34 +72,6 @@ export default function LandingPricing() {
                 'Auto-sync daily sales to Xero',
                 'GST breakdown on invoices',
                 'Credit notes for refunds',
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-[var(--space-xs)] font-sans text-sm text-[var(--color-text-muted)]">
-                  <span className="mt-1 shrink-0 text-[var(--color-text-muted)]">·</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <span className="inline-block font-sans text-sm font-bold text-[var(--color-amber)] mt-[var(--space-md)] group-hover:underline">
-              Learn more →
-            </span>
-          </Link>
-
-          {/* Email Notifications */}
-          <Link
-            href="/add-ons/email-notifications"
-            className="group bg-white border border-[var(--color-border)] rounded-lg p-[var(--space-xl)] hover:border-[var(--color-amber)] transition-colors duration-150"
-          >
-            <h3 className="font-sans text-sm font-bold text-[var(--color-text)]">
-              Email Notifications
-            </h3>
-            <p className="font-sans text-sm font-bold text-[var(--color-amber)] mt-[var(--space-xs)]">
-              $5/month NZD
-            </p>
-            <ul className="mt-[var(--space-md)] space-y-[var(--space-xs)]">
-              {[
-                'Order confirmations to customers',
-                'Pickup-ready alerts',
-                'Daily sales summary',
               ].map((item) => (
                 <li key={item} className="flex items-start gap-[var(--space-xs)] font-sans text-sm text-[var(--color-text-muted)]">
                   <span className="mt-1 shrink-0 text-[var(--color-text-muted)]">·</span>
