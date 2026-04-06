@@ -33,7 +33,6 @@ Declared values (must be multiples of 4):
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| 2xs | 2px | Grain texture, hairline separators |
 | xs | 4px | Icon gaps, inline badge padding |
 | sm | 8px | Compact element spacing, inner card padding |
 | md | 16px | Default element spacing, form field gaps |
@@ -41,6 +40,8 @@ Declared values (must be multiples of 4):
 | xl | 32px | Layout gaps between sections |
 | 2xl | 48px | Major section breaks |
 | 3xl | 64px | Page-level spacing |
+
+Note: Grain texture and hairline separators are CSS-layer visual treatments (e.g., `border: 1px solid`) — not spacing tokens.
 
 Exceptions:
 - POS touch targets: minimum 44×44px (all interactive elements in POS flow — "Add Customer" button, search result rows, Apply Points button, Cancel button).
@@ -56,10 +57,12 @@ Source: DESIGN.md spacing scale + POS-specific minimums
 | Role | Font | Size | Weight | Line Height | Usage |
 |------|------|------|--------|-------------|-------|
 | Body | DM Sans | 16px / 1rem | 400 | 1.5 | Default prose, descriptions, privacy notices |
-| Label | DM Sans | 14px / 0.875rem | 500 | 1.4 | Form labels, secondary info, points balance ("450 pts"), timestamps in transaction history |
+| Label | DM Sans | 14px / 0.875rem | 400 | 1.4 | Form labels, secondary info, points balance ("450 pts"), timestamps in transaction history |
 | Heading | DM Sans | 20px / 1.25rem | 700 | 1.2 | Section headings: "Loyalty Settings", "Customer Loyalty", sheet panel titles |
 | Display (data) | DM Sans | 30px / 1.875rem | 700 | 1.0 | Large numeric values in earn/redeem rate inputs (matching DiscountSheet `text-3xl` pattern) |
 | Mono | Geist Mono | 14px / 0.875rem | 400 | 1.4 | Transaction IDs, order references in loyalty transaction history |
+
+Weight system: 400 (body, label, mono) + 700 (heading, display) — 2 weights only.
 
 Note: Tabular-nums (`font-feature-settings: 'tnum' 1`) on all points balance and dollar amount displays.
 
@@ -92,6 +95,8 @@ Source: DESIGN.md color palette
 ---
 
 ## Component Inventory
+
+Primary visual anchor: amber "Add Customer" CTA in CartPanel footer — this is the focal point of the POS loyalty entry flow.
 
 Components to BUILD for this phase:
 
