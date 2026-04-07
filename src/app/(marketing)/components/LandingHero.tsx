@@ -11,7 +11,7 @@ export default function LandingHero() {
               The retail platform built for Kiwi businesses.
             </h1>
             <p className="text-base leading-relaxed text-white/70 mt-[var(--space-lg)]">
-              Sell in-store and online from one dashboard. GST handled correctly on every transaction.
+              Sell in-store and online from one dashboard. GST handled correctly on every transaction. 5 optional add-ons when you need them.
             </p>
             {/* CTA buttons — per D-07: two CTAs in hero, per D-08: ghost outlined secondary */}
             <div className="flex flex-wrap gap-[var(--space-sm)] mt-[var(--space-lg)] items-center">

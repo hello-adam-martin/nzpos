@@ -377,6 +377,80 @@ const featureGroups: FeatureGroup[] = [
       },
     ],
   },
+  {
+    heading: 'Grow Your Business',
+    features: [
+      {
+        title: 'Gift Cards',
+        description:
+          'Sell physical and digital gift cards. NZ Fair Trading Act compliant with automatic 3-year expiry tracking.',
+        icon: (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="3" y="8" width="18" height="4" rx="1" />
+            <rect x="3" y="12" width="18" height="9" rx="1" />
+            <path d="M12 8v13" />
+            <path d="M9 8c0-1.66 1.34-3 3-3s3 1.34 3 3" />
+            <path d="M9 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3" />
+          </svg>
+        ),
+      },
+      {
+        title: 'Advanced Reporting',
+        description:
+          'Track COGS, profit margins, and sales performance across your whole business.',
+        icon: (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="3" y="12" width="4" height="9" />
+            <rect x="10" y="7" width="4" height="14" />
+            <rect x="17" y="3" width="4" height="18" />
+          </svg>
+        ),
+      },
+      {
+        title: 'Loyalty Points',
+        description:
+          'Reward repeat customers with points they can spend in-store and online. Privacy Act compliant.',
+        icon: (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+        ),
+      },
+    ],
+  },
 ]
 
 export default function LandingFeatures() {
