@@ -9,9 +9,9 @@ Requirements for milestone v8.1: Marketing Refresh & Compare Page. Each maps to 
 
 ### Marketing Pages
 
-- [ ] **MKTG-01**: Visitor can view a dedicated Gift Cards add-on detail page at `/add-ons/gift-cards`
-- [ ] **MKTG-02**: Visitor can view a dedicated Advanced Reporting add-on detail page at `/add-ons/advanced-reporting`
-- [ ] **MKTG-03**: Visitor can view a dedicated Loyalty Points add-on detail page at `/add-ons/loyalty-points`
+- [x] **MKTG-01**: Visitor can view a dedicated Gift Cards add-on detail page at `/add-ons/gift-cards`
+- [x] **MKTG-02**: Visitor can view a dedicated Advanced Reporting add-on detail page at `/add-ons/advanced-reporting`
+- [x] **MKTG-03**: Visitor can view a dedicated Loyalty Points add-on detail page at `/add-ons/loyalty-points`
 - [ ] **MKTG-04**: Visitor sees all 5 paid add-ons in the landing page pricing section with correct prices
 - [ ] **MKTG-05**: Visitor sees all 5 add-ons referenced in the landing page hero and features sections
 - [ ] **MKTG-06**: Visitor can navigate to all 5 add-on detail pages from the add-ons catalog page
@@ -59,9 +59,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MKTG-01 | Phase 38 | Pending |
-| MKTG-02 | Phase 38 | Pending |
-| MKTG-03 | Phase 38 | Pending |
+| MKTG-01 | Phase 38 | Complete |
+| MKTG-02 | Phase 38 | Complete |
+| MKTG-03 | Phase 38 | Complete |
 | MKTG-04 | Phase 38 | Pending |
 | MKTG-05 | Phase 38 | Pending |
 | MKTG-06 | Phase 38 | Pending |
