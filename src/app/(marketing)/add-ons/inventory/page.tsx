@@ -7,6 +7,13 @@ export const metadata: Metadata = {
   title: 'Inventory Management — NZPOS Add-ons',
   description:
     'Track stock levels across in-store and online in real time. Low-stock alerts and detailed inventory reports.',
+  openGraph: {
+    title: 'Inventory Management — NZPOS Add-ons',
+    description:
+      'Track stock levels across in-store and online in real time. Low-stock alerts and detailed inventory reports.',
+    type: 'website',
+    url: 'https://nzpos.co.nz/add-ons/inventory',
+  },
 }
 
 const withoutItems = [
@@ -181,6 +188,27 @@ export default function InventoryPage() {
           </Link>
         </div>
       </section>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'NZPOS Inventory Management',
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web',
+            description:
+              'Track stock levels across in-store and online in real time. Low-stock alerts and detailed inventory reports.',
+            offers: {
+              '@type': 'Offer',
+              price: '9',
+              priceCurrency: 'NZD',
+              description: '$9/month add-on',
+            },
+          }),
+        }}
+      />
     </>
   )
 }

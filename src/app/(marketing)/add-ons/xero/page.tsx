@@ -7,6 +7,13 @@ export const metadata: Metadata = {
   title: 'Xero Integration — NZPOS Add-ons',
   description:
     'Automatically sync daily sales to Xero with GST breakdowns and credit notes. No manual data entry.',
+  openGraph: {
+    title: 'Xero Integration — NZPOS Add-ons',
+    description:
+      'Automatically sync daily sales to Xero with GST breakdowns and credit notes. No manual data entry.',
+    type: 'website',
+    url: 'https://nzpos.co.nz/add-ons/xero',
+  },
 }
 
 const withoutItems = [
@@ -181,6 +188,27 @@ export default function XeroPage() {
           </Link>
         </div>
       </section>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'NZPOS Xero Integration',
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web',
+            description:
+              'Automatically sync daily sales to Xero with GST breakdowns and credit notes.',
+            offers: {
+              '@type': 'Offer',
+              price: '9',
+              priceCurrency: 'NZD',
+              description: '$9/month add-on',
+            },
+          }),
+        }}
+      />
     </>
   )
 }
