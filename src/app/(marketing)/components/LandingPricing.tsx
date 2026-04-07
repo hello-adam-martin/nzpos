@@ -1,6 +1,92 @@
 import Link from 'next/link'
 
+const addOns = [
+  {
+    name: 'Xero Integration',
+    price: '$9/month NZD',
+    href: '/add-ons/xero',
+    bullets: [
+      'Auto-sync daily sales to Xero',
+      'GST breakdown on invoices',
+      'Credit notes for refunds',
+    ],
+  },
+  {
+    name: 'Inventory Management',
+    price: '$9/month NZD',
+    href: '/add-ons/inventory',
+    bullets: [
+      'Live stock levels across in-store and online',
+      'Low-stock alerts',
+      'Inventory reports',
+    ],
+  },
+  {
+    name: 'Gift Cards',
+    price: '$14/month NZD',
+    href: '/add-ons/gift-cards',
+    bullets: [
+      'Sell physical and digital gift cards',
+      'Real-time balance tracking',
+      'NZ Fair Trading Act compliant',
+    ],
+  },
+  {
+    name: 'Advanced Reporting',
+    price: '$9/month NZD',
+    href: '/add-ons/advanced-reporting',
+    bullets: [
+      'COGS and profit margin tracking',
+      'Sales analytics by category',
+      'Export reports to CSV',
+    ],
+  },
+  {
+    name: 'Loyalty Points',
+    price: '$15/month NZD',
+    href: '/add-ons/loyalty-points',
+    bullets: [
+      'Automatic points on every sale',
+      'Redeem in-store and online',
+      'NZ Privacy Act compliant',
+    ],
+  },
+]
+
+function AddOnCard({ addon }: { addon: (typeof addOns)[number] }) {
+  return (
+    <Link
+      href={addon.href}
+      className="group bg-white border border-[var(--color-border)] rounded-lg p-[var(--space-xl)] hover:border-[var(--color-amber)] transition-colors duration-150"
+    >
+      <h3 className="font-sans text-sm font-bold text-[var(--color-text)]">
+        {addon.name}
+      </h3>
+      <p className="font-sans text-sm font-bold text-[var(--color-amber)] mt-[var(--space-xs)]">
+        {addon.price}
+      </p>
+      <ul className="mt-[var(--space-md)] space-y-[var(--space-xs)]">
+        {addon.bullets.map((item) => (
+          <li
+            key={item}
+            className="flex items-start gap-[var(--space-xs)] font-sans text-sm text-[var(--color-text-muted)]"
+          >
+            <span className="mt-1 shrink-0 text-[var(--color-text-muted)]">·</span>
+            {item}
+          </li>
+        ))}
+      </ul>
+      <span className="inline-block font-sans text-sm font-bold text-[var(--color-amber)] mt-[var(--space-md)] group-hover:underline">
+        Learn more →
+      </span>
+    </Link>
+  )
+}
+
 export default function LandingPricing() {
+  const topRow = addOns.slice(0, 3)
+  const bottomRow = addOns.slice(3)
+
   return (
     <section id="pricing" className="bg-[var(--color-surface)]">
       <div className="max-w-[1200px] mx-auto px-[var(--space-md)] md:px-[var(--space-lg)] py-[var(--space-3xl)]">
@@ -29,7 +115,10 @@ export default function LandingPricing() {
               'Reporting',
               'Email notifications',
             ].map((item) => (
-              <li key={item} className="flex items-center gap-[var(--space-sm)] font-sans text-base text-[var(--color-text)]">
+              <li
+                key={item}
+                className="flex items-center gap-[var(--space-sm)] font-sans text-base text-[var(--color-text)]"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="16"
@@ -55,62 +144,19 @@ export default function LandingPricing() {
         <h3 className="font-sans text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wide text-center mt-[var(--space-2xl)]">
           Optional add-ons
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-lg)] mt-[var(--space-md)] max-w-3xl mx-auto">
-          {/* Xero Integration */}
-          <Link
-            href="/add-ons/xero"
-            className="group bg-white border border-[var(--color-border)] rounded-lg p-[var(--space-xl)] hover:border-[var(--color-amber)] transition-colors duration-150"
-          >
-            <h3 className="font-sans text-sm font-bold text-[var(--color-text)]">
-              Xero Integration
-            </h3>
-            <p className="font-sans text-sm font-bold text-[var(--color-amber)] mt-[var(--space-xs)]">
-              $9/month NZD
-            </p>
-            <ul className="mt-[var(--space-md)] space-y-[var(--space-xs)]">
-              {[
-                'Auto-sync daily sales to Xero',
-                'GST breakdown on invoices',
-                'Credit notes for refunds',
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-[var(--space-xs)] font-sans text-sm text-[var(--color-text-muted)]">
-                  <span className="mt-1 shrink-0 text-[var(--color-text-muted)]">·</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <span className="inline-block font-sans text-sm font-bold text-[var(--color-amber)] mt-[var(--space-md)] group-hover:underline">
-              Learn more →
-            </span>
-          </Link>
 
-          {/* Inventory Management */}
-          <Link
-            href="/add-ons/inventory"
-            className="group bg-white border border-[var(--color-border)] rounded-lg p-[var(--space-xl)] hover:border-[var(--color-amber)] transition-colors duration-150"
-          >
-            <h3 className="font-sans text-sm font-bold text-[var(--color-text)]">
-              Inventory Management
-            </h3>
-            <p className="font-sans text-sm font-bold text-[var(--color-amber)] mt-[var(--space-xs)]">
-              $9/month NZD
-            </p>
-            <ul className="mt-[var(--space-md)] space-y-[var(--space-xs)]">
-              {[
-                'Live stock levels across in-store and online',
-                'Low-stock alerts',
-                'Inventory reports',
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-[var(--space-xs)] font-sans text-sm text-[var(--color-text-muted)]">
-                  <span className="mt-1 shrink-0 text-[var(--color-text-muted)]">·</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <span className="inline-block font-sans text-sm font-bold text-[var(--color-amber)] mt-[var(--space-md)] group-hover:underline">
-              Learn more →
-            </span>
-          </Link>
+        {/* Top row — 3 cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-lg)] mt-[var(--space-md)] max-w-5xl mx-auto">
+          {topRow.map((addon) => (
+            <AddOnCard key={addon.href} addon={addon} />
+          ))}
+        </div>
+
+        {/* Bottom row — 2 cards centered */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-lg)] mt-[var(--space-lg)] max-w-3xl mx-auto">
+          {bottomRow.map((addon) => (
+            <AddOnCard key={addon.href} addon={addon} />
+          ))}
         </div>
 
         <p className="font-sans text-sm text-[var(--color-text-muted)] text-center mt-[var(--space-lg)]">
