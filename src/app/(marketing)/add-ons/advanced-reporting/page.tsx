@@ -7,6 +7,13 @@ export const metadata: Metadata = {
   title: 'Advanced Reporting — NZPOS Add-ons',
   description:
     'COGS tracking, profit margins, and detailed sales analytics for NZ retail businesses.',
+  openGraph: {
+    title: 'Advanced Reporting — NZPOS Add-ons',
+    description:
+      'COGS tracking, profit margins, and detailed sales analytics for NZ retail businesses.',
+    type: 'website',
+    url: 'https://nzpos.co.nz/add-ons/advanced-reporting',
+  },
 }
 
 const withoutItems = [
@@ -262,6 +269,27 @@ export default function AdvancedReportingPage() {
           </Link>
         </div>
       </section>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'NZPOS Advanced Reporting',
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web',
+            description:
+              'COGS tracking, profit margins, and detailed sales analytics for NZ retail businesses.',
+            offers: {
+              '@type': 'Offer',
+              price: '9',
+              priceCurrency: 'NZD',
+              description: '$9/month add-on',
+            },
+          }),
+        }}
+      />
     </>
   )
 }

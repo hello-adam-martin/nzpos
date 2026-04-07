@@ -7,6 +7,13 @@ export const metadata: Metadata = {
   title: 'Gift Cards — NZPOS Add-ons',
   description:
     'Sell and manage gift cards with automatic NZ Fair Trading Act compliance. 3-year minimum expiry tracked for you.',
+  openGraph: {
+    title: 'Gift Cards — NZPOS Add-ons',
+    description:
+      'Sell and manage gift cards with automatic NZ Fair Trading Act compliance. 3-year minimum expiry tracked for you.',
+    type: 'website',
+    url: 'https://nzpos.co.nz/add-ons/gift-cards',
+  },
 }
 
 const withoutItems = [
@@ -262,6 +269,27 @@ export default function GiftCardsPage() {
           </Link>
         </div>
       </section>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'NZPOS Gift Cards',
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web',
+            description:
+              'Sell and manage gift cards with automatic NZ Fair Trading Act compliance. 3-year minimum expiry tracked for you.',
+            offers: {
+              '@type': 'Offer',
+              price: '14',
+              priceCurrency: 'NZD',
+              description: '$14/month add-on',
+            },
+          }),
+        }}
+      />
     </>
   )
 }

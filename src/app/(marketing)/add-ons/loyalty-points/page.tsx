@@ -7,6 +7,13 @@ export const metadata: Metadata = {
   title: 'Loyalty Points — NZPOS Add-ons',
   description:
     'Reward repeat customers with points they can spend in-store and online. NZ Privacy Act compliant.',
+  openGraph: {
+    title: 'Loyalty Points — NZPOS Add-ons',
+    description:
+      'Reward repeat customers with points they can spend in-store and online. NZ Privacy Act compliant.',
+    type: 'website',
+    url: 'https://nzpos.co.nz/add-ons/loyalty-points',
+  },
 }
 
 const withoutItems = [
@@ -262,6 +269,27 @@ export default function LoyaltyPointsPage() {
           </Link>
         </div>
       </section>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'NZPOS Loyalty Points',
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web',
+            description:
+              'Reward repeat customers with points they can spend in-store and online. NZ Privacy Act compliant.',
+            offers: {
+              '@type': 'Offer',
+              price: '15',
+              priceCurrency: 'NZD',
+              description: '$15/month add-on',
+            },
+          }),
+        }}
+      />
     </>
   )
 }
