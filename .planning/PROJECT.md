@@ -18,9 +18,9 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 
 ## Current State
 
-**Shipped:** v1.0 through v8.0 (2026-04-01 → 2026-04-07)
+**Shipped:** v1.0 through v8.0 + Phase 38 (2026-04-01 → 2026-04-07)
 
-1,000+ source files, 58,000+ LOC TypeScript, 37 phases shipped across 115+ plans. Production-ready multi-tenant SaaS POS with 5 paid add-ons: Xero ($9/mo), Inventory Management ($9/mo), Gift Cards ($14/mo), Advanced Reporting/COGS ($9/mo), Loyalty Points ($15/mo). Email notifications free for all stores. Max MRR per merchant: $56/mo across all add-ons. NZ compliance: GST 15% tax-inclusive, Fair Trading Act 2024 (3-year gift card expiry), Privacy Amendment Act 2025 (IPP 3A loyalty consent). Landing page showcases 15 features, 5 paid add-ons, NZ trust signals, and a "Try POS Demo" ghost button. Platform fully operational for merchant self-serve signup with integrated demo-to-signup conversion funnel.
+1,000+ source files, 58,000+ LOC TypeScript, 38 phases shipped across 117+ plans. Production-ready multi-tenant SaaS POS with 5 paid add-ons: Xero ($9/mo), Inventory Management ($9/mo), Gift Cards ($14/mo), Advanced Reporting/COGS ($9/mo), Loyalty Points ($15/mo). Email notifications free for all stores. Max MRR per merchant: $56/mo across all add-ons. NZ compliance: GST 15% tax-inclusive, Fair Trading Act 2024 (3-year gift card expiry), Privacy Amendment Act 2025 (IPP 3A loyalty consent). All 5 add-ons now have dedicated detail pages with NZ compliance callouts. Landing page pricing, features, and hero sections refreshed to showcase all 5 add-ons in 3+2 grid layout. Platform fully operational for merchant self-serve signup with integrated demo-to-signup conversion funnel.
 
 ## Core Value
 
@@ -205,4 +205,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-07 after v8.1 Marketing Refresh & Compare Page milestone started*
+*Last updated: 2026-04-07 after Phase 38 (add-on detail pages + landing page refresh) complete*
