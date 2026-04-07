@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A multi-tenant SaaS POS + online store platform for NZ small businesses. Any merchant can sign up, get a working POS and storefront on a subdomain, with email notifications included free and optional paid add-ons (Xero, inventory management). Runs on iPad for in-store checkout, public storefront for customers, admin dashboard for owners, and a super admin panel for platform operations. Built for the NZ market (GST, EFTPOS, NZD).
+A multi-tenant SaaS POS + online store platform for NZ small businesses. Any merchant can sign up, get a working POS and storefront on a subdomain, with email notifications included free and 5 paid add-ons (Xero, Inventory, Gift Cards, Advanced Reporting, Loyalty Points). Runs on iPad for in-store checkout, public storefront for customers, admin dashboard for owners, and a super admin panel for platform operations. Built for the NZ market (GST, EFTPOS, NZD).
 
 ## Milestones Shipped
 
@@ -14,12 +14,13 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 - **v5.0 Marketing & Landing Page** — Phase 28 (shipped 2026-04-06): Hero/CTA copy rewrite, 15-feature showcase, NZ trust badges, corrected pricing, add-on detail pages
 - **v6.0 Free Email Notifications** — Phases 29-31 (shipped 2026-04-06): Email notifications moved from $5/mo paid add-on to free tier across backend, admin UI, and marketing pages
 - **v7.0 POS Demo** — Phases 32-34 (shipped 2026-04-06): Demo store seed data, unauthenticated `/demo/pos` route with full POS simulation, post-sale signup CTA, landing page "Try POS Demo" button
+- **v8.0 Add-On Catalog Expansion** — Phases 35-37 (shipped 2026-04-07): Gift Cards ($14/mo), Advanced Reporting/COGS ($9/mo), Loyalty Points ($15/mo) — all with Stripe billing, feature gating, NZ compliance
 
 ## Current State
 
-**Shipped:** v1.0 through v7.0 (2026-04-01 → 2026-04-06), v8.0 Phases 35-37 (2026-04-07)
+**Shipped:** v1.0 through v8.0 (2026-04-01 → 2026-04-07)
 
-1,000+ source files, 49,000+ LOC TypeScript, 37 phases shipped across 100+ plans. Production-ready multi-tenant SaaS POS with inventory management and Xero as paid add-ons ($9/mo each), email notifications free for all stores. Phase 35 complete — Gift Cards add-on ($14/mo) with digital issuance, POS + online redemption, NZ Fair Trading Act 2024 compliance (3-year minimum expiry), admin management UI. Phase 36 complete — Advanced Reporting / COGS add-on ($9/mo) with cost price tracking per product, margin % in product list, Profit & Margin report tab with summary cards, sortable product table, collapsible category breakdown, and CSV export. Phase 37 complete — Loyalty Points add-on with DB schema, billing integration, admin settings, POS customer lookup with privacy consent, earn/redeem points on POS and online sales, customer profile display, admin customer loyalty views. Landing page showcases 15 features, 4 paid add-ons, NZ trust signals, and a "Try POS Demo" ghost button linking to `/demo/pos`. Demo POS runs real UI with client-side sale simulation — after completing a demo sale, visitors see a signup CTA linking to merchant registration. Platform fully operational for merchant self-serve signup with integrated demo-to-signup conversion funnel.
+1,000+ source files, 58,000+ LOC TypeScript, 37 phases shipped across 115+ plans. Production-ready multi-tenant SaaS POS with 5 paid add-ons: Xero ($9/mo), Inventory Management ($9/mo), Gift Cards ($14/mo), Advanced Reporting/COGS ($9/mo), Loyalty Points ($15/mo). Email notifications free for all stores. Max MRR per merchant: $56/mo across all add-ons. NZ compliance: GST 15% tax-inclusive, Fair Trading Act 2024 (3-year gift card expiry), Privacy Amendment Act 2025 (IPP 3A loyalty consent). Landing page showcases 15 features, 5 paid add-ons, NZ trust signals, and a "Try POS Demo" ghost button. Platform fully operational for merchant self-serve signup with integrated demo-to-signup conversion funnel.
 
 ## Core Value
 
@@ -90,24 +91,15 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 
 ### Active
 
-#### Current Milestone: v8.0 Add-On Catalog Expansion
-
-**Goal:** Research, identify, and build new paid add-ons that NZ small retail merchants would pay for, expanding revenue per merchant.
-
-**Target features:**
-- Research the NZ small retail POS add-on landscape (competitor offerings, merchant willingness to pay)
-- Identify strongest add-on candidates based on merchant value, build complexity, and revenue potential
-- Build selected add-ons with full billing integration (Stripe subscriptions, feature gating, admin UI, marketing pages)
+No active milestone. Next milestone TBD via `/gsd:new-milestone`.
 
 ### Out of Scope
 
 - Offline mode — requires local-first architecture rewrite (v3)
 - Multi-store per merchant — one store per signup for now, multi-store is v3
 - Delivery/shipping — click-and-collect only
-- Loyalty program — not needed for supplies store
 - Lay-by management — not needed for supplies store
 - Staff rostering — separate concern, use existing tools
-- Advanced analytics / charts — basic reporting sufficient
 - Integrated EFTPOS terminal — standalone terminal with manual entry, Windcave integration deferred
 - Physical receipt printer integration — screen receipt shipped, printer when hardware purchased
 - Custom domains — infrastructure ready (wildcard DNS) but UI/DNS verification not built
@@ -128,7 +120,7 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - v3.0 shipped 2026-04-05 with inventory management add-on, service products, and stocktake workflows
 - v7.0 shipped 2026-04-06 with interactive POS demo and demo-to-signup conversion funnel
 - Platform is now multi-tenant SaaS — any NZ business can sign up at the root domain
-- Pricing: free core POS/storefront/admin/email notifications, 2 paid add-ons via Stripe (Xero $9/mo, Inventory Management $9/mo)
+- Pricing: free core POS/storefront/admin/email notifications, 5 paid add-ons via Stripe (Xero $9/mo, Inventory $9/mo, Gift Cards $14/mo, Advanced Reporting $9/mo, Loyalty Points $15/mo)
 - Super admin panel operational for platform management
 - Full documentation suite: setup guide, env vars, architecture, server actions, deployment runbook, merchant guide
 - CSP headers in Report-Only mode — switch to enforcing after production monitoring confirms no false positives
@@ -181,6 +173,11 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 | NS delegation for wildcard DNS (not CNAME) | Vercel requires NS delegation for wildcard SSL cert | ✓ Good — documented prominently in deploy.md |
 | Email notifications free (not paid add-on) | Reduces friction for new stores, email is table-stakes for any POS | ✓ Good — every store gets order confirmations out of the box |
 | Keep has_email_notifications column (always true) | Backwards compatibility with existing queries, zero migration risk | ✓ Good — no breakage, clean removal possible later |
+| Gift card as deferred liability (not revenue) | NZ accounting: gift card sale is liability until redemption | ✓ Good — excluded from Xero sync, separate table |
+| NZ Fair Trading Act 2024 3-year gift card expiry | DB CHECK constraint enforces minimum, not app code | ✓ Good — impossible to create non-compliant cards |
+| Privacy Amendment Act 2025 IPP 3A loyalty consent | Privacy notice before loyalty enrollment, consent stored in DB | ✓ Good — compliant before Act takes effect (1 May 2026) |
+| Loyalty operations non-fatal to sales | Points earn/redeem failures warn but never void the sale | ✓ Good — matches gift card pattern, no lost revenue |
+| Per-add-on pricing (5 add-ons, no bundles) | Merchants buy only what they need, max MRR $56/mo | ✓ Good — simple Stripe integration, clear value prop |
 
 ## Evolution
 
@@ -200,4 +197,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-07 after Phase 37 loyalty-points-add-on complete*
+*Last updated: 2026-04-07 after v8.0 Add-On Catalog Expansion milestone complete*

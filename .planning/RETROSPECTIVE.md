@@ -267,6 +267,73 @@
 
 ---
 
+## Milestone: v7.0 — POS Demo
+
+**Shipped:** 2026-04-06
+**Phases:** 3 | **Plans:** 5
+
+### What Was Built
+- Demo store seed (Aroha Home & Gift) with 20 NZ-priced products across 5 categories
+- Unauthenticated `/demo/pos` route with full POS simulation — product grid, cart, discounts, payment selection
+- Client-side sale completion (demoMode prop) — no DB writes, full checkout UX
+- Post-demo-sale signup CTA on receipt screen with dismiss action
+- Landing page "Try POS Demo" ghost button linking to demo route
+
+### What Worked
+- **demoMode prop pattern** — single boolean gates all server writes, reuses 100% of real POS UI components
+- **Client-side sale simulation** — no test infrastructure needed for the demo path, no seed cleanup after each visitor
+
+### Key Lessons
+1. **Demo flows are powerful conversion tools** — letting visitors try the real product UI (not screenshots) is more convincing than any marketing copy
+
+---
+
+## Milestone: v8.0 — Add-On Catalog Expansion
+
+**Shipped:** 2026-04-07
+**Phases:** 3 | **Plans:** 19 | **Tests:** 659
+
+### What Was Built
+- Gift Cards add-on ($14/mo): digital issuance with unique codes, POS code entry + auto-split payment, online redemption via Stripe negative line items, partial balance tracking, admin management (list/detail/void), email delivery, NZ Fair Trading Act 2024 compliance (3-year DB constraint)
+- Advanced Reporting / COGS add-on ($9/mo): cost_price_cents per product, margin % in product list, Profit & Margin report tab with summary cards, sortable product table, collapsible category breakdown, CSV export
+- Loyalty Points add-on ($15/mo): loyalty_settings + loyalty_transactions tables, SECURITY DEFINER RPCs for earn/redeem, admin settings (earn rate, redeem rate, pause), POS customer lookup (type-ahead, quick-add with IPP 3A privacy consent), automatic points earning on POS + online sales, online checkout redemption (LoyaltyRedeemControl in CartDrawer), customer profile balance display with privacy banner, admin customer loyalty visibility (points column + transaction history)
+- All 3 add-ons fully integrated with existing requireFeature() billing pattern
+
+### What Worked
+- **Wave 0 RED test stubs pattern** — established in Phase 35, carried through 36 and 37. ~48 test stubs across 3 phases ensured TDD discipline from day one.
+- **requireFeature() scales effortlessly** — adding 3 new add-ons to the existing JWT/DB dual-path pattern required zero changes to the gating infrastructure
+- **Non-fatal loyalty/gift card operations** — both subsystems warn on RPC failure but never void the sale. No lost revenue from add-on bugs.
+- **Privacy-first loyalty enrollment** — building to Privacy Amendment Act 2025 (IPP 3A) standard before the Act takes effect (1 May 2026) means zero compliance scramble
+- **Gap closure plans** — Phase 37-07 fixed prop-wiring issues found by verification. The gap closure workflow (verify → diagnose → plan → fix) is reliable and fast.
+- **Parallel execution with worktree isolation** — 19 plans across 3 phases, zero merge conflicts
+
+### What Was Inefficient
+- **as-any casts for new DB tables** — every phase needed `as any` for tables/columns not yet in Supabase generated types. 5th milestone with this workaround.
+- **Prop wiring missed in initial plans** — Phase 37 verification caught 3 prop-passing gaps between server components and client components. Server→client prop boundaries need explicit verification in plans.
+- **SUMMARY.md one-liner extraction still inconsistent** — some summaries return "One-liner:" or "Commit:" prefixes instead of clean one-liners
+
+### Patterns Established
+- Gift card as deferred liability — separate `gift_cards` table, excluded from Xero sync and orders
+- `redeem_gift_card` / `earn_loyalty_points` / `redeem_loyalty_points` as SECURITY DEFINER RPCs with `SELECT FOR UPDATE` for concurrency
+- Negative Stripe line items for partial discounts (gift cards + loyalty points) — simpler than Stripe Coupons API
+- Full-cover bypass pattern: `gift_card_{orderId}` / `loyalty_{orderId}` placeholder session IDs for orders paid entirely by non-Stripe methods
+- Privacy consent stored in DB (`loyalty_banner_dismissed_at`) with IPP 3A notice before enrollment
+- Cart state machine extension pattern: new payment methods (gift card, loyalty) added as reducer actions without modifying existing checkout flow
+
+### Key Lessons
+1. **Server→client prop boundaries are verification-critical** — when server components mount client components, prop passing must be explicitly verified. Phase 37-07 was entirely about 2 missed props.
+2. **Non-fatal add-on operations are a feature** — loyalty and gift card RPC failures should warn, never void the sale. This pattern scales to any future add-on.
+3. **Wave 0 RED stubs are worth the overhead** — the ~2% time cost of writing failing test stubs pays back 10x by catching interface mismatches early.
+4. **NZ compliance should be built proactively** — Privacy Amendment Act 2025 IPP 3A built before effective date means no rush later.
+5. **5 add-ons prove the per-add-on billing model** — no plan tiers needed, merchants pick what they need, max MRR $56/mo per merchant.
+
+### Cost Observations
+- Model mix: ~55% opus (orchestration + planning), ~45% sonnet (executor/verifier agents)
+- Sessions: ~3 across the milestone
+- Notable: Phase 37 was the largest single phase (8 plans, 11 requirements) — still completed in one session with parallel execution
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -280,6 +347,8 @@
 | v4.0 | ~2 | 4 | Admin platform build-out. Materialised Stripe snapshots for analytics. |
 | v5.0 | ~1 | 1 | Single-phase marketing milestone. Static-first marketing pages. |
 | v6.0 | 1 | 3 | Full-stack pricing model change. Layer-by-layer approach (backend → UI → marketing). Fastest milestone. |
+| v7.0 | ~1 | 3 | Demo-to-signup conversion funnel. demoMode prop pattern reuses all real POS components. |
+| v8.0 | ~3 | 3 | Add-on catalog expansion. Wave 0 RED stubs, non-fatal RPC pattern, NZ compliance built proactively. |
 
 ### Cumulative Quality
 
@@ -290,6 +359,8 @@
 | v2.1 | 434 | 989 | 89,000+ |
 | v3.0 | 445+ | 1,000+ | 99,000+ |
 | v4.0-v6.0 | 565+ | 1,000+ | 49,354 |
+| v7.0 | 565+ | 1,000+ | ~50,000 |
+| v8.0 | 659 | 1,000+ | 58,263 |
 
 ### Top Lessons (Verified Across Milestones)
 
@@ -303,3 +374,5 @@
 8. Append-only audit tables with INSERT+SELECT-only RLS are a reusable pattern for tamper-proof history.
 9. Pricing model changes are full-stack — backend, admin UI, marketing, and tests all need updating. Plan sweeps, not spot fixes.
 10. Layer-by-layer refactoring (backend → UI → marketing) allows independent verification at each stage.
+11. Server→client prop boundaries are the #1 source of verification gaps — verify prop passing explicitly in plans, not just component internals.
+12. Non-fatal add-on operations (warn, don't void) prevent revenue loss from add-on bugs — apply to all future payment method add-ons.

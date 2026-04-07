@@ -1,5 +1,28 @@
 # Milestones
 
+## v8.0 Add-On Catalog Expansion (Shipped: 2026-04-07)
+
+**Phases completed:** 3 phases, 19 plans, 31 tasks
+
+**Key accomplishments:**
+
+- One-liner:
+- One-liner:
+- One-liner:
+- Gift card code entry in CartDrawer with collapsible toggle, full-cover Stripe bypass (server-side order completion), and partial-cover webhook redemption with race-condition prevention.
+- One-liner:
+- One-liner:
+- One-liner:
+- One-liner:
+- 32 RED test stubs across 5 files for loyalty utility functions, cart state machine extensions, and server actions
+- One-liner:
+- Loyalty admin settings page with earn/redeem rate configuration, pause toggle, and D-10 setup gate warning — gated by requireFeature('loyalty_points')
+- POS customer lookup with type-ahead search (300ms debounce), quick-add with IPP 3A privacy consent, cart state machine extended with customer attachment and loyalty discount, CartPanel/POSClientShell wired end-to-end
+- Commit:
+- POS page and storefront layout wired to pass hasLoyalty/redeemRateCents and isAuthenticated props, unblocking LOYAL-04, LOYAL-08, and LOYAL-09 without touching any component internals
+
+---
+
 ## v7.0 POS Demo (Shipped: 2026-04-06)
 
 **Phases completed:** 3 phases, 5 plans, 6 tasks
