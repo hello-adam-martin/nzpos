@@ -108,7 +108,7 @@
 
 ### v8.1 Marketing Refresh & Compare Page
 
-- [ ] **Phase 38: Add-On Detail Pages + Landing Page Refresh** — Three new add-on detail pages and landing page updated to show all 5 paid add-ons
+- [x] **Phase 38: Add-On Detail Pages + Landing Page Refresh** — Three new add-on detail pages and landing page updated to show all 5 paid add-ons (completed 2026-04-07)
 - [ ] **Phase 39: Comparison Page + Nav/Footer/SEO** — Competitor comparison page with feature matrix, editorial sections, FAQ, and nav/footer/SEO wired throughout
 
 ## Phase Details
@@ -122,11 +122,11 @@
   2. Visitor sees all 5 paid add-ons with correct prices in the landing page pricing section (Xero $9, Inventory $9, Gift Cards $14, Advanced Reporting $9, Loyalty Points $15)
   3. Visitor sees references to all 5 add-ons in the landing page hero and features sections
   4. Visitor can navigate to all 5 add-on detail pages from the add-ons catalog page at `/add-ons`
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 38-01-PLAN.md — Three new add-on detail pages (Gift Cards, Advanced Reporting, Loyalty Points)
-- [ ] 38-02-PLAN.md — Landing page pricing/features/hero update + add-ons catalog expansion
+- [x] 38-02-PLAN.md — Landing page pricing/features/hero update + add-ons catalog expansion
 
 **UI hint**: yes
 
@@ -184,5 +184,5 @@ Plans:
 | 35. Gift Cards Add-On | v8.0 | 7/7 | Complete | 2026-04-06 |
 | 36. Advanced Reporting / COGS Add-On | v8.0 | 4/4 | Complete | 2026-04-06 |
 | 37. Loyalty Points Add-On | v8.0 | 8/8 | Complete | 2026-04-07 |
-| 38. Add-On Detail Pages + Landing Page Refresh | v8.1 | 1/2 | In Progress|  |
+| 38. Add-On Detail Pages + Landing Page Refresh | v8.1 | 2/2 | Complete   | 2026-04-07 |
 | 39. Comparison Page + Nav/Footer/SEO | v8.1 | 0/? | Not started | - |
