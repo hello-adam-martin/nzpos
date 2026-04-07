@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v8.1
 milestone_name: Marketing Refresh & Compare Page
-status: roadmap_ready
-stopped_at: null
-last_updated: "2026-04-07T03:00:00.000Z"
-last_activity: 2026-04-07
+status: planning
+stopped_at: Phase 38 context gathered
+last_updated: "2026-04-07T03:12:19.341Z"
+last_activity: 2026-04-07 — Roadmap created for v8.1
 progress:
   total_phases: 2
   completed_phases: 0
@@ -49,6 +49,7 @@ Progress: [░░░░░░░░░░] 0%
 Carried forward from v8.0 in PROJECT.md Key Decisions table.
 
 **v8.1 decisions:**
+
 - Phase 38 before Phase 39: add-on detail pages must exist before comparison page can link to them as evidence. Broken `/add-ons/gift-cards` links on a comparison page undermine credibility.
 - All competitor data centralised in `src/data/competitors.ts` with source URLs and last-verified dates as comments — FTA compliance and maintenance requirement.
 - Use text-only competitor names (no stylised logos or branded assets) — trademark risk mitigation per research SUMMARY.md.
@@ -68,6 +69,6 @@ Phase 39 has a legal prerequisite: competitor pricing claims must be sourced fro
 
 ## Session Continuity
 
-Last session: 2026-04-07
-Stopped at: Roadmap created — ready for `/gsd:plan-phase 38`
-Resume file: None
+Last session: 2026-04-07T03:12:19.333Z
+Stopped at: Phase 38 context gathered
+Resume file: .planning/phases/38-add-on-detail-pages-landing-page-refresh/38-CONTEXT.md
