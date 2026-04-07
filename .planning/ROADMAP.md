@@ -109,7 +109,7 @@
 ### v8.1 Marketing Refresh & Compare Page
 
 - [x] **Phase 38: Add-On Detail Pages + Landing Page Refresh** — Three new add-on detail pages and landing page updated to show all 5 paid add-ons (completed 2026-04-07)
-- [ ] **Phase 39: Comparison Page + Nav/Footer/SEO** — Competitor comparison page with feature matrix, editorial sections, FAQ, and nav/footer/SEO wired throughout
+- [x] **Phase 39: Comparison Page + Nav/Footer/SEO** — Competitor comparison page with feature matrix, editorial sections, FAQ, and nav/footer/SEO wired throughout (completed 2026-04-07)
 
 ## Phase Details
 
@@ -140,7 +140,7 @@ Plans:
   3. Visitor sees multiple CTA buttons on the comparison page linking to signup or the POS demo
   4. Visitor can navigate to the comparison page from both the desktop nav and mobile nav on the landing page
   5. All new pages (3 add-on detail pages + comparison page) have title, description, Open Graph meta tags, and JSON-LD SoftwareApplication structured data; footer includes links to the comparison page and all add-on detail pages
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 39-01-PLAN.md — Comparison data file + comparison page (matrix, editorial, FAQ, CTAs, SEO)
@@ -190,4 +190,4 @@ Plans:
 | 36. Advanced Reporting / COGS Add-On | v8.0 | 4/4 | Complete | 2026-04-06 |
 | 37. Loyalty Points Add-On | v8.0 | 8/8 | Complete | 2026-04-07 |
 | 38. Add-On Detail Pages + Landing Page Refresh | v8.1 | 2/2 | Complete    | 2026-04-07 |
-| 39. Comparison Page + Nav/Footer/SEO | v8.1 | 2/3 | In Progress|  |
+| 39. Comparison Page + Nav/Footer/SEO | v8.1 | 2/3 | Complete    | 2026-04-07 |
