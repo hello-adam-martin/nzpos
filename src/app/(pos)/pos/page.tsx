@@ -60,11 +60,12 @@ export default async function PosPage() {
         .eq('store_id', storeId)
         .eq('is_active', true),
       // Query store_plans for hasInventory and hasLoyalty (POS uses staff JWT, not Supabase auth)
-      supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
         .from('store_plans')
         .select('has_inventory, has_loyalty_points')
         .eq('store_id', storeId)
-        .single(),
+        .single() as Promise<{ data: { has_inventory: boolean; has_loyalty_points: boolean } | null }>,
     ])
 
   const products = productsResult.data ?? []
@@ -77,11 +78,12 @@ export default async function PosPage() {
 
   let redeemRateCents = 1
   if (hasLoyalty) {
-    const { data: loyaltySettings } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: loyaltySettings } = await (supabase as any)
       .from('loyalty_settings')
       .select('redeem_rate_cents')
       .eq('store_id', storeId)
-      .single()
+      .single() as { data: { redeem_rate_cents: number } | null }
     redeemRateCents = loyaltySettings?.redeem_rate_cents ?? 1
   }
 
