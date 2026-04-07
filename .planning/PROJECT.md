@@ -18,9 +18,9 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 
 ## Current State
 
-**Shipped:** v1.0 through v8.0 + Phase 38 (2026-04-01 → 2026-04-07)
+**Shipped:** v1.0 through v8.1 (2026-04-01 → 2026-04-07)
 
-1,000+ source files, 58,000+ LOC TypeScript, 38 phases shipped across 117+ plans. Production-ready multi-tenant SaaS POS with 5 paid add-ons: Xero ($9/mo), Inventory Management ($9/mo), Gift Cards ($14/mo), Advanced Reporting/COGS ($9/mo), Loyalty Points ($15/mo). Email notifications free for all stores. Max MRR per merchant: $56/mo across all add-ons. NZ compliance: GST 15% tax-inclusive, Fair Trading Act 2024 (3-year gift card expiry), Privacy Amendment Act 2025 (IPP 3A loyalty consent). All 5 add-ons now have dedicated detail pages with NZ compliance callouts. Landing page pricing, features, and hero sections refreshed to showcase all 5 add-ons in 3+2 grid layout. Platform fully operational for merchant self-serve signup with integrated demo-to-signup conversion funnel.
+1,000+ source files, 58,000+ LOC TypeScript, 39 phases shipped across 120+ plans. Production-ready multi-tenant SaaS POS with 5 paid add-ons: Xero ($9/mo), Inventory Management ($9/mo), Gift Cards ($14/mo), Advanced Reporting/COGS ($9/mo), Loyalty Points ($15/mo). Email notifications free for all stores. Max MRR per merchant: $56/mo across all add-ons. NZ compliance: GST 15% tax-inclusive, Fair Trading Act 2024 (3-year gift card expiry), Privacy Amendment Act 2025 (IPP 3A loyalty consent). All 5 add-ons have dedicated detail pages with NZ compliance callouts, OG meta tags, and JSON-LD structured data. Landing page pricing, features, and hero sections refreshed to showcase all 5 add-ons in 3+2 grid layout. Competitor comparison page at `/compare` with feature matrix, Why NZPOS editorial, FAQ accordion. Footer restructured into 4-column navigation. Platform fully operational for merchant self-serve signup with integrated demo-to-signup conversion funnel.
 
 ## Core Value
 
@@ -88,6 +88,10 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - ✓ Gift Cards add-on ($14/mo) — digital issuance, POS + online redemption, NZ Fair Trading Act 2024 compliance — v8.0
 - ✓ Advanced Reporting / COGS add-on ($9/mo) — cost price tracking, margin % in product list, Profit & Margin report tab — Validated in Phase 36: advanced-reporting-cogs-add-on
 - ✓ Loyalty Points add-on — earn/redeem points on POS + online, admin settings, customer lookup with privacy consent, profile display — Validated in Phase 37: loyalty-points-add-on
+- ✓ Add-on detail pages for Gift Cards, Advanced Reporting, Loyalty Points — Validated in Phase 38: add-on-detail-pages-landing-page-refresh
+- ✓ Competitor comparison page with feature matrix vs Square, Lightspeed, Shopify POS, POSbiz — Validated in Phase 39: comparison-page-nav-footer-seo
+- ✓ Navigation updated with Compare link, footer restructured into 4-column layout — Validated in Phase 39
+- ✓ SEO retrofit: OG meta tags + JSON-LD SoftwareApplication on all 5 add-on detail pages + comparison page — Validated in Phase 39
 
 ### Active
 
