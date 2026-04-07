@@ -18,11 +18,11 @@ Requirements for milestone v8.1: Marketing Refresh & Compare Page. Each maps to 
 
 ### Comparison Page
 
-- [ ] **COMP-01**: Visitor can view a comparison page at `/compare` with a feature matrix comparing NZPOS against NZ POS competitors
-- [ ] **COMP-02**: Visitor sees competitor pricing with "last verified" date disclaimer for NZ Fair Trading Act compliance
-- [ ] **COMP-03**: Visitor can read a "Why NZPOS" narrative section highlighting key differentiators
-- [ ] **COMP-04**: Visitor can expand/collapse FAQ items answering common comparison questions
-- [ ] **COMP-05**: Visitor sees multiple CTA buttons throughout the comparison page linking to signup
+- [x] **COMP-01**: Visitor can view a comparison page at `/compare` with a feature matrix comparing NZPOS against NZ POS competitors
+- [x] **COMP-02**: Visitor sees competitor pricing with "last verified" date disclaimer for NZ Fair Trading Act compliance
+- [x] **COMP-03**: Visitor can read a "Why NZPOS" narrative section highlighting key differentiators
+- [x] **COMP-04**: Visitor can expand/collapse FAQ items answering common comparison questions
+- [x] **COMP-05**: Visitor sees multiple CTA buttons throughout the comparison page linking to signup
 
 ### Navigation & SEO
 
@@ -65,11 +65,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MKTG-04 | Phase 38 | Complete |
 | MKTG-05 | Phase 38 | Complete |
 | MKTG-06 | Phase 38 | Complete |
-| COMP-01 | Phase 39 | Pending |
-| COMP-02 | Phase 39 | Pending |
-| COMP-03 | Phase 39 | Pending |
-| COMP-04 | Phase 39 | Pending |
-| COMP-05 | Phase 39 | Pending |
+| COMP-01 | Phase 39 | Complete |
+| COMP-02 | Phase 39 | Complete |
+| COMP-03 | Phase 39 | Complete |
+| COMP-04 | Phase 39 | Complete |
+| COMP-05 | Phase 39 | Complete |
 | NAV-01 | Phase 39 | Pending |
 | NAV-02 | Phase 39 | Complete |
 | NAV-03 | Phase 39 | Complete |

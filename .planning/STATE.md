@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v8.1
 milestone_name: Marketing Refresh & Compare Page
 status: executing
-stopped_at: Completed 39-03-PLAN.md
-last_updated: "2026-04-07T05:34:37.172Z"
+stopped_at: Completed 39-01-PLAN.md
+last_updated: "2026-04-07T05:35:50.735Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 5
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 ## Current Position
 
 Phase: 39 (comparison-page-nav-footer-seo) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-07
 
@@ -59,6 +59,8 @@ Carried forward from v8.0 in PROJECT.md Key Decisions table.
 - [Phase 38]: Compliance callouts cite specific NZ legislation by name/year: FTA 2024 for Gift Cards, Privacy Amendment Act 2025 IPP 3A for Loyalty Points, contextual NZ Retail callout for Advanced Reporting
 - [Phase 38]: Refactored LandingPricing add-on cards into data array split by slice for 3+2 grid — cleaner than duplication
 - [Phase 39]: Reused existing metadata description values for OG fields rather than writing separate social-optimized copy
+- [Phase 39]: Used native details/summary for FAQ accordion — no JS dependency, matches LandingNav pattern
+- [Phase 39]: Typed data file pattern (src/data/comparison.ts) for marketing content — single source of truth for competitor data, features, FAQ
 
 ### Pending Todos
 
@@ -73,6 +75,6 @@ Phase 39 has a legal prerequisite: competitor pricing claims must be sourced fro
 
 ## Session Continuity
 
-Last session: 2026-04-07T05:34:37.170Z
-Stopped at: Completed 39-03-PLAN.md
+Last session: 2026-04-07T05:35:50.732Z
+Stopped at: Completed 39-01-PLAN.md
 Resume file: None
