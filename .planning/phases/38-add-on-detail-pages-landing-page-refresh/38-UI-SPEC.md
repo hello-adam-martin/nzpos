@@ -22,8 +22,8 @@ created: 2026-04-07
 | Preset | not applicable | — |
 | Component library | none (custom components, Radix not used) | CLAUDE.md |
 | Icon library | Inline SVG (Lucide-style, stroke width 2) | xero/page.tsx, add-ons/page.tsx |
-| Display font | Satoshi — class `font-display`, weight 700 (headings) and 900 (hero) | DESIGN.md |
-| Body font | DM Sans — class `font-sans`, weight 400/500/600/700 | DESIGN.md |
+| Display font | Satoshi — class `font-display`, weight 700 | DESIGN.md |
+| Body font | DM Sans — class `font-sans`, weight 400/700 | DESIGN.md |
 | Token convention | CSS custom properties via `var(--token)` — never raw Tailwind color utilities | CONTEXT.md D-12 note, globals.css |
 
 ---
@@ -53,7 +53,7 @@ Source: DESIGN.md typography scale. Only the sizes actually used in marketing pa
 | Role | Size | CSS Class | Weight | Line Height | Font |
 |------|------|-----------|--------|-------------|------|
 | Body | 16px (1rem) | `text-base` | 400 (`font-sans`) | 1.5 | DM Sans |
-| Label / caption | 14px (0.875rem) | `text-sm` | 400–600 | 1.5 | DM Sans |
+| Label / caption | 14px (0.875rem) | `text-sm` | 400 or 700 | 1.5 | DM Sans |
 | Section heading | 24px (1.5rem) | `text-2xl` | 700 (`font-bold`) | 1.3 | DM Sans |
 | Hero / display | 48px (3rem) | `text-5xl` | 700 (`font-bold`) | 1.1 | Satoshi (`font-display`) |
 
@@ -63,6 +63,7 @@ Notes:
 - Uppercase labels (section eyebrows): `text-sm font-bold uppercase tracking-wide` in `var(--color-text-muted)` or accent color
 - Price display (add-on cards): `text-sm font-bold text-[var(--color-amber)]`
 - Hero subtext: `text-base md:text-lg text-white/70` under navy hero backgrounds
+- Only two weights are used throughout: 400 (regular body and labels) and 700 (bold headings, price text, eyebrows, feature titles)
 
 ---
 
