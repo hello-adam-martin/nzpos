@@ -17,9 +17,9 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 
 ## Current State
 
-**Shipped:** v1.0 through v7.0 (2026-04-01 → 2026-04-06), v8.0 Phases 35-36 (2026-04-07)
+**Shipped:** v1.0 through v7.0 (2026-04-01 → 2026-04-06), v8.0 Phases 35-37 (2026-04-07)
 
-1,000+ source files, 49,000+ LOC TypeScript, 36 phases shipped across 100+ plans. Production-ready multi-tenant SaaS POS with inventory management and Xero as paid add-ons ($9/mo each), email notifications free for all stores. Phase 35 complete — Gift Cards add-on ($14/mo) with digital issuance, POS + online redemption, NZ Fair Trading Act 2024 compliance (3-year minimum expiry), admin management UI. Phase 36 complete — Advanced Reporting / COGS add-on ($9/mo) with cost price tracking per product, margin % in product list, Profit & Margin report tab with summary cards, sortable product table, collapsible category breakdown, and CSV export. Landing page showcases 15 features, 4 paid add-ons, NZ trust signals, and a "Try POS Demo" ghost button linking to `/demo/pos`. Demo POS runs real UI with client-side sale simulation — after completing a demo sale, visitors see a signup CTA linking to merchant registration. Platform fully operational for merchant self-serve signup with integrated demo-to-signup conversion funnel.
+1,000+ source files, 49,000+ LOC TypeScript, 37 phases shipped across 100+ plans. Production-ready multi-tenant SaaS POS with inventory management and Xero as paid add-ons ($9/mo each), email notifications free for all stores. Phase 35 complete — Gift Cards add-on ($14/mo) with digital issuance, POS + online redemption, NZ Fair Trading Act 2024 compliance (3-year minimum expiry), admin management UI. Phase 36 complete — Advanced Reporting / COGS add-on ($9/mo) with cost price tracking per product, margin % in product list, Profit & Margin report tab with summary cards, sortable product table, collapsible category breakdown, and CSV export. Phase 37 complete — Loyalty Points add-on with DB schema, billing integration, admin settings, POS customer lookup with privacy consent, earn/redeem points on POS and online sales, customer profile display, admin customer loyalty views. Landing page showcases 15 features, 4 paid add-ons, NZ trust signals, and a "Try POS Demo" ghost button linking to `/demo/pos`. Demo POS runs real UI with client-side sale simulation — after completing a demo sale, visitors see a signup CTA linking to merchant registration. Platform fully operational for merchant self-serve signup with integrated demo-to-signup conversion funnel.
 
 ## Core Value
 
@@ -86,6 +86,7 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 - ✓ Landing page "Try POS Demo" ghost button linking to `/demo/pos` — v7.0
 - ✓ Gift Cards add-on ($14/mo) — digital issuance, POS + online redemption, NZ Fair Trading Act 2024 compliance — v8.0
 - ✓ Advanced Reporting / COGS add-on ($9/mo) — cost price tracking, margin % in product list, Profit & Margin report tab — Validated in Phase 36: advanced-reporting-cogs-add-on
+- ✓ Loyalty Points add-on — earn/redeem points on POS + online, admin settings, customer lookup with privacy consent, profile display — Validated in Phase 37: loyalty-points-add-on
 
 ### Active
 
@@ -199,4 +200,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-06 after v8.0 Add-On Catalog Expansion milestone started*
+*Last updated: 2026-04-07 after Phase 37 loyalty-points-add-on complete*
