@@ -11,6 +11,7 @@
 - ✅ **v6.0 Free Email Notifications** — Phases 29-31 (shipped 2026-04-06). [Archive](milestones/v6.0-ROADMAP.md)
 - ✅ **v7.0 POS Demo** — Phases 32-34 (shipped 2026-04-06). [Archive](milestones/v7.0-ROADMAP.md)
 - ✅ **v8.0 Add-On Catalog Expansion** — Phases 35-37 (shipped 2026-04-07). [Archive](milestones/v8.0-ROADMAP.md)
+- **v8.1 Marketing Refresh & Compare Page** — Phases 38-39 (in progress)
 
 ## Phases
 
@@ -105,6 +106,38 @@
 
 </details>
 
+### v8.1 Marketing Refresh & Compare Page
+
+- [ ] **Phase 38: Add-On Detail Pages + Landing Page Refresh** — Three new add-on detail pages and landing page updated to show all 5 paid add-ons
+- [ ] **Phase 39: Comparison Page + Nav/Footer/SEO** — Competitor comparison page with feature matrix, editorial sections, FAQ, and nav/footer/SEO wired throughout
+
+## Phase Details
+
+### Phase 38: Add-On Detail Pages + Landing Page Refresh
+**Goal**: Visitors can discover all 5 paid add-ons through dedicated detail pages and an updated landing page
+**Depends on**: Nothing (marketing-only, no backend changes)
+**Requirements**: MKTG-01, MKTG-02, MKTG-03, MKTG-04, MKTG-05, MKTG-06
+**Success Criteria** (what must be TRUE):
+  1. Visitor can navigate to `/add-ons/gift-cards`, `/add-ons/advanced-reporting`, and `/add-ons/loyalty-points` and see full detail pages with pricing, features, and NZ compliance callouts
+  2. Visitor sees all 5 paid add-ons with correct prices in the landing page pricing section (Xero $9, Inventory $9, Gift Cards $14, Advanced Reporting $9, Loyalty Points $15)
+  3. Visitor sees references to all 5 add-ons in the landing page hero and features sections
+  4. Visitor can navigate to all 5 add-on detail pages from the add-ons catalog page at `/add-ons`
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 39: Comparison Page + Nav/Footer/SEO
+**Goal**: Visitors can evaluate NZPOS against NZ competitors through a compliant comparison page discoverable from every marketing page
+**Depends on**: Phase 38 (comparison page references NZPOS pricing and links to all 5 add-on detail pages as evidence)
+**Requirements**: COMP-01, COMP-02, COMP-03, COMP-04, COMP-05, NAV-01, NAV-02, NAV-03, NAV-04
+**Success Criteria** (what must be TRUE):
+  1. Visitor can view `/compare` and see a feature matrix with NZPOS and NZ POS competitors, with competitor pricing shown alongside a "last verified" date disclaimer
+  2. Visitor can read a "Why NZPOS" editorial section and expand/collapse FAQ items on the comparison page
+  3. Visitor sees multiple CTA buttons on the comparison page linking to signup or the POS demo
+  4. Visitor can navigate to the comparison page from both the desktop nav and mobile nav on the landing page
+  5. All new pages (3 add-on detail pages + comparison page) have title, description, Open Graph meta tags, and JSON-LD SoftwareApplication structured data; footer includes links to the comparison page and all add-on detail pages
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -143,6 +176,8 @@
 | 32. Demo Store Seed | v7.0 | 1/1 | Complete | 2026-04-06 |
 | 33. Demo POS Route & Checkout | v7.0 | 2/2 | Complete | 2026-04-06 |
 | 34. Signup Conversion & Landing Page | v7.0 | 2/2 | Complete | 2026-04-06 |
-| 35. Gift Cards Add-On | v8.0 | 7/7 | Complete    | 2026-04-06 |
-| 36. Advanced Reporting / COGS Add-On | v8.0 | 4/4 | Complete    | 2026-04-06 |
-| 37. Loyalty Points Add-On | v8.0 | 8/8 | Complete    | 2026-04-07 |
+| 35. Gift Cards Add-On | v8.0 | 7/7 | Complete | 2026-04-06 |
+| 36. Advanced Reporting / COGS Add-On | v8.0 | 4/4 | Complete | 2026-04-06 |
+| 37. Loyalty Points Add-On | v8.0 | 8/8 | Complete | 2026-04-07 |
+| 38. Add-On Detail Pages + Landing Page Refresh | v8.1 | 0/? | Not started | - |
+| 39. Comparison Page + Nav/Footer/SEO | v8.1 | 0/? | Not started | - |

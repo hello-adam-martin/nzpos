@@ -59,27 +59,27 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MKTG-01 | TBD | Pending |
-| MKTG-02 | TBD | Pending |
-| MKTG-03 | TBD | Pending |
-| MKTG-04 | TBD | Pending |
-| MKTG-05 | TBD | Pending |
-| MKTG-06 | TBD | Pending |
-| COMP-01 | TBD | Pending |
-| COMP-02 | TBD | Pending |
-| COMP-03 | TBD | Pending |
-| COMP-04 | TBD | Pending |
-| COMP-05 | TBD | Pending |
-| NAV-01 | TBD | Pending |
-| NAV-02 | TBD | Pending |
-| NAV-03 | TBD | Pending |
-| NAV-04 | TBD | Pending |
+| MKTG-01 | Phase 38 | Pending |
+| MKTG-02 | Phase 38 | Pending |
+| MKTG-03 | Phase 38 | Pending |
+| MKTG-04 | Phase 38 | Pending |
+| MKTG-05 | Phase 38 | Pending |
+| MKTG-06 | Phase 38 | Pending |
+| COMP-01 | Phase 39 | Pending |
+| COMP-02 | Phase 39 | Pending |
+| COMP-03 | Phase 39 | Pending |
+| COMP-04 | Phase 39 | Pending |
+| COMP-05 | Phase 39 | Pending |
+| NAV-01 | Phase 39 | Pending |
+| NAV-02 | Phase 39 | Pending |
+| NAV-03 | Phase 39 | Pending |
+| NAV-04 | Phase 39 | Pending |
 
 **Coverage:**
 - v8.1 requirements: 15 total
-- Mapped to phases: 0
-- Unmapped: 15
+- Mapped to phases: 15
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-07*
-*Last updated: 2026-04-07 after initial definition*
+*Last updated: 2026-04-07 after roadmap creation — all 15 requirements mapped*
