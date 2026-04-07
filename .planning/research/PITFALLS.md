@@ -1,383 +1,321 @@
-# Pitfalls Research: v8.0 Add-On Catalog Expansion
+# Pitfalls Research: v8.1 Marketing Refresh & Competitor Comparison Page
 
-**Domain:** Adding new paid add-ons (loyalty, analytics, CRM, gift cards) to an existing multi-tenant SaaS POS. Integrating with the proven requireFeature() gating pattern, Stripe per-add-on subscriptions, Supabase RLS store_id isolation, and NZ-specific compliance requirements (GST, Privacy Act 2020 + 2025 amendments, Fair Trading Act 2024 gift card law).
-**Researched:** 2026-04-06
-**Confidence:** HIGH for NZ gift card law and Privacy Act requirements (confirmed against official NZ legislation). HIGH for Stripe webhook idempotency risks (confirmed against Stripe official docs and practitioner reports). HIGH for gift card accounting pitfalls (confirmed against accounting best practice sources). MEDIUM for loyalty program regulatory risks (confirmed against NZ FMA guidance + Privacy Act + practitioner experience). MEDIUM for scope creep patterns (practitioner experience + post-mortems).
+**Domain:** Adding a marketing site refresh and NZ POS competitor comparison page to an existing multi-tenant SaaS product. Updating landing page, add-on detail pages, and building a competitor feature matrix page.
+**Researched:** 2026-04-07
+**Confidence:** HIGH for NZ Fair Trading Act comparative advertising rules (confirmed against Commerce Commission official guidance and NZ legislation). HIGH for FTA penalty increases (confirmed against Commerce Commission announcement and MBIE). MEDIUM for comparison page SEO pitfalls (multiple sources agree, practitioner evidence). MEDIUM for design consistency/brand drift (multiple sources agree, practitioner reports). LOW for NZ-specific competitor data accuracy (competitor pricing changes frequently; data requires manual verification at time of build).
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: Gift Card Sales Recorded as Revenue Instead of Deferred Liability
+### Pitfall 1: Misleading Competitor Claims Breach the NZ Fair Trading Act
 
 **What goes wrong:**
-A gift card sale is not revenue — it is a liability. When a customer purchases a $100 gift card, the store owes $100 of goods or services. Revenue is only recognised when the card is redeemed. If the POS records the gift card purchase as a completed sale in the `orders` table with a payment, the merchant's Xero integration syncs it as taxable revenue immediately. The merchant overstates income and GST payable. If the card is partially redeemed or never redeemed, the accounting is corrupted from day one.
+A comparison table includes feature claims about Square, Lightspeed (formerly Vend), or POSbiz that are inaccurate — for example, claiming a competitor "doesn't support GST" when they do, or claiming their pricing is higher than it currently is. Under the NZ Fair Trading Act 1986 s 9 (misleading conduct) and s 13 (false representations), this is a legal breach regardless of intent. Commerce Commission can issue infringement notices or pursue prosecution.
+
+Critically: pending 2026 legislation will increase corporate penalties from $600,000 to $5 million (or 3x the commercial gain). The bill is expected to pass in late 2026. By the time this comparison page goes live, or shortly after, the penalty environment will have materially increased.
 
 **Why it happens:**
-Gift card issuance looks like a payment event in the POS flow: money changes hands, a receipt is generated, stock does not decrement. Developers model it as a "sale with no product" or "prepaid credit" and route it through the existing sale completion path. The existing `complete_pos_sale` and `complete_online_sale` RPCs are not designed to distinguish deferred revenue from recognised revenue.
+The developer researches competitor features once at build time. Competitor products change — Square restructured its entire pricing tier system in October 2025, Vend was acquired by Lightspeed and rebranded (pricing/features changed). A claim accurate in January 2026 may be false by June 2026. Additionally, comparison pages often make "framing errors" — technically accurate statements presented in a context that creates a false overall impression, which the FTA also prohibits.
 
 **How to avoid:**
-Gift cards require a separate data model entirely:
-- `gift_cards` table with columns: `id`, `store_id`, `code` (unique), `initial_balance_cents` (integer), `current_balance_cents` (integer), `issued_at`, `expires_at`, `voided_at`
-- `gift_card_transactions` table: `id`, `gift_card_id`, `store_id`, `order_id` (nullable), `delta_cents` (negative for redemption, positive for top-up), `type` (ISSUED / REDEEMED / VOID), `created_at`
-- Gift card **issuance** never touches the `orders` table. It writes to `gift_cards` with full balance and logs an ISSUED transaction.
-- Gift card **redemption** creates an `orders` entry and deducts from `current_balance_cents` atomically in a SECURITY DEFINER RPC.
-- For Xero sync: skip gift card issuance rows entirely. Only sync redemption orders (the point at which goods change hands and GST applies). Add a flag `is_gift_card_issuance BOOLEAN DEFAULT false` to prevent accidental syncing.
-- Keep integer cents throughout — no floats, consistent with the existing codebase pattern.
+- Source every competitor claim from the competitor's own current public documentation or official pricing page. Link to the source URL in an internal reference doc at time of writing.
+- Never claim a competitor "doesn't have" a feature unless confirmed directly on their current feature documentation (not a third-party review site).
+- Use hedged language for dynamic claims: "as at [month year]" disclosure on the comparison page.
+- Restrict comparison to verifiable, stable facts: pricing tiers, availability in NZ, NZ-specific compliance (GST, Xero integration), contract terms. Avoid subjective quality claims ("better support").
+- Add a page footer: "Pricing and features reflect publicly available information as at [date]. Contact vendors for current pricing." This is standard practice and reduces FTA exposure.
+- Build a review trigger into the page: schedule quarterly review of all competitor claims (every 3 months).
 
 **Warning signs:**
-- Gift card purchase appears in the `orders` table as a completed order
-- Xero sync includes gift card issuance as a sales invoice
-- No `gift_cards` or `gift_card_transactions` table exists
-- Gift card balance stored as a float rather than integer cents
+- Comparison table has no date disclosure
+- Claims sourced from third-party review sites rather than competitor's own documentation
+- Any claim that a competitor "cannot do X" without a direct link to their own docs confirming the absence
+- Claims about competitor pricing without citing the pricing page
 
 **Phase to address:**
-Gift card add-on phase, first schema design step. The data model must be correct before any UI is built. Add an explicit note to Xero sync exclusion logic before the phase ships.
+Competitor comparison page phase — first task before building the table is to document all sources and dates. Legal review checklist before publish.
 
 ---
 
-### Pitfall 2: NZ Fair Trading Act 2024 — Gift Cards Must Have 3-Year Minimum Expiry (Effective 16 March 2026)
+### Pitfall 2: Competitor Pricing Data Stales Immediately After Publish
 
 **What goes wrong:**
-The platform ships a gift card add-on with a configurable expiry (e.g., defaulting to 12 months "for simplicity"). From 16 March 2026, this is **illegal** under the Fair Trading (Gift Card Expiry) Amendment Act 2024. Any gift card sold to a consumer must be valid for at least 3 years from the date of sale. Merchants using the platform's gift card add-on are exposed to Commerce Commission infringement notices of up to $1,000 per offence and prosecution fines up to $30,000.
+The comparison page shows Lightspeed at $89/month. Lightspeed changes pricing. The page now contains a false statement that is harder to update than the initial build — especially because Next.js static pages (`force-static`) are built at deploy time and the comparison data is hardcoded in TSX. Visitors who compare prices will find contradictions when they visit the competitor's site. This damages trust, not competitors.
+
+Vend was acquired by Lightspeed in 2021 for ~USD $350M. It is now "Lightspeed Retail." Square restructured its tier system in October 2025. POSbiz is a smaller NZ player with less-documented pricing. All of these are high-churn competitor data points.
 
 **Why it happens:**
-Developers often default to short expiry periods (12 months) because it reduces outstanding liability on the merchant's balance sheet. The law change (effective the same month as this milestone) is recent and not widely known in developer communities.
+Marketing pages are often built once and treated as static content. Pricing comparison data is stored as hardcoded values in component files. There is no process for review. The solo developer context (this project) compounds the risk — no marketing team to flag outdated claims.
 
 **How to avoid:**
-- Hard-code a 3-year minimum expiry in the `gift_cards` schema: check constraint `expires_at >= issued_at + INTERVAL '3 years'`.
-- In the UI, let merchants choose "3 years" or "No expiry" — never allow less than 3 years.
-- Display the expiry date prominently on digital gift card receipts/emails (prominently is the statutory requirement).
-- Add the wording "This gift card is redeemable for 3 years from the date of purchase" to all gift card receipt templates.
-- Document NZ legal requirements in the merchant-facing gift card setup UI with a reference to the Commerce Commission guidance.
+- Store all competitor comparison data in a single configuration object or data file (e.g., `src/data/competitors.ts`) rather than scattered across TSX. This creates a single location to update.
+- Clearly document which competitor website page each claim was sourced from, with a last-verified date, in comments inside the data file.
+- Consider "fuzzy" pricing language: "from $X/month" with a "visit [Competitor] for current pricing" link, rather than exact current prices. Exact prices are the most volatile data point.
+- Add a visible last-reviewed date on the comparison page: "Last reviewed: [month year]"
+- Schedule a recurring review: every 90 days, verify competitor pricing and features against their live sites.
 
 **Warning signs:**
-- Configurable expiry field allows values under 3 years
-- Default expiry is 12 months
-- No expiry date displayed on gift card confirmation email/receipt
-- No check constraint on `expires_at` in the database schema
+- Competitor pricing data is hardcoded in JSX/TSX with no comments indicating source or date
+- No single file contains all comparison data (changes require hunting across multiple components)
+- No last-reviewed date disclosed to visitors
+- NZ-specific claims about competitors (GST handling, Xero integration) sourced from review sites rather than the competitor's NZ documentation
 
 **Phase to address:**
-Gift card add-on phase, schema and receipt template steps. The compliance requirement is non-negotiable and cannot be retrofitted as a "nice to have."
+Competitor comparison page phase — architect the data structure before writing any comparison content. Centralised data file is a prerequisite.
 
 ---
 
-### Pitfall 3: Loyalty Points Create an Undisclosed Financial Liability and GST Complexity
+### Pitfall 3: Comparison Page Creates Thin Content Penalised by Google
 
 **What goes wrong:**
-Every loyalty point issued is a promise to deliver future goods or services. At scale, unredeemed points accumulate as a hidden liability on the merchant's books. More critically: if loyalty points can be exchanged for goods, IRD may treat the point issuance as a supply event requiring GST accounting at the point of issuance (not just at redemption). The merchant's Xero integration will not account for this correctly unless explicitly designed to do so. Additionally, if points are transferable or have monetary value, the NZ Financial Markets Authority may deem the program a stored-value scheme requiring FSPR registration.
+A comparison page built as a simple feature matrix table with yes/no checkboxes contains very little original content. Google's December 2025 core update specifically targeted thin content pages, with 63-71% ranking loss reported for pages optimised for keywords rather than users. A comparison page that is purely a table without original analysis, context, or NZPOS-specific value adds no editorial signal.
 
 **Why it happens:**
-Loyalty programs feel like simple "discount with extra steps" features. Developers treat points as non-monetary counters. The GST implications are non-obvious: Inland Revenue's April 2025 interpretation guidance specifically addressed loyalty points and trade rebates and found them taxable in circumstances most developers would not anticipate.
+Comparison pages look complete when the table is populated. The visual completeness of a grid with checkmarks masks the content thinness. The table answers "what" but not "why" — Google's E-E-A-T signals require Experience and Expertise signals that a matrix alone cannot provide.
 
 **How to avoid:**
-- Design loyalty as a **points-only discount** system (no cash-out, no transfer, no secondary market). This keeps it below financial regulation thresholds.
-- Points represent discount eligibility, not stored value. State this clearly in program T&Cs.
-- Points are NOT taxable at issuance when they represent a contingent discount — only at redemption when goods change hands. Document this distinction for Xero sync: redemption discounts reduce the order total (already handled by promo code mechanics), not a separate supply event.
-- Never allow points-to-cash conversion. This is the line that triggers stored-value financial regulation.
-- For the NZ Privacy Act: collecting purchase history to award points is indirect personal data collection. Notify customers at the point of signup what data is collected and how it is used (see Pitfall 7).
-- Keep point values simple: integer points, no fractional balances, no expiry below 12 months without merchant explicit configuration (no statutory minimum for loyalty points — but very short expiry periods face Fair Trading Act "misleading" risk).
+- Add 400-600 words of original analysis above the matrix: "Why we built NZPOS", "What NZ retailers need that global POS providers miss", "How we handle GST differently". This is genuine expertise that global review sites cannot replicate.
+- Include NZ-specific evidence: IRD compliance explanation, Privacy Act 2025 loyalty consent (NZPOS has it, large players may not have documented NZ compliance), Fair Trading Act 2024 gift card expiry compliance.
+- Acknowledge where competitors are genuinely better (Square has broader hardware ecosystem, Lightspeed has multi-location). This increases credibility (E-E-A-T) and reduces FTA risk.
+- Structure the page as a guide, not just a table: H2/H3 hierarchy, introduction, matrix, analysis sections, conclusion, FAQ.
+- URL structure: `/compare` or `/compare/nzpos-vs-square` rather than generic paths. Exact-match keyword structure is the standard for this content type.
 
 **Warning signs:**
-- Points can be redeemed for cash or store credit equivalent to cash
-- Points are transferable between customers
-- No T&Cs displayed at loyalty sign-up
-- Xero sync counts point issuance as a sales event
-- Points have monetary value stated in dollar terms (e.g., "100 points = $1")
+- The comparison page consists only of a table with no surrounding editorial content
+- No NZ-specific analysis present
+- Page word count under 400 words (excluding table data)
+- No FAQ section addressing common buyer questions
 
 **Phase to address:**
-Loyalty program add-on phase, T&C and data model design. Flag for merchant accountant review in the add-on onboarding flow.
+Competitor comparison page content phase. Content outline and editorial sections should be drafted before the table is built, not after.
 
 ---
 
-### Pitfall 4: Stripe Webhook Duplicate Events Cause Double Feature Activation or Double Deactivation
+### Pitfall 4: New Marketing Pages Drift From the Existing Design System
 
 **What goes wrong:**
-Stripe explicitly documents that webhooks may be delivered more than once. For add-on activation (`customer.subscription.created`, `invoice.paid`), a duplicate event activates the add-on, then a second activation attempt writes a duplicate record or toggles the feature gate off-then-on. For deactivation (`customer.subscription.deleted`), a duplicate event correctly deactivates, then re-deactivates an already-inactive add-on — harmless unless the deactivation flow triggers a merchant notification email, which fires twice.
+New add-on detail pages (Gift Cards, Advanced Reporting, Loyalty Points) and the comparison page are built with slightly different component patterns, spacing values, or colour usage than the existing Xero and Inventory add-on pages. The navy/amber design system (`var(--color-navy)`, `var(--color-amber)`) is correctly defined in globals.css, but new pages use hardcoded Tailwind classes (`bg-slate-900`) instead of design tokens. Visitors navigating between existing pages and new pages notice visual inconsistency — undermining the professional brand.
 
 **Why it happens:**
-The existing webhook handler for Xero and Inventory add-ons may not have been stress-tested for duplicate delivery. The new add-ons will use the same webhook handler pattern (`/api/stripe/webhook`) and inherit any non-idempotent behaviour. At low tenant counts, duplicates are rare. As tenant count grows, "occasional duplicates" becomes "regular duplicates."
+This project has a working design system in `globals.css` with CSS custom properties (`--color-navy`, `--color-amber`, `--space-md`, etc.), but it is not enforced by a component library or Storybook. Each new page is built in isolation. Under deadline pressure, developers reach for familiar Tailwind utility classes rather than referencing the token system. The comparison page in particular may be built by copying a feature section pattern from a different source (e.g., Tailwind UI examples) that uses different class naming conventions.
 
 **How to avoid:**
-- Store processed Stripe event IDs in a `stripe_processed_events` table: `(event_id TEXT PRIMARY KEY, processed_at TIMESTAMP)`.
-- At the start of every webhook handler, check if `event_id` is already in the table. If yes, return 200 immediately — do not process.
-- Wrap the event-ID insert and the feature activation/deactivation in a single DB transaction. If the transaction commits, the event was processed exactly once.
-- Review the existing webhook handler to confirm idempotency is already in place. If not, add it before adding new add-on event handling.
-- For email side effects (merchant notification on activation/deactivation), send emails only after the DB transaction commits successfully — never in the webhook handler directly.
+- Read the existing `LandingHero.tsx`, `LandingFeatures.tsx`, and the Xero add-on page before writing any new page. Match the exact class patterns and layout conventions already in use.
+- Never use hardcoded colour hex values or Tailwind colour utilities (`bg-slate-900`, `text-gray-600`) on marketing pages — use CSS custom property classes only (`bg-[var(--color-navy)]`, `text-[var(--color-text-muted)]`).
+- The comparison page has unique layout needs (table/matrix). Ensure the table uses the same type scale (font-sans, font-display), border colours (`border-[var(--color-navy)]`), and surface colours (`bg-[var(--color-surface)]`) as the existing pricing cards.
+- For new add-on detail pages, use the Xero page (`/add-ons/xero/page.tsx`) as the canonical template. Match structure: hero section, without/with lists, feature grid, 3-step setup, pricing CTA. Don't reinvent the layout.
 
 **Warning signs:**
-- No `stripe_processed_events` table or equivalent in the schema
-- Webhook handler processes `customer.subscription.created` without checking if subscription is already active in the DB
-- Merchant receives two "Your add-on has been activated" emails after subscribing
-- Webhook handler sends emails or calls external APIs synchronously before returning 200
+- New page uses `bg-slate-900` or `text-gray-700` instead of CSS custom property tokens
+- Section padding values differ from `var(--space-3xl)` used on existing pages
+- Font size classes use Tailwind scale (`text-4xl`) rather than the font size tokens or explicitly matched px values used on existing pages
+- Hero section background colour or gradient is different from the navy used on `/add-ons/xero` and `/add-ons/inventory`
 
 **Phase to address:**
-Any new add-on billing phase, as the first task before wiring up Stripe events. Audit the existing handler first.
+All marketing page phases — verify consistency with existing pages before each page ships. Include a design consistency check in every phase's acceptance criteria.
 
 ---
 
-### Pitfall 5: Feature Gate Bypass — New Add-On Tables Lack RLS Policies
+### Pitfall 5: Missing 3 New Add-On Detail Pages Leaves the Marketing Funnel Broken
 
 **What goes wrong:**
-The `requireFeature()` pattern correctly gates the Server Action layer. But when a new add-on creates new Postgres tables (e.g., `loyalty_points`, `loyalty_transactions`, `gift_cards`), those tables are not automatically covered by existing RLS policies. If a developer forgets to add `store_id`-filtered RLS policies to the new tables, a tenant can read another tenant's loyalty balances or gift card codes via a crafted Supabase client query (direct REST/RPC call bypassing Next.js middleware).
+The landing page already mentions 5 paid add-ons in the pricing section. After v8.0, Gift Cards, Advanced Reporting/COGS, and Loyalty Points exist in the product but have no dedicated marketing pages — only Xero and Inventory Management have add-on detail pages (`/add-ons/xero`, `/add-ons/inventory`). Visitors who click "Learn more" on these add-ons from the landing page or the `/add-ons` overview land on 404s or generic pages. This is a broken conversion funnel that undermines the marketing refresh goal.
 
 **Why it happens:**
-New tables start with RLS disabled by default in Postgres. The developer focuses on the feature logic and the `requireFeature()` guard in Server Actions. The Supabase RLS policy migration is a separate step that is easy to defer or forget. The existing tables are correctly protected but new tables in new migrations start unprotected.
+Add-on pages are easily deferred because the add-on itself works in the product. The marketing page feels like "polish" and gets deprioritised. But users making a $14-15/month purchase decision want a dedicated page explaining the value before they commit.
 
 **How to avoid:**
-- Every new table migration must include: `ALTER TABLE [table] ENABLE ROW LEVEL SECURITY;` followed by RLS policies for all required operations.
-- Standard policy pattern for all add-on tables: SELECT/INSERT/UPDATE/DELETE allowed only where `store_id = (SELECT store_id FROM store_members WHERE user_id = auth.uid())` or use the existing JWT custom claim path.
-- Add a CI check or test that queries each new table with a cross-tenant user and asserts zero rows returned.
-- Use a checklist in the phase plan: "New table added → RLS enabled → SELECT policy → INSERT policy → UPDATE policy (if applicable) → DELETE policy (if applicable) → test cross-tenant isolation."
+- Create `/add-ons/gift-cards`, `/add-ons/advanced-reporting`, and `/add-ons/loyalty-points` pages as part of this milestone — not as a future task.
+- Use the Xero add-on page as the exact structural template: hero, without/with lists, feature grid, 3-step setup, pricing CTA.
+- Each page needs unique NZ-specific compliance content: Gift Cards → Fair Trading Act 2024 compliance statement; Loyalty Points → Privacy Act 2025 consent disclosure.
 
 **Warning signs:**
-- New migration file lacks `ENABLE ROW LEVEL SECURITY` for new tables
-- No RLS policies in the migration for new tables
-- A Supabase client query without store_id filter returns rows from all tenants
+- `/add-ons/gift-cards` returns 404
+- The `/add-ons` overview page has cards for add-ons that don't have detail pages
+- The landing page pricing section links to `/add-ons` but the add-ons overview page does not link to individual add-on detail pages
 
 **Phase to address:**
-Every add-on phase with a new table. This must be in the acceptance criteria for every schema migration in the milestone.
+Landing page refresh phase and add-on detail page phase together — the navigation links must resolve before the landing page update ships.
 
 ---
 
-### Pitfall 6: Analytics Add-On Reports Metrics Across Tenants Instead of Per-Tenant
+### Pitfall 6: Competitor Name Usage Creates Trademark Risk
 
 **What goes wrong:**
-An advanced analytics add-on queries aggregated sales data. A developer writing a "top products" query forgets the `store_id` filter and the query aggregates across all tenants. The merchant sees every product sold across all merchants on the platform — including competitor product names and sales volumes. This is a data breach under the NZ Privacy Act 2020.
+The comparison page uses competitor logos or brand names (Square, Lightspeed, Vend) in ways that could be construed as implying affiliation or endorsement. Using a competitor's registered trademark in a comparison page is generally lawful in NZ if the comparison is accurate and non-misleading. However, using their logo without permission, misrepresenting their product, or implying they endorse the comparison creates trademark and FTA liability.
+
+One real-world example from a B2B SaaS operator building 50 comparison pages: one cease-and-desist received, one correction request received. For a small NZ startup, a cease-and-desist from Square Inc. (a US public company with a legal team) would be a material distraction.
 
 **Why it happens:**
-Analytics queries are often written in raw SQL or complex Supabase `.rpc()` calls where the developer is focused on the aggregation logic. The `store_id` filter is a "business logic concern" that feels separate from the analytics problem being solved. When using the Supabase admin client (service role) for complex queries, RLS does not enforce the filter automatically.
+Comparison page templates often include competitor logos for visual credibility. The developer assumes "fair use" covers comparative advertising. NZ trademark law does not have the US "nominative fair use" doctrine by name, but comparative advertising with a competitor's mark is lawful if accurate and not misleading under the FTA. The risk is not the name — it is inaccuracy combined with logo use.
 
 **How to avoid:**
-- All analytics queries must use the standard Supabase server client (with the store session context), not the admin client. RLS provides the store_id filter automatically.
-- For complex aggregation queries (WINDOW functions, CTEs), use SECURITY DEFINER RPCs that accept `p_store_id` as a parameter and include an explicit `WHERE store_id = p_store_id` in every subquery.
-- Add a cross-tenant isolation integration test specifically for analytics queries: call every analytics RPC with Store A's credentials and assert that Store B's data never appears in any result set.
-- In the super-admin panel, cross-tenant analytics are intentional — but must be clearly routed through super-admin-only Server Actions and never exposed to tenant-level routes.
+- Use competitor names as plain text, not as stylised logos or branded assets. "Square" in text is lower risk than the Square logo (which is trademarked).
+- If logos are used, they must be current, unmodified, and accompanied by trademark attribution: "Square is a trademark of Square, Inc." (or similar).
+- Consider not using logos at all for v8.1 — text-based comparison tables are legally safer and faster to update.
+- Add a disclaimer to the comparison page: "All trademarks are the property of their respective owners. NZPOS is not affiliated with Square, Lightspeed, or POSbiz."
 
 **Warning signs:**
-- Analytics RPC does not accept `p_store_id` parameter
-- Analytics Server Action uses admin client
-- Analytics result set includes products/orders not belonging to the requesting tenant
-- No cross-tenant isolation test for analytics queries
+- Competitor logos are used in the comparison table
+- No trademark attribution notice on the comparison page
+- No disclaimer of affiliation
 
 **Phase to address:**
-Analytics add-on phase, for every new RPC written. Cross-tenant isolation test in acceptance criteria.
+Competitor comparison page phase — decide on logo-vs-text approach before any design work begins. This is an architecture decision, not a polish step.
 
 ---
 
-### Pitfall 7: NZ Privacy Act 2020 + 2025 Amendment — CRM and Loyalty Data Collection Without Proper Notice
+### Pitfall 7: SEO Keyword Cannibalisation Between Landing Page and Comparison Page
 
 **What goes wrong:**
-A CRM or loyalty add-on collects customer purchase history, contact details, and behavioural data. Under the NZ Privacy Act 2020, any organisation collecting personal information must notify the individual of (a) who is collecting it, (b) why it is being collected, (c) who it will be disclosed to, and (d) how they can access or correct it. The 2025 Privacy Amendment Act (IPP 3A, effective 1 May 2026) adds indirect collection notification obligations — if purchase history data is shared between merchant systems (e.g., synced to the merchant's own CRM), the merchant must notify the customer even when data was collected from another source.
+The landing page already ranks (or is targeting) for "NZ POS system" and "point of sale NZ." A comparison page targeting "NZPOS vs Square" or "best POS NZ" can compete with the landing page for similar keyword clusters, splitting authority between two pages rather than concentrating it on the strongest page.
 
 **Why it happens:**
-Developers treat privacy notices as a "legal concern" separate from technical implementation. The CRM add-on signup flow collects an email, phone, and purchase history — but the privacy notice is missing or buried. Solo developers particularly tend to defer this as "admin" that can be added later.
+Comparison pages are naturally written with high-intent keywords ("best POS for NZ retailers," "Square alternative NZ") that overlap with top-of-funnel landing page keywords. Without deliberate keyword targeting differentiation, Google sees two pages competing for the same terms from the same domain.
 
 **How to avoid:**
-- Every customer-facing sign-up flow for loyalty or CRM must include a visible privacy notice statement before data is collected: "We collect your [email/phone/purchase history] to [purpose]. You can request access or deletion at any time by contacting [merchant contact]."
-- The platform must provide merchants with a configurable privacy notice template — merchants must be able to edit their own store's privacy statement within the add-on settings.
-- Do NOT collect any data beyond what is needed for the add-on's stated purpose (data minimisation principle, Privacy Act IPP 1).
-- Do NOT share customer data between merchants or use it for platform-wide analytics without explicit consent.
-- Provide a customer data deletion workflow: when a customer requests deletion, the add-on must support purging their record from `loyalty_members`, `gift_cards`, and CRM tables — scoped to that store's data.
-- The platform operator (as a multi-tenant SaaS) is itself a data processor under the Privacy Act and must have a privacy policy covering its data handling.
+- The landing page should own: "NZ POS system," "point of sale NZ," "POS for small business NZ."
+- The comparison page should own: "[NZPOS] vs Square," "[NZPOS] vs Lightspeed," "Square alternative NZ POS," "Vend alternative NZ." These are mid-funnel evaluation queries, not top-of-funnel awareness queries.
+- Ensure the comparison page has a canonical URL pointing to itself (not the landing page), a unique title tag, and unique H1.
+- Internal link from the landing page to the comparison page with anchor text like "See how we compare" — this passes authority to the comparison page without cannibalising the landing page's keyword targeting.
 
 **Warning signs:**
-- No privacy notice text in the loyalty or CRM signup flow
-- No merchant-configurable privacy statement in add-on settings
-- Customer data deletion is not handled when a merchant cancels the add-on
-- Add-on collects data (e.g., full purchase history) beyond what is needed for its stated purpose
-- No mention of Privacy Act compliance in the merchant onboarding for the add-on
+- Landing page and comparison page have overlapping title tags
+- Landing page has no internal link to the comparison page
+- Comparison page targets "NZ POS" rather than "NZPOS vs [competitor]" keyword structure
 
 **Phase to address:**
-CRM and loyalty add-on phases. Privacy notice must be in the acceptance criteria for any customer-facing data collection flow.
-
----
-
-### Pitfall 8: Loyalty Points Issued But Not Scoped to the Correct Store's Customers
-
-**What goes wrong:**
-A customer signs up for loyalty at Store A. Their `loyalty_member_id` is stored without adequate `store_id` scoping. When the same customer later shops at Store B (a different tenant on the same platform), a developer's query inadvertently finds their loyalty record and awards points to the wrong store's program — or worse, exposes Store A's loyalty balance to Store B's admin.
-
-**Why it happens:**
-Customer accounts on the platform use a shared `customers` table with `store_id` — but new add-on tables may not inherit this scoping correctly. Loyalty members are often keyed by email, which is not unique across stores. A developer queries `WHERE email = customer_email` without the `store_id` filter.
-
-**How to avoid:**
-- `loyalty_members` table must have `store_id` as a non-nullable column with a composite unique constraint: `UNIQUE(store_id, customer_email)`.
-- All loyalty lookup queries (earn, redeem, balance check) must filter on both `store_id` AND customer identifier. Never lookup by customer identifier alone.
-- RLS policies on loyalty tables enforce `store_id` automatically — test cross-tenant isolation.
-- Never reuse a loyalty balance or membership across stores, even if the same customer email exists in both.
-
-**Warning signs:**
-- `loyalty_members` table has no `store_id` column
-- Loyalty lookup query uses `WHERE email = $1` without `AND store_id = $2`
-- No composite unique constraint on `(store_id, customer_email)`
-
-**Phase to address:**
-Loyalty program add-on phase, schema design step.
+Comparison page phase — define keyword targeting before writing any content. URL, title, H1, and meta description must be set to mid-funnel evaluation queries.
 
 ---
 
 ## Technical Debt Patterns
 
-Shortcuts that seem reasonable but create long-term problems.
-
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Model gift card sale as a regular order | Reuses existing checkout path | Revenue overstated, GST incorrect, Xero sync corrupted | Never — gift cards require separate data model |
-| Set gift card expiry to 12 months by default | Simpler UI | Illegal under NZ Fair Trading Act 2024 (effective Mar 2026) | Never — hard-code 3-year minimum |
-| Allow loyalty points-to-cash conversion | Higher perceived value for customers | Triggers NZ financial regulation (FSPR registration, AML obligations) | Never for v1 — defer if ever |
-| Skip privacy notice in loyalty signup flow | Faster to ship | Privacy Act breach, OPC investigation risk, merchant liability | Never — privacy notice is a legal requirement |
-| Use admin Supabase client for analytics queries | Simpler code, avoid RLS config | Cross-tenant data leak, Privacy Act breach | Super-admin routes only, never tenant analytics |
-| No idempotency check on Stripe webhooks | Less schema complexity | Duplicate add-on activations, double notification emails | Never — idempotency is required at any scale |
-| Store loyalty point balance as a running total column | Simple to read | Balance can be corrupted by concurrent transactions; no audit trail | Never — use transaction log pattern and compute balance from ledger |
-| Add new table without RLS policies | Faster migration | Tenant data isolation broken for new feature's data | Never — RLS must be in same migration as table creation |
+| Hardcode competitor pricing in JSX | Fast to ship | Single source of truth doesn't exist; updates require hunting across files; stale data risk | Never — centralise in a data file |
+| Use third-party review site data for competitor claims | Avoids visiting competitor sites | Review sites are often outdated; citing them exposes you to FTA risk when they're wrong | Never for factual claims; OK for quote attribution only |
+| No "last reviewed" date on comparison page | Cleaner visual design | Visitors notice contradictions with current competitor sites; FTA risk increases over time | Never — disclosure protects both legally and credibility-wise |
+| Copy Tailwind UI component patterns verbatim for new pages | Fast to build | Tailwind UI uses different colour classes than the NZPOS design token system; creates brand drift | OK as a structural starting point only — replace all Tailwind utilities with design tokens |
+| Skip add-on detail pages for new add-ons | Less work this milestone | Broken conversion funnel; visitors who want to buy Gift Cards or Loyalty Points hit dead ends | Never — incomplete add-on pages must not ship |
+| Use competitor logos without attribution | Higher visual credibility | Trademark liability; cease-and-desist exposure with corporate legal teams (Square Inc., Lightspeed Commerce) | Never without trademark attribution and accuracy |
 
 ---
 
 ## Integration Gotchas
 
-Common mistakes when connecting to external services.
+Common mistakes when connecting marketing pages to existing product.
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| Stripe webhooks (add-on activation) | Process `customer.subscription.created` without idempotency check | Store `stripe_processed_events` event IDs; check before processing any event |
-| Stripe webhooks (deactivation) | Send merchant notification email inside webhook handler before returning 200 | Return 200 immediately; process side effects (email, DB writes) after response |
-| Xero sync (gift cards) | Sync gift card issuance as a sales invoice | Exclude issuance from sync; only sync redemption orders |
-| Xero sync (loyalty redemption discount) | Treat loyalty discount as a separate supply event | Loyalty redemption reduces order total; sync as a discounted order, not a separate transaction |
-| Supabase RLS (new add-on tables) | Create table without `ENABLE ROW LEVEL SECURITY` | Every new table migration must explicitly enable RLS and add per-store policies |
-| Supabase service role client (analytics) | Use admin client for analytics queries to avoid RLS complexity | Use server client with session context; RLS enforces store_id filter automatically |
+| `/add-ons` overview page | Adding new add-on cards without creating corresponding detail pages | Always create the detail page route before linking to it; verify 404 does not occur |
+| Landing page pricing section | Updating add-on count or names without updating the features list and add-on detail links | Update all three sections atomically: features section, pricing section, add-on links |
+| Demo POS CTA | New marketing pages lack the "Try POS Demo" ghost button that exists on the landing page | All primary marketing pages should include a consistent demo CTA |
+| `force-static` metadata | New comparison page defaults to dynamic rendering because it has no `export const dynamic = 'force-static'` | All marketing pages should be statically generated — add the directive and verify at build time |
+| Internal links | Comparison page links to `/signup` with no UTM parameters, making demo-to-signup attribution impossible | Add UTM parameters to comparison page CTAs: `utm_source=compare_page` |
 
 ---
 
 ## Performance Traps
 
-Patterns that work at small scale but fail as usage grows.
-
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Computing loyalty point balance by summing `gift_card_transactions` on every request | Slow balance lookup as transaction count grows | Cache running balance in `loyalty_members.point_balance` (updated atomically on each transaction RPC) | ~500+ transactions per customer |
-| Fetching full transaction history for analytics on page load | Slow analytics page, timeout on large stores | Materialise aggregated analytics in a snapshot table; update on schedule | ~10,000+ transactions per store |
-| Gift card code generation without uniqueness index | Duplicate code collision at scale | Use `gen_random_uuid()` or a collision-resistant code scheme; UNIQUE index on `gift_cards(store_id, code)` | ~50,000+ codes (lower with simple schemes) |
-| CRM customer search without index | Slow search across large customer tables | Index on `(store_id, email)` and `(store_id, name)` for text search; use Postgres `ILIKE` with `%` anchored to end only | ~5,000+ customers per store |
-| Loyalty point expiry cleanup as a cron job scanning all rows | Full-table scan on `loyalty_points` | Partial index on `expires_at WHERE expires_at IS NOT NULL`; process in batches | ~100,000+ loyalty records |
+| Comparison table built as a large client component | JavaScript bundle size increases; slower Time to Interactive on mobile (iPad-heavy NZ retail audience) | Build comparison table as a Server Component; no interactivity needed for a static feature matrix | Any traffic from mobile/tablet devices |
+| Full-page hero image on comparison page without next/image optimisation | Large LCP on slow connections; Google Core Web Vitals penalty | Use `next/image` with `priority` prop for hero images; ensure Supabase Storage domain is in `remotePatterns` | First load from mobile on 4G |
+| Marketing pages with `revalidate: 0` (fully dynamic) | Every request hits the server; higher Vercel function invocation count | All marketing pages should use `force-static` or `revalidate: 86400`; comparison data is editorial, not real-time | At any scale — performance waste from day one |
 
 ---
 
 ## Security Mistakes
 
-Domain-specific security issues beyond general web security.
-
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Gift card code is sequential or predictable (e.g., GC-00001) | Brute-force code guessing allows unauthorized redemption | Use `gen_random_uuid()` or cryptographically random 16-char alphanumeric code; rate-limit redemption attempts per IP |
-| Gift card redemption without balance check in RPC | Race condition allows double-spend if two requests arrive simultaneously | Use `SELECT ... FOR UPDATE` or atomic `UPDATE ... WHERE current_balance_cents >= amount_cents RETURNING *` in SECURITY DEFINER RPC |
-| Loyalty balance manipulation via direct Supabase client call | Customer can award themselves arbitrary points via crafted REST call | All point earn/redeem operations via SECURITY DEFINER RPCs only — never allow client-side INSERT into `loyalty_transactions` |
-| CRM customer data exported without store_id scoping | Export returns all tenant data | Add explicit `store_id` filter to all export queries regardless of RLS; double-check admin client use |
-| Analytics data exposed via public RPC | Competitor sees another store's sales data | All analytics RPCs require authenticated session; verify store membership before returning data |
-| Gift card void without audit trail | Gift cards voided silently, no record | Every void writes to `gift_card_transactions` with type VOID and `voided_by` user ID |
+| Comparison page serves competitor data from a server-side fetch to competitor sites | SSRF vector; server IP changes expose your request origin to competitors | Never fetch competitor data at runtime; all comparison data is static editorial content in a data file |
+| New marketing pages bypass CSP headers | Inline scripts or third-party embeds added for analytics/chatbot trigger CSP violations (currently in Report-Only mode) | Review any new scripts added to marketing pages against the existing CSP policy; convert from Report-Only to enforcing only after verification |
+| Competitor email collection via comparison page | Privacy Act obligation to disclose data use at collection; SPAM Act compliance for marketing emails | Any email capture on comparison page must have the same privacy disclosure as the main signup form |
 
 ---
 
 ## UX Pitfalls
 
-Common user experience mistakes in this domain.
-
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Loyalty sign-up form collects data without explaining why | Customers decline, low enrollment | "Earn points on every purchase" headline + one-line privacy statement before form |
-| Gift card balance shown in "credits" rather than NZD | Confusion about actual value | Always display balance in NZD with GST note ("Balance: $45.00 NZD") |
-| Loyalty points with no visible redemption path at POS | Staff doesn't know how to apply points; friction at checkout | Pin redemption mechanic to POS cart — one button "Apply loyalty points" visible when customer has balance |
-| Analytics add-on shows raw numbers without context | Merchant cannot interpret trend | Always show comparison period (vs last 30 days / last year) alongside current metric |
-| Gift card expiry date buried in email footer | Customer misses it; disputes when card "expires" | Expiry date in bold near the top of gift card email: "Valid until [date]" — required by law |
-| CRM customer list shows all customers without search | Slow page load, cognitive overload | Default to empty state + search; never auto-load full customer list |
-| Add-on trial without clear upgrade prompt | Merchant uses trial features, confused when they stop working | Never provide "trial" access to a paid add-on without a visible upgrade CTA and clear end date |
+| Comparison table is all "NZPOS wins" checkmarks | Looks like marketing, not analysis; reduces credibility | Include honest cells: "Square has broader hardware ecosystem," "Lightspeed supports multi-location" — these build trust |
+| "Why NZPOS" section uses generic SaaS copy ("built for you") | Fails to resonate with NZ retail owner audience | Use specific NZ context: "Built for IRD GST filing, Xero integration, and EFTPOS-first workflows" |
+| Comparison page has no CTA path | Visitor finishes reading with no next step | End comparison page with: "Try it free" (signup) + "Try POS Demo" (demo) — same dual CTA pattern as landing page |
+| Add-on detail pages have inconsistent pricing (showing old pricing) | Visitor confusion; support queries | Verify all 5 add-on pricing cards show current prices: Xero $9, Inventory $9, Gift Cards $14, Advanced Reporting $9, Loyalty Points $15 |
+| New pages lack mobile-first layout validation | iPad users (the core POS audience) see broken table layouts on smaller screens | Test comparison table on iPad viewport (1024px) and mobile (390px) before shipping; use responsive horizontal scroll for wide tables |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-Things that appear complete but are missing critical pieces.
-
-- [ ] **Gift card issuance:** Card is issued and code is sent — verify the issuance does NOT create an `orders` row, does NOT sync to Xero as revenue, and balance is stored as integer cents.
-- [ ] **Gift card expiry:** Expiry date is stored — verify it is at least 3 years from issuance, displayed prominently in the confirmation email, and the UI does not allow merchants to set a shorter period.
-- [ ] **Gift card redemption:** Redemption deducts balance — verify the deduction is atomic (no double-spend possible), a `gift_card_transactions` row is written, and the corresponding order IS synced to Xero.
-- [ ] **Loyalty point earn:** Points are awarded on purchase — verify award is scoped to the correct `store_id`, uses a SECURITY DEFINER RPC (not client-side INSERT), and the customer was shown a privacy notice before enrollment.
-- [ ] **Loyalty point redemption:** Discount is applied at POS — verify the discount reduces the order total (not a separate transaction), GST is recalculated on the discounted amount (existing per-line GST logic), and the point deduction is atomic.
-- [ ] **CRM data collection:** Customer record created — verify privacy notice was shown, only necessary fields are collected, and there is a deletion workflow for customer data requests.
-- [ ] **Analytics add-on:** Report renders with correct numbers — verify all queries have `store_id` filter or use authenticated server client with RLS, cross-tenant data never appears, and the admin client is not used in tenant-facing analytics routes.
-- [ ] **Stripe webhook idempotency:** Add-on activates on subscription — verify `stripe_processed_events` table exists, duplicate event does not cause double activation, and deactivation is idempotent.
-- [ ] **RLS on new tables:** New add-on table is created — verify migration includes `ENABLE ROW LEVEL SECURITY`, SELECT/INSERT/UPDATE/DELETE policies exist, and a cross-tenant isolation test passes.
-- [ ] **requireFeature() gate:** Add-on feature is visible in UI — verify both the UI fast-path (JWT claim) and the DB-path in Server Action mutations independently enforce the gate; test direct POST to mutation action without active subscription.
+- [ ] **Competitor comparison table:** Table renders and looks correct — verify each competitor claim has a source URL in the data file, a last-verified date, and no "doesn't have X" claim without direct competitor documentation confirming absence.
+- [ ] **FTA compliance:** Comparison page is published — verify a "last reviewed" date disclosure is present, a trademark disclaimer is present, and no unsubstantiated superlative claims ("best," "only NZ POS") are made without evidence.
+- [ ] **Add-on detail pages:** Gift Cards, Advanced Reporting, and Loyalty Points pages exist — verify routes return 200, each page matches the structural template of the Xero add-on page, and NZ compliance details are included.
+- [ ] **Landing page refresh:** Updated to show all 5 add-ons — verify the pricing section, features section, and add-on links are all updated atomically and internally consistent.
+- [ ] **Design system consistency:** New pages ship with correct design tokens — verify no hardcoded Tailwind colour classes, spacing values match `var(--space-*)` tokens, and font classes match existing marketing pages.
+- [ ] **Static generation:** All new marketing pages — verify `export const dynamic = 'force-static'` is present, build output confirms static generation, and no unexpected dynamic routes.
+- [ ] **Internal links resolved:** No 404s — verify every link from the landing page and `/add-ons` overview to new detail pages resolves correctly after build.
+- [ ] **SEO metadata:** Each new page — verify unique `<title>`, unique `<meta description>`, and correct Open Graph tags are defined via Next.js `metadata` export.
 
 ---
 
 ## Recovery Strategies
 
-When pitfalls occur despite prevention, how to recover.
-
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Gift card revenue incorrectly synced to Xero | HIGH | Identify all gift card issuance orders synced to Xero; create Xero credit notes to reverse; rebuild gift card data model; re-run Xero sync from correct data; notify affected merchants |
-| Gift card expiry under 3 years (non-compliant) | HIGH | Immediate: update all gift cards in DB to 3-year minimum; update UI to block short expiry; update all email templates; document Commerce Commission notification process if cards were already issued |
-| Duplicate Stripe webhook processed twice | MEDIUM | Review activation logs; if double-activated, the state is idempotent (add-on still active); if double-deactivation caused merchant to lose access incorrectly, manually restore via super-admin override; add idempotency check before next deploy |
-| Loyalty points awarded without privacy notice | MEDIUM | Retroactively notify enrolled customers of data collection (required under Privacy Act); provide opt-out mechanism; add privacy notice to enrollment flow; consult Privacy Commissioner guidelines on retrospective notification |
-| Cross-tenant analytics data leak | HIGH | Immediately take analytics page offline; patch all queries to add store_id filter; audit logs to identify scope of exposure; notify affected merchants under Privacy Act breach notification obligation (within 72 hours if serious harm risk) |
-| Gift card double-spend via race condition | HIGH | Identify affected transactions; calculate net balance; void corrupted gift card codes; issue replacement codes; implement atomic balance check in RPC |
+| FTA breach — misleading competitor claim discovered post-publish | MEDIUM | Remove or correct the specific claim immediately; add "last reviewed" date disclosure; document the correction; monitor for Commerce Commission contact |
+| Cease-and-desist from competitor over comparison page | HIGH | Take page offline immediately; legal review; correct any inaccurate claims; republish with corrections and trademark attribution; respond to C&D via NZ legal counsel |
+| Competitor pricing data found to be stale | LOW | Update the centralised data file; redeploy; update the "last reviewed" date |
+| New marketing pages break design system consistency | LOW | Audit all pages against the design token checklist; update all non-compliant classes in a single pass |
+| SEO cannibalisation identified post-launch | MEDIUM | Update landing page title tag and meta to focus on top-of-funnel terms; update comparison page to mid-funnel evaluation terms; add canonical tags; submit updated URLs to Google Search Console |
 
 ---
 
 ## Pitfall-to-Phase Mapping
 
-How roadmap phases should address these pitfalls.
-
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Gift card as deferred revenue, not order (Pitfall 1) | Gift card add-on schema phase | Verify `orders` table has zero rows for gift card issuance; Xero sync test excludes issuance |
-| Gift card 3-year minimum expiry (NZ law) (Pitfall 2) | Gift card add-on schema + receipt template | DB check constraint; UI blocks < 3 years; email template shows expiry prominently |
-| Loyalty points as financial liability (Pitfall 3) | Loyalty add-on design phase | T&Cs in place; no cash-out path; Xero sync excludes issuance events |
-| Stripe webhook duplicate event double-activation (Pitfall 4) | Any new add-on billing phase | `stripe_processed_events` table; idempotency integration test |
-| New table without RLS policies (Pitfall 5) | Every add-on schema migration | Cross-tenant isolation test per new table; migration checklist |
-| Analytics cross-tenant data leak (Pitfall 6) | Analytics add-on RPC phase | Cross-tenant isolation test for every analytics query |
-| Privacy Act notice missing from CRM/loyalty (Pitfall 7) | CRM and loyalty add-on UI phase | Privacy notice visible before data collection; deletion workflow tested |
-| Loyalty points not scoped to store (Pitfall 8) | Loyalty add-on schema phase | Composite unique constraint; cross-tenant lookup test |
+| Misleading competitor claims (FTA breach) (Pitfall 1) | Competitor comparison page — content sourcing | Source doc with URLs and dates; FTA checklist review before publish |
+| Stale competitor pricing (Pitfall 2) | Competitor comparison page — data architecture | Centralised data file exists; last-reviewed date displayed; review calendar set |
+| Thin content SEO penalty (Pitfall 3) | Competitor comparison page — content phase | 400+ words of original editorial; NZ-specific analysis present; FAQ section |
+| Design system drift on new pages (Pitfall 4) | All marketing page phases | No hardcoded colour classes; design consistency audit per page |
+| Missing add-on detail pages — broken funnel (Pitfall 5) | Add-on detail pages phase | All 5 add-ons have detail pages; no 404s from navigation |
+| Competitor trademark risk (Pitfall 6) | Competitor comparison page — design decision | Text-not-logos decision; trademark attribution present; affiliation disclaimer |
+| SEO keyword cannibalisation (Pitfall 7) | Comparison page — keyword targeting | Distinct title/H1/meta from landing page; internal link from landing page to comparison page |
 
 ---
 
-## NZ-Specific Compliance Reference
+## NZ-Specific Compliance Reference for Marketing
 
-Summary of NZ laws relevant to v8.0 add-ons.
-
-| Law | Relevant Add-On | Key Requirement | Penalty for Non-Compliance |
-|-----|-----------------|-----------------|---------------------------|
-| Fair Trading (Gift Card Expiry) Amendment Act 2024 (effective 16 March 2026) | Gift Cards | 3-year minimum expiry; expiry date prominently displayed | Up to $30,000 per offence |
-| Privacy Act 2020 (IPP 1, IPP 3, IPP 5) | CRM, Loyalty | Collect only what is needed; notify at collection; store securely | Up to $10,000 for breach notification failure |
-| Privacy Amendment Act 2025 (IPP 3A, effective 1 May 2026) | CRM, Loyalty | Notify customers when personal data is collected indirectly | Up to $10,000 |
-| Fair Trading Act 1986 (misleading conduct) | Loyalty, Gift Cards | Program terms must be clear; changes must be disclosed | Commerce Commission prosecution |
-| Financial Markets Conduct Act 2013 | Loyalty (if cash-convertible) | Points convertible to cash may require FSPR registration | FMA enforcement action |
-| GST Act 1985 (s 5(11D)) | Gift Cards, Loyalty | GST on redemption, not issuance, for vouchers exchangeable for goods | IRD audit, back-tax, penalties |
+| Law | Relevant Section | Requirement for Comparison/Marketing Page | Risk Level |
+|-----|-----------------|-------------------------------------------|------------|
+| Fair Trading Act 1986 s 9 | Misleading conduct | No false or misleading impression about competitors' features, pricing, or limitations | HIGH — pending $5M penalty increase (late 2026) |
+| Fair Trading Act 1986 s 10 | Misleading conduct in connection with land/goods/services | Comparative pricing claims must be accurate and sourced | HIGH |
+| Fair Trading Act 1986 s 13 | False representations | No false statements about competitors' products, services, or affiliations | HIGH |
+| Fair Trading Act 1986 s 12A | Unsubstantiated representations | Any claim must have reasonable grounds before it is made | MEDIUM — includes performance/value claims |
+| NZ Advertising Standards Authority Comparative Advertising Code | Best practice | Comparisons must be factual, verifiable, and present like-for-like (same market, same tier) | MEDIUM — not legally binding but used by courts to assess reasonableness |
+| NZ Trademarks Act 2002 s 89 | Use of registered mark in comparative advertising | Permitted if comparison is honest and does not take unfair advantage of the mark's reputation | MEDIUM |
 
 ---
 
 ## Sources
 
-- Fair Trading (Gift Card Expiry) Amendment Act 2024: https://www.legislation.govt.nz/act/public/2024/0035/latest/LMS946059.html
-- NZ 1News: Retailers must now honour three-year gift card expiry (16 March 2026): https://www.1news.co.nz/2026/03/16/retailers-must-now-honour-three-year-gift-card-expiry-under-new-law/
-- Commerce Commission gift card guidance: https://www.comcom.govt.nz/consumers/dealing-with-typical-situations/gift-cards-and-vouchers/
-- Retail NZ gift card guidance: https://retail.kiwi/advice/gift-cards-and-vouchers/
-- Privacy Act 2020 Information Privacy Principles: https://www.legislation.govt.nz/act/public/2020/0031/latest/LMS23342.html
-- Privacy Amendment Act 2025, IPP 3A (effective 1 May 2026): https://www.privacy.org.nz/resources-and-learning/a-z-topics/ipp3a/
-- NZ Privacy Act and CRM (Magnetism Solutions): https://blog.magnetismsolutions.com/blog/johneccles/2020/10/18/crm-and-the-nz-privacy-act-2020
-- IRD tax treatment of gift cards (Affinity Accounting, April 2025): https://www.affinityaccounting.co.nz/blog/tax-treatment-of-gift-cards-ird-interpretation
-- NZ loyalty points tax debate (TaxTonic): https://taxtonic.co.nz/trade-loyalty-points-the-sleeping-bear-awakes/
-- Gift card liability accounting best practices (HubiFi): https://www.hubifi.com/blog/gift-card-liability-accounting
-- GAAP accounting for gift cards (GBQ): https://gbq.com/accounting-for-gift-cards/
-- Stripe webhook idempotency best practices (Stigg): https://www.stigg.io/blog-posts/best-practices-i-wish-we-knew-when-integrating-stripe-webhooks
-- Stripe subscription webhook idempotency guide (DEV Community): https://dev.to/aniefon_umanah_ac5f21311c/building-reliable-stripe-subscriptions-in-nestjs-webhook-idempotency-and-optimistic-locking-3o91
-- Multi-tenant POS data isolation (AWS): https://aws.amazon.com/blogs/database/multi-tenant-data-isolation-with-postgresql-row-level-security/
-- POS loyalty program pitfalls (ConnectPOS): https://www.connectpos.com/first-time-rolling-out-a-pos-loyalty-program-look-out-for-these-common-pitfalls/
-- NZ FMA financial services regulation (FSPR): https://www.fma.govt.nz/business/services/offer-information/faqs/
-- Loyalty program regulatory impact on small businesses (FasterCapital): https://fastercapital.com/content/Loyalty-program-regulation--How-Loyalty-Program-Regulations-Impact-Startups-and-Small-Businesses.html
+- Commerce Commission — Comparative Advertising (official NZ guidance): https://www.comcom.govt.nz/business/dealing-with-typical-situations/advertising-your-product-or-service/comparative-advertising/
+- Commerce Commission — Stronger Fair Trading Act (penalty increase announcement, 2025): https://www.comcom.govt.nz/news-and-media/news-and-events/2025/stronger-fair-trading-act-a-win-for-consumers-and-rule-abiding-businesses/
+- MBIE — Fair Trading Act changes (2026 amendment overview): https://www.mbie.govt.nz/business-and-employment/consumer-protection/fair-trading-act-changes
+- Fair Trading Act 1986 s 13 — False or misleading representations (NZ Legislation): https://www.legislation.govt.nz/act/public/1986/0121/latest/DLM96908.html
+- Simpson Grierson — Fair Trading Act penalty increases: https://www.simpsongrierson.com/insights-news/legal-updates/fair-trading-act-update-black-friday-obligations-and-higher-penalties-on-the-horizon
+- B2B SaaS comparison pages guide 2026 (Backstage SEO, includes C&D experience): https://backstageseo.com/blog/b2b-comparison-pages/
+- Sprintlaw NZ — Comparative advertising rules: https://sprintlaw.co.nz/articles/business-advertising-laws-in-new-zealand-key-rules-for-smes-and-startups/
+- Google thin content penalties (December 2025 core update): https://almcorp.com/blog/google-december-2025-core-update-complete-guide/
+- Brand drift in SaaS (Mariya Design): https://www.mariya.design/post/what-is-brand-drift-and-why-it-starts-as-you-scale
+- Lightspeed acquires Vend (NZ Entrepreneur): https://nzentrepreneur.co.nz/nz-pos-software-provider-vend-acquired-by-lightspeed/
+- Vend is now Lightspeed Retail (official Lightspeed): https://www.lightspeedhq.com/vend/
+- Square October 2025 pricing restructure (NerdWallet): https://www.nerdwallet.com/business/software/reviews/square-pos
+- Competitor trademark use in advertising (CPS Law, 2025): https://www.cpsslaw.com/blog/2025/02/can-you-use-competitor-trademarks-in-comparative-advertising/
 
 ---
-*Pitfalls research for: v8.0 Add-On Catalog Expansion — loyalty, analytics, CRM, gift cards on existing multi-tenant NZ POS platform*
-*Researched: 2026-04-06*
+*Pitfalls research for: v8.1 Marketing Refresh & Competitor Comparison Page — NZ Fair Trading Act compliance, SEO risks, design consistency, competitor data accuracy, and marketing funnel integrity*
+*Researched: 2026-04-07*

@@ -1,712 +1,364 @@
 # Architecture Research
 
-**Domain:** Multi-tenant SaaS POS — paid add-on integration
-**Researched:** 2026-04-06
-**Confidence:** HIGH (based on existing codebase, not speculation)
+**Domain:** Marketing site integration — v8.1 Marketing Refresh & Compare Page
+**Researched:** 2026-04-07
+**Confidence:** HIGH (based on direct codebase inspection)
 
----
+## Standard Architecture
 
-## Context: What Already Exists
+### System Overview
 
-This is not a greenfield architecture question. The billing and gating infrastructure is fully operational. Every new add-on plugs into an established pipeline. The question is how each add-on type maps to that pipeline and what net-new components each requires.
-
-### Existing Billing Pipeline (Do Not Change)
+The marketing surface of NZPOS is built with Next.js App Router route groups and Server Components. All marketing pages are statically rendered (`force-static`). No database queries, no auth, no Server Actions on marketing pages.
 
 ```
-Merchant clicks "Subscribe" in /admin/billing
-    ↓
-createSubscriptionCheckoutSession(feature) — Server Action
-    ↓
-Stripe Checkout (hosted, 14-day trial, metadata: store_id + feature)
-    ↓
-Stripe webhook: customer.subscription.created/updated/deleted
-    ↓
-/api/webhooks/stripe/billing/route.ts
-    ↓ PRICE_TO_FEATURE[priceId] → featureColumn
-    ↓
-store_plans UPDATE SET has_{feature} = true/false
-    ↓
-Next JWT refresh → app_metadata.{feature} = true
-    ↓
-requireFeature(feature) fast-path reads JWT claim
-    ↓
-Server Action mutations use requireFeature(feature, { requireDbCheck: true })
+src/app/
+├── page.tsx                          ← Root landing page — assembles Landing* components directly
+│                                        (NOT inside (marketing) group — no group layout)
+│
+├── (marketing)/                      ← Route group — provides shared layout for sub-routes
+│   ├── add-ons/
+│   │   ├── layout.tsx                ← Wraps add-on routes with LandingNav + LandingFooter
+│   │   ├── page.tsx                  ← Add-ons catalog index (/add-ons)
+│   │   ├── xero/page.tsx             ← Xero detail page — ESTABLISHED PATTERN
+│   │   ├── inventory/page.tsx        ← Inventory detail page — ESTABLISHED PATTERN
+│   │   ├── gift-cards/page.tsx       ← NEW: Gift Cards detail (/add-ons/gift-cards)
+│   │   ├── advanced-reporting/
+│   │   │   └── page.tsx              ← NEW: Advanced Reporting detail
+│   │   └── loyalty-points/
+│   │       └── page.tsx              ← NEW: Loyalty Points detail
+│   ├── compare/
+│   │   └── page.tsx                  ← NEW: Competitor comparison (/compare)
+│   └── components/
+│       ├── LandingNav.tsx            ← MODIFY: Add "Compare" nav link
+│       ├── LandingHero.tsx           ← No change needed
+│       ├── LandingFeatures.tsx       ← No change needed (15 features already there)
+│       ├── LandingPricing.tsx        ← MODIFY: Add 3 missing add-ons (5 total)
+│       ├── LandingNZCallout.tsx      ← No change needed
+│       ├── LandingCTA.tsx            ← No change needed
+│       └── LandingFooter.tsx         ← MODIFY: Add "Compare" footer link
+│
+├── (demo)/                           ← Demo POS route group
+├── (store)/                          ← Tenant storefront route group
+└── (pos)/                            ← POS route group
 ```
 
-### Existing Schema for Feature Gating
+### Component Responsibilities
 
-```sql
--- store_plans (one row per store, extends on each new add-on)
-store_id UUID UNIQUE
-has_xero BOOLEAN DEFAULT false
-has_xero_manual_override BOOLEAN DEFAULT false
-has_email_notifications BOOLEAN DEFAULT false  -- always true, kept for compat
-has_custom_domain BOOLEAN DEFAULT false
-has_inventory BOOLEAN DEFAULT false
-has_inventory_manual_override BOOLEAN DEFAULT false
-```
+| Component | Current Responsibility | Modification Required |
+|-----------|----------------------|----------------------|
+| `LandingNav` | Sticky nav with Features, Pricing, Add-ons, Sign in, Get started | Add "Compare" link in both desktop and mobile nav |
+| `LandingPricing` | Free tier card + 2 add-on cards (Xero, Inventory) | Expand to 5 add-on cards; fix grid layout for odd count |
+| `add-ons/page.tsx` | Catalog of 2 add-on cards linking to detail pages | Expand to 5 cards; fix grid for odd count |
+| `add-ons/layout.tsx` | Wraps add-on sub-routes with LandingNav + LandingFooter | No change needed |
+| `add-ons/xero/page.tsx` | Xero detail — Hero, Before/After, Features, Steps, CTA | No change needed |
+| `add-ons/inventory/page.tsx` | Inventory detail — same pattern | No change needed |
+| `LandingFooter` | Footer with Sign in, Privacy, Terms links | Add "Compare" link |
 
-### Existing Config for Add-ons
+## Recommended Project Structure
 
-```
-src/config/addons.ts
-  SubscriptionFeature union type
-  PRICE_ID_MAP: feature → Stripe Price ID (env var)
-  PRICE_TO_FEATURE: Stripe Price ID → store_plans column
-  FEATURE_TO_COLUMN: feature → store_plans column
-  ADDONS array: display metadata for billing UI
-```
-
----
-
-## System Overview
+### New Files to Create
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                      MERCHANT BROWSER                           │
-│  /admin/billing  /admin/{addon}  /pos  /store (public)          │
-└────────────────────────────┬────────────────────────────────────┘
-                             │ HTTPS
-┌────────────────────────────▼────────────────────────────────────┐
-│                       NEXT.JS APP ROUTER                        │
-│                                                                 │
-│  Server Components (RSC)      Server Actions                    │
-│  ┌──────────────────────┐    ┌──────────────────────────────┐   │
-│  │  Admin pages         │    │  requireFeature() guard      │   │
-│  │  /admin/billing      │    │  JWT fast-path (reads claims) │   │
-│  │  /admin/{addon}/*    │    │  DB fallback (mutations)     │   │
-│  └──────────────────────┘    └──────────────────────────────┘   │
-│                                                                 │
-│  API Route Handlers                                             │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │  /api/webhooks/stripe/billing  (subscription events)    │   │
-│  │  /api/webhooks/stripe          (checkout.session events) │   │
-│  │  /api/cron/*                   (scheduled jobs)          │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└────────────────────────────┬────────────────────────────────────┘
-                             │
-┌────────────────────────────▼────────────────────────────────────┐
-│                         SUPABASE                                │
-│                                                                 │
-│  ┌──────────────────┐  ┌──────────────────┐                     │
-│  │  Postgres + RLS  │  │  Auth + JWT hook  │                    │
-│  │  (store_id on    │  │  custom_access_   │                    │
-│  │   all tables)    │  │  token_hook       │                    │
-│  └──────────────────┘  └──────────────────┘                     │
-│                                                                 │
-│  Core tables: stores, store_plans, products, orders, staff      │
-│  Add-on tables: stock_adjustments, stocktake_*, loyalty_*...    │
-└────────────────────────────┬────────────────────────────────────┘
-                             │
-┌────────────────────────────▼────────────────────────────────────┐
-│                    EXTERNAL SERVICES                            │
-│  Stripe (billing + checkout)  Xero (accounting)  Email          │
-└─────────────────────────────────────────────────────────────────┘
+src/app/(marketing)/
+├── add-ons/
+│   ├── gift-cards/
+│   │   └── page.tsx              ← Follows xero/inventory pattern exactly
+│   ├── advanced-reporting/
+│   │   └── page.tsx              ← Follows xero/inventory pattern exactly
+│   └── loyalty-points/
+│       └── page.tsx              ← Follows xero/inventory pattern exactly
+└── compare/
+    └── page.tsx                  ← New pattern — feature matrix + NZ narrative
 ```
 
----
+### Layout Gap: The /compare Route
 
-## The Four-Step Add-On Integration Checklist
+The `(marketing)` route group has no shared `layout.tsx`. Only `add-ons/` has a layout. The new `/compare` route is a sibling of `add-ons/`, not a child — so it cannot inherit the `add-ons/layout.tsx`.
 
-Every new add-on requires exactly these four steps. The order is non-negotiable — billing must exist before gating works.
+**Two options:**
 
-### Step 1: Schema Extension
-
-```sql
--- In a new migration file: 0XX_{addon}_core.sql
-
--- 1a. Add flag columns to store_plans
-ALTER TABLE public.store_plans
-  ADD COLUMN IF NOT EXISTS has_{addon} BOOLEAN NOT NULL DEFAULT false,
-  ADD COLUMN IF NOT EXISTS has_{addon}_manual_override BOOLEAN NOT NULL DEFAULT false;
-
--- 1b. Create add-on-specific tables (with store_id + RLS)
-CREATE TABLE public.{addon}_* (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_id UUID NOT NULL REFERENCES public.stores(id),
-  ...
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-ALTER TABLE public.{addon}_* ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "{addon}_store_isolation" ON public.{addon}_*
-  USING ((store_id)::text = (auth.jwt() -> 'app_metadata' ->> 'store_id'));
-
--- 1c. Update custom_access_token_hook to inject new claim
--- (Full CREATE OR REPLACE — preserve all existing logic)
-```
-
-### Step 2: Config Registration
-
+Option A — Create `(marketing)/layout.tsx` (recommended):
 ```typescript
-// src/config/addons.ts — four additions per add-on:
+// src/app/(marketing)/layout.tsx
+import LandingNav from './components/LandingNav'
+import LandingFooter from './components/LandingFooter'
 
-// 1. Extend the union type
-export type SubscriptionFeature = 'xero' | 'inventory' | '{addon}'
+export default function MarketingLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <LandingNav />
+      <main>{children}</main>
+      <LandingFooter />
+    </>
+  )
+}
+```
+This makes `add-ons/layout.tsx` redundant (can be deleted or kept — nested layouts in Next.js stack, so it would wrap twice if kept). Delete `add-ons/layout.tsx` when creating the group layout.
 
-// 2. Extend FeatureFlags interface
-interface FeatureFlags {
-  has_{addon}: boolean
+Option B — Import LandingNav and LandingFooter directly in `compare/page.tsx`:
+```typescript
+// src/app/(marketing)/compare/page.tsx
+import LandingNav from '../components/LandingNav'
+import LandingFooter from '../components/LandingFooter'
+```
+Simpler, avoids touching the `add-ons/layout.tsx`. Correct for a single new page.
+
+**Recommendation: Option B** for this milestone. It adds one page; creating a group layout would require removing `add-ons/layout.tsx` to avoid double-wrapping, which is scope creep. Option A is the right long-term refactor but not required now.
+
+### Files to Modify
+
+```
+src/app/(marketing)/components/
+├── LandingNav.tsx            ← Add "Compare" nav item (desktop + mobile)
+├── LandingPricing.tsx        ← Expand add-on grid from 2 to 5 entries
+└── LandingFooter.tsx         ← Add "Compare" footer link
+
+src/app/(marketing)/add-ons/
+└── page.tsx                  ← Expand catalog grid from 2 to 5 entries
+```
+
+## Architectural Patterns
+
+### Pattern 1: Static Add-On Detail Page (Established)
+
+**What:** Each add-on has a dedicated route with `export const dynamic = 'force-static'`. All content is hardcoded as TypeScript arrays in the page file. No shared data layer, no props. Page sections are: Hero (back link + price CTA) → Before/After comparison → Features grid (2-col) → How it works (3 numbered steps) → CTA.
+
+**When to use:** All 3 new add-on detail pages (Gift Cards, Advanced Reporting, Loyalty Points).
+
+**Trade-offs:** Content is duplicated across files. Correct at this scale (5 add-ons). Would become a smell at 15+ add-ons where a shared schema/CMS would be warranted.
+
+**Exact structure to follow:**
+```typescript
+export const dynamic = 'force-static'
+
+export const metadata: Metadata = {
+  title: '[Add-on Name] — NZPOS Add-ons',
+  description: '...',
 }
 
-// 3. Add to PRICE_ID_MAP
-{addon}: process.env.STRIPE_PRICE_{ADDON}!,
+const withoutItems: string[] = [...]  // 4 items — pain points without the add-on
+const withItems: string[] = [...]     // 4 items — benefits with the add-on
+const features = [{ title: string, description: string }]  // 4 features
+const steps = [{ number: string, title: string, text: string }]  // 3 steps
 
-// 4. Add to PRICE_TO_FEATURE (webhook routing)
-[process.env.STRIPE_PRICE_{ADDON}!]: 'has_{addon}',
-
-// 5. Add to FEATURE_TO_COLUMN (requireFeature DB-path)
-{addon}: 'has_{addon}',
-
-// 6. Add to ADDONS display array (billing UI)
-{
-  feature: '{addon}' as SubscriptionFeature,
-  name: '{Addon Display Name}',
-  benefitLine: '...',
-  gatedHeadline: '...',
-  gatedBody: '...',
+export default function [Name]Page() {
+  return (
+    <>
+      {/* Hero — navy bg, back link, h1, tagline, price CTA */}
+      {/* Before/After — 2-col grid, left=without (border), right=with (amber border + white bg) */}
+      {/* Features — surface bg, 2-col grid */}
+      {/* How it works — bg, 3-col numbered steps */}
+      {/* CTA — navy bg, centered h2, amber button */}
+    </>
+  )
 }
 ```
 
-### Step 3: Server Actions with requireFeature Guard
+### Pattern 2: Static Comparison Page (New)
 
+**What:** A single route at `/compare` presenting a feature matrix comparing NZPOS against 2-3 NZ competitors. All data is hardcoded TypeScript. No API calls. Pure Server Component.
+
+**When to use:** The `/compare` route only.
+
+**Trade-offs:** Competitor data goes stale. Acceptable — this is a marketing asset. Include a "Prices correct as of [date]" note and links to competitor pricing pages.
+
+**Recommended page sections:**
+```
+Hero         — "Why NZ retailers choose NZPOS" + CTA
+Feature matrix — Table with rows = features, columns = NZPOS / Square / Vend
+NZ-specific section — GST, Xero, NZD as differentiators (what global tools miss)
+Pricing callout — per-add-on model vs competitors' flat monthly tiers
+CTA          — "Get started free"
+```
+
+**Data shape:**
 ```typescript
-// src/actions/{addon}/someAction.ts
-'use server'
-import 'server-only'
-import { requireFeature } from '@/lib/requireFeature'
+type ComparisonValue = true | false | 'partial'
 
-export async function someAddonMutation(input: Input) {
-  // DB-path check for all mutations (stale JWT is unacceptable for writes)
-  const gate = await requireFeature('{addon}', { requireDbCheck: true })
-  if (!gate.authorized) return { error: 'feature_not_subscribed', upgradeUrl: gate.upgradeUrl }
-
-  // ... rest of action
+interface ComparisonRow {
+  category: string
+  feature: string
+  nzpos: ComparisonValue
+  square: ComparisonValue
+  vend: ComparisonValue      // Lightspeed Retail NZ
+  note?: string              // e.g. "NZ Fair Trading Act 2024 compliant"
 }
+
+const rows: ComparisonRow[] = [
+  { category: 'Core POS', feature: 'Free to start', nzpos: true, square: false, vend: false },
+  { category: 'NZ Compliance', feature: 'GST per-line calculation', nzpos: true, square: 'partial', vend: 'partial', note: 'IRD-compliant rounding' },
+  { category: 'NZ Compliance', feature: 'Xero integration', nzpos: true, square: false, vend: true },
+  // ...
+]
 ```
 
-### Step 4: UI Gate in Admin Pages
+**Rendering the matrix:** Use an HTML `<table>` with `role="table"` — not a CSS grid. Screen readers interpret table semantics correctly for comparison grids. Use `<thead>` for competitor names, `<tbody>` for rows, `<th scope="row">` for feature names.
 
-```typescript
-// src/app/admin/{addon}/page.tsx (Server Component)
-const gate = await requireFeature('{addon}')  // JWT fast-path for reads
-if (!gate.authorized) return <UpgradePrompt feature="{addon}" upgradeUrl={gate.upgradeUrl} />
+### Pattern 3: In-Page Anchor vs Full Route Navigation
 
-// Render the actual add-on UI
-```
+**What:** The `LandingNav` currently uses `href="#features"` and `href="#pricing"` anchor links for the root landing page sections, plus `href="/add-ons"` for the add-ons catalog. These hash anchors only work correctly on the root `/` page — on all other marketing pages (e.g. `/add-ons/xero`, `/compare`) the anchor links produce no-ops.
 
----
+**When to use the correct pattern:** The new "Compare" link is a full page — use `href="/compare"` (a `<Link>` component), not a hash anchor. Do not add `#compare` as a section on the landing page.
 
-## Component Boundaries Per Add-On Type
+**Trade-offs:** The hash anchor issue is pre-existing technical debt. This milestone should not introduce more hash anchors.
 
-### Add-On: Loyalty Program
+## Data Flow
 
-**What it is:** Points earned per dollar spent, redeemable for discounts. In-store (POS) and online redemption.
-
-**New tables:**
-
-```sql
-loyalty_accounts        -- one per customer, store_id + customer_id (or email)
-  store_id UUID
-  customer_id UUID REFERENCES customers(id) -- nullable for guest/phone lookup
-  email TEXT            -- primary lookup key
-  phone TEXT            -- secondary lookup
-  points_balance INTEGER NOT NULL DEFAULT 0
-  lifetime_points INTEGER NOT NULL DEFAULT 0
-
-loyalty_transactions    -- append-only ledger (like stock_adjustments pattern)
-  store_id UUID
-  loyalty_account_id UUID
-  order_id UUID         -- nullable (manual adjustments have no order)
-  points_delta INTEGER  -- positive = earned, negative = redeemed
-  points_after INTEGER
-  reason TEXT CHECK (reason IN ('purchase', 'redemption', 'manual_adjustment', 'expiry', 'bonus'))
-  created_at TIMESTAMPTZ
-
-loyalty_settings        -- one per store, configurable earn rate
-  store_id UUID UNIQUE
-  points_per_dollar INTEGER NOT NULL DEFAULT 1  -- e.g. 1 point per $1 spent
-  dollars_per_point NUMERIC(10,4) NOT NULL DEFAULT 0.01  -- e.g. 100 points = $1
-  minimum_redemption INTEGER NOT NULL DEFAULT 100
-  expiry_days INTEGER   -- null = no expiry
-```
-
-**New RPCs (SECURITY DEFINER):**
-
-```sql
-earn_loyalty_points(store_id, order_id, customer_email)
-  -- Called by complete_pos_sale / complete_online_sale
-  -- Reads loyalty_settings earn rate, inserts loyalty_transaction, updates balance
-
-redeem_loyalty_points(store_id, loyalty_account_id, points_to_redeem)
-  -- Returns discount_cents
-  -- Validates minimum_redemption, atomically decrements balance
-```
-
-**Integration with POS/Storefront:** The complete_pos_sale and complete_online_sale RPCs need loyalty calls added (same pattern as stock_adjustments was added in 025_inventory_core.sql). This is the key dependency — loyalty only works well if sales automatically earn points.
-
-**New Server Actions:**
-- `lookupLoyaltyAccount(email | phone)` — POS lookup before checkout
-- `redeemPoints(accountId, pointsToRedeem)` — returns discount cents
-- `adjustLoyaltyPoints(accountId, delta, reason)` — manual admin adjustment
-- `getLoyaltyDashboard(storeId)` — top accounts, total outstanding points liability
-
-**Admin UI pages:**
-- `/admin/loyalty/settings` — earn rate, redemption rate, expiry
-- `/admin/loyalty/accounts` — customer point balances
-- `/admin/loyalty/transactions` — full ledger view
-
-**POS integration:** Search field before checkout shows "Has loyalty account (450 pts)" → optional redemption → discount applied before total.
-
-**Build dependency:** Requires customer accounts to exist (already shipped). No hard dependency on Inventory add-on.
-
----
-
-### Add-On: Gift Cards
-
-**What it is:** Merchant sells digital gift cards. Customer receives code, redeems in-store or online.
-
-**New tables:**
-
-```sql
-gift_cards
-  store_id UUID
-  code TEXT UNIQUE NOT NULL  -- 16-char alphanumeric, uppercase
-  initial_balance_cents INTEGER NOT NULL
-  current_balance_cents INTEGER NOT NULL
-  issued_to_email TEXT        -- nullable (anonymous purchase)
-  issued_order_id UUID        -- the Stripe order that purchased it
-  expires_at TIMESTAMPTZ      -- nullable, from gift_card_settings
-  is_active BOOLEAN DEFAULT true
-  created_at TIMESTAMPTZ
-
-gift_card_transactions       -- redemption audit log
-  store_id UUID
-  gift_card_id UUID
-  order_id UUID
-  amount_cents INTEGER        -- negative = redemption, positive = refund
-  balance_after_cents INTEGER
-  created_at TIMESTAMPTZ
-```
-
-**New RPCs (SECURITY DEFINER):**
-
-```sql
-generate_gift_card(store_id, initial_balance_cents, issued_to_email, issued_order_id)
-  -- Generates unique code, inserts gift_card row
-
-redeem_gift_card(store_id, code, amount_to_redeem_cents)
-  -- Validates code active + sufficient balance
-  -- Atomically decrements current_balance_cents
-  -- Returns actual_amount_redeemed (may be less than requested if partial)
-```
-
-**Stripe integration for gift card purchase:** Gift card purchase goes through Stripe Checkout (product = "Gift Card $X"). On checkout.session.completed, the existing Stripe webhook calls generate_gift_card. The gift card code is emailed to the buyer.
-
-**Admin UI pages:**
-- `/admin/gift-cards` — list all cards, balance search by code
-- `/admin/gift-cards/settings` — expiry policy
-
-**POS integration:** Code entry field at checkout. Partial redemption allowed (remaining balance stays on card).
-
-**Build dependency:** Standalone. No dependency on Loyalty or Inventory.
-
----
-
-### Add-On: Supplier Management
-
-**What it is:** Track suppliers, record purchase orders, receive stock against POs (auto-updates inventory).
-
-**New tables:**
-
-```sql
-suppliers
-  store_id UUID
-  name TEXT NOT NULL
-  contact_name TEXT
-  contact_email TEXT
-  contact_phone TEXT
-  account_number TEXT
-  notes TEXT
-  is_active BOOLEAN DEFAULT true
-  created_at TIMESTAMPTZ
-
-purchase_orders
-  store_id UUID
-  supplier_id UUID
-  status TEXT CHECK (status IN ('draft', 'sent', 'partial', 'received', 'cancelled'))
-  po_number TEXT               -- auto-generated or manual
-  expected_at DATE
-  notes TEXT
-  created_by UUID REFERENCES staff(id)
-  created_at TIMESTAMPTZ
-
-purchase_order_lines
-  store_id UUID
-  purchase_order_id UUID
-  product_id UUID
-  quantity_ordered INTEGER NOT NULL
-  quantity_received INTEGER NOT NULL DEFAULT 0
-  unit_cost_cents INTEGER      -- cost price, not retail
-  created_at TIMESTAMPTZ
-
-supplier_products              -- maps which suppliers supply which products
-  store_id UUID
-  supplier_id UUID
-  product_id UUID
-  supplier_sku TEXT
-  unit_cost_cents INTEGER
-  PRIMARY KEY (store_id, supplier_id, product_id)
-```
-
-**New RPC (SECURITY DEFINER):**
-
-```sql
-receive_stock_against_po(purchase_order_id, lines: [{product_id, quantity_received}])
-  -- For each line: calls adjust_stock with reason='received', updates quantity_received
-  -- Updates PO status to 'partial' or 'received'
-  -- Atomic: all lines succeed or none
-```
-
-**Build dependency:** Hard dependency on Inventory add-on. Stock receiving only makes sense if the store tracks stock. Should be gated as requiring both `supplier_management` AND `inventory`. Consider bundling with inventory or treating it as an inventory sub-feature.
-
-**Admin UI pages:**
-- `/admin/suppliers` — supplier list
-- `/admin/suppliers/[id]` — supplier detail, products, PO history
-- `/admin/purchase-orders` — PO list, status filter
-- `/admin/purchase-orders/new` — create PO from supplier + products
-
----
-
-### Add-On: Advanced Analytics / Reports
-
-**What it is:** Deeper reporting beyond the existing basic dashboard. Period comparison, product performance cohorts, customer lifetime value.
-
-**Architecture note:** The existing Stripe analytics snapshot pattern (030_analytics_snapshot.sql) provides the model — materialised snapshots queried by the admin UI, refreshed by cron jobs. Use the same pattern for add-on analytics.
-
-**New tables:**
-
-```sql
-analytics_daily_snapshots    -- pre-aggregated per store per day
-  store_id UUID
-  snapshot_date DATE
-  total_revenue_cents INTEGER
-  transaction_count INTEGER
-  avg_transaction_cents INTEGER
-  top_products JSONB           -- [{product_id, name, revenue_cents, units_sold}]
-  hourly_breakdown JSONB       -- [24 integers for revenue by hour]
-  channel_breakdown JSONB      -- {pos: cents, online: cents}
-  created_at TIMESTAMPTZ
-  PRIMARY KEY (store_id, snapshot_date)
-
-analytics_customer_snapshots -- CLV, purchase frequency per customer
-  store_id UUID
-  customer_id UUID
-  snapshot_month DATE          -- first of month
-  orders_this_month INTEGER
-  revenue_this_month_cents INTEGER
-  lifetime_orders INTEGER
-  lifetime_revenue_cents INTEGER
-  last_order_at TIMESTAMPTZ
-  created_at TIMESTAMPTZ
-  PRIMARY KEY (store_id, customer_id, snapshot_month)
-```
-
-**Cron job:** `/api/cron/analytics-snapshot` — runs nightly via Vercel cron, populates analytics_daily_snapshots for all stores with analytics add-on. Same pattern as existing Stripe snapshot cron.
-
-**No new RPCs needed** — snapshots are read-only from the admin UI. Server Components query directly.
-
-**Build dependency:** Standalone. No dependency on Inventory or Loyalty. The existing orders table has enough data for meaningful analytics from day one.
-
----
-
-### Add-On: Multi-Location
-
-**What it is:** One merchant account managing multiple physical store locations, each with separate inventory.
-
-**Architecture note:** This is the most complex add-on. The entire existing architecture assumes one store per merchant account. Multi-location requires a concept of "location" within a store.
-
-**New tables:**
-
-```sql
-locations                    -- physical locations within a store
-  store_id UUID
-  name TEXT NOT NULL          -- "CBD Store", "Airport Kiosk"
-  address TEXT
-  is_active BOOLEAN DEFAULT true
-  created_at TIMESTAMPTZ
-
-product_location_stock       -- replaces products.stock_quantity per-location
-  store_id UUID
-  product_id UUID
-  location_id UUID
-  stock_quantity INTEGER NOT NULL DEFAULT 0
-  PRIMARY KEY (store_id, product_id, location_id)
-```
-
-**Impact on existing RPCs:** complete_pos_sale and complete_online_sale currently decrement products.stock_quantity. With multi-location, they must decrement product_location_stock for the correct location. This is a significant migration.
-
-**Recommended approach:** Gate the UI at the location selector. When a multi-location store opens POS, they pick a location first. That location_id is threaded through the entire sale. The RPCs accept an optional location_id parameter — when provided, decrement product_location_stock; when null, decrement products.stock_quantity (backward compat for single-location stores).
-
-**Build dependency:** Hard dependency on Inventory add-on (stock tracking per location). This is the last add-on to build — it modifies core RPCs and needs the most testing.
-
----
-
-### Add-On: CRM (Customer Relationship Management)
-
-**What it is:** Enhanced customer profiles, purchase history analysis, customer segmentation, manual outreach logging.
-
-**Architecture note:** Customer accounts and basic order history already exist. CRM extends this with segments, tags, and communication activity logging.
-
-**New tables:**
-
-```sql
-customer_tags
-  store_id UUID
-  name TEXT NOT NULL
-  color TEXT                   -- hex for UI label
-  PRIMARY KEY (store_id, name)
-
-customer_tag_assignments
-  store_id UUID
-  customer_id UUID
-  tag_name TEXT
-  PRIMARY KEY (store_id, customer_id, tag_name)
-
-customer_segments            -- saved filter queries
-  store_id UUID
-  name TEXT NOT NULL
-  filter_criteria JSONB        -- {min_orders: 3, last_purchase_within_days: 90, tags: [...]}
-  customer_count INTEGER        -- cached, refreshed on cron
-  created_at TIMESTAMPTZ
-
-crm_activities               -- log of manual outreach
-  store_id UUID
-  customer_id UUID
-  staff_id UUID
-  type TEXT CHECK (type IN ('note', 'email', 'call', 'sms'))
-  notes TEXT
-  created_at TIMESTAMPTZ
-```
-
-**Build dependency:** Requires customer accounts (already shipped). No dependency on Inventory or Loyalty. Can be built independently.
-
----
-
-## How the Feature Gating Pattern Scales
-
-### Current State (2 active paid add-ons)
-
-The pattern works cleanly at 2-5 add-ons. The JWT hook SELECT is one query that fetches all columns from store_plans. Adding a column per add-on adds negligible overhead.
-
-### At 10+ Add-Ons
-
-The custom_access_token_hook SQL function grows but remains one query. The JWT payload grows by one boolean per add-on — at 10 add-ons the JWT is still under 1KB. No architectural change needed.
-
-### At 20+ Add-Ons
-
-Consider grouping related features (e.g., `loyalty_and_crm: true` instead of separate booleans) only if store_plans grows unwieldy. At 20 columns it is still manageable. The real scaling concern is developer confusion, not technical overhead — the `has_{addon}` naming convention prevents this.
-
-### Webhook Routing Scaling
-
-The PRICE_TO_FEATURE map in addons.ts is a flat lookup. Each new add-on adds one entry. At 20 add-ons this is still a simple object literal. No scaling concern.
-
-### JWT Refresh Timing
-
-After a merchant subscribes, their JWT claims are stale until the next token refresh (up to 1 hour by default in Supabase). The requireFeature DB-path (requireDbCheck: true) on all mutations prevents unauthorized access during this window. The UI may show a gated state for up to 1 hour after subscription — acceptable for a billing flow. Mitigate by calling `supabase.auth.refreshSession()` on the billing page after detecting the `?subscribed={feature}` query param.
-
----
-
-## Recommended Build Order
-
-Dependencies drive the order. Build the infrastructure additions first, then independent add-ons, then dependent ones.
+### Comparison Page Data Flow
 
 ```
-Phase 1: Loyalty Program
-  - No dependencies on other add-ons
-  - High merchant value; Square NZ charges $45+/mo for loyalty
-  - Extends complete_pos_sale / complete_online_sale (establishes pattern for future hooks)
-
-Phase 2: Gift Cards
-  - No dependencies
-  - Standalone Stripe product purchase flow
-  - Well-defined scope, no complex dependencies
-
-Phase 3: Advanced Analytics
-  - No dependencies
-  - Reuses existing snapshot cron pattern
-  - Adds meaningful dashboard value for merchants with order history
-
-Phase 4: CRM
-  - Depends on customer accounts (already shipped)
-  - No dependency on above add-ons
-  - Natural complement to Loyalty data
-
-Phase 5: Supplier Management
-  - Hard dependency on Inventory add-on (v3.0, already shipped)
-  - Must be built after Inventory is stable in production
-
-Phase 6: Multi-Location
-  - Hard dependency on Inventory add-on
-  - Modifies core RPCs (highest risk)
-  - Build last, test extensively
+ComparisonRow[] (hardcoded in compare/page.tsx)
+    ↓
+<table> rendered as Server Component
+    ↓
+force-static → Vercel CDN serves from edge cache
+    ↓
+No client JS required — table is read-only
 ```
 
-**Rationale for this order:**
-- Loyalty and Gift Cards are highest-value NZ retail add-ons with proven willingness to pay
-- Analytics and CRM require no risky RPC changes
-- Supplier Management and Multi-Location touch the stock system — saved for when Inventory is battle-tested in production
-
----
-
-## Data Flow: New Add-On Full Lifecycle
+### Add-On Discovery Flow
 
 ```
-1. SCHEMA MIGRATION
-   Migration file → store_plans ALTER → new tables + RLS → hook rewrite
-
-2. CONFIG REGISTRATION
-   addons.ts → SubscriptionFeature type → PRICE_ID_MAP → PRICE_TO_FEATURE → ADDONS array
-
-3. BILLING SUBSCRIBE
-   /admin/billing → createSubscriptionCheckoutSession('loyalty')
-   → Stripe Checkout → webhook → store_plans.has_loyalty = true
-   → JWT refresh → app_metadata.loyalty = true
-   → /admin/billing detects ?subscribed=loyalty → refreshSession() → gate lifts immediately
-
-4. FEATURE ACCESS (reads)
-   Server Component → requireFeature('loyalty') [JWT fast-path]
-   → authorized: true → render add-on UI
-
-5. FEATURE ACCESS (mutations)
-   Server Action → requireFeature('loyalty', { requireDbCheck: true }) [DB path]
-   → authorized: true → execute mutation
-
-6. CANCEL SUBSCRIPTION
-   Stripe webhook: customer.subscription.deleted
-   → store_plans.has_loyalty = false
-   → Next JWT refresh → gate re-applies
+LandingNav "Add-ons" link → /add-ons (catalog)
+                                ↓
+                     5 add-on cards, each linking to:
+                     /add-ons/xero
+                     /add-ons/inventory
+                     /add-ons/gift-cards         ← NEW
+                     /add-ons/advanced-reporting  ← NEW
+                     /add-ons/loyalty-points      ← NEW
+                                ↓
+                     "Back to add-ons" ← Back link on each detail page
 ```
 
----
+### Landing Page Pricing Flow
+
+```
+LandingPricing.tsx (hardcoded data)
+    ↓
+Free tier card (max-w-lg, centered)
+    ↓
+5 add-on cards in grid
+    Each card links to /add-ons/[slug]
+```
 
 ## Integration Points
 
-### Extending complete_pos_sale and complete_online_sale
+### Modified Components — What Breaks If Done Wrong
 
-These two RPCs are the most critical integration point. Both Loyalty (earning points) and Gift Cards (redemption) need to hook in at sale completion. The pattern established by stock_adjustments (adding INSERT statements inside the RPC) is the correct approach — keep all side effects inside the SECURITY DEFINER RPC, not in application-layer Server Actions.
+| Component | Change | Risk if Wrong |
+|-----------|--------|---------------|
+| `LandingNav` | Add "Compare" link | Adding to desktop nav but forgetting mobile nav = broken mobile UX. Both the `md:flex` desktop nav and the `<details>` mobile overlay must be updated. |
+| `LandingPricing` | 2 → 5 add-on cards | Current grid is `md:grid-cols-2 max-w-3xl`. With 5 cards, keeping 2-col gives an orphaned single card on the last row. Consider `md:grid-cols-3` or `md:grid-cols-2 lg:grid-cols-3`, or accept the asymmetry as intentional. |
+| `add-ons/page.tsx` | 2 → 5 add-on cards | Same grid issue as LandingPricing. Currently `md:grid-cols-2 max-w-3xl`. |
+| `LandingFooter` | Add "Compare" link | Footer uses `|` separators between links. Add the separator pattern consistently. |
 
-```sql
--- Pattern: additions to complete_pos_sale RPC
-IF p_loyalty_account_id IS NOT NULL THEN
-  PERFORM earn_loyalty_points(p_store_id, v_order_id, p_loyalty_account_id, v_total_cents);
-END IF;
+### New Routes and Their Layout Sources
 
-IF p_gift_card_code IS NOT NULL THEN
-  PERFORM redeem_gift_card(p_store_id, p_gift_card_code, p_gift_card_amount_cents);
-END IF;
+| Route | File | Layout Source |
+|-------|------|---------------|
+| `/compare` | `(marketing)/compare/page.tsx` | Import `LandingNav` + `LandingFooter` directly in the page (Option B above) |
+| `/add-ons/gift-cards` | `(marketing)/add-ons/gift-cards/page.tsx` | Inherited from `add-ons/layout.tsx` |
+| `/add-ons/advanced-reporting` | `(marketing)/add-ons/advanced-reporting/page.tsx` | Inherited from `add-ons/layout.tsx` |
+| `/add-ons/loyalty-points` | `(marketing)/add-ons/loyalty-points/page.tsx` | Inherited from `add-ons/layout.tsx` |
+
+### Slug Consistency — Critical
+
+The route directory name must match the `href` used in `add-ons/page.tsx` and `LandingPricing.tsx`. Mismatches produce 404s.
+
+| Add-on | Route dir name | href in catalog/pricing |
+|--------|---------------|-------------------------|
+| Gift Cards | `gift-cards` | `/add-ons/gift-cards` |
+| Advanced Reporting | `advanced-reporting` | `/add-ons/advanced-reporting` |
+| Loyalty Points | `loyalty-points` | `/add-ons/loyalty-points` |
+
+## Build Order Recommendation
+
+Dependencies drive the order:
+
+```
+STEP 1 — New add-on detail pages (independent of each other, no blockers)
+  src/app/(marketing)/add-ons/gift-cards/page.tsx
+  src/app/(marketing)/add-ons/advanced-reporting/page.tsx
+  src/app/(marketing)/add-ons/loyalty-points/page.tsx
+
+STEP 2 — New comparison page (independent, only needs Nav + Footer imports)
+  src/app/(marketing)/compare/page.tsx
+
+STEP 3 — Update add-on catalog (depends on knowing all 5 slugs exist)
+  src/app/(marketing)/add-ons/page.tsx  ← add 3 new cards
+
+STEP 4 — Update pricing section (depends on knowing all 5 slugs and prices)
+  src/app/(marketing)/components/LandingPricing.tsx
+
+STEP 5 — Update nav and footer last (affects all marketing pages — highest blast radius)
+  src/app/(marketing)/components/LandingNav.tsx
+  src/app/(marketing)/components/LandingFooter.tsx
 ```
 
-**Risk:** These RPCs are already complex. Each new hook adds a failure mode. Mitigation: each helper function is itself SECURITY DEFINER with its own error handling. The outer RPC continues if a loyalty earn fails — a failed point earn should not roll back a completed sale.
+**Rationale:** The 3 new add-on detail pages and the compare page are fully independent — build these first so they can be verified in isolation before touching shared components. Nav and footer changes affect every marketing page, so they go last when everything else is verified.
 
-### Super Admin Override Pattern
+## Anti-Patterns
 
-Every new add-on follows the `has_{addon}_manual_override` column pattern. The billing webhook must respect overrides:
+### Anti-Pattern 1: Shared add-on data file
 
-```typescript
-// requireFeature DB-path reads both columns:
-const isAuthorized = plan.has_{addon} || plan.has_{addon}_manual_override
-```
+**What people do:** Extract add-on metadata (name, price, description, href) into `src/data/addons.ts` shared between the catalog, pricing, and detail pages.
 
-This lets the platform comp add-ons to strategic merchants without Stripe subscriptions. The super admin panel already handles this for xero and inventory — extend the same UI.
+**Why it's wrong:** Detail pages have richer content (before/after lists, feature breakdowns, steps) that doesn't fit a catalog-level schema. Forcing a shared structure means the data file becomes bloated or the detail pages stop using it for their unique sections. The existing pattern — each page owns its content — is correct at this scale.
 
-### Environment Variables
+**Do this instead:** Keep content hardcoded per page. Only create a shared data file if the same data appears verbatim in 3+ places and changes frequently.
 
-Each add-on requires a new Stripe Price ID env var. Naming convention: `STRIPE_PRICE_{ADDON_UPPERCASE}`. Must be added to `.env.local`, Vercel project settings, and `src/config/addons.ts` PRICE_ID_MAP.
+### Anti-Pattern 2: Interactive comparison table
 
----
+**What people do:** Add filter/sort controls to the comparison table for perceived polish.
 
-## Anti-Patterns to Avoid
+**Why it's wrong:** The comparison page is a marketing page — its job is to persuade, not enable data exploration. Interactivity adds client JS bundle weight and complexity for zero measurable conversion benefit. The table has ~15-20 rows; visitors can scan it in under a minute without filters.
 
-### Anti-Pattern 1: Creating a New Gating Mechanism Per Add-On
+**Do this instead:** Static Server Component. All rows visible by default. Group rows by category with visible section headers for scannability.
 
-**What people do:** Build a custom permission check for each add-on feature instead of plugging into requireFeature().
+### Anti-Pattern 3: Hash anchor for Compare in the nav
 
-**Why it's wrong:** Splits the audit trail, creates inconsistent upgrade flows, breaks the super admin override system, and makes webhook handling per-feature instead of centralized.
+**What people do:** Add `href="#compare"` to embed a comparison section directly on the landing page instead of creating a new route.
 
-**Do this instead:** Every add-on uses requireFeature(). If requireFeature() needs extension (e.g., checking two features simultaneously for Supplier Management), extend the utility with a new option — do not bypass it.
+**Why it's wrong:** The comparison content is substantial (full feature matrix). It would bloat the already-long landing page. A dedicated `/compare` URL is indexable by search engines, shareable, and linkable from ads and content marketing.
 
----
+**Do this instead:** Use `href="/compare"` — a proper Next.js `<Link>` to a dedicated page with its own `<Metadata>` for SEO.
 
-### Anti-Pattern 2: Skipping the DB-Path Check on Mutations
+### Anti-Pattern 4: Fetching live competitor pricing
 
-**What people do:** Use the JWT fast-path (no requireDbCheck) on Server Action mutations to save one DB round-trip.
+**What people do:** Attempt to fetch Square or Lightspeed pricing dynamically to keep comparison data current.
 
-**Why it's wrong:** The JWT is up to 1 hour stale. A cancelled subscription's JWT still says `loyalty: true` for up to an hour. This allows unauthorized writes during that window.
+**Why it's wrong:** Competitor pricing pages block scraping. Even if it worked, stale cached fetches are harder to detect than static data with an explicit date. Misrepresenting competitor pricing has legal risk.
 
-**Do this instead:** JWT fast-path for reads (Server Component rendering). DB-path for every mutation. The extra round-trip is ~5ms and worth it.
+**Do this instead:** Static hardcoded data with a "Correct as of [Month Year]" note and links to each competitor's pricing page so readers can verify. Update the static data manually when doing future marketing refreshes.
 
----
+### Anti-Pattern 5: Building `(marketing)/layout.tsx` this milestone
 
-### Anti-Pattern 3: Application-Layer Loops Instead of SECURITY DEFINER RPCs
+**What people do:** Refactor the route group to add a shared layout, removing `add-ons/layout.tsx`.
 
-**What people do:** Call adjust_stock in a JavaScript loop over cart line items in a Server Action.
+**Why it's wrong:** It is the right long-term decision but adds scope beyond the v8.1 goal. Creating the group layout requires deleting `add-ons/layout.tsx` to prevent double-wrapping — a change that touches existing working pages. One extra `import` in `compare/page.tsx` is the safer path for this milestone.
 
-**Why it's wrong:** Each iteration is a separate DB round-trip. If one fails, previous ones are already committed — partial state is worse than no state.
-
-**Do this instead:** Pass the entire payload to a SECURITY DEFINER RPC that loops in PL/pgSQL. One round-trip, one transaction, atomic.
-
----
-
-### Anti-Pattern 4: Separate Stripe Products Instead of One Price ID Per Feature
-
-**What people do:** Create multiple Stripe Products for different tiers of an add-on.
-
-**Why it's wrong:** PRICE_TO_FEATURE is a flat lookup — it maps one Price ID to one store_plans column. Multiple Price IDs per feature require custom routing logic.
-
-**Do this instead:** One Stripe Product + one Price ID per add-on feature. If pricing needs to change, create a new Price ID and update the env var — old subscribers keep their original price.
-
----
-
-### Anti-Pattern 5: Storing Feature State Outside store_plans
-
-**What people do:** Create a separate `loyalty_plans` table to track loyalty subscription state.
-
-**Why it's wrong:** The JWT hook only reads from store_plans. A second table creates two sources of truth and breaks the JWT fast-path.
-
-**Do this instead:** All subscription feature flags live in store_plans as boolean columns. Add-on-specific *configuration* (earn rates, expiry policies, etc.) lives in the add-on's own settings table (e.g., loyalty_settings). These are different concerns.
-
----
+**Do this instead:** Import `LandingNav` and `LandingFooter` directly in `compare/page.tsx`. Flag the group layout refactor for a future maintenance phase.
 
 ## Scaling Considerations
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 0-100 stores | Current architecture is correct. No changes needed. |
-| 100-1,000 stores | Add composite index on store_plans(store_id) — already exists. Monitor cron job duration for analytics snapshots. |
-| 1,000-10,000 stores | Analytics cron may need pagination (process stores in batches of 100). JWT hook stays fast (single SELECT on indexed column). |
-| 10,000+ stores | store_plans table is still fast (indexed on store_id UNIQUE). Real bottleneck will be cron analytics jobs — move to queue-based processing (Supabase pg_cron + pg_partman, or Inngest). |
+The marketing pages are fully static. All `force-static` pages are served from Vercel's edge CDN. There is no scaling concern for the marketing surface regardless of traffic volume.
 
-**First bottleneck:** Nightly analytics cron jobs processing all stores synchronously. Fix: paginate by processing stores in batches within the cron budget.
-
-**Second bottleneck:** Stripe webhook processing time if subscription events spike (mass signups during a promotion). Fix: idempotency is already built in — safe to add webhook queueing later if needed.
-
----
+The only "scale" concern is content maintenance as the add-on catalog grows. At 5 add-ons, the current pattern is correct. At 10+ add-ons, a CMS integration (Contentlayer, or even a simple `src/data/addons/` directory of JSON/MDX files) would reduce developer burden for content updates.
 
 ## Sources
 
-- Existing codebase (direct analysis, HIGH confidence):
-  - `src/config/addons.ts`
-  - `src/lib/requireFeature.ts`
-  - `src/app/api/webhooks/stripe/billing/route.ts`
-  - `src/actions/billing/createSubscriptionCheckoutSession.ts`
-  - `supabase/migrations/019_billing_claims.sql`
-  - `supabase/migrations/024_service_product_type.sql`
-  - `supabase/migrations/025_inventory_core.sql`
-- Competitor feature analysis: Square NZ loyalty ($45+/mo), marketing ($15+/mo) — MEDIUM confidence (WebSearch 2026-04-06)
-- Lightspeed Retail NZ add-on landscape — MEDIUM confidence (WebSearch 2026-04-06)
-- Multi-tenant feature gating patterns: [WorkOS Developer Guide](https://workos.com/blog/developers-guide-saas-multi-tenant-architecture) — MEDIUM confidence
+- Direct codebase inspection (HIGH confidence, 2026-04-07):
+  - `src/app/page.tsx` — root landing assembly
+  - `src/app/(marketing)/add-ons/layout.tsx` — layout pattern
+  - `src/app/(marketing)/add-ons/page.tsx` — catalog pattern
+  - `src/app/(marketing)/add-ons/xero/page.tsx` — established detail page pattern
+  - `src/app/(marketing)/add-ons/inventory/page.tsx` — established detail page pattern
+  - `src/app/(marketing)/components/LandingNav.tsx` — nav structure (desktop + mobile)
+  - `src/app/(marketing)/components/LandingPricing.tsx` — pricing section with 2 add-on cards
+  - `src/app/(marketing)/components/LandingFooter.tsx` — footer link pattern
+- Project context: `.planning/PROJECT.md` — v8.1 milestone scope confirmed
 
 ---
-
-*Architecture research for: NZPOS v8.0 Add-On Catalog Expansion*
-*Researched: 2026-04-06*
+*Architecture research for: NZPOS v8.1 Marketing Refresh & Compare Page*
+*Researched: 2026-04-07*

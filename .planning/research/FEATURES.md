@@ -1,246 +1,337 @@
 # Feature Research
 
-**Domain:** NZ Small Retail POS — Paid Add-On Catalog Expansion (v8.0)
-**Researched:** 2026-04-06
-**Confidence:** MEDIUM (competitor pricing verified via official pages; NZ-specific willingness-to-pay estimated from market proxies, not direct survey data)
+**Domain:** NZ SaaS POS — Marketing Site Refresh & Competitor Comparison Page (v8.1)
+**Researched:** 2026-04-07
+**Confidence:** MEDIUM-HIGH (competitor pricing verified via official pages and third-party review sites; SEO/comparison page patterns from multiple practitioner sources; NZ market details cross-referenced)
 
 ---
 
 ## Context: What This Research Covers
 
-This file answers: "What new paid add-ons would NZ small retail merchants pay $5–29/month for?" It is scoped to the v8.0 milestone and does NOT cover features already shipped (POS checkout, inventory management, Xero integration, email notifications, staff RBAC, click-and-collect, promo codes, customer accounts — all shipped through v7.0).
+This file answers: "What belongs on a refreshed marketing site that showcases all 5 paid add-ons, and what goes on a competitor comparison page targeting NZ retail POS buyers?"
 
-**Existing paid add-ons (already live):**
-- Xero Integration — $9/mo
-- Inventory Management — $9/mo
+**In scope:**
+- Landing page refresh (hero, feature grid, pricing section) to show all 5 paid add-ons
+- New dedicated add-on detail pages for Gift Cards, Advanced Reporting, and Loyalty Points
+- Competitor comparison page with feature matrix and "Why NZPOS" narrative
+- SEO structure and conversion patterns for comparison/alternative pages
 
-**Free baseline (already live):**
-- POS checkout, online storefront, email notifications, barcode scanning, basic reporting, staff RBAC (owner/manager/staff), customer accounts, promo codes, click-and-collect, CSV import
+**Not in scope:**
+- Building any new product features (v8.0 shipped Gift Cards, Advanced Reporting, Loyalty Points)
+- Infrastructure or backend changes
+- Existing Xero and Inventory detail pages (already live)
 
----
-
-## Competitor Add-On Landscape
-
-### Square (AU/NZ)
-
-Square uses a freemium + transaction fee model. Paid add-ons in AU/NZ:
-
-| Add-On | AU/NZ Pricing | What It Does |
-|--------|--------------|--------------|
-| Square Loyalty | A$49/mo (0–500 visits), scales up | Points-per-purchase, digital loyalty card, auto-rewards |
-| Square Marketing (Email) | Included in Square Plus (A$109/mo/location) | Email campaigns to customer list |
-| Square Appointments Free | $0 (1 staff) | Online booking, calendar, reminders |
-| Square Appointments Plus | A$40/mo/location | Multi-staff, classes, Google Calendar sync, waitlist |
-| Square Retail Plus | A$109/mo/location | COGS reporting, advanced inventory, barcode printing |
-
-Key insight: Square charges separately for loyalty (~$49/mo) and bundles email marketing into a higher plan tier.
-
-### Lightspeed / Vend (NZ)
-
-Lightspeed includes loyalty, advanced reporting, eCommerce, and multi-location in all plans (Basic $89/mo, Core $149/mo, Plus $289/mo). No granular add-ons at the sub-$30 level — they charge for the whole platform. Vend was the dominant NZ retail POS before Lightspeed acquisition.
-
-Key insight: Lightspeed competes on bundles, not micro add-ons. This creates an opportunity for per-feature pricing at $9–19/mo.
-
-### Shopify POS (NZ)
-
-| Tier | Price | What's Gated |
-|------|-------|-------------|
-| POS Lite | Free (with Shopify plan) | Basic checkout, returns |
-| POS Pro | US$89/mo/location (~NZ$150) | Staff roles, advanced inventory, omnichannel (BOPIS, ship-from-store), spend-threshold discounts |
-
-Key insight: Shopify gates omnichannel features (buy online, pick up in-store) behind a high-price add-on. NZPOS already ships click-and-collect free.
-
-### Marsello (NZ-founded, used by NZ retailers)
-
-| Plan | Price | What's Included |
-|------|-------|----------------|
-| Loyalty Launch | NZ$100/mo | Points, referrals, automations (25k orders/mo) |
-| Loyalty Accelerate | NZ$200/mo | VIP tiers, custom segmentation, API |
-| Marketing add-on | From US$15/1,000 customers | Email campaigns |
-| SMS add-on | US$0.017/credit | SMS to customers |
-
-Key insight: Loyalty at NZ$100/mo is the market rate for a standalone loyalty product. NZPOS could offer a simpler version at $15–19/mo and win on price for small stores.
-
-### NRS Advanced Data (US, reference only)
-
-$14.95/mo add-on for analytics (profit reports, item sales breakdown, COGS). Shows that $15/mo is an acceptable price point for reporting add-ons even in price-sensitive markets.
+**Existing marketing page state (pre-v8.1):**
+- Landing page showcases 15 features and a pricing section (built in v5.0, updated for email-free in v6.0)
+- Pricing section reflected only 2 paid add-ons (Xero, Inventory) — now needs 5
+- Detail pages exist for Xero and Inventory add-ons only
+- No competitor comparison page exists
 
 ---
 
-## NZ Market Specifics
+## NZ POS Competitor Landscape
 
-**Gift cards:** As of March 16, 2026, NZ law (Fair Trading Amendment) requires eligible gift cards to expire no less than 3 years from date of sale, with expiry date displayed on the card. Non-compliance risks fines up to NZ$30,000 for organisations. Any gift card feature must generate expiry dates 3+ years out and display them on digital gift cards.
+### Competitor 1: Lightspeed Retail (formerly Vend)
 
-**GST on gift cards:** GST is not recognised at gift card purchase time — it is deferred to the point of redemption (when the card is used for goods/services). This means a gift card feature needs to handle deferred GST liability carefully (record the liability on sale, recognise GST only on redemption). This is a meaningful complexity differentiator for NZ vs generic POS systems.
+Vend was founded in Auckland in 2010, making it the most NZ-native of the major competitors. Acquired by Lightspeed (Canada) in 2021, now marketed as Lightspeed Retail X-Series. Strong brand recognition in NZ retail.
 
-**Xero dominance:** ~75% of NZ small businesses use Xero. Already integrated. Any add-on that produces financial data (gift card liability, loyalty points liability) may need Xero sync — but this is v2 complexity, not v1.
+| Plan | Monthly Price (USD) | Key Features |
+|------|-------------------|--------------|
+| Basic | $89/mo (annual) | 1 register, inventory, integrated payments, loyalty, eCommerce |
+| Core | $149/mo | + advanced reporting, multi-location, eCommerce |
+| Plus | $289/mo | + customisation, API access |
 
-**EFTPOS:** Standalone physical terminals (Windcave, Verifone) are the norm. No NFC-integrated POS in v1. Any add-on requiring EFTPOS integration (e.g., gift card tap-to-redeem) must account for manual redemption flow.
+**NZ-relevant notes:**
+- Xero integration: YES — automatic daily sales sync (mixed user reviews on reconciliation quality)
+- Gift cards: YES — included in platform
+- Loyalty: YES — included in all plans
+- COGS / advanced reporting: YES — included in Core+
+- Online store: YES — built in to Core+
+- Offline mode: YES — limited offline capability (the original Vend product was known for this)
+- Pricing model: Bundled — no micro add-ons
 
-**SMS costs in NZ:** NZ short codes cost NZ$275/mo to lease — prohibitive for a small-biz add-on. SMS marketing is not a viable native add-on at $9–19/mo; better to integrate with an existing provider (Twilio, ClickSend) and pass through costs.
+**Key weakness for comparison:** Cheapest plan is $89/mo USD (~NZD $155/mo). No free tier. Lock-in to a subscription even for basic checkout. Acquired Canadian company, NZ origins diluted.
+
+### Competitor 2: Shopify POS
+
+Shopify is primarily an eCommerce platform that extended into POS. Most NZ retailers who use Shopify online are the target market. Strong global brand, widely known.
+
+| Plan | Monthly Price | Key Features |
+|------|-------------|--------------|
+| Basic (with POS Lite) | US$39/mo | Basic checkout, returns at original location, limited staff access |
+| Grow (with POS Lite) | US$105/mo | Unlimited POS logins |
+| Advanced (with POS Lite) | US$399/mo | Advanced reporting |
+| POS Pro add-on | +US$89/mo/location | Staff roles, advanced inventory, BOPIS, spend-threshold discounts, loyalty insights |
+| Retail plan (NZ-specific) | NZ$89/mo | 1 POS Pro location, unlimited POS logins |
+
+**NZ-relevant notes:**
+- Xero integration: Via third-party app — NZ$20/mo additional (CarryTheOne connector)
+- Gift cards: YES — included free with all paid Shopify plans
+- Loyalty: NOT native — requires third-party app (Smile.io, Yotpo, etc., priced separately)
+- COGS / advanced reporting: Gated behind POS Pro (US$89/mo add-on)
+- Online store: YES — this is Shopify's core strength; POS is the add-on
+- Offline mode: NO — requires internet for all transactions
+- Click-and-collect: Gated behind POS Pro
+
+**Key weakness for comparison:** POS is an afterthought to eCommerce. No native loyalty. Xero requires a paid third-party connector. Pricing adds up quickly (base plan + POS Pro + Xero connector = ~NZD $300+/mo).
+
+### Competitor 3: Square
+
+Square is available in New Zealand but with a critical limitation: **Square cannot process card payments in New Zealand.** Square NZ functions as a POS tracking tool only — you cannot use Square's payment processing. All card payments still require a separate EFTPOS terminal.
+
+| Plan | Monthly Price (AUD, AU is closest proxy) | Key Features |
+|------|----------------------------------------|--------------|
+| Free | $0 + transaction fees | Basic POS, inventory, online store |
+| Plus | A$109/mo/location | COGS reports, advanced inventory, barcode printing |
+| Premium | Custom | Large volume, dedicated support |
+
+**NZ-relevant notes:**
+- Card processing: NOT AVAILABLE in NZ (confirmed via Square community forums)
+- Xero integration: NOT available for NZ — only AU, UK, Ireland, Canada, US
+- Gift cards: YES — included free, but no NZ-compliant 3-year expiry handling
+- Loyalty: YES — separate product, A$49/mo (~NZD $85/mo)
+- COGS / advanced reporting: Gated behind Plus tier (A$109/mo)
+- Online store: YES — included free
+- Offline mode: NO — requires internet
+
+**Key weakness for comparison:** Cannot process EFTPOS/card in NZ. No Xero integration for NZ. Gift cards may not comply with NZ Fair Trading Act 2024 (3-year expiry). A significant portion of Square's advertised value is unavailable to NZ merchants.
+
+### Competitor 4: Hike POS
+
+Hike is an Australian cloud POS with a strong NZ presence via the Xero App Store. Positioned as the mid-market all-in-one alternative to Lightspeed for NZ retailers.
+
+| Plan | Monthly Price (USD billed monthly) | Key Features |
+|------|----------------------------------|--------------|
+| Essential | $69/mo | POS, inventory, basic reports, gift cards, loyalty, Xero |
+| Plus | $119/mo | + advanced reports, multiple registers, eCommerce, staff management |
+| Enterprise | Custom | Multi-location chains |
+
+Annual pricing: ~15% cheaper (Essential ~$59/mo, Plus ~$99/mo).
+
+**NZ-relevant notes:**
+- Xero integration: YES — built in, free for all Hike + Xero users. Auto-syncs sales, customers, inventory movement
+- Gift cards: YES — included in all plans
+- Loyalty: YES — points-per-purchase, included in all plans
+- COGS / advanced reporting: Included in Plus tier
+- Online store: YES — eCommerce via Plus plan
+- Offline mode: YES — can continue selling when internet is down (sync when reconnected)
+- GST: YES — supports NZ 15% GST
+
+**Key weakness for comparison:** Essential plan is ~NZD $120+/mo for a complete system. No free tier. More expensive than NZPOS at equivalent add-on coverage. Offline mode is a genuine advantage NZPOS does not yet have.
+
+### Competitor 5: Shopify (NZ) — add-on comparison note
+
+For the add-on comparison specifically, the relevant Shopify NZ cost for parity with NZPOS's 5 add-ons would be:
+- Base Shopify plan (~US$39/mo) + POS Pro (~US$89/mo) + Xero connector (NZ$20/mo) + third-party loyalty app (~US$49/mo)
+- Total equivalent: ~NZD $350+/mo vs NZPOS max $56/mo
 
 ---
 
-## Feature Landscape
+## Feature Landscape for Marketing Pages
 
-### Table Stakes for Add-On Catalog (Must Offer to Compete)
+### Table Stakes: What a Marketing Site Must Show
 
-Features that competing platforms charge for and NZ merchants will expect to find as upgrade options.
+Features every SaaS marketing site must have. Missing these = site feels amateur or incomplete.
 
-| Feature | Why Expected | Complexity | Est. Price Point | Notes |
-|---------|--------------|------------|-----------------|-------|
-| Gift Cards (digital) | Square, Shopify, Lightspeed all offer this; NZ law now mandates 3-year expiry compliance | MEDIUM | $9–14/mo | Requires: issue card (generate unique code), sell card as product, redeem at POS/storefront, track balance. NZ compliance: 3-year expiry, expiry date on card. GST deferred to redemption — must record liability. |
-| Customer Loyalty (points) | Every competitor charges for this; Marsello charges NZ$100+/mo — strong price gap opportunity | MEDIUM | $15–19/mo | Points-per-dollar-spent, redemption at POS checkout, simple balance display. No VIP tiers or SMS for v1. |
-| Advanced Reporting (COGS + margin) | Square gates COGS reports behind Plus ($109/mo); NRS charges $15/mo. Merchants need margin data to buy well | MEDIUM | $9–14/mo | Requires: cost_price column on products, profit margin per-product, COGS report by period. Hook into existing orders+line_items schema. |
-| Purchase Orders / Supplier Reorder | Lightspeed, Shopify POS Stocky app, AdvanceRetail all offer PO management. Merchants at a supplies store reorder frequently | HIGH | $9–14/mo | Create PO, send to supplier (PDF/email), receive stock (auto-increment inventory). Depends on Inventory Management add-on. |
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Pricing section with all add-ons | Buyers want self-serve pricing — no "contact for pricing" | LOW | Update existing pricing section to show all 5 add-ons (was 2). Must match actual Stripe billing. |
+| Dedicated page per paid add-on | SaaS buyers research specific features before committing | LOW-MEDIUM | Gift Cards, Advanced Reporting, Loyalty need new pages. Xero and Inventory pages already exist. |
+| Feature comparison table | Decision-stage buyers expect side-by-side feature matrix | MEDIUM | Core of the comparison page. Rows = features, columns = NZPOS vs Lightspeed vs Shopify vs Square |
+| Trust signals (NZ-specific) | NZ buyers are skeptical of generic global SaaS | LOW | GST badge, EFTPOS support callout, NZ law compliance (Fair Trading Act, Privacy Act), "Built for NZ" |
+| CTA at multiple page positions | Conversion best practice — capture intent wherever it fires | LOW | Top of page (Try Demo), post-comparison table (Start Free), FAQ bottom (Contact) |
+| Free trial / no credit card framing | Reduces signup friction; relevant since NZPOS has a free core | LOW | Hero should call out "Free core POS — add what you need" |
+| Mobile-responsive layout | Many NZ small biz owners browse on phones | LOW | Already handled by Tailwind CSS — maintain for new pages |
 
-### Differentiators (Strong Opportunity, Not Yet Commoditised)
+### Differentiators: What Makes the Comparison Page Compelling
 
-Features where NZ-specific context or price advantage creates real differentiation.
+Features and framing that give NZPOS a genuine argument over competitors.
 
-| Feature | Value Proposition | Complexity | Est. Price Point | Notes |
-|---------|-------------------|------------|-----------------|-------|
-| Gift Cards with NZ GST Compliance | Generic gift card apps don't handle NZ deferred-GST liability correctly. NZPOS already handles GST per-line — gift card deferred GST is a natural extension | MEDIUM | $14/mo | Deferred GST journal: credit gift_card_liability, debit when redeemed. Correct Xero sync if they have Xero add-on. This is a genuine NZ differentiator. |
-| Loyalty Integrated with Existing Customer Accounts | Marsello and Square require separate loyalty signup. NZPOS customers already have accounts — loyalty points add to existing profiles with zero friction | MEDIUM | $15/mo | Points attached to `customers` table. No new auth needed. In-store: staff looks up customer by name/email at POS. Online: auto-applied at checkout. |
-| Printed/Email Receipt with QR Loyalty Balance | Customers can check their points balance via QR on receipt — no app required | LOW | Bundled with loyalty | QR links to a public `/loyalty/[customer_id]` page showing balance. No app install. NZ merchants like low-tech solutions. |
-| Cost Price Tracking for Supplies Businesses | A supplies store (the founder's own use case) buys at wholesale and needs margin visibility per SKU. Lightspeed includes this but charges NZ$89–289/mo | MEDIUM | $9/mo | Add `cost_price_cents` to products table. Show margin% on product admin, in reports. Existing orders already have unit_price — margin is `(unit_price - cost_price) / unit_price`. |
+| Feature / Angle | Value Proposition | Complexity | Notes |
+|----------------|-------------------|------------|-------|
+| Per-add-on pricing vs bundle | "Pay $9/mo for Xero, not $89/mo for a plan you don't need" | LOW | This is a core positioning claim. Show a side-by-side cost calculator scenario: "Getting Xero + loyalty from Lightspeed costs $149/mo. With NZPOS: $24/mo." |
+| NZ GST compliance built in | Square and Shopify require configuration; Lightspeed handles it; NZPOS does it correctly by default | LOW | Explicit callout in comparison table. Per-line GST on discounted amounts. IRD-compliant. |
+| NZ Fair Trading Act gift card compliance | Square gift cards do not auto-enforce 3-year NZ minimum expiry. NZPOS does at DB level (CHECK constraint). | LOW | Strong trust signal for NZ merchants. Cite the law. |
+| Privacy Amendment Act 2025 loyalty consent | NZPOS stores explicit consent before loyalty enrollment (required from 1 May 2026). Competitors are silent on this. | LOW | Relevant to NZ merchants who need to be compliant |
+| Xero integration included ($9/mo) vs Shopify's paid connector | Shopify needs a NZ$20/mo third-party app for Xero. NZPOS native integration is $9/mo and does not require a connector. | LOW | Direct comparison claim with evidence |
+| Square cannot process payments in NZ | Square is widely known globally but NZ card processing not available. POS-only, no EFTPOS integration. | LOW | This is a factual disqualifier for NZ buyers. State it clearly in the comparison. |
+| Interactive POS demo | Competitors do not offer an in-browser try-before-signup experience | LOW | Link to existing /demo/pos from comparison page hero |
+| Free tier includes more than competitors | POS + online store + email notifications + basic reporting + barcode scanning — all free. Square free tier has no Xero sync. Shopify free tier has no POS Pro features. | LOW | Feature table rows showing what's free vs paid for each competitor |
+| Built by an NZ founder for NZ needs | Vend was NZ-born but is now a Canadian company product. NZPOS is indie. | LOW | "Why NZPOS" narrative section. Not just features, but who it's for and who built it. |
 
-### Anti-Features (Frequently Requested, Wrong for This Platform)
+### Anti-Features for Marketing Pages
 
-| Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| SMS Marketing add-on | Competitors offer it; merchants want to text customers | NZ short codes cost NZ$275/mo to lease — completely uneconomical at $9–19/mo price point. Twilio pass-through costs at NZ retail volume (~500 customers) would exceed the add-on price | Integrate email marketing (free tier email already exists). Flag SMS as future if merchant count grows to subsidise short-code cost. |
-| Booking / Appointments add-on | Cafes and boutiques ask for appointment features | Outside scope of retail POS. Square Appointments is a separate product. Most NZ service businesses use Calendly, SimplyBook.me, or Google Calendar (all free or cheap). Building a booking engine from scratch is 2-3x the complexity of any other add-on | Recommend third-party integration or explicitly out-of-scope. |
-| Loyalty with tiered VIP status (Bronze/Silver/Gold) | Sounds valuable; Marsello's "Loyalty Accelerate" charges NZ$200/mo for it | Tier logic requires segment migration rules, retroactive recalculation, edge cases on point expiry, and customer-visible messaging. For NZ micro-retailers with 200–500 regular customers, VIP tiers add zero behaviour change | Start with flat points rate. Add tiers in v2 if merchants request it post-launch. |
-| Multi-channel email campaigns (CRM blast) | Merchants want to email their whole customer list | Email deliverability is a profession. SPAM compliance, unsubscribe management (NZ Unsolicited Electronic Messages Act 2007), bounce handling, and reputation management are separate SaaS concerns | Use Mailchimp/Klaviyo integration rather than building an email platform. Out of scope for v8.0. |
-| Physical gift card printing integration | "Can I print gift cards like Myer?" | Requires physical card vendor (US-based for AU/NZ), MOQ of 100–500 cards, per-design setup fee. Completely out of scope for a SaaS add-on | Digital gift codes only — customers receive a unique code by email. |
-| Windcave / EFTPOS terminal integration for gift card tap | "Customers want to tap their gift card like a credit card" | Windcave integration is explicitly deferred to v1.1 in PROJECT.md. Terminal SDK provisioning is complex hardware integration. NFC gift cards require physical card printing | Digital gift codes redeemed manually by reading a code to the cashier or scanning. Use barcode/QR on digital card. |
-| Offline mode for any add-on | "What if internet goes down?" | Offline mode requires local-first architecture (explicitly ruled out in PROJECT.md). No add-on should change this constraint | Document internet requirement clearly. For NZ retail, broadband reliability is sufficient for single-terminal stores. |
+Patterns that seem like good marketing but create problems.
+
+| Anti-Feature | Why Requested | Why Problematic | Alternative |
+|-------------|---------------|-----------------|-------------|
+| Claiming offline mode | Competitors (Hike, Lightspeed) have offline mode; tempting to claim parity | NZPOS explicitly does not support offline in v1. False claim damages trust and increases support burden | State it honestly: "Internet required (reliable broadband in NZ retail makes this practical). Offline mode planned." |
+| Fake comparison checkmarks | Check everything as "YES" to look better than competitors | Savvy buyers verify claims. Getting caught in a misleading comparison destroys trust and invites public criticism. | Only check features that genuinely exist. Use nuanced notes (e.g., "Gift cards — NZ 3-year expiry compliant" vs just a tick) |
+| "Contact for pricing" | Avoids committing to prices that might need updating | B2B SaaS buyers abandon pages with opaque pricing. NZPOS has clear, committed pricing — use it. | Show real prices. Add "as at [date]" footnote. Update pricing section when Stripe prices change. |
+| Overwhelming feature lists | More features = more value, right? | Decision paralysis. Buyers looking at a 40-row table close the tab. Competitors' comparison tables are shorter and more skimmable. | Lead with 8-10 decisive features. Link to full feature list for those who want depth. |
+| Naming every competitor in the same table | "We're better than 10 other systems!" | A 10-column table is unreadable. Dilutes the argument. Signals you're not confident about specific comparisons. | Focus on 3-4 primary comparisons: Lightspeed (dominant NZ), Shopify (eComm-first NZ), Square (awareness but limited NZ), Hike (Xero-specific NZ). |
+| Discounting to compete on price alone | "We're the cheapest!" | Cheapest signals low quality in enterprise-adjacent tools. NZ small biz owners want reliable, not just cheap. | Price-for-value framing: "Get exactly what you need, pay only for what you use." Show scenario math, not race to zero. |
+| Generic testimonials ("Great product! 5 stars") | Social proof is important | Generic quotes are ignored. Buyers want specifics about NZ use cases, GST handling, EFTPOS workflow, Xero sync outcomes. | Write placeholder testimonials that model the specificity you want to collect ("As a Christchurch gift store owner, the 3-year gift card expiry just worked — I didn't have to configure anything.") |
 
 ---
 
-## Feature Dependencies
+## Feature Dependencies (Marketing Pages)
 
 ```
-[Gift Cards add-on]
-    └──requires──> [products table — new "gift_card" product_type]
-    └──requires──> [gift_cards table — code, balance, issued_at, expires_at, redeemed_by]
-    └──requires──> [POS redemption flow — apply gift card code before cash/EFTPOS]
-    └──requires──> [Storefront purchase flow — sell gift card as product]
-    └──requires──> [Email delivery — send code to recipient (already free)]
-    └──requires──> [NZ compliance: 3-year expiry auto-set on issue]
-    └──optionally──> [Xero sync — deferred GST liability journal if merchant has Xero add-on]
-    └──conflicts──> [Offline mode — gift card balances require DB lookup]
+[Comparison Page]
+    └──requires──> [Competitor data accuracy] — must verify competitor pricing before publish
+    └──requires──> [All 5 add-on detail pages] — comparison table links into each
+    └──requires──> [Updated pricing section] — comparison page references NZPOS prices
+    └──enhances──> [/demo/pos] — comparison page CTA links to existing demo
+    └──enhances──> [Signup flow] — "Start Free" CTA from comparison must go to signup
 
-[Loyalty Points add-on]
-    └──requires──> [customers table — ALREADY EXISTS (v2.0)]
-    └──requires──> [loyalty_points table — customer_id, store_id, points_balance, transactions log]
-    └──requires──> [POS checkout — "look up customer" step before completing sale]
-    └──requires──> [Storefront checkout — auto-apply points if customer logged in]
-    └──enhances──> [Customer accounts — points balance shown on customer profile page]
-    └──optionally──> [Gift Cards — points could be redeemed for store credit/gift card]
+[Landing Page Refresh]
+    └──requires──> [Gift Cards detail page] — new, must build
+    └──requires──> [Advanced Reporting detail page] — new, must build
+    └──requires──> [Loyalty Points detail page] — new, must build
+    └──enhances──> [Existing Xero detail page] — link from pricing section already works
+    └──enhances──> [Existing Inventory detail page] — link from pricing section already works
 
-[Advanced Reporting / COGS add-on]
-    └──requires──> [products table — new cost_price_cents column]
-    └──requires──> [order_items table — ALREADY EXISTS (unit_price, quantity)]
-    └──requires──> [Inventory Management add-on — ALREADY EXISTS — for stock-on-hand valuation]
-    └──enhances──> [Admin dashboard — margin% overlay on existing charts]
+[Add-On Detail Pages (3 new)]
+    └──requires──> [Existing feature gates] — pages describe what is gated, so feature gating must be correct in prod
+    └──enhances──> [Comparison page] — comparison table links into detail pages as evidence
 
-[Purchase Orders add-on]
-    └──requires──> [Inventory Management add-on — ALREADY EXISTS — for stock increment on receive]
-    └──requires──> [suppliers table — name, email, phone]
-    └──requires──> [purchase_orders table — supplier_id, status, line items]
-    └──requires──> [purchase_order_items table — product_id, quantity_ordered, cost_price]
-    └──requires──> [receive PO flow — mark as received, increment stock via adjust_stock RPC]
-    └──enhances──> [Advanced Reporting — cost of goods auto-populated from PO receive events]
+[Pricing Section Update]
+    └──requires──> [Stripe billing confirmed for all 5 add-ons] — already done in v8.0
+    └──requires──> [Correct max MRR copy] — $56/mo if all 5 add-ons
 ```
 
 ### Dependency Notes
 
-- **Purchase Orders depends on Inventory Management:** You cannot receive stock against a PO if inventory is not tracked. Feature gating must require `has_inventory` before `has_purchase_orders`.
-- **Advanced Reporting benefits from both POs and Inventory:** COGS accuracy improves when cost_price comes from PO receiving rather than manual entry. However, COGS reporting can launch with manual cost_price input — PO integration is an enhancement.
-- **Loyalty requires a customer lookup step at POS:** Currently the POS checkout has no "who is the customer?" step for in-store sales. Adding loyalty means adding an optional customer search/select before completing a sale. This is a UX change to the POS flow.
-- **Gift cards at POS require a redemption input step:** POS checkout currently accepts cash or EFTPOS. Gift card adds a third payment method path: enter code, validate balance, apply partial or full payment.
+- **Comparison page depends on all 5 add-on detail pages:** The comparison table should link directly to each add-on's dedicated page as evidence. Build detail pages before the comparison page, or at minimum in the same phase.
+- **Pricing section must be updated before comparison page goes live:** The comparison page references NZPOS pricing. If the pricing section still shows 2 add-ons, the comparison is internally inconsistent.
+- **Competitor data needs a verification date:** Competitor pricing changes. The comparison page should include a "Competitor pricing last verified [date]" footnote and use approximate ranges rather than exact current prices where possible.
 
 ---
 
-## MVP Definition (v8.0)
+## MVP Definition (v8.1)
 
-This milestone adds paid add-ons. "MVP" means the smallest set of add-ons that generates meaningful new MRR and validates add-on demand.
+### Launch With
 
-### Build First — Highest Value / Best Fit
+- [ ] **Pricing section update** — Show all 5 paid add-ons with prices and feature descriptions. The current 2-add-on pricing section is the biggest gap. Complexity: LOW.
+- [ ] **Gift Cards detail page** — Explain what the add-on does, NZ compliance angle, how to enable. Mirror the Xero and Inventory page format. Complexity: LOW.
+- [ ] **Advanced Reporting detail page** — Explain COGS, margin%, profit reports. Complexity: LOW.
+- [ ] **Loyalty Points detail page** — Explain earn/redeem, customer lookup, NZ privacy compliance. Complexity: LOW.
+- [ ] **Competitor comparison page** — Feature matrix, "Why NZPOS" narrative, FAQ, CTAs. Complexity: MEDIUM.
 
-- [ ] **Gift Cards ($14/mo)** — NZ law change (March 2026) makes this timely. NZPOS already handles GST correctly — deferred GST on gift cards is a natural extension. Low competition at this price point for NZ-compliant digital gift cards. Complexity: MEDIUM.
-- [ ] **Advanced Reporting / COGS ($9/mo)** — Already have all the data (orders, line items). Just need cost_price column on products and report generation. Low build complexity, clear merchant value. Complexity: MEDIUM (mostly reporting UI).
+### Add After Validation
 
-### Build Second — Strong Demand, Moderate Complexity
+- [ ] **Testimonials / social proof on comparison page** — Requires real customer quotes. Start with placeholder structure; fill in when merchants provide feedback.
+- [ ] **Comparison page for individual competitors** (e.g., `/compare/nzpos-vs-lightspeed`) — Targeted SEO pages for high-intent searches. Depends on whether single unified page converts well first.
 
-- [ ] **Loyalty Points ($15/mo)** — Demand is high (every competitor charges for it). NZPOS has existing customer accounts, making integration cleaner than standalone loyalty tools. Adds a customer lookup step to POS flow (UX design work needed). Complexity: MEDIUM.
+### Future Consideration
 
-### Defer — High Complexity or Dependency Chain
-
-- [ ] **Purchase Orders ($9/mo)** — High complexity, depends on Inventory Management being adopted first. Build after Loyalty and COGS are live and generating revenue. Target v8.1 or v9.0. Complexity: HIGH.
+- [ ] **Pricing calculator ("Build your plan")** — Interactive tool to show cost based on add-on selection. High value but medium complexity. Defer until pricing section validates.
+- [ ] **Case study pages** — Specific NZ merchant stories. Requires real customers using the platform.
 
 ---
 
 ## Feature Prioritization Matrix
 
-| Feature | Merchant Value | Build Cost | Revenue Potential | Priority |
-|---------|---------------|------------|------------------|----------|
-| Gift Cards (NZ-compliant) | HIGH — timely due to new NZ law | MEDIUM | $14/mo × stores | P1 |
-| Advanced Reporting / COGS | HIGH — margin data is universal need | MEDIUM | $9/mo × stores | P1 |
-| Loyalty Points | HIGH — every competitor charges for it | MEDIUM | $15/mo × stores | P2 |
-| Purchase Orders | MEDIUM — supplies/wholesale focused | HIGH | $9/mo × inventory users only | P3 |
+| Feature | User Value | Implementation Cost | Priority |
+|---------|------------|---------------------|----------|
+| Pricing section update (all 5 add-ons) | HIGH — removes confusion for evaluators | LOW — update existing component | P1 |
+| Gift Cards detail page | HIGH — new in v8.0, NZ compliance angle is compelling | LOW — content + page structure | P1 |
+| Advanced Reporting detail page | HIGH — COGS is a real merchant need | LOW — content + page structure | P1 |
+| Loyalty Points detail page | HIGH — most relatable feature for retail buyers | LOW — content + page structure | P1 |
+| Competitor comparison page | HIGH — captures high-intent decision-stage traffic | MEDIUM — feature matrix research + layout | P1 |
+| Individual "vs" pages per competitor | MEDIUM — targeted SEO, lower overall volume | MEDIUM — content per competitor | P2 |
+| Pricing calculator | MEDIUM — useful, not essential | MEDIUM — interactive React component | P3 |
+| Customer case studies | HIGH — when available | LOW — template exists | P2 (blocked on real data) |
 
 **Priority key:**
-- P1: Ship in v8.0
-- P2: Ship in v8.1 (after v8.0 validated)
+- P1: Ship in v8.1
+- P2: Add after v8.1 validates
 - P3: Future milestone
 
 ---
 
-## Competitor Feature Analysis
+## Competitor Feature Analysis (Comparison Table Rows)
 
-| Feature | Square AU/NZ | Lightspeed/Vend | Shopify POS | Marsello (NZ) | NZPOS v8.0 Approach |
-|---------|-------------|-----------------|-------------|---------------|---------------------|
-| Gift cards | A$0 (free, but no deferred GST) | Included in plan | Free with Shopify | Not applicable | $14/mo, NZ-compliant (3-yr expiry, deferred GST) |
-| Loyalty | A$49/mo | Included in plan | Not native | NZ$100–200/mo | $15/mo — strong price advantage |
-| COGS / margin reports | A$109/mo (Square Plus) | Included in plan | US$89/mo (POS Pro) | Not applicable | $9/mo — differentiated on price |
-| Purchase orders | A$109/mo (Square Plus) | Included in plan | Via Stocky app | Not applicable | $9/mo (future, requires Inventory) |
-| Email marketing | Included in Square Plus | Included in plan | Via Shopify Email | $15+/1k contacts | Not in v8.0 (free email notifications already exist) |
-| SMS marketing | Separate product | Separate product | Via Klaviyo etc. | $0.017/credit | Explicitly not in scope (NZ short-code costs prohibitive) |
+These are the rows to include in the comparison page feature matrix. Focused on 8-10 decisive factors, not exhaustive.
+
+| Feature | NZPOS | Lightspeed Retail | Shopify POS | Square NZ | Hike POS |
+|---------|-------|-------------------|-------------|-----------|----------|
+| **Free tier** | YES — full POS + online store + email notifications | NO — from $89/mo | NO — from ~US$39/mo | YES — tracking only (no card processing) | NO — from $69/mo USD |
+| **NZ card processing** | YES — standalone EFTPOS (manual confirm) | YES — integrated | YES — via Stripe | NO — card processing unavailable in NZ | YES — via integrated payments |
+| **Xero integration** | YES — $9/mo add-on, native | YES — included (mixed reviews) | Via third-party connector (~NZ$20/mo extra) | NOT available for NZ | YES — included free |
+| **GST 15% (NZ)** | YES — IRD-compliant per-line rounding | YES | YES — requires configuration | YES — requires configuration | YES |
+| **Gift cards (NZ 3-yr expiry)** | YES — $14/mo, DB-enforced NZ compliance | YES — included | YES — included, compliance manual | YES — free but no auto NZ expiry enforcement | YES — included |
+| **Loyalty points** | YES — $15/mo, built on existing customer accounts | YES — included | NOT native (third-party app ~US$49/mo) | YES — A$49/mo (~NZD $85/mo) | YES — included |
+| **COGS / margin reports** | YES — $9/mo add-on | YES — Core plan ($149/mo) | Gated behind POS Pro (US$89/mo) | Gated behind Plus tier (A$109/mo) | YES — Plus plan ($119/mo USD) |
+| **Online store** | YES — included free | YES — Core plan+ | YES — Shopify's core product | YES — included | YES — Plus plan+ |
+| **Click-and-collect** | YES — included free | YES — included | Gated behind POS Pro | YES — included | YES — included |
+| **Offline mode** | NO | YES — limited | NO | NO | YES |
+| **Max monthly cost** | $56/mo (all 5 add-ons) | $149–289/mo | $300+/mo (base + POS Pro + Xero + loyalty) | Not viable as primary NZ POS | $119/mo USD |
+| **NZ Privacy Act 2025 compliance** | YES — loyalty consent built in | Not documented | Not documented | Not documented | Not documented |
+
+**Notes for comparison page copy:**
+- Square's "NO" for NZ card processing is a significant factual differentiator. Cite: Square Community forum confirmation.
+- Shopify Xero connector cost: NZ$20/mo via CarryTheOne app (confirmed on Xero App Store NZ).
+- Square Loyalty pricing: A$49/mo confirmed on AU Square pricing page.
+- Lightspeed pricing in USD: $89/$149/$289/mo (annual). NZD equivalent approximately 1.7× at current rates (~NZD $155–505/mo).
+- Competitor pricing should be noted as approximate with last-verified date. All are subject to change.
 
 ---
 
-## Suggested Pricing for v8.0 Add-Ons
+## SEO & Page Structure Patterns
 
-| Add-On | Recommended Price | Rationale |
-|--------|------------------|-----------|
-| Gift Cards | **$14/mo** | Between Square (free but non-compliant) and Lightspeed (bundled at $89+/mo). NZ compliance is the justification for charging. |
-| Advanced Reporting | **$9/mo** | Same as existing add-ons. Anchors to established price expectations. $15/mo also viable if COGS + supplier cost import is included. |
-| Loyalty Points | **$15/mo** | Dramatically below Marsello NZ$100/mo. Above $9 to signal it's a meaningful feature. Square charges A$49/mo — even $15 is a strong price position. |
-| Purchase Orders | **$9/mo** | Bundled with Inventory Management conceptually. Could be $14/mo if standalone. Require Inventory Management as prerequisite. |
+### Comparison Page URL
+
+Recommended: `/compare` (single page for v8.1)
+
+Future expansion: `/compare/nzpos-vs-lightspeed`, `/compare/nzpos-vs-shopify`, etc.
+
+Do NOT use: `/alternatives/` (implies you are the alternative; NZPOS should be positioned as the primary recommendation)
+
+### Page Structure (Comparison Page)
+
+1. **H1** — "NZPOS vs [Lightspeed / Shopify / Square]: NZ Retail POS Compared" (or variant)
+2. **Above-fold bias disclosure** — Short sentence: "This comparison is written by NZPOS. We've aimed to be accurate — competitor details last verified [date]."
+3. **Quick verdict** — 3-bullet summary of where NZPOS wins
+4. **Feature comparison table** — 8-10 rows, 5 columns (NZPOS + 4 competitors). Checkmarks + contextual notes, not just ticks.
+5. **Detailed callouts (3-5)** — Narrative sections on key differentiators: pricing model, NZ GST compliance, NZ gift card law, Square's NZ limitations, Xero integration cost
+6. **"Who should choose each"** — Brief paragraph per competitor: "Choose Lightspeed if you need offline mode and multi-location today." Builds credibility, helps buyers self-qualify.
+7. **FAQ accordion** — 4-6 questions: "Does Square work in NZ?", "Is Xero included?", "What's the minimum cost?", "Do I need a contract?"
+8. **Final CTA** — High-contrast section: "Start free. Add what you need." → Sign up button + Try demo link
+
+### Add-On Detail Page Structure (x3 new pages)
+
+Each page mirrors the existing Xero and Inventory detail page format:
+1. Hero — Feature name, one-line value prop, price ($X/mo), CTA
+2. What it does — 3-4 bullet feature list
+3. NZ compliance callout (where relevant — Gift Cards, Loyalty)
+4. Screenshot or UI illustration placeholder
+5. How it works — numbered steps (enable in billing → configure → use at POS/storefront)
+6. "Works with" — note that the add-on integrates with existing free features
+7. FAQ — 3-4 questions specific to the feature
+8. CTA — "Enable [Add-On] — $X/mo"
 
 ---
 
 ## Sources
 
-- Square Retail AU pricing (official): https://squareup.com/au/en/point-of-sale/retail/pricing
-- Square Loyalty AU pricing: https://squareup.com/help/au/en/article/6382-square-loyalty-pricing
-- Square Appointments AU review (2026): https://www.softwarehq.com.au/review/square-appointments
-- Lightspeed Retail pricing (official): https://www.lightspeedhq.com/pos/retail/pricing/
-- Lightspeed Loyalty overview: https://www.lightspeedhq.com/pos/retail/loyalty/
-- Marsello pricing (official, NZD confirmed): https://www.marsello.com/pricing
-- Shopify POS Lite vs Pro comparison: https://litextension.com/blog/shopify-pos-lite-vs-pro/
-- NZ gift card law change (business.govt.nz): https://www.business.govt.nz/news/gift-card-rules-have-changed
-- NRS Advanced Data pricing ($14.95/mo add-on): https://nrsplus.com/advanced-data/
-- Top 5 POS systems NZ: https://www.connectpos.com/top-5-pos-systems-in-new-zealand/
-- Top 5 POS tools for small Kiwi retailers: https://blog.eftpos.co.nz/blog/top-5-pos-software-tools-for-small-kiwi-retailers
-- Shopify NZ: Gift cards for retail: https://www.shopify.com/nz/retail/gift-cards-for-retail
-- Shopify NZ: POS loyalty programs: https://www.shopify.com/nz/retail/pos-loyalty-program
-- IRD tax treatment of gift cards (April 2025): https://www.affinityaccounting.co.nz/blog/tax-treatment-of-gift-cards-ird-interpretation
+- Lightspeed Retail pricing (official, verified 2026-04-07): https://www.lightspeedhq.com/pos/retail/pricing/
+- Lightspeed Xero integration: https://www.lightspeedhq.com/lightspeed-xero/
+- Square AU pricing (closest proxy for NZ market): https://squareup.com/au/en/point-of-sale/retail/pricing
+- Square NZ card processing not available (community confirmation): https://community.squareup.com/t5/General-Discussion/Is-Square-available-in-New-Zealand/td-p/72331
+- Square + Xero NZ unavailability: https://central.xero.com/s/article/Square
+- Shopify POS NZ pricing: https://www.shopify.com/nz/pos/pricing
+- Shopify Xero connector (CarryTheOne, NZ$20/mo): https://apps.xero.com/nz/app/shopify
+- Hike POS pricing (USD): https://hikeup.com/nz/pricing/ (confirmed via SoftwareConnect, G2)
+- Hike Xero integration: https://apps.xero.com/nz/app/hike-pos
+- B2B SaaS comparison page guide: https://backstageseo.com/blog/b2b-comparison-pages/
+- SaaS comparison pages for SEO: https://piperocket.digital/blogs/how-to-write-saas-comparison-pages-for-seo/
+- Best SaaS comparison page examples: https://www.poweredbysearch.com/learn/best-saas-comparison-pages/
+- POSbiz (hospitality-only, not retail): https://www.posbiz.co.nz/pricing
+- Xero App Store NZ — POS integrations: https://apps.xero.com/nz/function/point-of-sale
 
 ---
 
-*Feature research for: NZPOS v8.0 Add-On Catalog Expansion*
-*Researched: 2026-04-06*
+*Feature research for: NZPOS v8.1 Marketing Refresh & Compare Page*
+*Researched: 2026-04-07*

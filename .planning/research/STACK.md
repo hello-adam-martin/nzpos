@@ -1185,3 +1185,157 @@ npm install nanoid @react-pdf/renderer xlsx @shopify/shopify-api oauth-1.0a @ful
 ---
 *Stack research for: NZPOS v8.0 Add-On Catalog Expansion (loyalty, gift cards, advanced reporting, CRM/marketing, marketplace sync, supplier management, staff scheduling)*
 *Researched: 2026-04-06*
+
+---
+
+## v8.1 Marketing Refresh & Compare Page — Stack Additions
+
+**Researched:** 2026-04-07
+**Confidence:** HIGH
+
+This section covers net-new stack needs for: landing page refresh (all 5 add-ons), 3 new add-on detail pages, and a competitor comparison page. The existing stack handles 95% of this work — only two targeted additions are warranted.
+
+---
+
+### What the Existing Stack Already Covers (No New Packages Needed)
+
+| Capability | Existing Solution |
+|------------|-----------------|
+| Static page rendering | `force-static` + Server Components (already in all marketing pages) |
+| SEO metadata | `generateMetadata` export in each `page.tsx` (already used) |
+| Tailwind CSS styling | Tailwind v4 CSS-native config, existing design tokens |
+| Icon set | `lucide-react ^1.7.0` (already installed) |
+| Link routing | `next/link` (built-in) |
+| Page layout | Existing `(marketing)` route group with `layout.tsx` |
+| Static data authoring | TypeScript constant files (pattern already used for add-on data) |
+
+The comparison page feature matrix is best authored as a typed TypeScript constant (`/src/data/competitors.ts`), not a CMS. It changes when competitor pricing changes — not frequently enough to justify a CMS dependency or monthly cost.
+
+---
+
+### New Package: `schema-dts` (dev dependency, types only)
+
+**Version:** ^2.0.0 (published March 2026, Google-maintained)
+
+**Purpose:** TypeScript types for Schema.org JSON-LD structured data. Zero runtime cost — types only. The JSON-LD output is a plain string rendered in a `<script type="application/ld+json">` tag inside a Server Component.
+
+**Why:** Next.js officially documents embedding JSON-LD as a `<script>` tag in Server Components. `schema-dts` provides type safety for `SoftwareApplication`, `FAQPage`, `Organization`, and `BreadcrumbList` schema types — authoring without it means writing untyped JSON blobs.
+
+**What to use it for:**
+- Comparison page: `SoftwareApplication` schema describing NZPOS + `FAQPage` for "Why NZPOS?" questions
+- Add-on detail pages: `SoftwareApplication` with add-on-specific `featureList` and `offers`
+- Landing page: `Organization` schema with `name`, `url`, `sameAs` social links
+
+**Installation:** `npm install -D schema-dts`
+
+---
+
+### New Package: `motion` (optional, client-side only)
+
+**Package:** `motion` (formerly `framer-motion`) — import from `motion/react`
+**Version:** ^12.x (v12.38.0 current as of April 2026)
+
+**Decision: Add only if scroll-triggered animations are required.** The existing marketing pages use Tailwind CSS transition utilities for hover effects, which is sufficient for the current page style. If the refresh calls for "fade up on scroll" entrance animations for feature cards and add-on tiles, `motion` is the correct choice.
+
+**Why motion over alternatives:**
+- GSAP: 78kb, complex setup, overkill for marketing page fade-ins. Designed for SVG/Canvas/WebGL timelines.
+- React Spring: Physics-based, high learning curve, wrong mental model for scroll-fade marketing copy.
+- `tailwindcss-motion` plugin (5kb pure CSS): Cannot trigger on scroll — only fires when element is in DOM on load. Doesn't solve viewport-entry animation.
+
+**Bundle strategy:** Use `LazyMotion` + `domAnimation` feature bundle to keep initial JS at ~4.6kb rather than the full 85kb bundle.
+
+**Constraint:** Any component importing from `motion/react` must be a Client Component (`"use client"`). Create thin animation wrapper components that leave the Server Component page tree intact.
+
+**Installation:** `npm install motion`
+
+---
+
+### CSS Animations: `tw-animate-css` (if simple keyframes suffice)
+
+**Not an npm package install in the traditional sense** — it is imported as a CSS file.
+
+`tailwindcss-animate` was deprecated March 2025 and does not support Tailwind v4's CSS-native config. The v4-compatible replacement is `tw-animate-css`, which uses `@import "tw-animate-css"` in `globals.css`.
+
+**Use case:** Simple one-shot entrance animations (fade-in on load, slide-up) where no scroll trigger is needed. Use this before reaching for `motion`. Most static marketing copy animations can be handled at the CSS level.
+
+**Decision tree:**
+1. Does the animation fire once on page load without scroll detection? → `tw-animate-css` CSS classes
+2. Does the animation need to fire when an element enters the viewport while scrolling? → `motion` with `useInView` or `whileInView`
+
+---
+
+### What NOT to Add
+
+| Avoid | Why |
+|-------|-----|
+| `next-seo` | Conflicts with existing `generateMetadata` API usage. Mixing these is a documented anti-pattern in Next.js App Router. |
+| Any CMS (Contentful, Sanity, etc.) | Competitor comparison data is static business content, not user-generated. A TypeScript constant file is the right model — TypeScript catches stale data, no monthly cost, no third-party auth. |
+| GSAP | Overkill for marketing scroll-fades. No SVG/Canvas/WebGL needs. |
+| `tailwindcss-animate` | Deprecated March 2025. JS plugin system incompatible with Tailwind v4 CSS-native config. |
+
+---
+
+### SEO Pattern for the Comparison Page
+
+Next.js `generateMetadata` handles `title`, `description`, `openGraph`, and `twitter` fields (already the pattern in existing marketing pages). JSON-LD is added separately as a `<script>` tag in the Server Component:
+
+```tsx
+// src/app/(marketing)/compare/page.tsx
+import type { SoftwareApplication, WithContext } from 'schema-dts'
+
+const jsonLd: WithContext<SoftwareApplication> = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'NZPOS',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'NZD', description: 'Free core plan' },
+  featureList: ['GST compliance', 'Xero integration', 'POS + online store', 'Gift Cards'],
+}
+
+export default function ComparePage() {
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      {/* page content */}
+    </>
+  )
+}
+```
+
+No library is needed at runtime. `schema-dts` provides the TypeScript types only.
+
+---
+
+### Installation Summary for v8.1
+
+```bash
+# Structured data type safety (dev-only, zero runtime)
+npm install -D schema-dts
+
+# Animation — only if scroll-triggered viewport animations are confirmed in design
+npm install motion
+
+# CSS animations for Tailwind v4 — add to src/app/globals.css, no npm install needed if using CDN
+# OR: npm install tw-animate-css  then @import "tw-animate-css" in globals.css
+```
+
+---
+
+### Sources
+
+- Next.js JSON-LD guide (official): https://nextjs.org/docs/app/guides/json-ld — `<script>` tag in Server Component, no library required
+- `schema-dts` npm (Google): https://www.npmjs.com/package/schema-dts — v2.0.0 current March 2026
+- `schema-dts` GitHub: https://github.com/google/schema-dts — Google-maintained, TypeScript-first
+- Motion (formerly Framer Motion): https://motion.dev — `motion` package, `motion/react` import path, v12.38.0 current April 2026
+- Motion LazyMotion bundle size: https://motion.dev/docs/react-reduce-bundle-size — 4.6kb initial with LazyMotion + domAnimation
+- LogRocket animation library comparison (Jan 2026): https://blog.logrocket.com/best-react-animation-libraries/ — benchmark of tailwindcss-motion 5kb vs motion 85kb full / 4.6kb lazy
+- tw-animate-css GitHub: https://github.com/Wombosvideo/tw-animate-css — Tailwind v4 CSS-native replacement for tailwindcss-animate
+- tailwindcss-animate deprecation: https://github.com/jamiebuilds/tailwindcss-animate — deprecated March 2025
+
+---
+*Stack research for: NZPOS v8.1 Marketing Refresh & Compare Page*
+*Researched: 2026-04-07*
