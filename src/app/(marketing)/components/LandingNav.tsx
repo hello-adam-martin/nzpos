@@ -18,6 +18,7 @@ export default function LandingNav() {
           <a href="#features" className="font-sans text-sm text-white/70 hover:text-white transition-colors duration-150 py-2">Features</a>
           <a href="#pricing" className="font-sans text-sm text-white/70 hover:text-white transition-colors duration-150 py-2">Pricing</a>
           <Link href="/add-ons" className="font-sans text-sm text-white/70 hover:text-white transition-colors duration-150 py-2">Add-ons</Link>
+          <Link href="/compare" className="font-sans text-sm text-white/70 hover:text-white transition-colors duration-150 py-2">Compare</Link>
           <Link
             href="/login"
             className="border border-white/50 text-white px-4 py-3 rounded-md text-sm hover:bg-white/10 transition-colors duration-150"
@@ -58,6 +59,7 @@ export default function LandingNav() {
             <a href="#features" className="font-sans text-base text-white/70 hover:text-white transition-colors duration-150">Features</a>
             <a href="#pricing" className="font-sans text-base text-white/70 hover:text-white transition-colors duration-150">Pricing</a>
             <Link href="/add-ons" className="font-sans text-base text-white/70 hover:text-white transition-colors duration-150">Add-ons</Link>
+            <Link href="/compare" className="font-sans text-base text-white/70 hover:text-white transition-colors duration-150">Compare</Link>
             <Link
               href="/login"
               className="border border-white/50 text-white px-8 py-3 rounded-md text-base hover:bg-white/10 transition-colors duration-150"
