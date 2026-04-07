@@ -1,5 +1,19 @@
 # Milestones
 
+## v8.1 Marketing Refresh & Compare Page (Shipped: 2026-04-07)
+
+**Phases completed:** 2 phases, 5 plans, 8 tasks
+
+**Key accomplishments:**
+
+- Three static add-on detail pages with 6-section structure, NZ compliance callouts, and correct pricing ($14/$9/$15/month)
+- One-liner:
+- Competitor comparison page at /compare with typed data file, sticky-column feature matrix (NZPOS vs Square/Lightspeed/Shopify POS/POSbiz), FTA-compliant pricing disclaimer, Why NZPOS editorial, details/summary FAQ accordion, and JSON-LD structured data
+- Compare link added to desktop/mobile nav; footer restructured into 4-column grid with Product, Add-ons, Account, Legal sections linking to all key pages
+- Open Graph meta tags and JSON-LD SoftwareApplication structured data added to all 5 add-on detail pages with correct per-add-on NZD pricing
+
+---
+
 ## v8.0 Add-On Catalog Expansion (Shipped: 2026-04-07)
 
 **Phases completed:** 3 phases, 19 plans, 31 tasks

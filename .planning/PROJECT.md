@@ -15,6 +15,7 @@ A multi-tenant SaaS POS + online store platform for NZ small businesses. Any mer
 - **v6.0 Free Email Notifications** — Phases 29-31 (shipped 2026-04-06): Email notifications moved from $5/mo paid add-on to free tier across backend, admin UI, and marketing pages
 - **v7.0 POS Demo** — Phases 32-34 (shipped 2026-04-06): Demo store seed data, unauthenticated `/demo/pos` route with full POS simulation, post-sale signup CTA, landing page "Try POS Demo" button
 - **v8.0 Add-On Catalog Expansion** — Phases 35-37 (shipped 2026-04-07): Gift Cards ($14/mo), Advanced Reporting/COGS ($9/mo), Loyalty Points ($15/mo) — all with Stripe billing, feature gating, NZ compliance
+- **v8.1 Marketing Refresh & Compare Page** — Phases 38-39 (shipped 2026-04-07): Add-on detail pages, landing page refresh, competitor comparison page, footer restructure, SEO retrofit
 
 ## Current State
 
@@ -95,15 +96,9 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 
 ### Active
 
-## Current Milestone: v8.1 Marketing Refresh & Compare Page
+## Current Milestone
 
-**Goal:** Update the marketing site with all 5 paid add-ons and create a competitor comparison page to position NZPOS in the NZ market.
-
-**Target features:**
-- Landing page refresh (hero, features, pricing) to showcase all 5 paid add-ons
-- Dedicated detail pages for Gift Cards, Advanced Reporting/COGS, and Loyalty Points
-- Competitor comparison page with feature matrix + "Why NZPOS" narrative
-- Research NZ POS market for accurate comparison data
+No active milestone. Run `/gsd:new-milestone` to plan the next one.
 
 ### Out of Scope
 
