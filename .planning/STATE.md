@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: Add-On Catalog Expansion
-status: verifying
-stopped_at: Completed 37-05-PLAN.md
-last_updated: "2026-04-06T21:00:53.641Z"
-last_activity: 2026-04-06
+status: executing
+stopped_at: Completed 37-07-PLAN.md
+last_updated: "2026-04-07T01:44:50.774Z"
+last_activity: 2026-04-07
 progress:
   total_phases: 3
   completed_phases: 3
-  total_plans: 18
-  completed_plans: 18
+  total_plans: 19
+  completed_plans: 19
   percent: 0
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 ## Current Position
 
 Phase: 37 (loyalty-points-add-on) — EXECUTING
-Plan: 7 of 7
-Status: Phase complete — ready for verification
-Last activity: 2026-04-06
+Plan: 2 of 8
+Status: Ready to execute
+Last activity: 2026-04-07
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -79,6 +79,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Phase 37-loyalty-points-add-on]: Zod v4 uses .issues[] not .errors[] — project is on Zod 4.3.6; all server actions must use parsed.error.issues
 - [Phase 37]: hasLoyaltyPoints fetched separately in CustomersPage and getCustomerDetail — avoids prop-drilling through client boundary, each query is cheap
 - [Phase 37]: Loyalty full-cover uses loyalty_{orderId} placeholder session ID, mirrors gift_card_{orderId} pattern for complete_online_sale RPC
+- [Phase 37-loyalty-points-add-on]: as-any cast used for loyalty columns/tables not yet in generated database types — matches established admin/layout.tsx pattern
+- [Phase 37-loyalty-points-add-on]: Conditional loyalty_settings fetch gated on has_loyalty_points=true — non-subscribers pay zero additional query cost
 
 ### Pending Todos
 
@@ -91,6 +93,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T21:00:53.639Z
-Stopped at: Completed 37-05-PLAN.md
+Last session: 2026-04-07T01:44:50.771Z
+Stopped at: Completed 37-07-PLAN.md
 Resume file: None

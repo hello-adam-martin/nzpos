@@ -154,7 +154,7 @@ Plans:
   3. Identified customers earn points automatically on completed POS and online sales, and can view their balance on their account page
   4. Customer can apply points as a discount during online checkout; staff can apply points during POS checkout
   5. Privacy notice is displayed to customers before any loyalty data is collected, compliant with Privacy Act 2020 and Privacy Amendment Act 2025 (IPP 3A)
-**Plans:** 7/7 plans complete
+**Plans:** 8/8 plans complete
 Plans:
 - [x] 37-00-PLAN.md — Wave 0 RED test stubs (loyalty utils, cart state, server actions)
 - [x] 37-01-PLAN.md — DB schema, billing pipeline, admin nav, loyalty-utils
@@ -205,4 +205,4 @@ Plans:
 | 34. Signup Conversion & Landing Page | v7.0 | 2/2 | Complete | 2026-04-06 |
 | 35. Gift Cards Add-On | v8.0 | 7/7 | Complete    | 2026-04-06 |
 | 36. Advanced Reporting / COGS Add-On | v8.0 | 4/4 | Complete    | 2026-04-06 |
-| 37. Loyalty Points Add-On | v8.0 | 7/7 | Complete   | 2026-04-06 |
+| 37. Loyalty Points Add-On | v8.0 | 8/8 | Complete   | 2026-04-07 |
