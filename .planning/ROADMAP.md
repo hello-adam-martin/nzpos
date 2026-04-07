@@ -140,12 +140,12 @@ Plans:
   3. Visitor sees multiple CTA buttons on the comparison page linking to signup or the POS demo
   4. Visitor can navigate to the comparison page from both the desktop nav and mobile nav on the landing page
   5. All new pages (3 add-on detail pages + comparison page) have title, description, Open Graph meta tags, and JSON-LD SoftwareApplication structured data; footer includes links to the comparison page and all add-on detail pages
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 39-01-PLAN.md — Comparison data file + comparison page (matrix, editorial, FAQ, CTAs, SEO)
 - [ ] 39-02-PLAN.md — Nav "Compare" link + footer restructure into multi-column layout
-- [ ] 39-03-PLAN.md — SEO retrofit (OG meta + JSON-LD) on all 5 add-on detail pages
+- [x] 39-03-PLAN.md — SEO retrofit (OG meta + JSON-LD) on all 5 add-on detail pages
 **UI hint**: yes
 
 ## Progress
@@ -190,4 +190,4 @@ Plans:
 | 36. Advanced Reporting / COGS Add-On | v8.0 | 4/4 | Complete | 2026-04-06 |
 | 37. Loyalty Points Add-On | v8.0 | 8/8 | Complete | 2026-04-07 |
 | 38. Add-On Detail Pages + Landing Page Refresh | v8.1 | 2/2 | Complete    | 2026-04-07 |
-| 39. Comparison Page + Nav/Footer/SEO | v8.1 | 0/3 | Not started | - |
+| 39. Comparison Page + Nav/Footer/SEO | v8.1 | 1/3 | In Progress|  |

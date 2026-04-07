@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v8.1
 milestone_name: Marketing Refresh & Compare Page
 status: executing
-stopped_at: Phase 39 context gathered
-last_updated: "2026-04-07T04:48:10.491Z"
+stopped_at: Completed 39-03-PLAN.md
+last_updated: "2026-04-07T05:34:37.172Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 2
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 5
+  completed_plans: 3
   percent: 0
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Phase 38 — add-on-detail-pages-landing-page-refresh
+**Current focus:** Phase 39 — comparison-page-nav-footer-seo
 
 ## Current Position
 
-Phase: 39
-Plan: Not started
+Phase: 39 (comparison-page-nav-footer-seo) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
 Last activity: 2026-04-07
 
@@ -58,6 +58,7 @@ Carried forward from v8.0 in PROJECT.md Key Decisions table.
 - [Phase 38]: All 3 add-on detail pages use identical 6-section structure with compliance callouts as distinct visual trust signals
 - [Phase 38]: Compliance callouts cite specific NZ legislation by name/year: FTA 2024 for Gift Cards, Privacy Amendment Act 2025 IPP 3A for Loyalty Points, contextual NZ Retail callout for Advanced Reporting
 - [Phase 38]: Refactored LandingPricing add-on cards into data array split by slice for 3+2 grid — cleaner than duplication
+- [Phase 39]: Reused existing metadata description values for OG fields rather than writing separate social-optimized copy
 
 ### Pending Todos
 
@@ -72,6 +73,6 @@ Phase 39 has a legal prerequisite: competitor pricing claims must be sourced fro
 
 ## Session Continuity
 
-Last session: 2026-04-07T04:48:10.484Z
-Stopped at: Phase 39 context gathered
-Resume file: .planning/phases/39-comparison-page-nav-footer-seo/39-CONTEXT.md
+Last session: 2026-04-07T05:34:37.170Z
+Stopped at: Completed 39-03-PLAN.md
+Resume file: None

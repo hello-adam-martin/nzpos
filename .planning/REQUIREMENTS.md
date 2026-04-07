@@ -27,8 +27,8 @@ Requirements for milestone v8.1: Marketing Refresh & Compare Page. Each maps to 
 ### Navigation & SEO
 
 - [ ] **NAV-01**: Visitor can navigate to the comparison page from the landing page nav bar (desktop and mobile)
-- [ ] **NAV-02**: All new pages have appropriate meta tags (title, description, Open Graph)
-- [ ] **NAV-03**: Comparison page and add-on detail pages include JSON-LD structured data (SoftwareApplication schema)
+- [x] **NAV-02**: All new pages have appropriate meta tags (title, description, Open Graph)
+- [x] **NAV-03**: Comparison page and add-on detail pages include JSON-LD structured data (SoftwareApplication schema)
 - [ ] **NAV-04**: Footer includes links to comparison page and all add-on detail pages
 
 ## Future Requirements
@@ -71,8 +71,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COMP-04 | Phase 39 | Pending |
 | COMP-05 | Phase 39 | Pending |
 | NAV-01 | Phase 39 | Pending |
-| NAV-02 | Phase 39 | Pending |
-| NAV-03 | Phase 39 | Pending |
+| NAV-02 | Phase 39 | Complete |
+| NAV-03 | Phase 39 | Complete |
 | NAV-04 | Phase 39 | Pending |
 
 **Coverage:**
