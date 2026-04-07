@@ -91,7 +91,15 @@ A store owner can ring up a sale in-store and take an order online, from a singl
 
 ### Active
 
-No active milestone. Next milestone TBD via `/gsd:new-milestone`.
+## Current Milestone: v8.1 Marketing Refresh & Compare Page
+
+**Goal:** Update the marketing site with all 5 paid add-ons and create a competitor comparison page to position NZPOS in the NZ market.
+
+**Target features:**
+- Landing page refresh (hero, features, pricing) to showcase all 5 paid add-ons
+- Dedicated detail pages for Gift Cards, Advanced Reporting/COGS, and Loyalty Points
+- Competitor comparison page with feature matrix + "Why NZPOS" narrative
+- Research NZ POS market for accurate comparison data
 
 ### Out of Scope
 
@@ -197,4 +205,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-07 after v8.0 Add-On Catalog Expansion milestone complete*
+*Last updated: 2026-04-07 after v8.1 Marketing Refresh & Compare Page milestone started*

@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v8.0
-milestone_name: Add-On Catalog Expansion
-status: complete
-stopped_at: Milestone v8.0 complete
-last_updated: "2026-04-07T02:10:00.000Z"
+milestone: v8.1
+milestone_name: Marketing Refresh & Compare Page
+status: defining_requirements
+stopped_at: null
+last_updated: "2026-04-07T03:00:00.000Z"
 last_activity: 2026-04-07
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 19
-  completed_plans: 19
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,23 +21,24 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** A store owner can ring up a sale in-store and take an order online, from a single inventory that stays in sync, with GST handled correctly.
-**Current focus:** Milestone v8.0 complete — planning next milestone
+**Current focus:** Milestone v8.1 — Marketing Refresh & Compare Page
 
 ## Current Position
 
-Milestone: v8.0 Add-On Catalog Expansion — COMPLETE
-Status: Ready for next milestone
-Last activity: 2026-04-07
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-07 — Milestone v8.1 started
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 19 (v8.0)
-- Average duration: ~15 min per plan
-- Total execution time: ~285 min
+- Total plans completed: 0 (v8.1)
+- Average duration: —
+- Total execution time: —
 
 *Updated after each plan completion*
 
@@ -45,7 +46,7 @@ Progress: [██████████] 100%
 
 ### Decisions
 
-Archived to .planning/milestones/v8.0-ROADMAP.md. Key decisions carried forward in PROJECT.md Key Decisions table.
+Carried forward from v8.0 in PROJECT.md Key Decisions table.
 
 ### Pending Todos
 
@@ -53,10 +54,10 @@ None.
 
 ### Blockers/Concerns
 
-None — all v8.0 blockers resolved.
+None.
 
 ## Session Continuity
 
 Last session: 2026-04-07
-Stopped at: Milestone v8.0 complete
+Stopped at: Defining requirements for v8.1
 Resume file: None
