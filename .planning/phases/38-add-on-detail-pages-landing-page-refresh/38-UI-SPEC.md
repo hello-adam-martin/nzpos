@@ -62,7 +62,7 @@ Notes:
 - Section headings use `font-sans` (not `font-display`) at `text-2xl font-bold leading-[1.3]` — matches established pattern
 - Uppercase labels (section eyebrows): `text-sm font-bold uppercase tracking-wide` in `var(--color-text-muted)` or accent color
 - Price display (add-on cards): `text-sm font-bold text-[var(--color-amber)]`
-- Hero subtext: `text-base md:text-lg text-white/70` under navy hero backgrounds
+- Hero subtext: `text-base text-white/70` under navy hero backgrounds — `text-base` at all breakpoints
 - Only two weights are used throughout: 400 (regular body and labels) and 700 (bold headings, price text, eyebrows, feature titles)
 
 ---
@@ -104,7 +104,7 @@ All 3 pages follow the xero/page.tsx section structure verbatim:
 **Section 1 — Hero** (`bg-[var(--color-navy)]`)
 - Back link: `← Back to add-ons` in `text-sm text-white/50 hover:text-white` — left-aligned
 - H1: `font-display text-3xl md:text-5xl font-bold text-white leading-[1.1]`
-- Subtext: `font-sans text-base md:text-lg text-white/70 mt-[var(--space-md)] max-w-2xl`
+- Subtext: `font-sans text-base text-white/70 mt-[var(--space-md)] max-w-2xl`
 - CTA row: amber `Get started free` button + `text-sm text-white/50` price note
 
 **Section 2 — Before/After** (`bg-[var(--color-bg)]`)
