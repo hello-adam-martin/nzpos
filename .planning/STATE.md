@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v8.1
 milestone_name: Marketing Refresh & Compare Page
 status: planning
-stopped_at: Phase 38 context gathered
-last_updated: "2026-04-07T03:12:19.341Z"
-last_activity: 2026-04-07 — Roadmap created for v8.1
+stopped_at: Phase 38 planned (2 plans, 1 wave)
+last_updated: "2026-04-07T12:00:00.000Z"
+last_activity: 2026-04-07 — Phase 38 planned (2 plans, 1 wave)
 progress:
   total_phases: 2
   completed_phases: 0
-  total_plans: 0
+  total_plans: 2
   completed_plans: 0
   percent: 0
 ---
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: Phase 38 — Add-On Detail Pages + Landing Page Refresh (not started)
-Plan: —
-Status: Roadmap ready, awaiting phase planning
-Last activity: 2026-04-07 — Roadmap created for v8.1
+Phase: Phase 38 — Add-On Detail Pages + Landing Page Refresh (planned)
+Plan: 2 plans (38-01, 38-02) in 1 wave
+Status: Plans ready, awaiting execution
+Last activity: 2026-04-07 — Phase 38 planned
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -69,6 +69,6 @@ Phase 39 has a legal prerequisite: competitor pricing claims must be sourced fro
 
 ## Session Continuity
 
-Last session: 2026-04-07T03:12:19.333Z
-Stopped at: Phase 38 context gathered
-Resume file: .planning/phases/38-add-on-detail-pages-landing-page-refresh/38-CONTEXT.md
+Last session: 2026-04-07T03:27:26.272Z
+Stopped at: Phase 38 UI-SPEC approved
+Resume file: .planning/phases/38-add-on-detail-pages-landing-page-refresh/38-UI-SPEC.md
