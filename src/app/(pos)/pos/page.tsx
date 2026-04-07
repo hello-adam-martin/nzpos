@@ -59,10 +59,10 @@ export default async function PosPage() {
         .select('id, name, role')
         .eq('store_id', storeId)
         .eq('is_active', true),
-      // Query store_plans for hasInventory (POS uses staff JWT, not Supabase auth)
+      // Query store_plans for hasInventory and hasLoyalty (POS uses staff JWT, not Supabase auth)
       supabase
         .from('store_plans')
-        .select('has_inventory')
+        .select('has_inventory, has_loyalty_points')
         .eq('store_id', storeId)
         .single(),
     ])
@@ -73,6 +73,17 @@ export default async function PosPage() {
   const storeName = storeResult.data?.name ?? 'NZPOS'
   const staffList = (staffListResult.data ?? []) as { id: string; name: string; role: 'owner' | 'staff' }[]
   const hasInventory = storePlanResult.data?.has_inventory === true
+  const hasLoyalty = storePlanResult.data?.has_loyalty_points === true
+
+  let redeemRateCents = 1
+  if (hasLoyalty) {
+    const { data: loyaltySettings } = await supabase
+      .from('loyalty_settings')
+      .select('redeem_rate_cents')
+      .eq('store_id', storeId)
+      .single()
+    redeemRateCents = loyaltySettings?.redeem_rate_cents ?? 1
+  }
 
   return (
     <POSClientShell
@@ -84,6 +95,8 @@ export default async function PosPage() {
       storeId={storeId}
       staffList={staffList}
       hasInventory={hasInventory}
+      hasLoyalty={hasLoyalty}
+      redeemRateCents={redeemRateCents}
     />
   )
 }
