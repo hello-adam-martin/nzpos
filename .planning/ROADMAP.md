@@ -184,5 +184,5 @@ Plans:
 | 35. Gift Cards Add-On | v8.0 | 7/7 | Complete | 2026-04-06 |
 | 36. Advanced Reporting / COGS Add-On | v8.0 | 4/4 | Complete | 2026-04-06 |
 | 37. Loyalty Points Add-On | v8.0 | 8/8 | Complete | 2026-04-07 |
-| 38. Add-On Detail Pages + Landing Page Refresh | v8.1 | 2/2 | Complete   | 2026-04-07 |
+| 38. Add-On Detail Pages + Landing Page Refresh | v8.1 | 2/2 | Complete    | 2026-04-07 |
 | 39. Comparison Page + Nav/Footer/SEO | v8.1 | 0/? | Not started | - |
