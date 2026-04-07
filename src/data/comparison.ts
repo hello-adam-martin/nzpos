@@ -1,9 +1,9 @@
 // Competitor pricing last verified: April 2026
 // Sources:
-//   Square NZ:     https://squareup.com/nz/pricing
 //   Lightspeed:    https://www.lightspeedhq.co.nz/pos/retail/pricing/
 //   Shopify POS:   https://www.shopify.co.nz/pos
 //   POSbiz:        https://www.posbiz.co.nz/pricing
+//   Hike POS:      https://hikeup.com/pricing/
 // Update pricingDisclaimerDate in this file if refreshing competitor data.
 
 // ---------------------------------------------------------------------------
@@ -47,12 +47,6 @@ export const pricingDisclaimerDate = 'April 2026'
 
 export const competitors: Competitor[] = [
   {
-    name: 'Square',
-    slug: 'square',
-    monthlyPrice: 'Free POS + 2.2% per tap',
-    website: 'https://squareup.com/nz/pricing',
-  },
-  {
     name: 'Lightspeed',
     slug: 'lightspeed',
     monthlyPrice: 'From $119/mo',
@@ -63,6 +57,12 @@ export const competitors: Competitor[] = [
     slug: 'shopify-pos',
     monthlyPrice: 'From $69/mo + POS Pro $139/mo',
     website: 'https://www.shopify.co.nz/pos',
+  },
+  {
+    name: 'Hike POS',
+    slug: 'hike',
+    monthlyPrice: 'From $59 USD/mo',
+    website: 'https://hikeup.com/pricing/',
   },
   {
     name: 'POSbiz',
@@ -95,45 +95,45 @@ export const features: Feature[] = [
     name: 'iPad POS checkout',
     category: 'core-pos',
     nzposValue: true,
-    competitorValues: { square: true, lightspeed: true, 'shopify-pos': true, posbiz: true },
+    competitorValues: { hike: true, lightspeed: true, 'shopify-pos': true, posbiz: true },
   },
   {
     name: 'Barcode scanning',
     category: 'core-pos',
     nzposValue: true,
-    competitorValues: { square: true, lightspeed: true, 'shopify-pos': true, posbiz: true },
+    competitorValues: { hike: true, lightspeed: true, 'shopify-pos': true, posbiz: true },
   },
   {
     name: 'Staff PIN login & roles',
     category: 'core-pos',
     nzposValue: true,
-    competitorValues: { square: 'Paid plan', lightspeed: true, 'shopify-pos': 'POS Pro only', posbiz: true },
+    competitorValues: { hike: true, lightspeed: true, 'shopify-pos': 'POS Pro only', posbiz: true },
   },
   // Online Store
   {
     name: 'Built-in online store',
     category: 'online-store',
     nzposValue: true,
-    competitorValues: { square: true, lightspeed: 'Via Shopify', 'shopify-pos': true, posbiz: false },
+    competitorValues: { hike: true, lightspeed: 'Via Shopify', 'shopify-pos': true, posbiz: false },
   },
   {
     name: 'Click-and-collect',
     category: 'online-store',
     nzposValue: true,
-    competitorValues: { square: true, lightspeed: true, 'shopify-pos': true, posbiz: false },
+    competitorValues: { hike: true, lightspeed: true, 'shopify-pos': true, posbiz: false },
   },
   // Inventory & Stock
   {
     name: 'Real-time inventory sync (POS + online)',
     category: 'inventory-stock',
     nzposValue: true,
-    competitorValues: { square: true, lightspeed: true, 'shopify-pos': true, posbiz: true },
+    competitorValues: { hike: true, lightspeed: true, 'shopify-pos': true, posbiz: true },
   },
   {
     name: 'Stocktake & adjustments',
     category: 'inventory-stock',
     nzposValue: '$9/mo add-on',
-    competitorValues: { square: true, lightspeed: true, 'shopify-pos': 'Shopify plan', posbiz: true },
+    competitorValues: { hike: true, lightspeed: true, 'shopify-pos': 'Shopify plan', posbiz: true },
     addOnLink: '/add-ons/inventory',
   },
   // NZ Compliance
@@ -141,41 +141,41 @@ export const features: Feature[] = [
     name: 'GST 15% tax-inclusive pricing',
     category: 'nz-compliance',
     nzposValue: true,
-    competitorValues: { square: true, lightspeed: true, 'shopify-pos': 'Configurable', posbiz: true },
+    competitorValues: { hike: true, lightspeed: true, 'shopify-pos': 'Configurable', posbiz: true },
   },
   {
     name: 'EFTPOS terminal support',
     category: 'nz-compliance',
     nzposValue: 'Standalone terminal',
-    competitorValues: { square: 'Square Reader', lightspeed: 'Integrated', 'shopify-pos': 'Third-party', posbiz: 'Integrated' },
+    competitorValues: { hike: 'Third-party', lightspeed: 'Integrated', 'shopify-pos': 'Third-party', posbiz: 'Integrated' },
   },
   // Add-ons & Extras
   {
     name: 'Xero accounting sync',
     category: 'add-ons-extras',
     nzposValue: '$9/mo add-on',
-    competitorValues: { square: 'Third-party', lightspeed: true, 'shopify-pos': 'Third-party app', posbiz: true },
+    competitorValues: { hike: true, lightspeed: true, 'shopify-pos': 'Third-party app', posbiz: true },
     addOnLink: '/add-ons/xero',
   },
   {
     name: 'Gift cards',
     category: 'add-ons-extras',
     nzposValue: '$14/mo add-on',
-    competitorValues: { square: true, lightspeed: true, 'shopify-pos': true, posbiz: false },
+    competitorValues: { hike: 'Paid plan', lightspeed: true, 'shopify-pos': true, posbiz: false },
     addOnLink: '/add-ons/gift-cards',
   },
   {
     name: 'Loyalty points',
     category: 'add-ons-extras',
     nzposValue: '$15/mo add-on',
-    competitorValues: { square: 'Paid plan', lightspeed: 'Paid add-on', 'shopify-pos': 'Third-party app', posbiz: false },
+    competitorValues: { hike: 'Paid plan', lightspeed: 'Paid add-on', 'shopify-pos': 'Third-party app', posbiz: false },
     addOnLink: '/add-ons/loyalty-points',
   },
   {
     name: 'Advanced reporting & COGS',
     category: 'add-ons-extras',
     nzposValue: '$9/mo add-on',
-    competitorValues: { square: 'Paid plan', lightspeed: true, 'shopify-pos': 'Shopify plan', posbiz: true },
+    competitorValues: { hike: true, lightspeed: true, 'shopify-pos': 'Shopify plan', posbiz: true },
     addOnLink: '/add-ons/advanced-reporting',
   },
   // Pricing
@@ -183,13 +183,13 @@ export const features: Feature[] = [
     name: 'Free core POS (no monthly fee)',
     category: 'pricing',
     nzposValue: true,
-    competitorValues: { square: true, lightspeed: false, 'shopify-pos': false, posbiz: false },
+    competitorValues: { hike: false, lightspeed: false, 'shopify-pos': false, posbiz: false },
   },
   {
     name: 'No transaction fees on POS sales',
     category: 'pricing',
     nzposValue: true,
-    competitorValues: { square: false, lightspeed: true, 'shopify-pos': true, posbiz: true },
+    competitorValues: { hike: true, lightspeed: true, 'shopify-pos': true, posbiz: true },
   },
 ]
 
@@ -199,9 +199,9 @@ export const features: Feature[] = [
 
 export const faqItems: FAQItem[] = [
   {
-    question: 'How does NZPOS pricing compare to Square or Lightspeed?',
+    question: 'How does NZPOS pricing compare to Lightspeed or Hike?',
     answer:
-      'NZPOS gives you a free core POS with no monthly fee and no transaction fees on in-store sales. You only pay for the add-ons you actually need. Square charges 2.2% on every tap, and Lightspeed starts at $119/month before add-ons.',
+      'NZPOS gives you a free core POS with no monthly fee and no transaction fees on in-store sales. You only pay for the add-ons you actually need. Lightspeed starts at $119/month and Hike at $59 USD/month before add-ons.',
   },
   {
     question: 'Is NZPOS suitable for my type of retail store?',

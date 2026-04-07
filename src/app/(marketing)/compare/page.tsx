@@ -12,9 +12,9 @@ import {
 export const dynamic = 'force-static'
 
 export const metadata: Metadata = {
-  title: 'Compare NZPOS vs Square, Lightspeed, Shopify POS — NZ POS Systems',
+  title: 'Compare NZPOS vs Lightspeed, Shopify POS, Hike — NZ POS Systems',
   description:
-    'See how NZPOS compares to Square, Lightspeed, Shopify POS and other NZ point-of-sale systems. Feature-by-feature comparison with transparent pricing.',
+    'See how NZPOS compares to Lightspeed, Shopify POS, Hike and other NZ point-of-sale systems. Feature-by-feature comparison with transparent pricing.',
   openGraph: {
     title: 'Compare NZPOS vs NZ POS Competitors',
     description:
@@ -120,14 +120,16 @@ export default function ComparePage() {
                     Feature
                   </th>
                   <th className="bg-[var(--color-navy)] text-white font-sans text-sm font-bold px-4 py-3 text-center min-w-[120px]">
-                    NZPOS
+                    <div>NZPOS</div>
+                    <div className="font-normal text-xs text-white/70 mt-0.5">Free + add-ons</div>
                   </th>
                   {competitors.map((c) => (
                     <th
                       key={c.slug}
                       className="bg-[var(--surface)] font-sans text-sm font-bold text-[var(--color-text)] px-4 py-3 text-center min-w-[120px]"
                     >
-                      {c.name}
+                      <div>{c.name}</div>
+                      <div className="font-normal text-xs text-[var(--text-muted)] mt-0.5">{c.monthlyPrice}</div>
                     </th>
                   ))}
                 </tr>
